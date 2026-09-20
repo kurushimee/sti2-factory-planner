@@ -1,0 +1,58 @@
+{
+  "pack_release": "https://www.curseforge.com/minecraft/modpacks/statech-industry-2/files/8875911",
+  "release_tag": "https://github.com/TheStaticVoid/StaTech-Industry/releases/tag/2.0.1",
+  "archives": [
+    {
+      "file": "curseforge-reference.zip",
+      "bytes": 60846112,
+      "sha256": "7c39a9cd56b52e320fdfdb72300bc3317f51bf02feaec0a358a46f3123deaa4d"
+    },
+    {
+      "file": "StaTech.Industry-2.0.1-curseforge.zip",
+      "bytes": 60846112,
+      "sha256": "7c39a9cd56b52e320fdfdb72300bc3317f51bf02feaec0a358a46f3123deaa4d"
+    },
+    {
+      "file": "StaTech.Industry-2.0.1-serverpack.zip",
+      "bytes": 429458468,
+      "sha256": "7bf868078e1c403b1a264baeafab8c5e443f2ffbc33484347438fc894e45ce8f"
+    }
+  ],
+  "sources": [
+    {
+      "name": "statech",
+      "url": "https://github.com/TheStaticVoid/StaTech-Industry.git",
+      "commit": "9b7ef18b5dfdcb3ac8eda93cb6dd2ca6135cbaf9"
+    },
+    {
+      "name": "mi",
+      "url": "https://github.com/AztechMC/Modern-Industrialization.git",
+      "commit": "e0b405a1f24917db38cb5e82836511f3ad357afe"
+    },
+    {
+      "name": "ei",
+      "url": "https://github.com/Swedz/Extended-Industrialization.git",
+      "commit": "9b0ea0905674996ec4c04b53bf1b48a3798833d2"
+    },
+    {
+      "name": "io",
+      "url": "https://github.com/Phantom-n-Co/Industrialization-Overdrive.git",
+      "commit": "9c0795868efe09eec82c3555f13a2d76b4e5772c"
+    },
+    {
+      "name": "yai",
+      "url": "https://github.com/Luligabi1/YetAnotherIndustrialization.git",
+      "commit": "3641da7c3d3f71ea7aff4c4a6d3e3c566b3eda24"
+    },
+    {
+      "name": "tesseract",
+      "url": "https://github.com/Swedz/tesseract-neoforge.git",
+      "commit": "f8fa5cebf61fbc2528f4db3030e7c6a0b349d3ce"
+    },
+    {
+      "name": "mi-tweaks",
+      "url": "https://github.com/Swedz/MI-Tweaks.git",
+      "commit": "058464541cda78ac5513124644f2b9fc4ef71224"
+    }
+  ]
+}

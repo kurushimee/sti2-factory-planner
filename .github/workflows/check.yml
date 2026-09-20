@@ -18,6 +18,8 @@ jobs:
           python-version: '3.12'
       - name: Check repository hygiene
         run: python tools/check.py
+      - name: Check extraction evidence handling
+        run: python -m unittest discover -s tools/extraction -p 'test_*.py'
       - name: Check whitespace
         run: git diff --check
       - name: Install Godot 4.7.2

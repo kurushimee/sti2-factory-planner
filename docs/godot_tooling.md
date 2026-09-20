@@ -16,7 +16,7 @@ This imports assets and refreshes registered script classes. Inspect errors as w
 
 ## Repository checks
 
-Run `python tools/check.py` and `git diff --check` from the project root. GitHub Actions repeats repository hygiene and a Godot 4.7.2 headless import. These checks do not yet test application behavior. The workstation has matching Windows and single-threaded web templates under `%APPDATA%/Godot/export_templates/4.7.2.stable`. See [browser constraints](web-platform.md) before adding platform-dependent behavior.
+Run `python tools/check.py`, `python -m unittest discover -s tools/extraction -p 'test_*.py'`, and `git diff --check` from the project root. GitHub Actions repeats repository hygiene, extraction evidence checks, and a Godot 4.7.2 headless import. These checks do not yet test application behavior. The workstation has matching Windows and single-threaded web templates under `%APPDATA%/Godot/export_templates/4.7.2.stable`. See [browser constraints](web-platform.md) before adding platform-dependent behavior.
 
 ## MCP connection
 

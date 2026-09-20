@@ -1,0 +1,1387 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "runtime_sha256": "521777580a030c3fa2b49b007062243512e4e4299d7854e4969d123b19316d8b",
+  "recipe_count": 26481,
+  "recipe_origins": {
+    "recipe_manager": 20399,
+    "machine_recipe_provider": 6082
+  },
+  "recipe_types": {
+    "ae2:add_item_upgrade": 1,
+    "ae2:charger": 3,
+    "ae2:crafting_unit_transform": 14,
+    "ae2:entropy": 10,
+    "ae2:facade": 1,
+    "ae2:matter_cannon": 22,
+    "ae2:quartz_cutting": 1,
+    "ae2:remove_item_upgrade": 1,
+    "ae2:storage_cell_disassembly": 42,
+    "ae2:storage_cell_upgrade": 40,
+    "ae2:transform": 9,
+    "ae2wtlib:combine": 9,
+    "ae2wtlib:upgrade": 5,
+    "almostunified:client_recipe_tracker": 46,
+    "architects_palette:warping": 22,
+    "bankstorage:bank_link": 1,
+    "bankstorage:copy_components_or_assign_uuid": 7,
+    "brewinandchewin:create_potion_pouring": 1,
+    "brewinandchewin:fermenting": 23,
+    "brewinandchewin:keg_pouring": 24,
+    "cognition:emptying": 3,
+    "cognition:filling": 3,
+    "cognition:infecting": 4,
+    "cognition:molecular_metamorphosis": 28,
+    "computercraft:clear_colour": 1,
+    "computercraft:colour": 1,
+    "computercraft:disk": 1,
+    "computercraft:impostor_shaped": 24,
+    "computercraft:impostor_shapeless": 16,
+    "computercraft:pocket_computer_upgrade": 1,
+    "computercraft:printout": 2,
+    "computercraft:transform_shapeless": 4,
+    "computercraft:turtle_upgrade": 1,
+    "constructionstick:smithing_upgrade": 25,
+    "create:compacting": 8,
+    "create:crushing": 103,
+    "create:cutting": 403,
+    "create:deploying": 167,
+    "create:emptying": 4,
+    "create:filling": 16,
+    "create:haunting": 22,
+    "create:item_application": 8,
+    "create:item_copying": 1,
+    "create:mechanical_crafting": 7,
+    "create:milling": 69,
+    "create:mixing": 18,
+    "create:pressing": 22,
+    "create:sandpaper_polishing": 1,
+    "create:sequenced_assembly": 7,
+    "create:splashing": 43,
+    "create:toolbox_dyeing": 1,
+    "create_dragons_plus:ending": 7,
+    "create_dragons_plus:freezing": 4,
+    "createaddition:charging": 47,
+    "createaddition:liquid_burning": 8,
+    "enderstorage:recolour_recipe": 3,
+    "exposure:component_transferring": 1,
+    "exposure:film_developing": 2,
+    "exposure:photograph_aging": 1,
+    "exposure:photograph_copying": 2,
+    "extended_industrialization:alloy_smelter": 19,
+    "extended_industrialization:bending_machine": 35,
+    "extended_industrialization:brewery": 295,
+    "extended_industrialization:canning_machine": 756,
+    "extended_industrialization:composter": 362,
+    "extended_industrialization:crafting_special_rainbowable_dye": 1,
+    "extendedae:crystal_assembler": 25,
+    "extendedae:crystal_fixer": 5,
+    "farmersdelight:cooking": 89,
+    "farmersdelight:cutting": 214,
+    "farmersdelight:food_serving": 1,
+    "farmingforblockheads:market": 102,
+    "framedblocks:apply_camo": 1,
+    "framedblocks:frame": 204,
+    "framedblocks:rotate_shape": 44,
+    "functionalstorage:copy_components": 3,
+    "functionalstorage:custom_compacting": 6,
+    "functionalstorage:framed_recipe": 1,
+    "industrialization_overdrive:pyrolyse_oven": 2,
+    "jeed:effect_provider": 20,
+    "jeed:potion_provider": 2,
+    "justenoughbreeding:allay_duplication": 1,
+    "justenoughbreeding:breeding": 26,
+    "justenoughbreeding:taming": 3,
+    "justenoughbreeding:temper": 5,
+    "justenoughbreeding:transformation": 29,
+    "justenoughbreeding:trusting": 2,
+    "justhammers:repair": 1,
+    "kubejs:shaped": 391,
+    "kubejs:shapeless": 25,
+    "little_big_redstone:clear_config": 1,
+    "little_big_redstone:copy_sticky_note": 1,
+    "little_big_redstone:crafting_data_retaining_dye": 1,
+    "little_big_redstone:seal_sticky_note": 1,
+    "mi_tweaks:copy_blueprint": 1,
+    "minecraft:blasting": 144,
+    "minecraft:campfire_cooking": 50,
+    "minecraft:crafting_decorated_pot": 1,
+    "minecraft:crafting_shaped": 5036,
+    "minecraft:crafting_shapeless": 1672,
+    "minecraft:crafting_special_armordye": 1,
+    "minecraft:crafting_special_bannerduplicate": 1,
+    "minecraft:crafting_special_bookcloning": 1,
+    "minecraft:crafting_special_firework_rocket": 1,
+    "minecraft:crafting_special_firework_star": 1,
+    "minecraft:crafting_special_firework_star_fade": 1,
+    "minecraft:crafting_special_mapcloning": 1,
+    "minecraft:crafting_special_mapextending": 1,
+    "minecraft:crafting_special_repairitem": 1,
+    "minecraft:crafting_special_shielddecoration": 1,
+    "minecraft:crafting_special_shulkerboxcoloring": 1,
+    "minecraft:crafting_special_suspiciousstew": 1,
+    "minecraft:crafting_special_tippedarrow": 1,
+    "minecraft:smelting": 256,
+    "minecraft:smithing_transform": 57,
+    "minecraft:smithing_trim": 19,
+    "minecraft:smoking": 59,
+    "minecraft:stonecutting": 4322,
+    "modern_industrialization:assembler": 1014,
+    "modern_industrialization:blast_furnace": 60,
+    "modern_industrialization:boss_crusher": 3,
+    "modern_industrialization:centrifuge": 137,
+    "modern_industrialization:chemical_reactor": 128,
+    "modern_industrialization:coke_oven": 4,
+    "modern_industrialization:compressor": 122,
+    "modern_industrialization:core_drill": 1,
+    "modern_industrialization:cutting_machine": 4496,
+    "modern_industrialization:distillation_tower": 7,
+    "modern_industrialization:distillery": 31,
+    "modern_industrialization:electrolyzer": 23,
+    "modern_industrialization:forge_hammer": 112,
+    "modern_industrialization:furnace": 256,
+    "modern_industrialization:fusion_reactor": 5,
+    "modern_industrialization:greenhouse": 108,
+    "modern_industrialization:heat_exchanger": 29,
+    "modern_industrialization:implosion_compressor": 11,
+    "modern_industrialization:laser_engraver": 41,
+    "modern_industrialization:macerator": 543,
+    "modern_industrialization:matter_fabricator": 233,
+    "modern_industrialization:mixer": 406,
+    "modern_industrialization:mob_crusher": 21,
+    "modern_industrialization:oil_drilling_rig": 5,
+    "modern_industrialization:packer": 413,
+    "modern_industrialization:photosynthetic_chamber": 86,
+    "modern_industrialization:polarizer": 3,
+    "modern_industrialization:pressurizer": 11,
+    "modern_industrialization:quantum_space_probe_launcher": 1,
+    "modern_industrialization:quarry": 7,
+    "modern_industrialization:recycler": 4,
+    "modern_industrialization:rocket_part_assembler": 12,
+    "modern_industrialization:singularity_forge": 1,
+    "modern_industrialization:space_probe_launcher": 4,
+    "modern_industrialization:supercomputer": 2,
+    "modern_industrialization:telescope": 2,
+    "modern_industrialization:unpacker": 249,
+    "modern_industrialization:vacuum_freezer": 28,
+    "modern_industrialization:wiremill": 18,
+    "nomansland:cauldron_interaction": 3,
+    "sophisticatedbackpacks:backpack_dye": 1,
+    "sophisticatedbackpacks:backpack_upgrade": 5,
+    "sophisticatedbackpacks:basic_backpack": 1,
+    "sophisticatedcore:ender_linker_clear": 1,
+    "sophisticatedcore:ender_linker_endpoint": 1,
+    "sophisticatedcore:upgrade_clear": 1,
+    "sophisticatedcore:upgrade_next_tier": 24,
+    "sophisticatedstorage:barrel_material": 1,
+    "sophisticatedstorage:double_chest_tier_upgrade_shapeless": 1,
+    "sophisticatedstorage:flat_top_barrel_toggle": 1,
+    "sophisticatedstorage:generic_wood_storage": 2,
+    "sophisticatedstorage:shulker_box_from_chest": 2,
+    "sophisticatedstorage:shulker_box_from_vanilla_shapeless": 17,
+    "sophisticatedstorage:storage_dye": 1,
+    "sophisticatedstorage:storage_tier_upgrade": 12,
+    "sophisticatedstorage:storage_tier_upgrade_shapeless": 3,
+    "spectral_decorations:bedrock_armor_coloring": 1,
+    "spectral_decorations:bottomless_bundle_coloring": 1,
+    "spectral_decorations:uncoloring": 1,
+    "spectrum:anvil_crushing": 268,
+    "spectrum:cinderhearth": 32,
+    "spectrum:clear_crafting_tablet": 1,
+    "spectrum:clear_ender_splice": 1,
+    "spectrum:clear_ink": 1,
+    "spectrum:clear_potion_fillable": 1,
+    "spectrum:color_everpromise_ribbon": 1,
+    "spectrum:crystallarieum_growing": 20,
+    "spectrum:dragonrot_converting": 6,
+    "spectrum:enchanted_book_unsouling": 1,
+    "spectrum:enchanter": 68,
+    "spectrum:enchantment_upgrade": 48,
+    "spectrum:fusion_shrine": 79,
+    "spectrum:gated_crafting_shaped": 70,
+    "spectrum:gated_crafting_shapeless": 73,
+    "spectrum:ink_converting": 48,
+    "spectrum:liquid_crystal_converting": 8,
+    "spectrum:memory_dementia": 1,
+    "spectrum:midnight_solution_converting": 64,
+    "spectrum:pedestal": 613,
+    "spectrum:pedestal_shapeless": 36,
+    "spectrum:pedestal_star_candy": 1,
+    "spectrum:potion_workshop_brewing": 44,
+    "spectrum:potion_workshop_crafting": 28,
+    "spectrum:potion_workshop_reacting": 57,
+    "spectrum:primordial_fire_burning": 23,
+    "spectrum:repair_anything": 1,
+    "spectrum:shooting_star_hardening": 1,
+    "spectrum:spirit_instiller": 185,
+    "spectrum:spirit_instiller_hardcore_player_revival": 1,
+    "spectrum:spirit_instiller_memory_to_head": 1,
+    "spectrum:spirit_instiller_spawner_creature_change": 1,
+    "spectrum:spirit_instiller_spawner_max_nearby_entities_change": 1,
+    "spectrum:spirit_instiller_spawner_spawn_count_change": 1,
+    "spectrum:spirit_instiller_spawner_spawn_delay_change": 1,
+    "spectrum:spirit_instiller_spawner_spawner_player_range_change": 1,
+    "spectrum:titration_barrel": 65,
+    "spectrum:titration_barrel_aqua_regia": 1,
+    "spectrum:titration_barrel_cheong": 1,
+    "spectrum:titration_barrel_jade_wine": 1,
+    "spectrum:titration_barrel_nectered_viognier": 1,
+    "spectrum:titration_barrel_suspicious_brew": 1,
+    "spectrum:wrap_present": 1,
+    "spikyspikes:copy_components_shapeless_recipe": 1,
+    "supplementaries:add_charges": 3,
+    "supplementaries:antique_book": 2,
+    "supplementaries:bamboo_spikes_tipped": 1,
+    "supplementaries:blackboard_duplicate": 1,
+    "supplementaries:confetti_dye": 1,
+    "supplementaries:flag_from_banner": 1,
+    "supplementaries:item_lore": 2,
+    "supplementaries:present_dye": 1,
+    "supplementaries:safe": 1,
+    "supplementaries:soap_clearing": 1,
+    "supplementaries:sus_crafting": 3,
+    "supplementaries:trapped_present": 1,
+    "supplementaries:weathered_map": 2,
+    "tacz:gun_smith_table_crafting": 173,
+    "tankstorage:tank_link": 1,
+    "tankstorage:tank_upgrade": 6,
+    "yet_another_industrialization:cryogenic_precipitator": 20,
+    "yet_another_industrialization:dragon_egg_energy_siphon": 2,
+    "yet_another_industrialization:pulse_detonation_generator": 8
+  },
+  "resource_count": 11805,
+  "tag_count": 2347,
+  "machine_count": 211,
+  "arithmetic": [
+    {
+      "machine": "modern_industrialization:electric_macerator",
+      "recipe_eu": 2,
+      "total_eu": 400,
+      "efficiency": 0,
+      "max_eu": 8
+    },
+    {
+      "machine": "modern_industrialization:electric_macerator",
+      "recipe_eu": 2,
+      "total_eu": 400,
+      "efficiency": 1,
+      "max_eu": 8
+    },
+    {
+      "machine": "modern_industrialization:electric_macerator",
+      "recipe_eu": 2,
+      "total_eu": 400,
+      "efficiency": 10,
+      "max_eu": 14
+    },
+    {
+      "machine": "modern_industrialization:electric_macerator",
+      "recipe_eu": 2,
+      "total_eu": 400,
+      "efficiency": 100,
+      "max_eu": 32
+    },
+    {
+      "machine": "modern_industrialization:electric_macerator",
+      "recipe_eu": 2,
+      "total_eu": 400,
+      "efficiency": 600,
+      "max_eu": 32
+    }
+  ],
+  "loaded_mods": [
+    {
+      "id": "c2me_fixes_worldgen_threading_issues",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "supermartijn642configlib",
+      "version": "1.1.8"
+    },
+    {
+      "id": "additionalentityattributes",
+      "version": "2.0.2+1.21.1"
+    },
+    {
+      "id": "createdeco",
+      "version": "2.1.3"
+    },
+    {
+      "id": "simplemagnets",
+      "version": "1.1.12+c"
+    },
+    {
+      "id": "kubejs_curios",
+      "version": "1.0.4"
+    },
+    {
+      "id": "apollib",
+      "version": "1.2.0"
+    },
+    {
+      "id": "javd",
+      "version": "9.0.0"
+    },
+    {
+      "id": "stonycliffs",
+      "version": "1.1.2"
+    },
+    {
+      "id": "forgeendertech",
+      "version": "12.1.3.0"
+    },
+    {
+      "id": "c2me_fixes_general_threading_issues",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "neoforge",
+      "version": "21.1.250"
+    },
+    {
+      "id": "modernfix",
+      "version": "5.27.24+mc1.21.1"
+    },
+    {
+      "id": "fabric_block_view_api_v2",
+      "version": "1.0.10+9afaaf8c19"
+    },
+    {
+      "id": "iris",
+      "version": "1.8.14-beta.1+mc1.21.1"
+    },
+    {
+      "id": "biolith",
+      "version": "3.0.14"
+    },
+    {
+      "id": "ae2importexportcard",
+      "version": "1.21.1-1.7.1"
+    },
+    {
+      "id": "forgivingvoid",
+      "version": "21.1.7"
+    },
+    {
+      "id": "c2me",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "balm",
+      "version": "21.0.65"
+    },
+    {
+      "id": "prickle",
+      "version": "21.1.11"
+    },
+    {
+      "id": "c2me_base",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "moderndynamics",
+      "version": "0.9.6"
+    },
+    {
+      "id": "structure_layout_optimizer",
+      "version": "1.0.12"
+    },
+    {
+      "id": "exposure",
+      "version": "1.9.18"
+    },
+    {
+      "id": "cloth_config",
+      "version": "15.0.140"
+    },
+    {
+      "id": "ctov",
+      "version": "3.6.3"
+    },
+    {
+      "id": "supplementaries",
+      "version": "1.21.1-3.9.9"
+    },
+    {
+      "id": "lmft",
+      "version": "1.1.1+1.21.9"
+    },
+    {
+      "id": "glodium",
+      "version": "1.21-2.2-neoforge"
+    },
+    {
+      "id": "torchmaster",
+      "version": "21.1.12"
+    },
+    {
+      "id": "bcc",
+      "version": "21.1.8"
+    },
+    {
+      "id": "phantoms_utilities",
+      "version": "0.3.2"
+    },
+    {
+      "id": "justhammers",
+      "version": "21.1.4"
+    },
+    {
+      "id": "blockrunner",
+      "version": "21.1.2"
+    },
+    {
+      "id": "torqueapi",
+      "version": "1.2.2"
+    },
+    {
+      "id": "supermartijn642corelib",
+      "version": "1.1.24"
+    },
+    {
+      "id": "resourcefulconfig",
+      "version": "3.0.11"
+    },
+    {
+      "id": "spark",
+      "version": "1.10.124"
+    },
+    {
+      "id": "c2me_opts_dfc",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "curios",
+      "version": "9.5.1+1.21.1"
+    },
+    {
+      "id": "measurements",
+      "version": "3.0.3"
+    },
+    {
+      "id": "conditional_mixin",
+      "version": "0.6.4"
+    },
+    {
+      "id": "lootintegrations_ctov",
+      "version": "1"
+    },
+    {
+      "id": "transition",
+      "version": "1.0.21"
+    },
+    {
+      "id": "emiprofessions",
+      "version": "1.0.3"
+    },
+    {
+      "id": "fabric_rendering_data_attachment_v1",
+      "version": "0.3.48+73761d2e19"
+    },
+    {
+      "id": "jadeaddons",
+      "version": "6.1.1+neoforge"
+    },
+    {
+      "id": "fallingtree",
+      "version": "1.21.1.11"
+    },
+    {
+      "id": "codechickenlib",
+      "version": "4.6.1.529"
+    },
+    {
+      "id": "cleanview",
+      "version": "1.21.1-v1-neoforge"
+    },
+    {
+      "id": "journeymap_api",
+      "version": "2.0.0-1.21.1"
+    },
+    {
+      "id": "elytraslot",
+      "version": "9.0.2+1.21.1"
+    },
+    {
+      "id": "c2me_threading_lighting",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "sophisticateditemactions",
+      "version": "0.5.16"
+    },
+    {
+      "id": "lithostitched",
+      "version": "1.8.0+beta6"
+    },
+    {
+      "id": "lithium",
+      "version": "0.15.4+mc1.21.1"
+    },
+    {
+      "id": "attributefix",
+      "version": "21.1.3"
+    },
+    {
+      "id": "caelus",
+      "version": "7.0.1+1.21.1"
+    },
+    {
+      "id": "naturescompass",
+      "version": "1.21.1-3.4.0-neoforge"
+    },
+    {
+      "id": "libx",
+      "version": "1.21.1-6.0.15"
+    },
+    {
+      "id": "farmingforblockheads",
+      "version": "21.1.13"
+    },
+    {
+      "id": "craterlib",
+      "version": "3.1.2"
+    },
+    {
+      "id": "midnightlib",
+      "version": "1.9.3"
+    },
+    {
+      "id": "c2me_rewrites_chunk_system",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "c2me_opts_worldgen_vanilla",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "c2me_opts_scheduling",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "createschematicchecker",
+      "version": "2.27.45-6.0"
+    },
+    {
+      "id": "spikyspikes",
+      "version": "21.1.2"
+    },
+    {
+      "id": "smoothchunk",
+      "version": "4.1"
+    },
+    {
+      "id": "emi",
+      "version": "1.1.24+1.21.1+neoforge"
+    },
+    {
+      "id": "minecraft",
+      "version": "1.21.1"
+    },
+    {
+      "id": "wdutils",
+      "version": "1.2-NEOFORGE-1.21.1"
+    },
+    {
+      "id": "aci",
+      "version": "1.1.0"
+    },
+    {
+      "id": "trade_cycling",
+      "version": "1.21.1-1.0.18"
+    },
+    {
+      "id": "fabric_api_base",
+      "version": "0.4.42+d1308ded19"
+    },
+    {
+      "id": "mousetweaks",
+      "version": "2.26.1"
+    },
+    {
+      "id": "nochatreports",
+      "version": "1.21.1-v2.9.1"
+    },
+    {
+      "id": "justenoughbreeding",
+      "version": "3.2.1"
+    },
+    {
+      "id": "gag",
+      "version": "1.21.1-5.2.0"
+    },
+    {
+      "id": "alltheleaks",
+      "version": "1.1.12+1.21.1-neoforge"
+    },
+    {
+      "id": "cleanswing",
+      "version": "1.10"
+    },
+    {
+      "id": "adlods",
+      "version": "9.1.7.0"
+    },
+    {
+      "id": "spectrelib",
+      "version": "0.17.2+1.21"
+    },
+    {
+      "id": "kotlinforforge",
+      "version": "5.12.0"
+    },
+    {
+      "id": "brewinandchewin",
+      "version": "4.5.0"
+    },
+    {
+      "id": "sablecompanion",
+      "version": "1.6.0"
+    },
+    {
+      "id": "flywheel",
+      "version": "1.0.6"
+    },
+    {
+      "id": "ponder",
+      "version": "1.0.82+mc1.21.1"
+    },
+    {
+      "id": "luminax",
+      "version": "1.3.1"
+    },
+    {
+      "id": "industrially_plated",
+      "version": "1.1.0"
+    },
+    {
+      "id": "imfast",
+      "version": "1.0.3"
+    },
+    {
+      "id": "greenhouseconfig_night_config",
+      "version": "1.1.0"
+    },
+    {
+      "id": "c2me_notickvd",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "almostunified",
+      "version": "1.21.1-1.4.2"
+    },
+    {
+      "id": "entityculling",
+      "version": "1.10.5"
+    },
+    {
+      "id": "wits",
+      "version": "1.3.1"
+    },
+    {
+      "id": "immediatelyfast",
+      "version": "1.6.13+1.21.1"
+    },
+    {
+      "id": "structory_towers",
+      "version": "1.0.16"
+    },
+    {
+      "id": "appleskin",
+      "version": "3.0.9+mc1.21"
+    },
+    {
+      "id": "showcaseitem",
+      "version": "1.21.1-1.1.0"
+    },
+    {
+      "id": "lootr",
+      "version": "1.21.1-1.11.38.125"
+    },
+    {
+      "id": "constructionstick",
+      "version": "1.5.0"
+    },
+    {
+      "id": "puzzleslib",
+      "version": "21.1.60"
+    },
+    {
+      "id": "emi_ores",
+      "version": "1.3+1.21.1+neoforge"
+    },
+    {
+      "id": "morered",
+      "version": "6.0.0.3"
+    },
+    {
+      "id": "responsiveshields",
+      "version": "2.4"
+    },
+    {
+      "id": "iden_decor",
+      "version": "3.0.0"
+    },
+    {
+      "id": "fancytabsections",
+      "version": "5.0-NEOFORGE-1.21.1"
+    },
+    {
+      "id": "kuma_api",
+      "version": "21.0.8"
+    },
+    {
+      "id": "fabric_renderer_api_v1",
+      "version": "3.4.0+acb05a3919"
+    },
+    {
+      "id": "transmog",
+      "version": "1.6.0"
+    },
+    {
+      "id": "netherportalfix",
+      "version": "21.1.1"
+    },
+    {
+      "id": "codecui",
+      "version": "1.21.1-1.3.6"
+    },
+    {
+      "id": "geckolib",
+      "version": "4.9.2"
+    },
+    {
+      "id": "revelationary",
+      "version": "1.5.2+1.21.1"
+    },
+    {
+      "id": "morejs",
+      "version": "1.21.1-0.16.0"
+    },
+    {
+      "id": "architects_palette",
+      "version": "1.4.0-beta.5"
+    },
+    {
+      "id": "c2me_opts_natives_math",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "sophisticatedcore",
+      "version": "1.5.1"
+    },
+    {
+      "id": "craft_config",
+      "version": "1.1.3"
+    },
+    {
+      "id": "prism",
+      "version": "1.0.11"
+    },
+    {
+      "id": "jumpoverfences",
+      "version": "1.6.1"
+    },
+    {
+      "id": "placebo",
+      "version": "9.9.0"
+    },
+    {
+      "id": "wstweaks",
+      "version": "10.1.1"
+    },
+    {
+      "id": "fastfurnace",
+      "version": "9.0.1"
+    },
+    {
+      "id": "lootintegrations",
+      "version": "4.7"
+    },
+    {
+      "id": "neoforgedatapackextensions",
+      "version": "21.1.2"
+    },
+    {
+      "id": "bookshelf",
+      "version": "21.1.81"
+    },
+    {
+      "id": "sophisticatedbackpacks",
+      "version": "3.26.3"
+    },
+    {
+      "id": "c2me_opts_math",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "bankstorage",
+      "version": "1.6.1+1.21"
+    },
+    {
+      "id": "jeed",
+      "version": "1.21-2.3.2"
+    },
+    {
+      "id": "grandpower",
+      "version": "3.0.2"
+    },
+    {
+      "id": "melody",
+      "version": "1.0.10"
+    },
+    {
+      "id": "spectrum",
+      "version": "1.12.7-1.21.1-neo"
+    },
+    {
+      "id": "fzzy_config",
+      "version": "0.7.6+1.21+neoforge"
+    },
+    {
+      "id": "emi_loot",
+      "version": "0.7.9+1.21+neoforge"
+    },
+    {
+      "id": "c2me_fixes_worldgen_vanilla_bugs",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "fractal",
+      "version": "1.8.2+1.21.1-neoforge"
+    },
+    {
+      "id": "trenzalore",
+      "version": "6.1.1"
+    },
+    {
+      "id": "konkrete",
+      "version": "1.9.9"
+    },
+    {
+      "id": "greenhouseconfig_toml",
+      "version": "1.1.0"
+    },
+    {
+      "id": "farmersdelight",
+      "version": "1.3.4"
+    },
+    {
+      "id": "rusticdelight",
+      "version": "1.7.1"
+    },
+    {
+      "id": "culturaldelights",
+      "version": "0.17.8"
+    },
+    {
+      "id": "crashutilities",
+      "version": "9.0.4"
+    },
+    {
+      "id": "c2me_fixes_chunkio_threading_issues",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "c2me_client_uncapvd",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "chunky",
+      "version": "1.4.23"
+    },
+    {
+      "id": "greenhouseconfig",
+      "version": "2.2.3+1.21.1"
+    },
+    {
+      "id": "simplylight",
+      "version": "1.5.3"
+    },
+    {
+      "id": "hangglider",
+      "version": "21.1.0"
+    },
+    {
+      "id": "simplebedrockmodel",
+      "version": "2.2.1-neoforge+mc1.21.1"
+    },
+    {
+      "id": "mixed_litter",
+      "version": "1.2.2"
+    },
+    {
+      "id": "elevatorid",
+      "version": "1.21.1-1.11.4"
+    },
+    {
+      "id": "sophisticatedinventoryinteractions",
+      "version": "0.1.13"
+    },
+    {
+      "id": "lootjs",
+      "version": "1.21.1-3.7.0"
+    },
+    {
+      "id": "architectury",
+      "version": "13.0.11"
+    },
+    {
+      "id": "ftblibrary",
+      "version": "2101.1.36"
+    },
+    {
+      "id": "jamlib",
+      "version": "1.3.6+1.21.1"
+    },
+    {
+      "id": "rightclickharvest",
+      "version": "4.6.1+1.21.1"
+    },
+    {
+      "id": "ftbfiltersystem",
+      "version": "21.1.4"
+    },
+    {
+      "id": "ftbteams",
+      "version": "2101.1.11"
+    },
+    {
+      "id": "ftbquests",
+      "version": "2101.1.35"
+    },
+    {
+      "id": "ftbranks",
+      "version": "2101.1.4"
+    },
+    {
+      "id": "ftbessentials",
+      "version": "2101.1.10"
+    },
+    {
+      "id": "accelerateddecay",
+      "version": "21.0.0"
+    },
+    {
+      "id": "computercraft",
+      "version": "1.120.0"
+    },
+    {
+      "id": "advancedperipherals",
+      "version": "1.21.1-0.8.1a"
+    },
+    {
+      "id": "aiimprovements",
+      "version": "0.5.3"
+    },
+    {
+      "id": "asynclogger",
+      "version": "2.2.2+1.21.1-neoforge"
+    },
+    {
+      "id": "cupboard",
+      "version": "4.1"
+    },
+    {
+      "id": "cherishedworlds",
+      "version": "10.1.1+1.21.1"
+    },
+    {
+      "id": "trashcans",
+      "version": "1.1.0"
+    },
+    {
+      "id": "inventoryessentials",
+      "version": "21.1.18"
+    },
+    {
+      "id": "bwncr",
+      "version": "3.20.4"
+    },
+    {
+      "id": "c2me_rewrites_chunkio",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "observable",
+      "version": "5.4.4"
+    },
+    {
+      "id": "yeetusexperimentus",
+      "version": "87.0.0"
+    },
+    {
+      "id": "c2me_opts_allocs",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "effortlessbuilding",
+      "version": "4.2"
+    },
+    {
+      "id": "tradingpost",
+      "version": "21.1.1"
+    },
+    {
+      "id": "rhino",
+      "version": "2101.2.8-build.91"
+    },
+    {
+      "id": "kubejs",
+      "version": "2101.7.2-build.377"
+    },
+    {
+      "id": "capejs",
+      "version": "1.1.1-1.21"
+    },
+    {
+      "id": "trashslot",
+      "version": "21.1.11"
+    },
+    {
+      "id": "jmi",
+      "version": "1.21.1-1.9"
+    },
+    {
+      "id": "craftingstation",
+      "version": "5"
+    },
+    {
+      "id": "sophisticatedstorage",
+      "version": "1.5.91"
+    },
+    {
+      "id": "arrowhead",
+      "version": "2.1.0+1.21.1-neoforge"
+    },
+    {
+      "id": "octolib",
+      "version": "0.6.2"
+    },
+    {
+      "id": "pipe_connector",
+      "version": "0.5.28"
+    },
+    {
+      "id": "crawl",
+      "version": "0.14.9"
+    },
+    {
+      "id": "commonnetworking",
+      "version": "1.0.21-1.21.1"
+    },
+    {
+      "id": "tacz",
+      "version": "1.1.8-hotfix-r6"
+    },
+    {
+      "id": "simplerpc",
+      "version": "4.1.3+release.0"
+    },
+    {
+      "id": "travelanchors",
+      "version": "1.1.1"
+    },
+    {
+      "id": "scannable",
+      "version": "1.8.0+d42c576"
+    },
+    {
+      "id": "trender",
+      "version": "1.0.15"
+    },
+    {
+      "id": "create",
+      "version": "6.0.10"
+    },
+    {
+      "id": "framedblocks",
+      "version": "10.6.2"
+    },
+    {
+      "id": "nomansland",
+      "version": "1.5.12"
+    },
+    {
+      "id": "create_dragons_plus",
+      "version": "1.11.8b"
+    },
+    {
+      "id": "create_central_kitchen",
+      "version": "2.6.0"
+    },
+    {
+      "id": "waystones",
+      "version": "21.1.45"
+    },
+    {
+      "id": "fastsuite",
+      "version": "6.0.7"
+    },
+    {
+      "id": "clumps",
+      "version": "19.0.0.1"
+    },
+    {
+      "id": "journeymap",
+      "version": "1.21.1-6.0.8"
+    },
+    {
+      "id": "comforts",
+      "version": "9.0.5+1.21.1"
+    },
+    {
+      "id": "artifacts",
+      "version": "13.2.5"
+    },
+    {
+      "id": "alternate_current",
+      "version": "1.9.0"
+    },
+    {
+      "id": "ali",
+      "version": "2.1.0"
+    },
+    {
+      "id": "decorative_blocks",
+      "version": "6.0.2"
+    },
+    {
+      "id": "guideme",
+      "version": "21.1.17"
+    },
+    {
+      "id": "explorerscompass",
+      "version": "1.21.1-3.4.0-neoforge"
+    },
+    {
+      "id": "enderstorage",
+      "version": "2.13.0.191"
+    },
+    {
+      "id": "factory_blocks",
+      "version": "1.4.0+mc1.21.1"
+    },
+    {
+      "id": "usefulslime",
+      "version": "1.12.1"
+    },
+    {
+      "id": "ftbchunks",
+      "version": "2101.1.22"
+    },
+    {
+      "id": "ftbxmodcompat",
+      "version": "21.1.11"
+    },
+    {
+      "id": "planner_probe",
+      "version": "1.0.0"
+    },
+    {
+      "id": "craftingtweaks",
+      "version": "21.1.11"
+    },
+    {
+      "id": "moonlight",
+      "version": "1.21.1-3.6.4"
+    },
+    {
+      "id": "titanium",
+      "version": "4.0.50"
+    },
+    {
+      "id": "jade",
+      "version": "15.10.6+neoforge"
+    },
+    {
+      "id": "ae2",
+      "version": "19.2.17"
+    },
+    {
+      "id": "invasiveopts",
+      "version": "1.0.24"
+    },
+    {
+      "id": "megacells",
+      "version": "4.11.0"
+    },
+    {
+      "id": "ae2ct",
+      "version": "1.21.1-1.1.1"
+    },
+    {
+      "id": "bigger_ae2",
+      "version": "1.4.9"
+    },
+    {
+      "id": "ae2netanalyser",
+      "version": "1.21-2.1.5-neoforge"
+    },
+    {
+      "id": "ae2wtlib",
+      "version": "19.5.1"
+    },
+    {
+      "id": "extendedae",
+      "version": "1.21-2.2.36-neoforge"
+    },
+    {
+      "id": "merequester",
+      "version": "1.21.1-1.5.0"
+    },
+    {
+      "id": "ae2wtlib_api",
+      "version": "19.5.1"
+    },
+    {
+      "id": "modern_industrialization",
+      "version": "2.5.8"
+    },
+    {
+      "id": "tesseract_api",
+      "version": "1.12.16-1.21.1"
+    },
+    {
+      "id": "yet_another_industrialization",
+      "version": "1.6.3-1.21.1"
+    },
+    {
+      "id": "stcm",
+      "version": "1.0.3"
+    },
+    {
+      "id": "little_big_redstone",
+      "version": "1.9.11-1.21.1"
+    },
+    {
+      "id": "extended_industrialization",
+      "version": "1.16.2-1.21.1"
+    },
+    {
+      "id": "industrialization_overdrive",
+      "version": "1.14.0+1.21.1"
+    },
+    {
+      "id": "mi_sound_addon",
+      "version": "1.3.1-1.21.1"
+    },
+    {
+      "id": "mi_utilities",
+      "version": "1.3.2"
+    },
+    {
+      "id": "c2me_server_utils",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "yigd",
+      "version": "2.0.13"
+    },
+    {
+      "id": "iceberg",
+      "version": "1.3.2"
+    },
+    {
+      "id": "fastbench",
+      "version": "9.1.3"
+    },
+    {
+      "id": "cognition",
+      "version": "2.4.13"
+    },
+    {
+      "id": "buildinggadgets2",
+      "version": "1.3.9"
+    },
+    {
+      "id": "c2me_opts_worldgen_general",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "c2me_opts_chunkio",
+      "version": "0.4.0-alpha.0.120+1.21.1"
+    },
+    {
+      "id": "modonomicon",
+      "version": "1.120.4"
+    },
+    {
+      "id": "cryonicconfig",
+      "version": "1.0.0+mc1.21.11"
+    },
+    {
+      "id": "coroutil",
+      "version": "1.21.0-1.3.9"
+    },
+    {
+      "id": "watut",
+      "version": "1.21.0-1.2.7"
+    },
+    {
+      "id": "betteradvancedtooltips",
+      "version": "2101.1.0-build.1"
+    },
+    {
+      "id": "emi_enchanting",
+      "version": "0.1.2+1.21+neoforge"
+    },
+    {
+      "id": "ferritecore",
+      "version": "7.0.3"
+    },
+    {
+      "id": "chisel",
+      "version": "2.0.1+mc1.21.1"
+    },
+    {
+      "id": "yet_another_config_lib_v3",
+      "version": "3.8.2+1.21.1-neoforge"
+    },
+    {
+      "id": "solcarrot",
+      "version": "1.16.6"
+    },
+    {
+      "id": "functionalstorage",
+      "version": "1.21.1-1.5.8"
+    },
+    {
+      "id": "moredragoneggs",
+      "version": "5.0"
+    },
+    {
+      "id": "charmofundying",
+      "version": "9.1.0+1.21.1"
+    },
+    {
+      "id": "packetfixer",
+      "version": "3.3.1"
+    },
+    {
+      "id": "spectral_decorations",
+      "version": "1.10.0-1.21.1-neo"
+    },
+    {
+      "id": "expandability",
+      "version": "12.0.0"
+    },
+    {
+      "id": "xtonesreworked",
+      "version": "1.1.1-1.21.1"
+    },
+    {
+      "id": "mi_tweaks",
+      "version": "1.9.5-1.21.1"
+    },
+    {
+      "id": "tankstorage",
+      "version": "1.1.1+1.21"
+    },
+    {
+      "id": "createaddition",
+      "version": "1.7.0"
+    }
+  ],
+  "extraction_failures": 0,
+  "normalized_dataset_complete": false
+}

@@ -24,6 +24,7 @@ Use [project-plans](.agents/skills/project-plans/SKILL.md) for every request in 
 |---|---|
 | GDScript, resources, scenes, or class naming | [GDScript conventions](docs/gdscript_conventions.md) |
 | Engine commands, MCP, or verification | [Godot tooling](docs/godot_tooling.md) |
+| Pack inputs, runtime extraction, or machine rules | [Extraction evidence](docs/extraction.md) |
 | Visible UI, scenes, animation, materials, or effects | [visual-verify](.agents/skills/visual-verify/SKILL.md), alongside the relevant UI or shader skill |
 
 Keep reusable calculations and planning rules independent of scene nodes when practical, so they can be tested without rendering. Choose concrete folders and state boundaries when implementing the relevant feature; record durable decisions in project docs.
