@@ -87,7 +87,6 @@ export function attachStructureBills(result, dataset) {
     if (!machine?.shapes?.length) continue;
     const configuration = line.configuration_details;
     try {
-      if (!configuration.capacity || configuration.operating_points) throw new Error('This utility machine needs a verified hatch-demand adapter.');
       const recipe = recipes.get(line.recipe);
       const setup = configuration.setup ?? {};
       const batch = setup.batch ?? setup.contained_count ?? 1;
@@ -104,15 +103,33 @@ export function attachStructureBills(result, dataset) {
         if (!fluid && !(max > 0)) throw new Error(`The captured stack limit is missing for ${resource}.`);
         entries.push({resource, amount, ...(!fluid ? {max_stack_size: max} : {})});
       };
-      const inputs = [...recipe.inputs, ...(configuration.inputs ?? [])];
-      for (const choice of line.ingredient_choices) {
-        const input = inputs[choice.slot];
-        if (!input) throw new Error('An operating input has no batch-storage rule.');
-        add('input', choice.resource, (input.nominal_amount ?? input.amount) * batch);
-        for (const returned of input.returns?.[choice.resource] ?? []) add('output', returned.resource, returned.amount * input.amount * batch);
+      const profile = configuration.startup_profile;
+      if (profile?.kind === 'boiler') {
+        const rule = profile.rule;
+        const steam = rule.max_eu_per_tick / (rule.eu_per_steam_mb ?? 1);
+        add('input', profile.water_resource, Math.ceil(steam / rule.steam_to_water));
+        add('output', profile.steam_resource, steam);
+        const refill = profile.fuel.kind === 'fluid' ? Math.floor(100 * rule.max_eu_per_tick / profile.fuel.eu_per_unit)
+          : Math.ceil(rule.max_eu_per_tick / profile.fuel.eu_per_unit);
+        const fuels = new Set(line.ingredient_choices.filter(choice => profile.fuel_resources.includes(choice.resource)).map(choice => choice.resource));
+        for (const resource of fuels) add('input', resource, refill);
+      } else if (machine.mechanic === 'buffered_fuel_generator') {
+        const fuel = recipe.inputs[0];
+        const energy = recipe.outputs.find(value => value.resource === 'energy:eu')?.amount;
+        if (!fuel?.resource || !(energy > 0) || recipe.inputs.length !== 1) throw new Error('This generator needs a verified fuel-storage adapter.');
+        add('input', fuel.resource, Math.ceil(machine.max_eu_per_tick * fuel.amount / energy));
+      } else {
+        if (!configuration.capacity || configuration.operating_points) throw new Error('This utility machine needs a verified hatch-demand adapter.');
+        const inputs = [...recipe.inputs, ...(configuration.inputs ?? [])];
+        for (const choice of line.ingredient_choices) {
+          const input = inputs[choice.slot];
+          if (!input) throw new Error('An operating input has no batch-storage rule.');
+          add('input', choice.resource, (input.nominal_amount ?? input.amount) * batch);
+          for (const returned of input.returns?.[choice.resource] ?? []) add('output', returned.resource, returned.amount * input.amount * batch);
+        }
+        for (const catalyst of configuration.startup_inputs ?? []) add('input', catalyst.resource, catalyst.amount);
+        for (const output of recipe.outputs) add('output', output.resource, (output.nominal_amount ?? output.amount) * batch);
       }
-      for (const catalyst of configuration.startup_inputs ?? []) add('input', catalyst.resource, catalyst.amount);
-      for (const output of recipe.outputs) add('output', output.resource, (output.nominal_amount ?? output.amount) * batch);
       if (configuration.eu_per_operation > 0) {
         const type = 'modern_industrialization:energy_input';
         demands.set(type, {type, energy: {buffer: configuration.capacity.peak_eu_per_tick,
@@ -122,7 +139,7 @@ export function attachStructureBills(result, dataset) {
       if (energy) {
         const type = 'modern_industrialization:energy_output';
         const condition = recipe.conditions?.find(value => value.type === 'planner:energy_output_buffer');
-        demands.set(type, {type, energy: {buffer: condition?.capacity_eu ?? energy * batch,
+        demands.set(type, {type, energy: {buffer: condition?.capacity_eu ?? (machine.mechanic === 'buffered_fuel_generator' ? machine.max_eu_per_tick : energy * batch),
           rate: energy * configuration.operations_per_second / 20}, single_buffer: Boolean(condition?.single_output_hatch)});
       }
       const shape = machine.shapes.find(value => value.index === (setup.shape ?? 0));

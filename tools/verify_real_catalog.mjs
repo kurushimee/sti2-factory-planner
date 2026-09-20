@@ -28,12 +28,23 @@ for (const [machine, steam, water, rate, heat] of [
     assert.equal(planned.status, 'optimal');
     assert.equal(planned.lines.length, 1);
     assert.equal(planned.lines[0].machines, 1);
+    assert.equal(planned.lines[0].configuration_details.structure.status, 'sized',
+      planned.lines[0].configuration_details.structure.reason);
     assert.ok(Math.abs(planned.external.find(value => value.resource === fuel).rate - heat / (fluidFuel ? 400 : 64000)) < 1e-9);
     assert.ok(Math.abs(planned.external.find(value => value.resource === input).rate - rate / 16) < 1e-9);
     assert.equal(planned.startup.incomplete.length, 0);
   }
 }
 console.log('All four large boilers retain their hot idle losses with coal/water and diesel/heavy-water routes at half load.');
+for (const machine of dataset.machines.filter(value => value.mechanic === 'buffered_fuel_generator' && value.shapes?.length)) {
+  const recipe = dataset.recipes.find(value => value.configurations?.some(configuration => configuration.machine === machine.id));
+  const planned = solveFactory(highs, dataset, {goals: [{recipe: recipe.id, resource: 'energy:eu', rate: machine.max_eu_per_tick * 20}],
+    routes: {'energy:eu': recipe.id}, available_machines: [machine.id], external: recipe.inputs.map(flow => ({resource: flow.resource}))});
+  assert.equal(planned.status, 'optimal');
+  assert.equal(planned.lines[0].machines, 1);
+  assert.equal(planned.lines[0].configuration_details.structure.status, 'sized', planned.lines[0].configuration_details.structure.reason);
+}
+console.log('All four buffered generator multiblocks have hatch bills at their full rated power.');
 const pulseRecipes = dataset.recipes.filter(recipe => recipe.type === 'yet_another_industrialization:pulse_detonation_generator');
 assert.equal(pulseRecipes.length, 8);
 for (const recipe of pulseRecipes) {

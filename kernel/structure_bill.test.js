@@ -46,3 +46,40 @@ test('selected recipe batches add measured hatches and preserve controller requi
   assert.equal(configuration.build_requirements.length, 3);
   assert.equal(configuration.build_requirements[0].resource, 'item:test:machine');
 });
+
+test('boiler hatches hold whole-tick water, steam, and fuel refills', () => {
+  const input = 'modern_industrialization:fluid_input';
+  const output = 'modern_industrialization:fluid_output';
+  const machine = {id: 'test:boiler', shapes: [{index: 0, cells: [cell(0, [input]), cell(1, [input]), cell(2, [output])]}]};
+  const data = {resources: [], shape_member_rules: rules, machines: [machine,
+    part('modern_industrialization:bronze_fluid_input_hatch', input, {fluid_slots_mb: [4000]}),
+    part('modern_industrialization:steel_fluid_input_hatch', input, {fluid_slots_mb: [16000]}),
+    part('modern_industrialization:bronze_fluid_output_hatch', output, {fluid_slots_mb: [4000]})],
+  recipes: [{id: 'boil', inputs: [], outputs: []}]};
+  const configuration = {operating_points: [], startup_profile: {kind: 'boiler',
+    rule: {max_eu_per_tick: 8192, eu_per_steam_mb: 8, steam_to_water: 16},
+    water_resource: 'fluid:water', steam_resource: 'fluid:steam', fuel_resources: ['fluid:fuel'],
+    fuel: {kind: 'fluid', eu_per_unit: 100}}};
+  attachStructureBills({lines: [{machine: machine.id, recipe: 'boil', configuration_details: configuration,
+    ingredient_choices: [{resource: 'fluid:fuel'}]}]}, data);
+  assert.equal(configuration.structure.status, 'sized', configuration.structure.reason);
+  assert.deepEqual(configuration.build_requirements.map(value => value.resource).sort(), [
+    'item:modern_industrialization:bronze_fluid_output_hatch',
+    'item:modern_industrialization:steel_fluid_input_hatch']);
+  assert.equal(configuration.build_requirements.find(value => value.resource.endsWith('steel_fluid_input_hatch')).amount, 2);
+});
+
+test('buffered generators size fuel and energy hatches for one production tick', () => {
+  const input = 'modern_industrialization:fluid_input';
+  const output = 'modern_industrialization:energy_output';
+  const machine = {id: 'test:generator', mechanic: 'buffered_fuel_generator', max_eu_per_tick: 128,
+    shapes: [{index: 0, cells: [cell(0, [input]), cell(1, [output])]}]};
+  const data = {resources: [], shape_member_rules: rules, machines: [machine,
+    part('modern_industrialization:bronze_fluid_input_hatch', input, {fluid_slots_mb: [4000]}),
+    part('modern_industrialization:mv_energy_output_hatch', output, {energy_eu: 76800, cable_eu_per_tick: 128})],
+  recipes: [{id: 'generate', inputs: [{resource: 'fluid:fuel', amount: 1}], outputs: [{resource: 'energy:eu', amount: 100000}]}]};
+  const configuration = {operations_per_second: 128 * 20 / 100000};
+  attachStructureBills({lines: [{machine: machine.id, recipe: 'generate', configuration_details: configuration}]}, data);
+  assert.equal(configuration.structure.status, 'sized', configuration.structure.reason);
+  assert.equal(configuration.build_requirements.length, 2);
+});
