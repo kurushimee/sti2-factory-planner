@@ -14,7 +14,11 @@ This imports assets and refreshes registered script classes. Inspect errors as w
 
 `gdparse` and `gdlint` are available through the workstation's gdtoolkit installation. Apply them to changed scripts; `gdlintrc` defines the declaration order and line limit. They complement engine checks and do not replace them. There is no test addon installed yet; add an appropriate harness when behavior warrants one, with its actual commands documented here.
 
-## MCP
+## Repository checks
+
+Run `python tools/check.py` and `git diff --check` from the project root. GitHub Actions repeats repository hygiene and a Godot 4.7.2 headless import. These checks do not yet test application behavior. The workstation has matching Windows and single-threaded web templates under `%APPDATA%/Godot/export_templates/4.7.2.stable`. See [browser constraints](web-platform.md) before adding platform-dependent behavior.
+
+## MCP connection
 
 Use the server's advertised tools and schemas. Project-scoped operations need the absolute `projectPath` value `F:/sti2-factory-planner`. Prefer read-only version and project-info calls to check connectivity. Launching the editor or running the project is useful when the task needs it; adding scenes and nodes mutates project files and belongs within the requested change.
 

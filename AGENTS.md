@@ -13,7 +13,10 @@ Use [project-plans](.agents/skills/project-plans/SKILL.md) for every request in 
 - Keep affected root and nested AGENTS.md files accurate. Put shared rules here and local rules in their owning directory.
 - Use the installed `writing` skill for all prose and comments, and `agents-md` for every AGENTS.md edit.
 - Use `godot-ui` for all Godot UI work, including small behavior fixes. Preserve its styling, redesign, animation, navigation, and visual-verification requirements. Use `godot-shaders` for shaders, materials, VFX, and visual styling, including small edits.
-- Use `codex/` for new development branches. Do not import another project's ticket prefixes, automatic commits, or merge workflow.
+- Every work item needs a GitHub issue before implementation, including investigation, fixes, tests, documentation, and packaging. Use this repository's existing remote and `codex/` development branches. Link PRs to their issues, verify completed changes, then squash-merge with one descriptive commit. No external review or approval is required. Keep unfinished work off main and close completed issues. GitHub deletes merged branches automatically.
+- Keep issue progress and decisions current across compaction. The full delivery is tracked in issue #2. Consult [delivery requirements](docs/delivery.md) when choosing scope or declaring completion.
+- Keep downloaded game files, isolated instances, saves, and release artifacts out of Git. Use `F:/sti2-work` for extraction inputs and test instances. Bundle only data and assets whose redistribution terms have been recorded.
+- The released StaTech Industry 2.0.1 pack is authoritative. Verify effective recipes and tags in the loaded pack and derive mechanics from matching code and runtime evidence. Never replace unsupported behavior with guessed values or free supplies.
 
 ## Guidance by task
 
