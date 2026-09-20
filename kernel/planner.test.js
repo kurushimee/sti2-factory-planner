@@ -56,6 +56,9 @@ test('generation includes the fuel chain power feedback and infrastructure', () 
   assert.equal(result.status, 'optimal');
   close(line(result, 'generate').operations_per_second, 1.25);
   close(supply(result, 'raw'), 1.25);
+  close(result.connections.filter(connection => connection.resource === 'energy:eu').reduce((sum, connection) => sum + connection.rate, 0), 125);
+  assert(result.connections.some(connection => connection.source === 'generate|generate:standard' && connection.destination === 'refine|refine:standard'));
+  assert(result.connections.some(connection => connection.destination === 'goal:energy:eu' && connection.rate === 20));
 });
 
 test('replication is excluded and unavailable pins explain the conflict', () => {

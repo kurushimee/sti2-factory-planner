@@ -1,6 +1,6 @@
 # STI2 Factory Planner
 
-This project uses stock Godot 4.7.2 and the GL Compatibility renderer. Runtime extraction tools, intermediate normalization, and a shared JavaScript calculation and world-reading kernel exist, but there is no main scene or usable application yet. Check the current files before relying on that state; update these facts as the application grows.
+This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The development workspace runs the shared JavaScript solver with a fictional example dataset. Runtime extraction, intermediate normalization, and world-reading tools exist. The complete StaTech dataset, mechanics, save reconstruction, and release are still in progress; do not present development exports as the finished product.
 
 ## Automatic project plans
 
@@ -27,6 +27,7 @@ Use [project-plans](.agents/skills/project-plans/SKILL.md) for every request in 
 | Pack inputs, runtime extraction, or machine rules | [Extraction evidence](docs/extraction.md) |
 | Calculation kernel, objectives, or numerical checks | [Planning kernel](docs/planning-kernel.md) |
 | World ZIP, NBT, or AE2 import | [World import evidence](docs/world-import.md) |
+| Workspace, exports, or application checks | [Application development](docs/application.md) |
 | Visible UI, scenes, animation, materials, or effects | [visual-verify](.agents/skills/visual-verify/SKILL.md), alongside the relevant UI or shader skill |
 
 Keep reusable calculations and planning rules independent of scene nodes when practical, so they can be tested without rendering. Choose concrete folders and state boundaries when implementing the relevant feature; record durable decisions in project docs.

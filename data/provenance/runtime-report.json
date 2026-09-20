@@ -288,6 +288,370 @@
       "max_eu": 32
     }
   ],
+  "generator_rules": {
+    "modern_industrialization:lv_steam_turbine": {
+      "max_eu_per_tick": 32,
+      "multiplier": 1.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:steam",
+          "eu_per_unit": 1
+        }
+      ]
+    },
+    "modern_industrialization:mv_steam_turbine": {
+      "max_eu_per_tick": 128,
+      "multiplier": 1.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:steam",
+          "eu_per_unit": 1
+        }
+      ]
+    },
+    "modern_industrialization:hv_steam_turbine": {
+      "max_eu_per_tick": 512,
+      "multiplier": 1.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:steam",
+          "eu_per_unit": 1
+        }
+      ]
+    },
+    "modern_industrialization:lv_diesel_generator": {
+      "max_eu_per_tick": 64,
+      "multiplier": 2.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:benzene",
+          "eu_per_unit": 200
+        },
+        {
+          "resource": "fluid:modern_industrialization:biodiesel",
+          "eu_per_unit": 500
+        },
+        {
+          "resource": "fluid:modern_industrialization:boosted_diesel",
+          "eu_per_unit": 1600
+        },
+        {
+          "resource": "fluid:modern_industrialization:creosote",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:crude_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:diesel",
+          "eu_per_unit": 800
+        },
+        {
+          "resource": "fluid:modern_industrialization:heavy_fuel",
+          "eu_per_unit": 480
+        },
+        {
+          "resource": "fluid:modern_industrialization:hydrogen",
+          "eu_per_unit": 4
+        },
+        {
+          "resource": "fluid:modern_industrialization:light_fuel",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:naphtha",
+          "eu_per_unit": 160
+        },
+        {
+          "resource": "fluid:modern_industrialization:raw_biodiesel",
+          "eu_per_unit": 100
+        },
+        {
+          "resource": "fluid:modern_industrialization:synthetic_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:pentaborane",
+          "eu_per_unit": 3200
+        }
+      ]
+    },
+    "modern_industrialization:mv_diesel_generator": {
+      "max_eu_per_tick": 256,
+      "multiplier": 2.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:benzene",
+          "eu_per_unit": 200
+        },
+        {
+          "resource": "fluid:modern_industrialization:biodiesel",
+          "eu_per_unit": 500
+        },
+        {
+          "resource": "fluid:modern_industrialization:boosted_diesel",
+          "eu_per_unit": 1600
+        },
+        {
+          "resource": "fluid:modern_industrialization:creosote",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:crude_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:diesel",
+          "eu_per_unit": 800
+        },
+        {
+          "resource": "fluid:modern_industrialization:heavy_fuel",
+          "eu_per_unit": 480
+        },
+        {
+          "resource": "fluid:modern_industrialization:hydrogen",
+          "eu_per_unit": 4
+        },
+        {
+          "resource": "fluid:modern_industrialization:light_fuel",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:naphtha",
+          "eu_per_unit": 160
+        },
+        {
+          "resource": "fluid:modern_industrialization:raw_biodiesel",
+          "eu_per_unit": 100
+        },
+        {
+          "resource": "fluid:modern_industrialization:synthetic_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:pentaborane",
+          "eu_per_unit": 3200
+        }
+      ]
+    },
+    "modern_industrialization:hv_diesel_generator": {
+      "max_eu_per_tick": 1024,
+      "multiplier": 2.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:benzene",
+          "eu_per_unit": 200
+        },
+        {
+          "resource": "fluid:modern_industrialization:biodiesel",
+          "eu_per_unit": 500
+        },
+        {
+          "resource": "fluid:modern_industrialization:boosted_diesel",
+          "eu_per_unit": 1600
+        },
+        {
+          "resource": "fluid:modern_industrialization:creosote",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:crude_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:diesel",
+          "eu_per_unit": 800
+        },
+        {
+          "resource": "fluid:modern_industrialization:heavy_fuel",
+          "eu_per_unit": 480
+        },
+        {
+          "resource": "fluid:modern_industrialization:hydrogen",
+          "eu_per_unit": 4
+        },
+        {
+          "resource": "fluid:modern_industrialization:light_fuel",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:naphtha",
+          "eu_per_unit": 160
+        },
+        {
+          "resource": "fluid:modern_industrialization:raw_biodiesel",
+          "eu_per_unit": 100
+        },
+        {
+          "resource": "fluid:modern_industrialization:synthetic_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:pentaborane",
+          "eu_per_unit": 3200
+        }
+      ]
+    },
+    "modern_industrialization:large_diesel_generator": {
+      "max_eu_per_tick": 16384,
+      "multiplier": 2.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:benzene",
+          "eu_per_unit": 200
+        },
+        {
+          "resource": "fluid:modern_industrialization:biodiesel",
+          "eu_per_unit": 500
+        },
+        {
+          "resource": "fluid:modern_industrialization:boosted_diesel",
+          "eu_per_unit": 1600
+        },
+        {
+          "resource": "fluid:modern_industrialization:creosote",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:crude_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:diesel",
+          "eu_per_unit": 800
+        },
+        {
+          "resource": "fluid:modern_industrialization:heavy_fuel",
+          "eu_per_unit": 480
+        },
+        {
+          "resource": "fluid:modern_industrialization:hydrogen",
+          "eu_per_unit": 4
+        },
+        {
+          "resource": "fluid:modern_industrialization:light_fuel",
+          "eu_per_unit": 320
+        },
+        {
+          "resource": "fluid:modern_industrialization:naphtha",
+          "eu_per_unit": 160
+        },
+        {
+          "resource": "fluid:modern_industrialization:raw_biodiesel",
+          "eu_per_unit": 100
+        },
+        {
+          "resource": "fluid:modern_industrialization:synthetic_oil",
+          "eu_per_unit": 32
+        },
+        {
+          "resource": "fluid:modern_industrialization:pentaborane",
+          "eu_per_unit": 3200
+        }
+      ]
+    },
+    "modern_industrialization:large_steam_turbine": {
+      "max_eu_per_tick": 16384,
+      "multiplier": 1.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:heavy_water_steam",
+          "eu_per_unit": 1
+        },
+        {
+          "resource": "fluid:modern_industrialization:high_pressure_heavy_water_steam",
+          "eu_per_unit": 8
+        },
+        {
+          "resource": "fluid:modern_industrialization:high_pressure_steam",
+          "eu_per_unit": 8
+        },
+        {
+          "resource": "fluid:modern_industrialization:steam",
+          "eu_per_unit": 1
+        }
+      ]
+    },
+    "modern_industrialization:plasma_turbine": {
+      "max_eu_per_tick": 1048576,
+      "multiplier": 1.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:helium_plasma",
+          "eu_per_unit": 100000
+        }
+      ]
+    },
+    "modern_industrialization:blood_generator": {
+      "max_eu_per_tick": 8192,
+      "multiplier": 1.0,
+      "fuels": [
+        {
+          "resource": "fluid:modern_industrialization:blood",
+          "eu_per_unit": 1024
+        },
+        {
+          "resource": "fluid:yet_another_industrialization:nutrient_rich_dragon_breath",
+          "eu_per_unit": 8192
+        }
+      ]
+    },
+    "yet_another_industrialization:numismatic_generator": {
+      "max_eu_per_tick": 1048576,
+      "multiplier": 1.0,
+      "fuels": [
+        {
+          "resource": "item:minecraft:diamond",
+          "eu_per_unit": 8192
+        },
+        {
+          "resource": "item:minecraft:emerald",
+          "eu_per_unit": 6144
+        },
+        {
+          "resource": "item:minecraft:lapis_lazuli",
+          "eu_per_unit": 512
+        },
+        {
+          "resource": "item:minecraft:quartz",
+          "eu_per_unit": 512
+        },
+        {
+          "resource": "item:minecraft:amethyst_shard",
+          "eu_per_unit": 1024
+        },
+        {
+          "resource": "item:minecraft:prismarine_crystals",
+          "eu_per_unit": 512
+        },
+        {
+          "resource": "item:extendedae:entro_crystal",
+          "eu_per_unit": 3072
+        },
+        {
+          "resource": "item:ae2:certus_quartz_crystal",
+          "eu_per_unit": 1024
+        },
+        {
+          "resource": "item:ae2:fluix_crystal",
+          "eu_per_unit": 2048
+        },
+        {
+          "resource": "item:modern_industrialization:ruby",
+          "eu_per_unit": 4096
+        },
+        {
+          "resource": "item:modern_industrialization:sapphire",
+          "eu_per_unit": 2048
+        },
+        {
+          "resource": "item:modern_industrialization:peridot",
+          "eu_per_unit": 2048
+        }
+      ]
+    }
+  },
   "loaded_mods": [
     {
       "id": "c2me_fixes_worldgen_threading_issues",

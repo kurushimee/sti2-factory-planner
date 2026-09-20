@@ -1,3 +1,5 @@
+import {allocateFlows} from './flows.js';
+
 const ENERGY = 'energy:eu';
 
 function nonnegative(value, name) {
@@ -145,6 +147,10 @@ function decode(model, solution) {
     operations_per_second: value(line.operation),
     capacity_per_second: Math.round(value(line.machine)) * line.configuration.operations_per_second,
     utilization: value(line.operation) / (Math.round(value(line.machine)) * line.configuration.operations_per_second),
+    inputs: line.recipe.inputs.map(flow => ({resource: flow.resource, rate: flow.amount * value(line.operation)})),
+    outputs: line.recipe.outputs.map(flow => ({resource: flow.resource, rate: flow.amount * value(line.operation)})),
+    power_eu_per_tick: value(line.operation) * (line.configuration.eu_per_operation ?? 0) / 20 + Math.round(value(line.machine)) * (line.configuration.idle_eu_per_tick ?? 0),
+    configuration_details: line.configuration,
   }));
   const balances = [];
   for (const [resource, terms] of model.rows) {
@@ -161,7 +167,8 @@ function decode(model, solution) {
     }
     balances.push({resource, demand, net, surplus: net - demand, numerical_tolerance: tolerance});
   }
-  return {lines, balances, steady_state_only: true, external: model.supplies.map(supply => ({resource: supply.resource, rate: value(supply.name)}))};
+  const external = model.supplies.map(supply => ({resource: supply.resource, rate: value(supply.name)}));
+  return {lines, balances, steady_state_only: true, external, ...allocateFlows(lines, external, model.demands)};
 }
 
 export function solveFactory(highs, dataset, request) {

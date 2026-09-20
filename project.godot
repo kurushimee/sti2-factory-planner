@@ -11,17 +11,26 @@ config_version=5
 [application]
 
 config/name="STI2 Factory Planner"
+run/main_scene="res://ui/workspace.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [display]
 
+window/size/viewport_width=1440
+window/size/viewport_height=900
+window/size/window_width_override=1440
+window/size/window_height_override=900
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
 [physics]
 
 3d/physics_engine="Jolt Physics"
+
+[gui]
+
+theme/custom="res://ui/theme.tres"
 
 [rendering]
 

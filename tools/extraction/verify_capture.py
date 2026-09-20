@@ -55,6 +55,15 @@ def verify(runtime: dict, probes: dict) -> dict:
         raise ValueError("The singleblock array rejects the reference macerator.")
     if not machines["modern_industrialization:distillation_tower"]["multi_processing_array_eligible"]:
         raise ValueError("The multiblock array rejects the reference tower.")
+    diesel = machines["modern_industrialization:lv_diesel_generator"]["fuel_rules"]
+    diesel_fuels = {entry["resource"]: entry["eu_per_unit"] for entry in diesel["fuels"]}
+    if diesel["max_eu_per_tick"] != 64 or diesel_fuels.get("fluid:modern_industrialization:diesel") != 800:
+        raise ValueError("The loaded diesel generator conversion changed.")
+    generators = {machine["id"]: machine["fuel_rules"] for machine in probes["machines"] if "fuel_rules" in machine}
+    for generator in generators.values():
+        for fuel in generator["fuels"]:
+            if fuel["resource"] not in resource_keys or fuel["eu_per_unit"] <= 0:
+                raise ValueError("A generator has an invalid fuel mapping.")
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -65,6 +74,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "tag_count": len(runtime["tags"]),
         "machine_count": len(machines),
         "arithmetic": probes["arithmetic"],
+        "generator_rules": generators,
         "loaded_mods": probes["loaded_mods"],
         "extraction_failures": 0,
         "normalized_dataset_complete": False,

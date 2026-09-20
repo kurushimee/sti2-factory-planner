@@ -124,7 +124,7 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
   if (worlds.length !== 1) throw new Error(worlds.length ? 'The archive contains multiple worlds. Import one world at a time.' : 'The archive contains no level.dat world file.');
   const root = worlds[0].name.slice(0, -9);
   const level = readNbt(decompress(worlds[0].read(), Gunzip)).value;
-  const machines = new Map(dataset.machines.map(machine => [machine.id, machine]));
+  const machines = new Map((dataset.machines ?? []).map(machine => [machine.id, machine]));
   const regions = entries.filter(entry => entry.name.startsWith(root) && /(^|\/)region\/r\.-?\d+\.-?\d+\.mca$/.test(entry.name));
   const result = {format: 1, world_name: level.Data?.LevelName ?? 'Imported world', data_version: level.Data?.DataVersion,
     machines: [], providers: [], unsupported: [], errors: [], evidence: 'Saved configuration; no observed production rate.'};

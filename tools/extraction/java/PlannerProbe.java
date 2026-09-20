@@ -2,6 +2,7 @@ package planner;
 
 import aztech.modern_industrialization.machines.MachineBlockEntity;
 import aztech.modern_industrialization.machines.components.CrafterComponent;
+import aztech.modern_industrialization.machines.components.FluidItemConsumerComponent;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -77,6 +78,49 @@ public final class PlannerProbe {
         }
     }
 
+    private static JsonObject scalarFields(Object target) throws Exception {
+        var result = new JsonObject();
+        for (Class<?> type = target.getClass(); type != null && !type.getName().startsWith("net.minecraft."); type = type.getSuperclass()) {
+            for (var field : type.getDeclaredFields()) {
+                if (field.isSynthetic()) continue;
+                if (!(field.getType().isPrimitive() || field.getType().isEnum() || field.getType() == String.class)) continue;
+                field.setAccessible(true);
+                Object value = field.get(target);
+                String key = type.getSimpleName() + "." + field.getName();
+                if (value instanceof Number number) result.addProperty(key, number);
+                else if (value instanceof Boolean bool) result.addProperty(key, bool);
+                else if (value != null) result.addProperty(key, value.toString());
+            }
+        }
+        return result;
+    }
+
+    private static JsonObject fuelRules(FluidItemConsumerComponent consumer) throws Exception {
+        var result = new JsonObject();
+        result.addProperty("max_eu_per_tick", consumer.maxEuProduction);
+        var multiplierField = FluidItemConsumerComponent.class.getDeclaredField("euMultiplier");
+        multiplierField.setAccessible(true);
+        double multiplier = multiplierField.getDouble(consumer);
+        result.addProperty("multiplier", multiplier);
+        var fuels = new JsonArray();
+        for (var fluid : BuiltInRegistries.FLUID) {
+            if (!consumer.fluidEUProductionMap.accept(fluid)) continue;
+            var entry = new JsonObject();
+            entry.addProperty("resource", "fluid:" + BuiltInRegistries.FLUID.getKey(fluid));
+            entry.addProperty("eu_per_unit", (long) (consumer.fluidEUProductionMap.getEuProduction(fluid) * multiplier));
+            fuels.add(entry);
+        }
+        for (var item : BuiltInRegistries.ITEM) {
+            if (!consumer.itemEUProductionMap.accept(item)) continue;
+            var entry = new JsonObject();
+            entry.addProperty("resource", "item:" + BuiltInRegistries.ITEM.getKey(item));
+            entry.addProperty("eu_per_unit", (long) (consumer.itemEUProductionMap.getEuProduction(item) * multiplier));
+            fuels.add(entry);
+        }
+        result.add("fuels", fuels);
+        return result;
+    }
+
     private static int export(MinecraftServer server) throws Exception {
         var machines = new JsonArray();
         var failures = new JsonArray();
@@ -94,11 +138,15 @@ public final class PlannerProbe {
                 var record = new JsonObject();
                 record.addProperty("id", id);
                 record.addProperty("class", entity.getClass().getName());
+                record.add("scalar_fields", scalarFields(entity));
                 record.addProperty("processing_array_eligible", net.swedz.extended_industrialization.machines.guicomponent.processingarraymachineslot.ProcessingArrayMachineSlot.isMachine(block.asItem()));
                 record.addProperty("multi_processing_array_eligible", dev.wp.industrialization_overdrive.machines.guicomponents.multiprocessingarraymachineslot.MultiProcessingArrayMachineSlot.isMachine(block.asItem()));
                 var components = new JsonArray();
+                var componentFields = new JsonObject();
                 for (Object component : machine.components) {
                     components.add(component.getClass().getName());
+                    componentFields.add(component.getClass().getName(), scalarFields(component));
+                    if (component instanceof FluidItemConsumerComponent consumer) record.add("fuel_rules", fuelRules(consumer));
                     if (component instanceof CrafterComponent crafter) {
                         var behavior = crafter.getBehavior();
                         record.addProperty("base_eu", behavior.getBaseRecipeEu());
@@ -130,6 +178,7 @@ public final class PlannerProbe {
                     }
                 }
                 record.add("components", components);
+                record.add("component_fields", componentFields);
                 record.addProperty("nbt", entity.saveWithFullMetadata(server.registryAccess()).toString());
                 machines.add(record);
             } catch (Exception error) {

@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[node name="Group" type="GraphFrame"]
+size = Vector2(640, 350)
+resizable = true
+autoshrink_enabled = false
+title = "Production line"
+drag_margin = 32
