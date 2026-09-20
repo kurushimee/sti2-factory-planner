@@ -251,6 +251,8 @@
   "resource_count": 11805,
   "tag_count": 2347,
   "machine_count": 211,
+  "multiblock_part_types": 52,
+  "machines_with_shape_templates": 60,
   "arithmetic": [
     {
       "machine": "modern_industrialization:electric_macerator",

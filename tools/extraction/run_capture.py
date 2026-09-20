@@ -11,6 +11,7 @@ def main() -> None:
     parser.add_argument("--instance", type=Path, required=True)
     parser.add_argument("--jdk", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=240)
+    parser.add_argument("--fixture", action="store_true", help="Create the controlled import fixture in the isolated test world.")
     args = parser.parse_args()
     instance = args.instance.resolve()
     argument_file = instance / "libraries/net/neoforged/neoforge/21.1.250/win_args.txt"
@@ -32,13 +33,19 @@ def main() -> None:
                     raise TimeoutError(f"Server capture timed out. Inspect {log_path}.")
                 text = log_path.read_text(encoding="utf-8", errors="replace")
                 if not sent and "Dedicated server took" in text:
-                    process.stdin.write("planner_export\nplanner_probe\nstop\n")
+                    commands = ["planner_export", "planner_probe"]
+                    if args.fixture:
+                        commands.extend(line.strip() for line in (Path(__file__).parent / "fixture-commands.txt").read_text().splitlines() if line.strip())
+                    commands.append("stop")
+                    process.stdin.write("\n".join(commands) + "\n")
                     process.stdin.flush()
                     sent = True
                 time.sleep(0.25)
             text = log_path.read_text(encoding="utf-8", errors="replace")
             if process.returncode != 0 or "PLANNER_EXPORT_COMPLETE" not in text or "PLANNER_PROBE_COMPLETE" not in text:
                 raise RuntimeError(f"Capture did not finish successfully. Inspect {log_path}.")
+            if args.fixture and "Planner AE2 fixture created." not in text:
+                raise RuntimeError(f"Fixture creation did not finish successfully. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:

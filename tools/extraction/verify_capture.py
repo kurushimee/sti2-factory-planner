@@ -86,6 +86,8 @@ def verify(runtime: dict, probes: dict) -> dict:
         "resource_count": len(resource_keys),
         "tag_count": len(runtime["tags"]),
         "machine_count": len(machines),
+        "multiblock_part_types": sum(machine.get("role") == "multiblock_part" for machine in machines.values()),
+        "machines_with_shape_templates": sum(bool(machine.get("shapes")) for machine in machines.values()),
         "arithmetic": probes["arithmetic"],
         "generator_rules": generators,
         "item_rules_count": len(items),

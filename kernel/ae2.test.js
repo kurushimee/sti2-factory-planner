@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {blockStateAt, decodePatterns, readProviders, inferProviderAssignments} from './ae2.js';
+import {blockStateAt, decodePatterns, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
 
 test('AE2 patterns preserve fluid units and stored quantities', () => {
   const [pattern] = decodePatterns([{Slot: 3, id: 'ae2:processing_pattern', components: {
@@ -37,4 +37,16 @@ test('patterns do not create machines and ambiguous assignments remain editable'
   assert.equal(result.machines.length, 1);
   assert.equal(result.machines[0].recipe_id, null);
   assert.equal(result.machines[0].assignment_evidence, 'ambiguous_adjacent_patterns');
+});
+test('requester thresholds remain exact quantities without inventing a rate', () => {
+  const result = readRequester({id: 'merequester:requester', requests: {
+    0: {state: 1, key: {'#t': 'ae2:i', id: 'minecraft:iron_ingot'}, amount: '9223372036854775807', batch: '64'},
+    1: {state: 0, key: {'#t': 'ae2:f', id: 'minecraft:water'}, amount: '1000', batch: '100'},
+    2: {state: 1, amount: '0', batch: '1'},
+  }}, {x: 10, y: 100, z: 0});
+  assert.equal(result.requests.length, 2);
+  assert.equal(result.requests[0].stock_target, '9223372036854775807');
+  assert.equal(result.requests[0].rate, null);
+  assert.equal(result.requests[1].enabled, false);
+  assert.equal(result.requests[1].interpretation, 'quantity');
 });

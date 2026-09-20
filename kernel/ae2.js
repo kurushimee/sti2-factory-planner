@@ -23,6 +23,25 @@ function genericStack(value) {
   return {resource: `${kind}:${value.id}`, amount, components: value.components ?? {}};
 }
 
+export function readRequester(block, origin) {
+  if (block.id !== 'merequester:requester') return null;
+  const requests = [];
+  for (const [slot, value] of Object.entries(block.requests ?? {})) {
+    if (!value.key) continue;
+    const entry = {slot: Number(slot), enabled: Boolean(value.state), facts: value};
+    try {
+      const amount = BigInt(value.amount ?? 0), batch = BigInt(value.batch ?? 0);
+      if (amount < 0n || batch < 1n) throw new Error('The requester has an invalid stock target or batch size.');
+      const key = genericStack({...value.key, '#': '1'});
+      if (!key) throw new Error('The requester key has no resource identity.');
+      requests.push({...entry, resource: key.resource, components: key.components,
+        stock_target: amount.toString(), crafting_batch: batch.toString(), interpretation: 'quantity', rate: null});
+    } catch (error) { requests.push({...entry, unsupported: error.message}); }
+  }
+  return {id: block.id, origin, requests, facts: block,
+    evidence: 'Saved stock targets and crafting batch sizes. No refill interval or production rate is recorded.'};
+}
+
 export function decodePatterns(inventory = []) {
   return inventory.map(stack => {
     const result = {slot: stack.Slot, item: stack.id, facts: stack};

@@ -1,4 +1,5 @@
 forceload add 0 0
+forceload add -16 0
 tick freeze
 setblock 0 100 0 modern_industrialization:electric_macerator
 setblock 2 100 0 modern_industrialization:assembler
@@ -7,4 +8,5 @@ setblock 6 100 0 industrialization_overdrive:multi_processing_array
 data merge block 0 100 0 {activeRecipe:"statech:modern_industrialization/macerator/copper_dust_from_copper_cluster",efficiencyTicks:36,maxEfficiencyTicks:36,upgradesItemStack:{id:"modern_industrialization:advanced_upgrade",count:8}}
 data merge block 4 100 0 {machinesStack:{id:"modern_industrialization:electric_macerator",count:16},upgradesItemStack:{id:"modern_industrialization:turbo_upgrade",count:4},activeShape:1}
 data merge block 6 100 0 {machinesStack:{id:"modern_industrialization:distillation_tower",count:8},activeShape:0}
+planner_fixture_ae2
 save-all flush

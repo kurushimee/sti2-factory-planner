@@ -63,6 +63,15 @@ public final class PlannerProbe {
         var part = cable.addPart(appeng.core.definitions.AEParts.PATTERN_PROVIDER.get(), net.minecraft.core.Direction.WEST, null);
         part.getLogic().getPatternInv().setItemDirect(0, pattern.copy());
         cable.setChanged();
+        var requesterPos = new BlockPos(10, 100, 0);
+        level.setBlockAndUpdate(requesterPos, com.almostreliable.merequester.core.Registration.REQUESTER_BLOCK.get().defaultBlockState());
+        var requester = (com.almostreliable.merequester.requester.RequesterBlockEntity) level.getBlockEntity(requesterPos);
+        requester.getRequestManager().get(0).fromComponent(new com.almostreliable.merequester.requester.Request.Component(
+                true, java.util.Optional.of(appeng.api.stacks.AEItemKey.of(output)), 4096, 64,
+                com.almostreliable.merequester.requester.status.RequestStatus.IDLE));
+        requester.setChanged();
+        var hatch = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:steel_item_input_hatch"));
+        level.setBlockAndUpdate(new BlockPos(8, 100, 0), hatch.defaultBlockState());
         System.out.println("Planner AE2 fixture created.");
         return 1;
     }
@@ -197,6 +206,45 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonArray shapes(Object target, MinecraftServer server) throws Exception {
+        var result = new JsonArray();
+        var seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<aztech.modern_industrialization.machines.multiblocks.ShapeTemplate, Boolean>());
+        for (Class<?> type = target.getClass(); type != null && !type.getName().startsWith("net.minecraft."); type = type.getSuperclass()) {
+            for (var field : type.getDeclaredFields()) {
+                if (field.getType() != aztech.modern_industrialization.machines.multiblocks.ShapeTemplate[].class) continue;
+                field.setAccessible(true);
+                var templates = (aztech.modern_industrialization.machines.multiblocks.ShapeTemplate[]) field.get(target);
+                if (templates == null) continue;
+                for (int index = 0; index < templates.length; index++) {
+                    var template = templates[index];
+                    if (!seen.add(template)) continue;
+                    var shape = new JsonObject();
+                    shape.addProperty("field", field.getName());
+                    shape.addProperty("index", index);
+                    var cells = new JsonArray();
+                    for (var entry : template.simpleMembers.entrySet()) {
+                        var cell = new JsonObject();
+                        var position = new JsonArray();
+                        position.add(entry.getKey().getX()); position.add(entry.getKey().getY()); position.add(entry.getKey().getZ());
+                        cell.add("position", position);
+                        cell.addProperty("preview_block", BuiltInRegistries.BLOCK.getKey(entry.getValue().getPreviewState().getBlock()).toString());
+                        var options = new JsonArray();
+                        for (var stack : entry.getValue().getItemPreviewState(server.registryAccess()).getItems()) options.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+                        cell.add("preview_items", options);
+                        var allowed = new JsonArray();
+                        var flags = template.hatchFlags.get(entry.getKey());
+                        if (flags != null) for (var hatch : flags.values()) allowed.add(hatch.id().toString());
+                        cell.add("allowed_hatches", allowed);
+                        cells.add(cell);
+                    }
+                    shape.add("cells", cells);
+                    result.add(shape);
+                }
+            }
+        }
+        return result;
+    }
+
     private static int export(MinecraftServer server) throws Exception {
         var machines = new JsonArray();
         var failures = new JsonArray();
@@ -214,12 +262,23 @@ public final class PlannerProbe {
                 var record = new JsonObject();
                 record.addProperty("id", id);
                 record.addProperty("class", entity.getClass().getName());
+                if (entity instanceof aztech.modern_industrialization.machines.multiblocks.HatchBlockEntity hatch) {
+                    record.addProperty("role", "multiblock_part");
+                    record.addProperty("hatch_type", hatch.getHatchType().id().toString());
+                    record.addProperty("upgrades_steam_to_steel", hatch.upgradesToSteel());
+                }
+                var shapeRecords = shapes(entity, server);
+                record.add("shapes", shapeRecords);
                 record.add("scalar_fields", scalarFields(entity));
                 record.addProperty("processing_array_eligible", net.swedz.extended_industrialization.machines.guicomponent.processingarraymachineslot.ProcessingArrayMachineSlot.isMachine(block.asItem()));
                 record.addProperty("multi_processing_array_eligible", dev.wp.industrialization_overdrive.machines.guicomponents.multiprocessingarraymachineslot.MultiProcessingArrayMachineSlot.isMachine(block.asItem()));
                 var components = new JsonArray();
                 var componentFields = new JsonObject();
                 for (Object component : machine.components) {
+                    if (component instanceof aztech.modern_industrialization.machines.components.ActiveShapeComponent) {
+                        shapeRecords = shapes(component, server);
+                        record.add("shapes", shapeRecords);
+                    }
                     components.add(component.getClass().getName());
                     componentFields.add(component.getClass().getName(), scalarFields(component));
                     if (component instanceof FluidItemConsumerComponent consumer) record.add("fuel_rules", fuelRules(consumer));

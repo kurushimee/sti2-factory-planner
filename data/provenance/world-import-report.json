@@ -1,5 +1,5 @@
 {
-  "archive_sha256": "0520d76e5653d7c55949f16e8e657412eedb94ff42b4d2699da727c1edeac25b",
+  "archive_sha256": "debcc3b67894df23019ffeeecbd52614ea91a576dda9e4640f74c0291298e44f",
   "data_version": 3955,
   "machines": [
     {
@@ -154,10 +154,48 @@
       ]
     }
   ],
+  "parts": [
+    {
+      "id": "modern_industrialization:steel_item_input_hatch",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 8,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "hatch_type": "modern_industrialization:item_input"
+    }
+  ],
+  "requesters": [
+    {
+      "id": "merequester:requester",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 10,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "evidence": "Saved stock targets and crafting batch sizes. No refill interval or production rate is recorded.",
+      "requests": [
+        {
+          "slot": 0,
+          "enabled": true,
+          "resource": "item:modern_industrialization:copper_dust",
+          "components": {},
+          "stock_target": "4096",
+          "crafting_batch": "64",
+          "interpretation": "quantity",
+          "rate": null
+        }
+      ]
+    }
+  ],
   "errors": [],
   "evidence": "Saved configuration; no observed production rate.",
   "limitations": [
     "The fixture controllers are unformed.",
-    "Inferred end goals and requester settings are not verified by this fixture."
+    "Inferred end goals are not verified by this fixture."
   ]
 }

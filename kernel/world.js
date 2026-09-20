@@ -1,6 +1,6 @@
 import {Inflate, Unzlib, Gunzip} from 'fflate';
 import {readNbt} from './nbt.js';
-import {blockStateAt, readProviders, inferProviderAssignments} from './ae2.js';
+import {blockStateAt, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
 
 const MAX_ENTRY = 256 * 1024 * 1024;
 const MAX_CHUNK = 32 * 1024 * 1024;
@@ -127,7 +127,7 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
   const machines = new Map((dataset.machines ?? []).map(machine => [machine.id, machine]));
   const regions = entries.filter(entry => entry.name.startsWith(root) && /(^|\/)region\/r\.-?\d+\.-?\d+\.mca$/.test(entry.name));
   const result = {format: 1, world_name: level.Data?.LevelName ?? 'Imported world', data_version: level.Data?.DataVersion,
-    machines: [], providers: [], unsupported: [], errors: [], evidence: 'Saved configuration; no observed production rate.'};
+    machines: [], parts: [], requesters: [], providers: [], unsupported: [], errors: [], evidence: 'Saved configuration; no observed production rate.'};
   for (const [index, region] of regions.entries()) {
     progress({phase: 'reading_regions', completed: index, total: regions.length});
     const match = region.name.match(/r\.(-?\d+)\.(-?\d+)\.mca$/);
@@ -143,13 +143,19 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
           const origin = {dimension, x: block.x, y: block.y, z: block.z, region: region.name};
           const providers = readProviders(block, origin, blockStateAt(chunk.data, block.x, block.y, block.z));
           result.providers.push(...providers);
+          const requester = readRequester(block, origin);
+          if (requester) result.requesters.push(requester);
           if (machines.has(block.id)) {
             const machine = machines.get(block.id);
+            if (machine.role === 'multiblock_part') {
+              result.parts.push({id: block.id, origin, hatch_type: machine.hatch_type, facts: block});
+              continue;
+            }
             result.machines.push({id: block.id, origin, recipe_id: block.activeRecipe ?? null,
               recipe_type: machines.get(block.machinesStack?.id)?.recipe_type ?? machine.recipe_type ?? null, upgrades: block.upgradesItemStack ?? {},
               contained_machine: block.machinesStack ?? null, shape: block.activeShape ?? null,
               casing: block.casing ?? {}, facts: block, assignment_evidence: block.activeRecipe ? 'saved_active_recipe' : 'unassigned'});
-          } else if (!providers.length && !block.id?.startsWith('minecraft:')) {
+          } else if (!providers.length && !requester && !block.id?.startsWith('minecraft:')) {
             result.unsupported.push({id: block.id, origin, reason: 'No block entity adapter is registered.', facts: block});
           }
         }
