@@ -66,9 +66,13 @@ def utility_recipes(capture):
                 continue
             energy = int(rules["burn_ticks"] * machine["eu_per_burn_tick"] * machine["item_fuel_multiplier"])
             obtained = resource["id"] == "item:create:creative_blaze_cake"
-            groups.setdefault((energy, obtained), []).append(resource)
-        for (energy, obtained), fuels in sorted(groups.items()):
-            identity = "boiling|" + machine["id"] + "|" + str(energy) + ("|obtained" if obtained else "")
+            groups.setdefault(("item", energy, obtained), []).append(resource)
+        for resource, rule in capture.get("data_maps", {}).get("modern_industrialization:fluid_fuels", {}).items():
+            energy = rule["eu_per_mb"]
+            if 0 < energy <= machine["max_eu_per_tick"] * 100:
+                groups.setdefault(("fluid", energy, False), []).append({"id": "fluid:" + resource, "item_rules": {}})
+        for (kind, energy, obtained), fuels in sorted(groups.items()):
+            identity = "boiling|" + machine["id"] + "|" + ("fluid|" if kind == "fluid" else "") + str(energy) + ("|obtained" if obtained else "")
             choices = [fuel["id"] for fuel in fuels]
             returns = {}
             for fuel in fuels:
@@ -86,7 +90,7 @@ def utility_recipes(capture):
                             "configurations": [{"id": identity, "machine": machine["id"], "operations_per_second": machine["max_eu_per_tick"] * 20,
                                                 "build_requirements": [{"resource": "item:" + machine["id"], "amount": 1}],
                                                 "startup_profile": {"kind": "boiler", "rule": {key: value for key, value in machine.items() if key not in {"hot_running_probe", "shapes"}},
-                                                                    "fuel": {"kind": "item", "eu_per_unit": energy}, "fuel_resources": choices,
+                                                                    "fuel": {"kind": kind, "eu_per_unit": energy}, "fuel_resources": choices,
                                                                     "water_resource": "fluid:minecraft:water", "steam_resource": "fluid:modern_industrialization:steam"},
                                                 "assumptions": ["Fuel arrives continuously. Returned containers are removed from the input slot before refilling it."]}]})
             if machine.get("continuous"):
@@ -105,6 +109,28 @@ def utility_recipes(capture):
                     for steam, heat in boiler_operating_points(machine["hot_running_probe"])]
                 configuration["startup_profile"].update(water_resource=water_id, steam_resource=steam_id)
                 configuration["assumptions"].append("The boiler stays hot. Steam buffering permits periodic whole-tick withdrawal at the captured efficient operating points; fuel includes continuous heat loss and heat insertion rounding.")
+    resources = {resource["id"] for resource in capture["resources"]}
+    for recipe in list(recipes):
+        if recipe.get("type") != "planner:boiling":
+            continue
+        original = recipe["configurations"][0]["startup_profile"]
+        pressure = original["rule"].get("eu_per_steam_mb", 1)
+        water = "fluid:modern_industrialization:" + ("high_pressure_" if pressure == 8 else "") + "heavy_water"
+        steam = water + "_steam"
+        if water not in resources or steam not in resources:
+            continue
+        variant = deepcopy(recipe)
+        variant["id"] += "|heavy_water"
+        variant["name"] = "Boil heavy-water steam"
+        variant["primary"] = steam
+        variant["outputs"][0]["resource"] = steam
+        for flow in variant["inputs"]:
+            if flow.get("resource") == original["water_resource"]:
+                flow["resource"] = water
+        configuration = variant["configurations"][0]
+        configuration["id"] = variant["id"]
+        configuration["startup_profile"].update(water_resource=water, steam_resource=steam)
+        recipes.append(variant)
     return recipes
 
 

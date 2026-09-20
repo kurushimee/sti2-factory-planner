@@ -17,19 +17,23 @@ for (const [machine, steam, water, rate, heat] of [
   ['high_pressure_large_steam_boiler', 'high_pressure_steam', 'fluid:modern_industrialization:high_pressure_water', 2560, 36864],
   ['high_pressure_advanced_large_steam_boiler', 'high_pressure_steam', 'fluid:modern_industrialization:high_pressure_water', 10240, 147456],
 ]) {
-  const id = `boiling|modern_industrialization:${machine}|64000`;
-  const resource = `fluid:modern_industrialization:${steam}`;
-  const planned = solveFactory(highs, dataset, {goals: [{recipe: id, resource, rate}],
-    available_machines: [`modern_industrialization:${machine}`], routes: {[resource]: id},
-    external: [{resource: water}, {resource: 'item:minecraft:coal'}]});
-  assert.equal(planned.status, 'optimal');
-  assert.equal(planned.lines.length, 1);
-  assert.equal(planned.lines[0].machines, 1);
-  assert.ok(Math.abs(planned.external.find(value => value.resource === 'item:minecraft:coal').rate - heat / 64000) < 1e-9);
-  assert.ok(Math.abs(planned.external.find(value => value.resource === water).rate - rate / 16) < 1e-9);
-  assert.equal(planned.startup.incomplete.length, 0);
+  for (const fluidFuel of [false, true]) {
+    const id = `boiling|modern_industrialization:${machine}|${fluidFuel ? 'fluid|400|heavy_water' : '64000'}`;
+    const resource = `fluid:modern_industrialization:${fluidFuel ? steam.replace('steam', 'heavy_water_steam') : steam}`;
+    const input = fluidFuel ? `fluid:modern_industrialization:${steam.includes('high_pressure') ? 'high_pressure_' : ''}heavy_water` : water;
+    const fuel = fluidFuel ? 'fluid:modern_industrialization:diesel' : 'item:minecraft:coal';
+    const planned = solveFactory(highs, dataset, {goals: [{recipe: id, resource, rate}],
+      available_machines: [`modern_industrialization:${machine}`], routes: {[resource]: id},
+      external: [{resource: input}, {resource: fuel}]});
+    assert.equal(planned.status, 'optimal');
+    assert.equal(planned.lines.length, 1);
+    assert.equal(planned.lines[0].machines, 1);
+    assert.ok(Math.abs(planned.external.find(value => value.resource === fuel).rate - heat / (fluidFuel ? 400 : 64000)) < 1e-9);
+    assert.ok(Math.abs(planned.external.find(value => value.resource === input).rate - rate / 16) < 1e-9);
+    assert.equal(planned.startup.incomplete.length, 0);
+  }
 }
-console.log('All four large boilers retain their hot idle losses and pressure-specific water use at half load.');
+console.log('All four large boilers retain their hot idle losses with coal/water and diesel/heavy-water routes at half load.');
 const before = performance.now();
 const result = solveFactory(highs, dataset, {
   goals: [{recipe: recipe.id, resource: 'item:modern_industrialization:copper_dust', rate: 12}],

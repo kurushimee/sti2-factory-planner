@@ -4,6 +4,20 @@ from player_dataset import crafting_adapter, utility_recipes, tool_recipe_varian
 
 
 class PlayerDatasetTests(unittest.TestCase):
+    def test_fluid_boilers_use_loaded_fuel_units_and_keep_heavy_water_separate(self):
+        capture = {"machine_rules": [{"id": "test:boiler", "mechanic": "mi_boiler", "eu_per_burn_tick": 20,
+                    "item_fuel_multiplier": 2, "steam_to_water": 16, "max_eu_per_tick": 8}],
+                   "resources": [{"id": "fluid:modern_industrialization:heavy_water"},
+                                 {"id": "fluid:modern_industrialization:heavy_water_steam"}],
+                   "data_maps": {"modern_industrialization:fluid_fuels": {"test:diesel": {"eu_per_mb": 400}, "test:oversized": {"eu_per_mb": 1600}}}}
+        recipes = utility_recipes(capture)
+        self.assertEqual(len(recipes), 2)
+        self.assertEqual(recipes[0]["inputs"][0], {"choices": ["fluid:test:diesel"], "amount": 1 / 400, "returns": {}})
+        self.assertEqual(recipes[0]["configurations"][0]["startup_profile"]["fuel"], {"kind": "fluid", "eu_per_unit": 400})
+        self.assertEqual(recipes[1]["inputs"][1]["resource"], "fluid:modern_industrialization:heavy_water")
+        self.assertEqual(recipes[1]["primary"], "fluid:modern_industrialization:heavy_water_steam")
+        self.assertNotEqual(recipes[0]["id"], recipes[1]["configurations"][0]["id"])
+
     def test_boiler_envelope_keeps_idle_loss_and_whole_tick_rounding(self):
         samples = [{"steam_per_tick": x, "fuel_eu_per_tick": y} for x, y in [(0, 205), (1, 205), (2, 206), (3, 206), (6, 206)]]
         self.assertEqual(boiler_operating_points(samples), [(0, 205), (1, 205), (6, 206)])

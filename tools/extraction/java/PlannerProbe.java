@@ -523,7 +523,9 @@ public final class PlannerProbe {
         return result;
     }
 
-    private static JsonObject boilerWarmup(MachineBlockEntity machine, MinecraftServer server) {
+    private static JsonObject boilerWarmup(MachineBlockEntity machine, MinecraftServer server, String fluidFuel, boolean heavyWater) {
+        machine = (MachineBlockEntity) ((EntityBlock) machine.getBlockState().getBlock()).newBlockEntity(BlockPos.ZERO, machine.getBlockState());
+        machine.setLevel(server.overworld());
         aztech.modern_industrialization.machines.components.SteamHeaterComponent heater = null;
         aztech.modern_industrialization.machines.components.FuelBurningComponent burner = null;
         for (var component : machine.components) {
@@ -533,11 +535,15 @@ public final class PlannerProbe {
         if (heater == null || burner == null) throw new IllegalStateException("The reference boiler has no heater or burner.");
         int pressure = heater.acceptHighPressure && !heater.acceptLowPressure ? 8 : 1;
         var inputFluid = pressure == 8 ? aztech.modern_industrialization.MIFluids.HIGH_PRESSURE_WATER.asFluid() : net.minecraft.world.level.material.Fluids.WATER;
+        if (heavyWater) inputFluid = pressure == 8 ? aztech.modern_industrialization.MIFluids.HIGH_PRESSURE_HEAVY_WATER.asFluid() : aztech.modern_industrialization.MIFluids.HEAVY_WATER.asFluid();
         long maximum = heater.maxEuProduction / pressure;
         var water = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardInputSlot(1000000);
         var steam = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardOutputSlot(1000000);
         var coal = aztech.modern_industrialization.inventory.ConfigurableItemStack.standardInputSlot();
-        long produced = 0, waterUsed = 0, coalUsed = 0, deficit = 0;
+        var fuelInput = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardInputSlot(1000000);
+        if (fluidFuel != null) fuelInput.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(
+                BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse(fluidFuel))));
+        long produced = 0, waterUsed = 0, coalUsed = 0, fluidUsed = 0, deficit = 0;
         var segments = new JsonArray();
         JsonObject segment = null;
         long previous = -1;
@@ -547,14 +553,17 @@ public final class PlannerProbe {
             water.setAmount(1000000);
             coal.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(net.minecraft.world.item.Items.COAL));
             coal.setAmount(64);
+            fuelInput.setAmount(1000000);
             steam.empty();
             heater.tick(java.util.List.of(water), java.util.List.of(steam));
-            burner.tick(java.util.List.of(coal), java.util.List.of(), true);
+            burner.tick(fluidFuel == null ? java.util.List.of(coal) : java.util.List.of(),
+                    fluidFuel == null ? java.util.List.of() : java.util.List.of(fuelInput), true);
             ticks++;
             long amount = steam.getAmount();
             produced += amount;
             waterUsed += 1000000 - water.getAmount();
             coalUsed += 64 - coal.getAmount();
+            fluidUsed += 1000000 - fuelInput.getAmount();
             deficit = Math.max(deficit, maximum * ticks - produced);
             if (previous != amount) {
                 segment = new JsonObject();
@@ -574,6 +583,14 @@ public final class PlannerProbe {
         result.addProperty("coal_consumed", coalUsed);
         result.addProperty("steam_deficit", deficit);
         result.add("output_segments", segments);
+        result.addProperty("eu_per_steam_mb", pressure);
+        result.addProperty("water", BuiltInRegistries.FLUID.getKey(inputFluid).toString());
+        if (fluidFuel != null) {
+            result.addProperty("fluid_fuel", fluidFuel);
+            result.addProperty("fluid_consumed", fluidUsed);
+            result.addProperty("fuel_eu_per_mb", aztech.modern_industrialization.api.datamaps.FluidFuel.getEu(fuelInput.getResource().getFluid()));
+            return result;
+        }
         var running = new JsonArray();
         for (long output = 0; output <= maximum; output++) {
             var limitedSteam = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardOutputSlot(output);
@@ -593,7 +610,6 @@ public final class PlannerProbe {
             running.add(point);
         }
         result.add("hot_running_probe", running);
-        result.addProperty("eu_per_steam_mb", pressure);
         return result;
     }
 
@@ -819,7 +835,8 @@ public final class PlannerProbe {
                 record.addProperty("nbt", entity.saveWithFullMetadata(server.registryAccess()).toString());
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.BoilerMachineBlockEntity
                         || entity instanceof aztech.modern_industrialization.machines.blockentities.multiblocks.SteamBoilerMultiblockBlockEntity) {
-                    record.add("coal_warmup_probe", boilerWarmup(machine, server));
+                    record.add("coal_warmup_probe", boilerWarmup(machine, server, null, false));
+                    record.add("diesel_heavy_water_warmup_probe", boilerWarmup(machine, server, "modern_industrialization:diesel", true));
                 }
                 machines.add(record);
             } catch (Exception error) {

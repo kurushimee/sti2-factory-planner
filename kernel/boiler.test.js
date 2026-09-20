@@ -33,3 +33,21 @@ test('large and high-pressure boiler startup agrees with the loaded pack', () =>
     assert.deepEqual(actual.output_segments, probe.output_segments);
   }
 });
+
+test('fluid-fueled heavy-water boilers retain loaded startup and refill behavior', () => {
+  const report = JSON.parse(readFileSync(new URL('../data/provenance/runtime-report.json', import.meta.url)));
+  assert.equal(Object.keys(report.fluid_boiler_warmup).length, 6);
+  for (const [id, probe] of Object.entries(report.fluid_boiler_warmup)) {
+    const rule = report.large_boilers[id]?.rule ?? {max_eu_per_tick: id.includes('bronze') ? 8 : 16,
+      eu_per_degree: 8, temperature_max: 1500};
+    assert.equal(probe.fuel_eu_per_mb, 400);
+    assert.match(probe.water, /heavy_water$/);
+    const actual = boilerWarmup(rule, {kind: 'fluid', eu_per_unit: probe.fuel_eu_per_mb});
+    assert.equal(actual.first_full_output_tick, probe.first_full_output_tick);
+    assert.equal(actual.steam_produced, probe.steam_produced);
+    assert.equal(actual.water_consumed, probe.water_consumed);
+    assert.equal(actual.fuel_consumed, probe.fluid_consumed);
+    assert.equal(actual.steam_deficit, probe.steam_deficit);
+    assert.deepEqual(actual.output_segments, probe.output_segments);
+  }
+});

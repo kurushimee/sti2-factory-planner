@@ -165,6 +165,8 @@ def verify(runtime: dict, probes: dict) -> dict:
         "blast_furnace_coils": coil_tiers,
         "boiler_warmup": boilers,
         "large_boilers": large_boilers,
+        "fluid_boiler_warmup": {key: machine["diesel_heavy_water_warmup_probe"] for key, machine in machines.items()
+                                if "diesel_heavy_water_warmup_probe" in machine},
         "water_pumps": pumps,
         "replication": replication,
         "batch_tiers": batch_tiers,

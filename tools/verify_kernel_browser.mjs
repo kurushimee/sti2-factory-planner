@@ -76,7 +76,7 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/embed`);
   const frame = page.frames().find(item => item !== page.mainFrame());
   await frame.waitForLoadState();
-  const actual = await frame.evaluate(async ({dataset, request}) => {
+  const solveInBrowser = (dataset, request) => frame.evaluate(async ({dataset, request}) => {
     const worker = new Worker('/kernel/worker.js', {type: 'module'});
     const phases = [];
     const result = await new Promise((resolve, reject) => {
@@ -92,10 +92,21 @@ try {
     worker.terminate();
     return {result, phases, isolated: self.crossOriginIsolated};
   }, {dataset, request});
+  const actual = await solveInBrowser(dataset, request);
   assert.deepEqual(actual.result, expected);
   assert.deepEqual(actual.phases, ['loading_solver', 'solving']);
   assert.equal(actual.isolated, false);
   assert.deepEqual(errors, []);
+  const boilerId = 'boiling|modern_industrialization:high_pressure_large_steam_boiler|fluid|400|heavy_water';
+  if (worldDataset.recipes?.some(recipe => recipe.id === boilerId)) {
+    const resource = 'fluid:modern_industrialization:high_pressure_heavy_water_steam';
+    const boilerRequest = {goals: [{recipe: boilerId, resource, rate: 2560}], routes: {[resource]: boilerId},
+      available_machines: ['modern_industrialization:high_pressure_large_steam_boiler'],
+      external: [{resource: 'fluid:modern_industrialization:high_pressure_heavy_water'}, {resource: 'fluid:modern_industrialization:diesel'}]};
+    const boiler = await solveInBrowser(worldDataset, boilerRequest);
+    assert.deepEqual(boiler.result, solveFactory(await loadHighs(), worldDataset, boilerRequest));
+    console.log('The full-catalog high-pressure boiler calculation matches Node in the browser Worker.');
+  }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();
     const worker = new Worker('/kernel/world-worker.js', {type: 'module'});
