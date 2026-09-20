@@ -70,6 +70,11 @@ static func check(value: Variant) -> String:
 		if preset_ids.has(preset.id):
 			return "Progression preset IDs must be unique."
 		preset_ids[preset.id] = true
+		if !_string_list(preset.get("available_parts", [])):
+			return "Progression hatch availability must be a list of IDs."
+		for id: String in preset.get("available_parts", []):
+			if !catalog_ids.machines.has(id):
+				return "A progression preset references an unknown hatch ID: " + id
 		for field: String in ["machines", "upgrades"]:
 			var selected: Variant = preset.get("available_" + field)
 			if !_string_list(selected):
@@ -90,7 +95,7 @@ static func check_plan(value: Variant) -> String:
 		return "The plan's dataset identity does not match its embedded data."
 	if !(value.get("request") is Dictionary) || !(value.request.get("goals") is Array):
 		return "The plan has no valid goal list."
-	for field: String in ["available_machines", "disabled_machines", "available_upgrades", "disabled_upgrades", "disabled_recipes", "obtained_resources", "available_dimensions", "available_biomes"]:
+	for field: String in ["available_machines", "disabled_machines", "available_upgrades", "disabled_upgrades", "available_parts", "disabled_recipes", "obtained_resources", "available_dimensions", "available_biomes"]:
 		if !_string_list(value.request.get(field, [])):
 			return "The plan's %s field must be a list of text IDs." % field
 	for field: String in ["weights", "routes", "configurations", "machine_setups", "ingredients", "catalysts", "installed", "limits", "dispatch"]:

@@ -230,6 +230,25 @@ try {
     await page.keyboard.press('Tab');
     await page.keyboard.press('Escape');
   }
+  if (catalogPath) {
+    await page.mouse.click(532, 92, {delay: 100});
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await page.mouse.click(480, 165, {delay: 100});
+    await new Promise(resolve => setTimeout(resolve, 150));
+    for (let index = 0; index < 6; index++) await page.keyboard.press('ArrowDown', {delay: 100});
+    await page.keyboard.press('Enter', {delay: 100});
+    await page.mouse.click(420, 210, {delay: 100});
+    await page.keyboard.type('bronze');
+    await new Promise(resolve => setTimeout(resolve, 150));
+    await page.mouse.click(250, 330, {delay: 100});
+    await page.screenshot({path: `${artifacts}/browser-hatch-settings.png`});
+    await page.mouse.click(550, 779, {delay: 100});
+    plan = await waitPlan(value => Array.isArray(value?.request.available_parts));
+    assert.equal(plan.request.available_parts.includes('modern_industrialization:bronze_item_input_hatch'), false);
+    assert.equal(plan.request.available_parts.includes('modern_industrialization:steel_item_input_hatch'), true);
+    await page.mouse.click(1320, 40, {delay: 100});
+    await waitPlan(value => !value?.request.available_parts);
+  }
   const previousView = await savedRecord('workspace-view');
   const planBeforeView = await savedPlan();
   await page.mouse.move(810, 425);

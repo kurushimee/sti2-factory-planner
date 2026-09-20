@@ -99,6 +99,7 @@ export function validateDataset(dataset) {
     text(preset.name, `progression ${preset.id}.name`);
     references(preset.available_machines, machines, `progression ${preset.id}.available_machines`);
     references(preset.available_upgrades, upgrades, `progression ${preset.id}.available_upgrades`);
+    if (preset.available_parts) references(preset.available_parts, machines, `progression ${preset.id}.available_parts`);
   }
   for (const machine of dataset.machines ?? []) {
     if (!['supported', 'unsupported', 'structural'].includes(machine.status)) fail(`machine ${machine.id}`, 'unknown support status');

@@ -16,7 +16,7 @@ var _loading := false
 
 
 func _ready() -> void:
-	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies"]:
+	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches"]:
 		%SettingsCategory.add_item(title_text)
 	%SettingsCategory.item_selected.connect(_category_changed)
 	%ProgressionPreset.item_selected.connect(func(index: int) -> void:
@@ -62,6 +62,11 @@ func open_settings(dataset: Dictionary, request: Dictionary) -> void:
 					if !configuration.machine in machines:
 						machines.append(configuration.machine)
 		_request.available_machines = machines
+	if !_request.has("available_parts"):
+		_request.available_parts = []
+		for machine: Dictionary in dataset.get("machines", []):
+			if machine.has("hatch_capacity"):
+				_request.available_parts.append(machine.id)
 	for pair: Array in [["available_machines", "disabled_machines"], ["available_upgrades", "disabled_upgrades"]]:
 		for id: String in _request.get(pair[1], []):
 			_request.get(pair[0], []).erase(id)
@@ -96,10 +101,12 @@ func _use_preset() -> void:
 	var preset: Dictionary = _dataset.progression[index]
 	_request.available_machines = preset.available_machines.duplicate()
 	_request.available_upgrades = preset.available_upgrades.duplicate()
+	if preset.has("available_parts"):
+		_request.available_parts = preset.available_parts.duplicate()
 	_request.progression_preset = preset.id
 	%SettingsSearch.clear()
 	_category_changed(%SettingsCategory.selected)
-	%SettingsError.text = "%s selected. You can still change individual machines and upgrades before applying." % preset.name
+	%SettingsError.text = "%s selected. You can change individual entries before applying." % preset.name
 	%SettingsEntries.grab_focus.call_deferred()
 
 
@@ -111,7 +118,8 @@ func _category_changed(category: int) -> void:
 		"Enable upgrade types for automatic loadout choices. Explicit saved or pinned loadouts retain their selected upgrades.",
 		"Disable a recipe to exclude that production route. Its resources must come from another enabled route or an explicit supply.",
 		"Mark resources already obtained as replication templates. Each replicator also needs one retained template item.",
-		"External supplies are deliberate imports into the factory. Select a resource to set its rate limit and cost. Item rates use items/s; fluid rates use mB/s; power uses EU/s."]
+		"External supplies are deliberate imports into the factory. Select a resource to set its rate limit and cost. Item rates use items/s; fluid rates use mB/s; power uses EU/s.",
+		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible."]
 	%SettingsHint.text = hints[category]
 	match category:
 		0:
@@ -137,6 +145,12 @@ func _category_changed(category: int) -> void:
 		3, 4:
 			for resource: Dictionary in _dataset.resources:
 				_entries.append({"id": resource.id, "name": resource.get("name", resource.id)})
+		5:
+			var supported := RegEx.create_from_string("^modern_industrialization:(bronze|steel|advanced|turbo|highly_advanced|lv|mv|hv|ev|superconductor)_(item|fluid|energy)_(input|output)_hatch$")
+			for machine: Dictionary in _dataset.get("machines", []):
+				if machine.has("hatch_capacity"):
+					_entries.append({"id": machine.id, "name": _names.get("item:" + str(machine.id), machine.id),
+						"unsupported": supported.search(machine.id) == null})
 	_filter(%SettingsSearch.text)
 
 
@@ -184,6 +198,7 @@ func _enabled(id: String) -> bool:
 		2: return !id in _request.disabled_recipes
 		3: return id in _request.obtained_resources
 		4: return _request.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
+		5: return id in _request.available_parts
 	return false
 
 
@@ -199,7 +214,7 @@ func _entry_changed() -> void:
 			_request.external.append({"resource": id, "cost": 1})
 		_entry_selected()
 		return
-	var field: String = ["available_machines", "available_upgrades", "disabled_recipes", "obtained_resources"][%SettingsCategory.selected]
+	var field: String = ["available_machines", "available_upgrades", "disabled_recipes", "obtained_resources", "external", "available_parts"][%SettingsCategory.selected]
 	var include := !enabled if %SettingsCategory.selected == 2 else enabled
 	_request[field].erase(id)
 	if include:

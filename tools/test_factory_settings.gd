@@ -106,9 +106,31 @@ func _run() -> void:
 		assert("ae2:molecular_assembler" in dialog._request.available_machines)
 		assert("modern_industrialization:basic_upgrade" in dialog._request.available_upgrades)
 		assert(!"modern_industrialization:quantum_upgrade" in dialog._request.available_upgrades)
+		assert(dialog._request.available_parts == catalog.progression[2].available_parts)
+		dialog.get_node("%SettingsCategory").select(5)
+		dialog._category_changed(5)
+		dialog.get_node("%SettingsSearch").text = "bronze"
+		dialog._filter("bronze")
+		assert(!dialog._matches.is_empty())
+		var hatch: TreeItem = entries.get_root().get_first_child()
+		var hatch_id: String = hatch.get_metadata(0)
+		var before: bool = hatch.is_checked(0)
+		hatch.select(0)
+		entries.grab_focus()
+		await process_frame
+		var toggle := InputEventKey.new()
+		toggle.keycode = KEY_ENTER
+		toggle.pressed = true
+		dialog.push_input(toggle)
+		await process_frame
+		toggle.pressed = false
+		dialog.push_input(toggle)
+		await process_frame
+		assert((hatch_id in dialog._request.available_parts) != before)
+		assert(!workspace._request.has("available_parts"))
 		if DisplayServer.get_name() != "headless":
 			await create_timer(0.2).timeout
 			await RenderingServer.frame_post_draw
-			root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/progression-settings.png")
+			root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/hatch-settings.png")
 	print("Factory settings passed keyboard supply selection, rate limits, costs, power reserve, overhead, and undo.")
 	quit()
