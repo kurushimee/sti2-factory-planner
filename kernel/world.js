@@ -1,5 +1,6 @@
 import {Inflate, Unzlib, Gunzip} from 'fflate';
 import {readNbt} from './nbt.js';
+import {decodeLz4Stream} from './lz4.js';
 import {reconstructFactory} from './reconstruct.js';
 import {blockStateAt, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
 import {readMachineAssignment} from './saved-machine.js';
@@ -51,20 +52,66 @@ export function zipEntries(bytes) {
   }
   if (end < Math.max(0, bytes.length - 65557)) throw new Error('The file is not a complete ZIP archive.');
   if (view.getUint16(end + 4, true) || view.getUint16(end + 6, true)) throw new Error('Split ZIP archives are not supported.');
-  const count = view.getUint16(end + 10, true);
+  let count = view.getUint16(end + 10, true);
   let cursor = view.getUint32(end + 16, true);
-  if (count === 65535 || cursor === 0xffffffff) throw new Error('ZIP64 archives need to be repacked below 4 GiB for this importer.');
+  let directorySize = view.getUint32(end + 12, true), directoryEnd = end;
+  const uint64 = (offset, boundary) => {
+    if (offset + 8 > boundary) throw new Error('A ZIP64 field is truncated.');
+    const value = view.getBigUint64(offset, true);
+    if (value > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('A ZIP64 address exceeds the supported numeric range.');
+    return Number(value);
+  };
+  if (count === 65535 || cursor === 0xffffffff || directorySize === 0xffffffff) {
+    const locator = end - 20;
+    if (locator < 0 || view.getUint32(locator, true) !== 0x07064b50) throw new Error('The ZIP64 directory locator is missing.');
+    if (view.getUint32(locator + 4, true) || view.getUint32(locator + 16, true) !== 1) throw new Error('Split ZIP64 archives are not supported.');
+    const record = uint64(locator + 8, end);
+    if (record + 56 > locator || view.getUint32(record, true) !== 0x06064b50) throw new Error('The ZIP64 directory record is malformed.');
+    const recordSize = uint64(record + 4, locator);
+    if (recordSize < 44 || record + 12 + recordSize > locator) throw new Error('The ZIP64 directory record is truncated.');
+    if (view.getUint32(record + 16, true) || view.getUint32(record + 20, true)) throw new Error('Split ZIP64 archives are not supported.');
+    count = uint64(record + 32, locator);
+    if (uint64(record + 24, locator) !== count) throw new Error('The ZIP64 directory entry counts disagree.');
+    directorySize = uint64(record + 40, locator);
+    cursor = uint64(record + 48, locator);
+    directoryEnd = record;
+  }
+  if (cursor + directorySize > directoryEnd || count > directorySize / 46) throw new Error('The ZIP directory size or entry count is malformed.');
+  directoryEnd = cursor + directorySize;
   const entries = [];
   const names = new Set();
   const decoder = new TextDecoder();
   for (let i = 0; i < count; i++) {
-    if (cursor + 46 > end || view.getUint32(cursor, true) !== 0x02014b50) throw new Error('The ZIP directory is malformed.');
+    if (cursor + 46 > directoryEnd || view.getUint32(cursor, true) !== 0x02014b50) throw new Error('The ZIP directory is malformed.');
     const flags = view.getUint16(cursor + 8, true), method = view.getUint16(cursor + 10, true);
     const expectedCrc = view.getUint32(cursor + 16, true);
-    const compressed = view.getUint32(cursor + 20, true), size = view.getUint32(cursor + 24, true);
+    let compressed = view.getUint32(cursor + 20, true), size = view.getUint32(cursor + 24, true);
     const nameLength = view.getUint16(cursor + 28, true), extraLength = view.getUint16(cursor + 30, true), commentLength = view.getUint16(cursor + 32, true);
-    const local = view.getUint32(cursor + 42, true);
-    if (cursor + 46 + nameLength + extraLength + commentLength > end) throw new Error('The ZIP filename or extra data is truncated.');
+    let local = view.getUint32(cursor + 42, true);
+    const disk = view.getUint16(cursor + 34, true);
+    if (disk && disk !== 65535) throw new Error('Split ZIP archives are not supported.');
+    if (cursor + 46 + nameLength + extraLength + commentLength > directoryEnd) throw new Error('The ZIP filename or extra data is truncated.');
+    if (size === 0xffffffff || compressed === 0xffffffff || local === 0xffffffff || disk === 65535) {
+      let extra = cursor + 46 + nameLength;
+      const extraEnd = extra + extraLength;
+      let found = false;
+      while (extra + 4 <= extraEnd) {
+        const type = view.getUint16(extra, true), length = view.getUint16(extra + 2, true);
+        const fieldEnd = extra + 4 + length;
+        if (fieldEnd > extraEnd) throw new Error('A ZIP extra field is truncated.');
+        if (type === 1) {
+          let field = extra + 4;
+          if (size === 0xffffffff) { size = uint64(field, fieldEnd); field += 8; }
+          if (compressed === 0xffffffff) { compressed = uint64(field, fieldEnd); field += 8; }
+          if (local === 0xffffffff) { local = uint64(field, fieldEnd); field += 8; }
+          if (disk === 65535 && (field + 4 > fieldEnd || view.getUint32(field, true))) throw new Error('The ZIP64 entry disk is invalid.');
+          found = true;
+          break;
+        }
+        extra = fieldEnd;
+      }
+      if (!found) throw new Error('A ZIP64 entry is missing its extended sizes or offset.');
+    }
     const name = decoder.decode(bytes.subarray(cursor + 46, cursor + 46 + nameLength)).replaceAll('\\', '/');
     if (names.has(name)) throw new Error(`Duplicate archive path: ${name}.`);
     names.add(name);
@@ -111,6 +158,7 @@ export function readRegion(bytes, origin, external = () => null) {
         case 1: expanded = decompress(payload, Gunzip); break;
         case 2: expanded = decompress(payload, Unzlib); break;
         case 3: expanded = payload; break;
+        case 4: expanded = decodeLz4Stream(payload, MAX_CHUNK); break;
         default: throw new Error(`Unsupported region compression ${compression & 127}.`);
       }
       if (expanded.length > MAX_CHUNK) throw new Error('The expanded chunk exceeds the import limit.');
@@ -143,24 +191,26 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
       for (const chunk of parsed.chunks) {
         for (const block of chunk.data.block_entities ?? chunk.data.Level?.TileEntities ?? []) {
           const origin = {dimension, x: block.x, y: block.y, z: block.z, region: region.name};
-          const providers = readProviders(block, origin, blockStateAt(chunk.data, block.x, block.y, block.z));
-          result.providers.push(...providers);
-          const requester = readRequester(block, origin);
-          if (requester) result.requesters.push(requester);
-          if (machines.has(block.id)) {
-            const machine = machines.get(block.id);
-            if (machine.role === 'multiblock_part') {
-              result.parts.push({id: block.id, origin, hatch_type: machine.hatch_type, facts: block});
-              continue;
+          try {
+            const providers = readProviders(block, origin, blockStateAt(chunk.data, block.x, block.y, block.z));
+            result.providers.push(...providers);
+            const requester = readRequester(block, origin);
+            if (requester) result.requesters.push(requester);
+            if (machines.has(block.id)) {
+              const machine = machines.get(block.id);
+              if (machine.role === 'multiblock_part') {
+                result.parts.push({id: block.id, origin, hatch_type: machine.hatch_type, facts: block});
+                continue;
+              }
+              result.machines.push({id: block.id, origin, recipe_id: block.activeRecipe ?? null,
+                recipe_type: machines.get(block.machinesStack?.id)?.recipe_type ?? machine.recipe_type ?? null, upgrades: block.upgradesItemStack ?? {},
+                contained_machine: block.machinesStack ?? null, shape: block.activeShape ?? null,
+                casing: block.casing ?? {}, facts: block, assignment_evidence: block.activeRecipe ? 'saved_active_recipe' : 'unassigned',
+                ...readMachineAssignment(block, machine, dataset)});
+            } else if (!providers.length && !requester && !block.id?.startsWith('minecraft:')) {
+              result.unsupported.push({id: block.id, origin, reason: 'No block entity adapter is registered.', facts: block});
             }
-            result.machines.push({id: block.id, origin, recipe_id: block.activeRecipe ?? null,
-              recipe_type: machines.get(block.machinesStack?.id)?.recipe_type ?? machine.recipe_type ?? null, upgrades: block.upgradesItemStack ?? {},
-              contained_machine: block.machinesStack ?? null, shape: block.activeShape ?? null,
-              casing: block.casing ?? {}, facts: block, assignment_evidence: block.activeRecipe ? 'saved_active_recipe' : 'unassigned',
-              ...readMachineAssignment(block, machine, dataset)});
-          } else if (!providers.length && !requester && !block.id?.startsWith('minecraft:')) {
-            result.unsupported.push({id: block.id, origin, reason: 'No block entity adapter is registered.', facts: block});
-          }
+          } catch (error) { result.errors.push({origin, id: block.id, message: error.message}); }
         }
       }
     } catch (error) { result.errors.push({region: region.name, message: error.message}); }
