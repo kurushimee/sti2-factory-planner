@@ -10,7 +10,7 @@ var _process_id := -1
 var _job_id := 0
 var _result_path := ""
 var _input_path := ""
-var _cleanup_jobs: Dictionary[int, PackedStringArray] = {}
+var _cleanup_jobs: Dictionary[int, Dictionary] = {}
 
 
 func _ready() -> void:
@@ -21,7 +21,7 @@ func _ready() -> void:
 	pattern.compile("^(?:job|result)_(\\d+)_(\\d+)(?:_\\d+)?\\.json(?:\\.pending)?$")
 	for filename: String in DirAccess.get_files_at("user://jobs"):
 		var matched := pattern.search(filename)
-		if matched && !OS.is_process_running(matched.get_string(1).to_int()):
+		if matched && !_owner_running(matched.get_string(1).to_int()):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path("user://jobs/" + filename))
 
 
@@ -39,7 +39,7 @@ func _process(_delta: float) -> void:
 		_accept(JSON.parse_string(text))
 	elif _process_id > 0 && !OS.is_process_running(_process_id):
 		busy = false
-		_queue_cleanup()
+		_queue_cleanup(true)
 		failed.emit("The calculation process stopped without a result. Your current plan is unchanged.")
 
 
@@ -76,12 +76,16 @@ func submit(job: Dictionary) -> void:
 
 
 func cancel() -> void:
+	var stopped := false
 	if busy:
 		if OS.has_feature("web"):
 			JavaScriptBridge.eval("window.plannerBridge.cancel()")
-		elif _process_id > 0 && OS.is_process_running(_process_id):
-			OS.kill(_process_id)
-	_queue_cleanup()
+		elif _process_id > 0:
+			if OS.is_process_running(_process_id):
+				stopped = OS.kill(_process_id) == OK
+			else:
+				stopped = true
+	_queue_cleanup(stopped)
 	busy = false
 	_process_id = -1
 
@@ -110,25 +114,42 @@ func _exit_tree() -> void:
 	_cleanup_finished_jobs()
 
 
-func _queue_cleanup() -> void:
+func _queue_cleanup(stopped := false) -> void:
 	if _input_path.is_empty():
 		return
-	var paths: PackedStringArray = _cleanup_jobs.get(_process_id, PackedStringArray())
+	var job: Dictionary = _cleanup_jobs.get(_process_id, {"paths": PackedStringArray(), "stopped": false})
+	var paths: PackedStringArray = job.paths
 	paths.append_array(PackedStringArray([_input_path, _result_path, _result_path + ".pending"]))
-	_cleanup_jobs[_process_id] = paths
+	job.paths = paths
+	job.stopped = job.stopped || stopped || _process_id < 1
+	_cleanup_jobs[_process_id] = job
 	_input_path = ""
 	_result_path = ""
 
 
 func _cleanup_finished_jobs() -> void:
 	for process_id: int in _cleanup_jobs.keys():
-		if process_id > 0 && OS.is_process_running(process_id):
+		var job: Dictionary = _cleanup_jobs[process_id]
+		if !job.stopped && OS.is_process_running(process_id):
 			continue
+		job.stopped = true
 		var remaining := PackedStringArray()
-		for path: String in _cleanup_jobs[process_id]:
+		for path: String in job.paths:
 			if FileAccess.file_exists(path) && DirAccess.remove_absolute(path) != OK:
 				remaining.append(path)
 		if remaining.is_empty():
 			_cleanup_jobs.erase(process_id)
 		else:
-			_cleanup_jobs[process_id] = remaining
+			job.paths = remaining
+
+
+func _owner_running(process_id: int) -> bool:
+	if process_id == OS.get_process_id():
+		return true
+	# Unix child-process checks reap exited children and reject unrelated owners.
+	if OS.get_name() == "Linux":
+		return DirAccess.dir_exists_absolute("/proc/%d" % process_id)
+	if OS.get_name() == "macOS":
+		var output: Array = []
+		return OS.execute("/bin/kill", PackedStringArray(["-0", str(process_id)]), output, true) == 0
+	return OS.is_process_running(process_id)
