@@ -74,7 +74,7 @@ func _filter_recipes(query: String) -> void:
 	var machine: Dictionary = _world.machines[_selected]
 	var chosen: String = str(_corrections.get(_key(machine), {}).get("recipe", machine.get("recipe_id", "")))
 	for recipe: Dictionary in _dataset.get("recipes", []):
-		if machine.get("recipe_type") != null && recipe.get("type") != machine.recipe_type:
+		if machine.get("recipe_type") != null && recipe.get("type") != machine.recipe_type && recipe.get("process", {}).get("type") != machine.recipe_type:
 			continue
 		var title: String = recipe.get("name", recipe.id)
 		if !query.is_empty() && !query.to_lower() in (title + " " + recipe.id).to_lower():

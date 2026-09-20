@@ -24,11 +24,12 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     const possible = (candidates.get(recipeId) ?? []).filter(recipe => !saved.recipe_type || recipe.type === saved.recipe_type || recipe.process?.type === saved.recipe_type);
     const pending = reason => unresolved.push({machine: key, origin: saved.origin, machine_id: saved.id, recipe_id: recipeId, reason,
       recipe_candidates: saved.provider_candidates ?? [], facts: saved});
+    if (!correction.recipe && saved.assignment_error) { pending(saved.assignment_error); continue; }
     if (!recipeId) { pending('No unique recipe assignment was saved or inferred.'); continue; }
     if (possible.length !== 1) { pending('The saved recipe does not identify one recipe in this dataset.'); continue; }
     const recipe = possible[0];
     const machine = machines.get(saved.id);
-    if (!machine?.mechanic || machine.status !== 'supported' || !recipe.process || recipe.unsupported) {
+    if (!machine?.mechanic || machine.status !== 'supported' || recipe.unsupported) {
       pending(recipe.unsupported ?? 'The saved machine or recipe still needs a capacity adapter.'); continue;
     }
     try {
@@ -40,8 +41,22 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
         setup.upgrade = upgrades.get(saved.upgrades.id);
       }
       if (machine.steel_hatch_variant && !Object.hasOwn(setup, 'steel_hatches')) throw new Error('The controller needs an associated hatch tier before its capacity can be established.');
-      const configuration = compileConfiguration({...recipe, ...recipe.process}, machine, setup);
+      const fixed = recipe.configurations.filter(value => value.machine === machine.id);
+      const configuration = recipe.process ? compileConfiguration({...recipe, ...recipe.process}, machine, setup)
+        : fixed.length === 1 ? fixed[0] : null;
+      if (!configuration) throw new Error('Choose a unique machine configuration for this saved utility process.');
+      const ingredientPins = {};
+      if (saved.crafting_pattern && !saved.crafting_pattern.canSubstitute) {
+        const stacks = saved.crafting_pattern.inputs.filter(stack => stack.id);
+        if (stacks.some(stack => Object.keys(stack.components ?? {}).length)) throw new Error('The dedicated crafting pattern has component-specific inputs that need a matching adapter.');
+        for (const [slot, flow] of recipe.inputs.entries()) {
+          const matching = [...new Set(stacks.map(stack => `item:${stack.id}`).filter(id => (flow.choices ?? [flow.resource]).includes(id)))];
+          if (matching.length !== 1) throw new Error('The dedicated crafting pattern needs an ingredient-choice correction.');
+          ingredientPins[`${recipe.id}#${slot}`] = matching[0];
+        }
+      }
       assignments.push({machine: key, origin: saved.origin, recipe: recipe.id, configuration, setup,
+        ingredient_pins: ingredientPins, obtained_resources: saved.obtained_resources ?? [],
         assignment_evidence: correction.recipe ? 'player_correction' : saved.assignment_evidence,
         capacity_basis: 'Configured capacity with continuous inputs, peak power, and accepted outputs; not an observed production rate.'});
     } catch (error) { pending(error.message); }
@@ -49,14 +64,14 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
   const recipes = new Map(dataset.recipes.map(value => [value.id, value]));
   const consumers = new Map();
   for (const assignment of assignments) {
-    for (const flow of recipes.get(assignment.recipe).inputs) {
+    for (const flow of [...recipes.get(assignment.recipe).inputs, ...(assignment.configuration.inputs ?? [])]) {
       for (const resource of flow.choices ?? [flow.resource]) {
         if (!consumers.has(resource)) consumers.set(resource, new Set());
         consumers.get(resource).add(assignment.recipe);
       }
     }
   }
-  const goals = [], machineSetups = Object.create(null), grouped = new Map();
+  const goals = [], machineSetups = Object.create(null), grouped = new Map(), ingredients = Object.create(null), obtained = new Set();
   const goalCandidates = [];
   for (const assignment of assignments) {
     const recipe = recipes.get(assignment.recipe);
@@ -66,7 +81,17 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     goalCandidates.push({machine: assignment.machine, recipe: recipe.id, resource: recipe.primary, retained,
       consumers: consumersOfPrimary, evidence: Object.hasOwn(correction, 'goal') ? 'player_correction' : 'primary_output_dependency_inference',
       reason: retained ? 'Keep this configured output as an editable capacity target.' : 'Another assigned recipe consumes this primary output.'});
+    for (const resource of assignment.obtained_resources) obtained.add(resource);
     if (!retained) continue;
+    const conflict = Object.entries(assignment.ingredient_pins).find(([slot, resource]) => ingredients[slot] && ingredients[slot] !== resource);
+    if (conflict) {
+      unresolved.push({machine: assignment.machine, origin: assignment.origin, machine_id: assignment.configuration.machine,
+        recipe_id: assignment.recipe, reason: 'Dedicated patterns use different fixed ingredients for the same recipe. This target needs a separate route or a corrected assignment.', ingredient_slot: conflict[0]});
+      continue;
+    }
+    for (const [slot, resource] of Object.entries(assignment.ingredient_pins)) {
+      ingredients[slot] = resource;
+    }
     const configuration = assignment.configuration;
     if (!grouped.has(configuration.id)) {
       const goal = {kind: 'capacity', recipe: recipe.id, resource: recipe.primary, configuration: configuration.id, machines: 0, origins: [], inferred: true};
@@ -81,6 +106,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
   }
   if (assignments.length && !goals.length && goalCandidates.every(value => value.consumers.length && value.evidence !== 'player_correction')) unresolved.push({reason: 'Assigned production forms a cycle with no clear retained primary output. Choose an end goal.', machines: assignments.map(value => value.machine)});
   return {assignments, goals, goal_candidates: goalCandidates, machine_setups: machineSetups, unresolved,
+    ingredients, obtained_resources: [...obtained],
     stock_targets: (imported.requesters ?? []).flatMap(requester => requester.requests.map(value => ({...value, origin: requester.origin}))),
     inference: 'Primary outputs with no other assigned consumer become capacity goals. Shared-resource connectivity is inferred, not a recovered cable network. Byproduct retention and cycles may need correction.',
     bootstrap_verified: false};

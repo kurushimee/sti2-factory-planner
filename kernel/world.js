@@ -2,6 +2,7 @@ import {Inflate, Unzlib, Gunzip} from 'fflate';
 import {readNbt} from './nbt.js';
 import {reconstructFactory} from './reconstruct.js';
 import {blockStateAt, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
+import {readMachineAssignment} from './saved-machine.js';
 
 const MAX_ENTRY = 256 * 1024 * 1024;
 const MAX_CHUNK = 32 * 1024 * 1024;
@@ -155,7 +156,8 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
             result.machines.push({id: block.id, origin, recipe_id: block.activeRecipe ?? null,
               recipe_type: machines.get(block.machinesStack?.id)?.recipe_type ?? machine.recipe_type ?? null, upgrades: block.upgradesItemStack ?? {},
               contained_machine: block.machinesStack ?? null, shape: block.activeShape ?? null,
-              casing: block.casing ?? {}, facts: block, assignment_evidence: block.activeRecipe ? 'saved_active_recipe' : 'unassigned'});
+              casing: block.casing ?? {}, facts: block, assignment_evidence: block.activeRecipe ? 'saved_active_recipe' : 'unassigned',
+              ...readMachineAssignment(block, machine, dataset)});
           } else if (!providers.length && !requester && !block.id?.startsWith('minecraft:')) {
             result.unsupported.push({id: block.id, origin, reason: 'No block entity adapter is registered.', facts: block});
           }

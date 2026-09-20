@@ -29,7 +29,17 @@ assert.equal(cableProvider.patterns[0].inputs[0].resource, 'item:spectrum:copper
 assert.equal(cableProvider.patterns[0].outputs[0].amount, 6);
 assert.deepEqual(cableProvider.directions, ['west']);
 assert.deepEqual(blockProvider.directions, ['east']);
-assert.equal(result.machines.length, 4);
+const extended = Boolean(at(14));
+assert.equal(result.machines.length, extended ? 6 : 4);
+if (extended) {
+  assert.equal(at(12).recipe_id, 'replicate|item:minecraft:iron_ingot');
+  assert.equal(at(12).assignment_evidence, 'saved_replication_template');
+  assert.equal(at(14).recipe_id, 'minecraft:stick');
+  assert.equal(at(14).upgrades.count, 2);
+  assert.equal(at(14).assignment_evidence, 'saved_dedicated_crafting_pattern');
+  assert.equal(result.reconstruction.goals.length, 3);
+  assert.equal(result.reconstruction.unresolved.length, 3);
+}
 assert.equal(result.parts.length, 1);
 assert.equal(result.parts[0].id, 'modern_industrialization:steel_item_input_hatch');
 assert.equal(result.requesters.length, 1);
@@ -38,7 +48,7 @@ assert.equal(result.requesters[0].requests[0].stock_target, '4096');
 assert.equal(result.requesters[0].requests[0].crafting_batch, '64');
 assert.equal(result.requesters[0].requests[0].rate, null);
 const report = {archive_sha256: createHash('sha256').update(archive).digest('hex'),
-  data_version: result.data_version, machines: [0, 2, 4, 6].map(x => {
+  data_version: result.data_version, machines: (extended ? [0, 2, 4, 6, 12, 14] : [0, 2, 4, 6]).map(x => {
     const {facts, ...machine} = at(x);
     return machine;
   }), providers: result.providers.map(provider => ({origin: provider.origin, directions: provider.directions,
@@ -46,6 +56,6 @@ const report = {archive_sha256: createHash('sha256').update(archive).digest('hex
   parts: result.parts.map(({facts, ...part}) => part),
   requesters: result.requesters.map(({facts, requests, ...requester}) => ({...requester, requests: requests.map(({facts, ...request}) => request)})),
   errors: result.errors, evidence: result.evidence,
-  limitations: ['The fixture controllers are unformed.', 'Inferred end goals are not verified by this fixture.']};
+  limitations: ['The multiblock controllers are unformed.', 'Saved loadouts establish configured capacity, not observed long-term output.']};
 await writeFile(reportPath, JSON.stringify(report, null, 2) + '\n');
-console.log('The real world fixture preserved four machines, both arrays, upgrades, the assigned recipe, both AE2 provider forms, a separate hatch, and requester quantities.');
+console.log(`The real world fixture preserved ${result.machines.length} machines, both arrays, upgrades, assigned recipes, both AE2 provider forms, a separate hatch, and requester quantities.`);

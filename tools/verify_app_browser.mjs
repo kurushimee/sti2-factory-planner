@@ -5,7 +5,8 @@ import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
 const root = resolve('builds/web');
-const [worldPath, machineCapturePath, catalogPath] = process.argv.slice(2);
+const [worldPath, machineCapturePath, catalogPath, fixtureKind] = process.argv.slice(2);
+const extendedFixture = fixtureKind === 'extended';
 const artifacts = resolve('.plans/artifacts/workspace');
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
@@ -98,7 +99,7 @@ try {
   };
   const changed = structuredClone(plan);
   changed.request.goals[0].rate = 2;
-  if (machineCapturePath) changed.dataset.machines = JSON.parse(await readFile(machineCapturePath, 'utf8')).machines;
+  if (machineCapturePath && !catalogPath) throw new Error('Application world tests need a complete player catalog as the third argument. Use verify_kernel_browser.mjs for raw captures.');
   await importFile({name: 'changed-plan.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(changed))});
   plan = await waitPlan(value => value?.request.goals[0]?.rate === 2);
   assert.deepEqual(plan.groups, changed.groups);
@@ -142,8 +143,9 @@ try {
   if (catalogPath) {
     const dataset = JSON.parse(await readFile(catalogPath, 'utf8'));
     const catalogPlan = {format: 'factory-plan', version: 1, dataset_identity: dataset.identity, dataset,
-      request: {goals: [], available_machines: ['modern_industrialization:electric_macerator'],
-        external: [{resource: 'item:spectrum:copper_cluster'}, {resource: 'energy:eu'}]}, positions: {}, groups: {}};
+      request: {goals: [], available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler'],
+        replication: extendedFixture,
+        external: ['item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks'].map(resource => ({resource}))}, positions: {}, groups: {}};
     await importFile({name: 'statech-plan.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(catalogPlan))});
     await waitPlan(value => value?.dataset_identity === dataset.identity);
     await page.mouse.click(1320, 40, {delay: 100});
@@ -153,16 +155,21 @@ try {
   }
   if (worldPath) {
     await importFile(worldPath);
-    plan = await waitPlan(value => value?.imported_world?.machines?.length === 4);
+    plan = await waitPlan(value => value?.imported_world?.machines?.length === (extendedFixture ? 6 : 4));
     assert.equal(plan.imported_world.providers.length, 2);
     assert.deepEqual(plan.imported_world.errors, []);
     if (catalogPath) {
       assert.equal(plan.request.goals[0].kind, 'capacity');
       assert.equal(plan.request.goals[0].machines, 1);
       assert.equal(plan.imported_world.reconstruction.unresolved.length, 3);
+      if (extendedFixture) {
+        assert.equal(plan.request.goals.length, 3);
+        assert.deepEqual(plan.request.obtained_resources, ['item:minecraft:iron_ingot']);
+        assert.equal(plan.request.ingredients['minecraft:crafting_shaped|minecraft:stick#0'], 'item:minecraft:oak_planks');
+      }
     }
     await page.keyboard.press('Escape');
-    if (catalogPath) {
+    if (catalogPath && !extendedFixture) {
       await page.mouse.click(1010, 40, {delay: 100});
       await page.mouse.click(370, 267, {delay: 100});
       await page.mouse.click(930, 655, {delay: 100});

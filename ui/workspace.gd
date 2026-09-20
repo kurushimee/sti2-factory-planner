@@ -282,6 +282,12 @@ func _calculated(result: Dictionary) -> void:
 		if !goals.is_empty() || apply_empty:
 			_request.goals = goals.duplicate(true)
 			_request.machine_setups = reconstruction.get("machine_setups", {}).duplicate(true)
+			_request.ingredients = reconstruction.get("ingredients", {}).duplicate(true)
+			var obtained: Array = _request.get("obtained_resources", []).duplicate()
+			for resource: String in reconstruction.get("obtained_resources", []):
+				if !resource in obtained:
+					obtained.append(resource)
+			_request.obtained_resources = obtained
 			_request.erase("routes")
 			_request.erase("configurations")
 			var available: Array = _request.get("available_machines", _dataset.get("default_machines", [])).duplicate()

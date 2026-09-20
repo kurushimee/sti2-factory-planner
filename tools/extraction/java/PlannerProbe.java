@@ -72,6 +72,29 @@ public final class PlannerProbe {
         requester.setChanged();
         var hatch = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:steel_item_input_hatch"));
         level.setBlockAndUpdate(new BlockPos(8, 100, 0), hatch.defaultBlockState());
+        var replicatorPos = new BlockPos(12, 100, 0);
+        var replicatorBlock = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:replicator"));
+        level.setBlockAndUpdate(replicatorPos, replicatorBlock.defaultBlockState());
+        var replicator = (aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity) level.getBlockEntity(replicatorPos);
+        var template = replicator.getInventory().getItemStacks().get(0);
+        template.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(net.minecraft.world.item.Items.IRON_INGOT));
+        template.setAmount(1);
+        replicator.setChanged();
+        var assemblerPos = new BlockPos(14, 100, 0);
+        level.setBlockAndUpdate(assemblerPos, appeng.core.definitions.AEBlocks.MOLECULAR_ASSEMBLER.block().defaultBlockState());
+        var assembler = (appeng.blockentity.crafting.MolecularAssemblerBlockEntity) level.getBlockEntity(assemblerPos);
+        var craftingPattern = appeng.core.definitions.AEItems.CRAFTING_PATTERN.stack();
+        var craftingInputs = new java.util.ArrayList<net.minecraft.world.item.ItemStack>();
+        for (int slot = 0; slot < 9; slot++) craftingInputs.add(slot == 0 || slot == 3
+                ? new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_PLANKS) : net.minecraft.world.item.ItemStack.EMPTY);
+        craftingPattern.set(appeng.api.ids.AEComponents.ENCODED_CRAFTING_PATTERN,
+                new appeng.crafting.pattern.EncodedCraftingPattern(craftingInputs,
+                        new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK, 4),
+                        net.minecraft.resources.ResourceLocation.parse("minecraft:stick"), false, false));
+        assembler.getInternalInventory().setItemDirect(10, craftingPattern);
+        assembler.getUpgrades().setItemDirect(0, appeng.core.definitions.AEItems.SPEED_CARD.stack());
+        assembler.getUpgrades().setItemDirect(1, appeng.core.definitions.AEItems.SPEED_CARD.stack());
+        assembler.setChanged();
         System.out.println("Planner AE2 fixture created.");
         return 1;
     }

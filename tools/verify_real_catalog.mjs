@@ -92,18 +92,30 @@ console.log('The dragon-egg siphon releases 102400 EU every 100 ticks, retains i
 
 if (process.argv[3]) {
   const imported = inspectWorld(new Uint8Array(await readFile(process.argv[3])), dataset);
-  assert.equal(imported.reconstruction.goals.length, 1);
+  const extended = imported.machines.some(machine => machine.id === 'ae2:molecular_assembler');
+  assert.equal(imported.reconstruction.goals.length, extended ? 3 : 1);
   assert.equal(imported.reconstruction.unresolved.length, 3);
   assert.equal(imported.reconstruction.goals[0].machines, 1);
   assert.equal(imported.reconstruction.stock_targets[0].stock_target, '4096');
   assert.equal(imported.machines.find(value => value.origin.x === 0).provider_candidates.length, 1);
   const reconstructed = solveFactory(highs, dataset, {goals: imported.reconstruction.goals,
-    machine_setups: imported.reconstruction.machine_setups, available_machines: ['modern_industrialization:electric_macerator'],
-    external: [{resource: 'item:spectrum:copper_cluster'}, {resource: 'energy:eu'}]});
+    machine_setups: imported.reconstruction.machine_setups, ingredients: imported.reconstruction.ingredients,
+    obtained_resources: imported.reconstruction.obtained_resources, replication: true,
+    available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler'],
+    external: ['item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks'].map(resource => ({resource}))});
   assert.equal(reconstructed.status, 'optimal');
-  assert.equal(reconstructed.lines.length, 1);
-  assert.equal(reconstructed.lines[0].machines, 1);
-  assert.equal(reconstructed.lines[0].configuration_details.setup.upgrade_count, 8);
-  assert.equal(reconstructed.targets[0].rate, 40);
+  assert.equal(reconstructed.lines.length, extended ? 3 : 1);
+  const macerator = reconstructed.lines.find(value => value.machine === 'modern_industrialization:electric_macerator');
+  assert.equal(macerator.machines, 1);
+  assert.equal(macerator.configuration_details.setup.upgrade_count, 8);
+  assert.equal(reconstructed.targets.find(value => value.resource === 'item:modern_industrialization:copper_dust').rate, 40);
+  if (extended) {
+    assert.equal(reconstructed.targets.find(value => value.resource === 'item:minecraft:iron_ingot').rate, 1);
+    assert.equal(reconstructed.targets.find(value => value.resource === 'item:minecraft:stick').rate, 80 / 6);
+    assert.equal(reconstructed.external.find(value => value.resource === 'fluid:modern_industrialization:uu_matter').rate, 100);
+    assert.equal(reconstructed.external.find(value => value.resource === 'item:minecraft:oak_planks').rate, 40 / 6);
+    assert.equal(reconstructed.startup.resources.find(value => value.resource === 'item:minecraft:iron_ingot').reusable_stock, 1);
+    console.log('The saved replicator retains its template; the dedicated AE2 pattern retains two speed cards and its oak-plank choice.');
+  }
   console.log('The real saved macerator reconstructs a 40-dust/s capacity goal with its eight advanced upgrades. Three unassigned machines remain visible for correction.');
 }
