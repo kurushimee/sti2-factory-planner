@@ -667,6 +667,8 @@
   },
   "item_rules_count": 11573,
   "resolved_custom_ingredients": 202,
+  "ingredient_tested_variants": 12319,
+  "component_remainder_samples": 752,
   "power_units": {
     "fe_per_eu": 10,
     "fe_per_ae": 2.0,
@@ -1202,6 +1204,32 @@
               "minecraft:damage": 50
             }
           }
+        }
+      ],
+      "tool_lifetimes": [
+        {
+          "item": "modern_industrialization:iron_hammer",
+          "max_damage": 1666,
+          "crafts": 34,
+          "ae2_substitutions_verified": true
+        },
+        {
+          "item": "modern_industrialization:steel_hammer",
+          "max_damage": 4333,
+          "crafts": 87,
+          "ae2_substitutions_verified": true
+        },
+        {
+          "item": "modern_industrialization:diamond_hammer",
+          "max_damage": 10406,
+          "crafts": 209,
+          "ae2_substitutions_verified": true
+        },
+        {
+          "item": "modern_industrialization:netherite_hammer",
+          "max_damage": 13540,
+          "crafts": 271,
+          "ae2_substitutions_verified": true
         }
       ],
       "remainder_implementations": [

@@ -1,9 +1,22 @@
 import unittest
 
-from player_dataset import crafting_adapter, utility_recipes
+from player_dataset import crafting_adapter, utility_recipes, tool_recipe_variants
 
 
 class PlayerDatasetTests(unittest.TestCase):
+    def test_tool_replacement_requires_verified_lifetime_and_ae2_reuse(self):
+        entry = {"source_id": "modern_industrialization:iron_plate_from_hammer", "raw": {"kubejs:ingredient_actions": [
+            {"action": {"damage": 50, "type": "damage"}, "filter": {"item": {"tag": "modern_industrialization:forge_hammer_tools"}}}]}}
+        record = {"id": "plates", "name": "Iron plate", "inputs": [{"resource": "item:test:hammer", "amount": 1}], "catalysts": []}
+        lifetime = {"item": "test:hammer", "crafts": 34, "ae2_substitutions_verified": True}
+        capture = {"crafting_rules": {"recipes": [{"id": entry["source_id"], "tool_lifetimes": [lifetime]}]}}
+        result = tool_recipe_variants(entry, record, capture)[0]
+        self.assertEqual(result["inputs"][0]["amount"], 1 / 34)
+        self.assertEqual(result["catalysts"][0]["amount"], 1)
+        self.assertEqual(record["inputs"][0]["amount"], 1)
+        lifetime["ae2_substitutions_verified"] = False
+        self.assertEqual(tool_recipe_variants(entry, record, capture), [])
+
     def test_replication_requires_a_retained_obtained_template_and_skips_blacklisted_items(self):
         capture = {"machine_rules": [{"id": "test:replicator", "replication": True, "operation_ticks": 20,
                                     "uu_matter_per_item": 100}],

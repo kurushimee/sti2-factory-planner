@@ -43,7 +43,7 @@ def ingredient(value, kind, tags, resolutions=None, variants=None):
         if not resolved:
             raise Unsupported("This ingredient needs a captured custom predicate adapter.")
         return sorted({resource_identity(kind, stack["id"], stack.get("components"), variants)
-                       for stack in resolved["matching_display_stacks"]})
+                       for stack in resolved.get("matching_stacks", resolved["matching_display_stacks"])})
     if kind in value:
         return [resource_identity(kind, value[kind], value.get("components"), variants)]
     if "tag" in value:
@@ -68,9 +68,10 @@ def flow(value, kind, tags, output=False, resolutions=None, variants=None):
         raise Unsupported("An output needs one concrete resource.")
     result = {"choices": choices, "amount": amount, "probability": probability,
               "role": "catalyst" if probability == 0 and not output else "material"}
-    if isinstance(value, dict) and value.get("type") == "neoforge:components":
+    if isinstance(value, dict) and value.get("type"):
         result["predicate"] = value
-        result["matching_scope"] = "captured_display_variants"
+        key = canonical({key: child for key, child in value.items() if key not in ("amount", "probability")})
+        result["matching_scope"] = (resolutions or {}).get(key, {}).get("matching_scope", "captured_display_variants")
     return result
 
 
@@ -133,6 +134,13 @@ def normalize(runtime, probes):
             resource["item_rules"] = item_rules[resource["registry_id"]]
             resource["name"] = resource["item_rules"]["name"]
     resources.extend(variants.values())
+    variant_rules = {}
+    for entry in probes.get("ingredient_rules", {}).get("variant_item_rules", []):
+        stack = entry["stack"]
+        variant_rules[resource_identity("item", stack["id"], stack.get("components"), {})] = entry
+    for resource in resources:
+        if resource["id"] in variant_rules:
+            resource["item_rules"] = variant_rules[resource["id"]]
     known = {value["id"] for value in resources}
     for recipe in recipes:
         for value in recipe["inputs"] + recipe["outputs"]:

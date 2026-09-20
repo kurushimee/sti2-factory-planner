@@ -66,6 +66,15 @@ class NormalizationTests(unittest.TestCase):
         second = resource_identity("item", "test:item", {"b": 2, "a": 1}, variants)
         self.assertEqual(first, second)
 
+    def test_predicate_uses_all_verified_catalog_variants(self):
+        predicate = {"type": "neoforge:compound", "children": [{"item": "test:a"}]}
+        resolutions = {canonical(predicate): {"matching_display_stacks": [{"id": "test:a"}],
+                      "matching_stacks": [{"id": "test:a"}, {"id": "test:b"}],
+                      "matching_scope": "captured_resource_variants"}}
+        result = flow(predicate, "item", {}, resolutions=resolutions)
+        self.assertEqual(result["choices"], ["item:test:a", "item:test:b"])
+        self.assertEqual(result["matching_scope"], "captured_resource_variants")
+
 
 if __name__ == "__main__":
     unittest.main()

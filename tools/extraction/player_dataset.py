@@ -2,6 +2,7 @@
 
 import argparse
 from collections import Counter
+from copy import deepcopy
 import json
 from pathlib import Path
 from normalize import resource_identity
@@ -77,6 +78,37 @@ def utility_recipes(capture):
     return recipes
 
 
+def tool_recipe_variants(entry, record, capture):
+    if entry["source_id"] != "modern_industrialization:iron_plate_from_hammer":
+        return []
+    actions = entry["raw"].get("kubejs:ingredient_actions", [])
+    if actions != [{"action": {"damage": 50, "type": "damage"},
+                    "filter": {"item": {"tag": "modern_industrialization:forge_hammer_tools"}}}]:
+        return []
+    evidence = next((value for value in capture.get("crafting_rules", {}).get("recipes", []) if value["id"] == entry["source_id"]), {})
+    lifetimes = evidence.get("tool_lifetimes", [])
+    if not lifetimes or not all(value.get("ae2_substitutions_verified") and value["crafts"] > 0 for value in lifetimes):
+        return []
+    tools = {"item:" + value["item"] for value in lifetimes}
+    slots = [index for index, flow in enumerate(record["inputs"]) if set(flow.get("choices", [flow.get("resource")])) == tools and flow["amount"] == 1]
+    if len(slots) != 1:
+        return []
+    results = []
+    for lifetime in lifetimes:
+        resource = "item:" + lifetime["item"]
+        variant = deepcopy(record)
+        variant["id"] += "|tool:" + lifetime["item"]
+        variant["name"] += " with " + lifetime["item"].split(":", 1)[-1].replace("_", " ")
+        variant["inputs"][slots[0]] = {"resource": resource, "amount": 1 / lifetime["crafts"]}
+        variant["catalysts"].append({"choices": [resource], "amount": 1})
+        variant["process"] = {"type": "planner:crafting"}
+        variant["tool_usage"] = {"resource": resource, "crafts_per_tool": lifetime["crafts"], "enchantments": "none"}
+        variant["assumptions"] = ["Use an AE2 dedicated pattern with substitutions enabled so the damaged hammer remains usable.",
+                                  "Tool replacement is amortized over its verified lifetime. Finite jobs need whole tools."]
+        results.append(variant)
+    return results
+
+
 def crafting_adapter(entry, record, capture, resources, variants):
     evidence = next((value for value in capture.get("crafting_rules", {}).get("recipes", []) if value["id"] == entry["source_id"]), None)
     standard = {"net.minecraft.world.item.crafting.ShapedRecipe", "net.minecraft.world.item.crafting.ShapelessRecipe",
@@ -93,7 +125,7 @@ def crafting_adapter(entry, record, capture, resources, variants):
         returns = {}
         for choice in flow.get("choices", [flow.get("resource")]):
             item = resources.get(choice, {})
-            if "components" in item or "item_rules" not in item:
+            if "item_rules" not in item:
                 return "The ingredient component variant needs a crafting-remainder check."
             remainder = item["item_rules"].get("crafting_remainder")
             if remainder:
@@ -157,11 +189,17 @@ def build_dataset(capture):
                 record["conditions"].append({"type": "planner:energy_output_buffer", "capacity_eu": generation["amount"],
                                               "single_output_hatch": True})
         else:
+            tool_variants = tool_recipe_variants(entry, record, capture)
+            if tool_variants:
+                recipes.extend(tool_variants)
+                continue
             reason = crafting_adapter(entry, record, capture, resource_index, variants)
             if reason:
                 record["unsupported"] = reason
-        if any(flow.get("matching_scope") for flow in entry["inputs"]):
+        if any(flow.get("matching_scope") == "captured_display_variants" for flow in entry["inputs"]):
             record["unsupported"] = "This custom ingredient currently has only displayed-variant evidence."
+        if any(flow.get("matching_scope") == "captured_resource_variants" for flow in entry["inputs"]):
+            record["assumptions"] = ["Custom ingredients were tested against catalogued item variants. Unlisted component combinations need separate matching evidence."]
         recipes.append(record)
     for machine in capture["machine_rules"]:
         if machine.get("mechanic") != "buffered_fuel_generator":

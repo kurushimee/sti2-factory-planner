@@ -68,6 +68,12 @@ def verify(runtime: dict, probes: dict) -> dict:
     ingredient_rules = probes["ingredient_rules"]
     if item_rules["failures"] or ingredient_rules["failures"]:
         raise ValueError("The item or ingredient probe contains extraction failures.")
+    if ingredient_rules.get("tested_variant_count", 0) < 11573 or not ingredient_rules.get("variant_item_rules"):
+        raise ValueError("The custom ingredient probe did not cover the catalogue's item variants.")
+    if any(entry.get("matching_scope") != "captured_resource_variants"
+           or entry.get("tested_variants") != ingredient_rules["tested_variant_count"]
+           for entry in ingredient_rules["resolved"]):
+        raise ValueError("A custom ingredient lacks complete matching evidence for the captured variants.")
     items = {entry["id"]: entry for entry in item_rules["items"]}
     if len(items) != 11573 or items["minecraft:coal"]["burn_ticks"] != 1600:
         raise ValueError("The loaded item rules changed.")
@@ -119,6 +125,8 @@ def verify(runtime: dict, probes: dict) -> dict:
         raise ValueError("The crafting probe failed or its coverage changed.")
     crafting_index = {entry["id"]: entry for entry in crafting["recipes"]}
     hammer = crafting_index["modern_industrialization:iron_plate_from_hammer"]
+    if [(entry["crafts"], entry.get("ae2_substitutions_verified")) for entry in hammer.get("tool_lifetimes", [])] != [(34, True), (87, True), (209, True), (271, True)]:
+        raise ValueError("The loaded hammer lifetime or AE2 reuse behavior changed.")
     if hammer["base_slots"][4]["remainder"].get("components") != {"minecraft:damage": 50}:
         raise ValueError("The loaded hammer crafting action changed.")
     return {
@@ -136,6 +144,8 @@ def verify(runtime: dict, probes: dict) -> dict:
         "generator_rules": generators,
         "item_rules_count": len(items),
         "resolved_custom_ingredients": len(ingredient_rules["resolved"]),
+        "ingredient_tested_variants": ingredient_rules["tested_variant_count"],
+        "component_remainder_samples": len(ingredient_rules["variant_item_rules"]),
         "power_units": probes["power_units"],
         "array_rules": arrays,
         "blast_furnace_coils": coil_tiers,

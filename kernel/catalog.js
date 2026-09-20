@@ -85,6 +85,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
       checkBudget();
       try {
         const configuration = compileConfiguration({...recipe, ...recipe.process}, matched, {...setup, compute_warmup: false}, capacityCache);
+        configuration.assumptions = [...configuration.assumptions ?? [], ...recipe.assumptions ?? []];
         configuration.conditions = recipe.conditions ?? [];
         configuration.startup_inputs = [];
         for (const [index, catalyst] of (recipe.catalysts ?? []).entries()) {

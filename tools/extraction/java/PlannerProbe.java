@@ -205,6 +205,20 @@ public final class PlannerProbe {
         }
         var resolved = new JsonArray();
         var failures = new JsonArray();
+        var candidates = new java.util.LinkedHashMap<String, net.minecraft.world.item.ItemStack>();
+        for (var item : BuiltInRegistries.ITEM) {
+            var stack = item.getDefaultInstance();
+            if (!stack.isEmpty()) candidates.put(net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, stack).getOrThrow().toString(), stack);
+        }
+        for (var raw : pending.values()) {
+            var decoded = net.minecraft.world.item.crafting.Ingredient.CODEC.parse(ops, raw);
+            decoded.result().ifPresent(ingredient -> {
+                for (var stack : ingredient.getItems()) if (!stack.isEmpty()) {
+                    candidates.put(net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, stack).getOrThrow().toString(), stack);
+                }
+            });
+        }
+        collectStackVariants(runtime.getAsJsonArray("recipes"), ops, candidates);
         for (var raw : pending.values()) {
             // Ordinary item and tag ingredients are already resolved in the registry capture.
             if (!raw.toString().contains("\"type\"") && !raw.toString().contains("\"components\"")) continue;
@@ -218,6 +232,13 @@ public final class PlannerProbe {
                     stacks.add(net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, stack).getOrThrow());
                 }
                 record.add("matching_display_stacks", stacks);
+                var matching = new JsonArray();
+                for (var stack : candidates.values()) {
+                    if (ingredient.test(stack)) matching.add(net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, stack).getOrThrow());
+                }
+                record.add("matching_stacks", matching);
+                record.addProperty("matching_scope", "captured_resource_variants");
+                record.addProperty("tested_variants", candidates.size());
                 record.addProperty("is_simple", ingredient.isSimple());
                 resolved.add(record);
             } catch (Exception error) {
@@ -228,7 +249,43 @@ public final class PlannerProbe {
         var result = new JsonObject();
         result.add("resolved", resolved);
         result.add("failures", failures);
+        var variantRules = new JsonArray();
+        for (var stack : candidates.values()) {
+            var encoded = net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
+            if (!encoded.getAsJsonObject().has("components")) continue;
+            var record = new JsonObject();
+            record.add("stack", encoded);
+            var remainder = stack.getCraftingRemainingItem();
+            if (!remainder.isEmpty()) record.add("crafting_remainder", net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, remainder).getOrThrow());
+            variantRules.add(record);
+        }
+        result.add("variant_item_rules", variantRules);
+        result.addProperty("tested_variant_count", candidates.size());
+        result.addProperty("scope", "Default item stacks, ingredient display variants, and component-bearing stacks encoded in effective recipes. Other component combinations are not claimed.");
         return result;
+    }
+
+    private static void collectStackVariants(com.google.gson.JsonElement value,
+            com.mojang.serialization.DynamicOps<com.google.gson.JsonElement> ops,
+            java.util.Map<String, net.minecraft.world.item.ItemStack> candidates) {
+        if (value.isJsonArray()) {
+            for (var child : value.getAsJsonArray()) collectStackVariants(child, ops, candidates);
+        } else if (value.isJsonObject()) {
+            var object = value.getAsJsonObject();
+            var identity = object.has("item") ? object.get("item") : object.get("id");
+            if (identity != null && identity.isJsonPrimitive() && identity.getAsJsonPrimitive().isString() && object.has("components")) {
+                var id = net.minecraft.resources.ResourceLocation.tryParse(identity.getAsString());
+                if (id != null && BuiltInRegistries.ITEM.containsKey(id)) {
+                    var encoded = new JsonObject();
+                    encoded.addProperty("id", id.toString());
+                    encoded.addProperty("count", 1);
+                    encoded.add("components", object.get("components"));
+                    var stack = net.minecraft.world.item.ItemStack.CODEC.parse(ops, encoded).getOrThrow();
+                    candidates.put(net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, stack).getOrThrow().toString(), stack);
+                }
+            }
+            for (var child : object.asMap().values()) collectStackVariants(child, ops, candidates);
+        }
     }
 
     private static JsonObject craftingRules(MinecraftServer server) throws Exception {
@@ -283,6 +340,42 @@ public final class PlannerProbe {
                     samples.add(sample);
                 }
                 record.add("base_slots", samples);
+                if (holder.id().toString().equals("modern_industrialization:iron_plate_from_hammer")) {
+                    var lifetimes = new JsonArray();
+                    for (int slot = 0; slot < ingredients.size(); slot++) {
+                        for (var tool : ingredients.get(slot).getItems()) {
+                            if (!tool.isDamageableItem()) continue;
+                            var current = tool.copyWithCount(1);
+                            var encodedInputs = new java.util.ArrayList<net.minecraft.world.item.ItemStack>();
+                            for (var stack : base) encodedInputs.add(stack.copy());
+                            encodedInputs.set(slot, current.copy());
+                            var patternItem = appeng.core.definitions.AEItems.CRAFTING_PATTERN.stack();
+                            patternItem.set(appeng.api.ids.AEComponents.ENCODED_CRAFTING_PATTERN,
+                                    new appeng.crafting.pattern.EncodedCraftingPattern(encodedInputs, output.copy(), holder.id(), true, false));
+                            var plan = (appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern) appeng.api.crafting.PatternDetailsHelper.decodePattern(patternItem, server.overworld());
+                            if (plan == null) throw new IllegalStateException("AE2 did not decode the tool crafting pattern.");
+                            int crafts = 0;
+                            while (!current.isEmpty() && crafts < 10000) {
+                                if (!plan.isItemValid(slot, appeng.api.stacks.AEItemKey.of(current), server.overworld())) throw new IllegalStateException("AE2 rejected the used hammer with substitutions enabled.");
+                                var trial = new java.util.ArrayList<net.minecraft.world.item.ItemStack>();
+                                for (var stack : base) trial.add(stack.copy());
+                                trial.set(slot, current);
+                                var trialInput = net.minecraft.world.item.crafting.CraftingInput.of(width, height, trial);
+                                if (!recipe.matches(trialInput, server.overworld())) throw new IllegalStateException("The used hammer stopped matching before it broke.");
+                                current = recipe.getRemainingItems(trialInput).get(slot);
+                                crafts++;
+                            }
+                            if (!current.isEmpty()) throw new IllegalStateException("The hammer lifetime probe did not reach breakage.");
+                            var lifetime = new JsonObject();
+                            lifetime.addProperty("item", BuiltInRegistries.ITEM.getKey(tool.getItem()).toString());
+                            lifetime.addProperty("max_damage", tool.getMaxDamage());
+                            lifetime.addProperty("crafts", crafts);
+                            lifetime.addProperty("ae2_substitutions_verified", true);
+                            lifetimes.add(lifetime);
+                        }
+                    }
+                    record.add("tool_lifetimes", lifetimes);
+                }
                 var declarations = new JsonArray();
                 for (var method : recipe.getClass().getMethods()) {
                     if (method.getName().equals("getRemainingItems") && !method.isBridge()) declarations.add(method.getDeclaringClass().getName());

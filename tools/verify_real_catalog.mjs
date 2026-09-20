@@ -39,6 +39,20 @@ assert.equal(crafted.lines.find(line => line.recipe === cake.id).outputs.find(fl
 assert.equal(crafted.power.consumption_eu_per_tick, 2);
 console.log('Captured cake crafting returns six buckets per second at two cakes per second.');
 
+const hammered = dataset.recipes.find(value => value.tool_usage?.resource === 'item:modern_industrialization:iron_hammer');
+assert.equal(hammered.tool_usage.crafts_per_tool, 34);
+const plates = solveFactory(highs, dataset, {goals: [{recipe: hammered.id, resource: hammered.primary, rate: 34}],
+  available_machines: ['ae2:molecular_assembler'],
+  external: ['item:minecraft:iron_ingot', 'item:modern_industrialization:iron_hammer', 'energy:eu'].map(resource => ({resource}))});
+assert.equal(plates.status, 'optimal');
+assert.equal(plates.lines.length, 1);
+assert.equal(plates.lines[0].machines, 17);
+assert.equal(plates.external.find(value => value.resource === 'item:minecraft:iron_ingot').rate, 136);
+assert.equal(plates.external.find(value => value.resource === 'item:modern_industrialization:iron_hammer').rate, 1);
+assert.equal(plates.startup.resources.find(value => value.resource === 'item:modern_industrialization:iron_hammer').reusable_stock, 17);
+assert.ok(plates.lines[0].configuration_details.assumptions.some(value => value.includes('substitutions enabled')));
+console.log('Hammer crafting replaces one iron hammer every 34 crafts and retains one working tool per assembler.');
+
 const steam = 'fluid:modern_industrialization:steam';
 const water = 'fluid:minecraft:water';
 const boiler = 'boiling|modern_industrialization:bronze_boiler|32000';
