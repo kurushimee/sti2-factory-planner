@@ -1,0 +1,21 @@
+# gdlint (gdtoolkit 4.x) config. Escape hatch for a single line: `# gdlint: ignore=<rule>`.
+max-line-length: 100
+# Studio declaration order places @onready before @export.
+class-definitions-order:
+  - tools
+  - classnames
+  - extends
+  - docstrings
+  - signals
+  - enums
+  - consts
+  - staticvars
+  - onreadypubvars
+  - onreadyprvvars
+  - exports
+  - pubvars
+  - prvvars
+  - others
+# Studio convention: reusable (non-game-specific) classes carry the NG_ prefix,
+# the rest of the name follows the Godot style guide (PascalCase).
+class-name: "(NG_)?([A-Z][a-z0-9]*)+"
