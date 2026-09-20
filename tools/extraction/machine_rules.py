@@ -20,6 +20,13 @@ def machine_rules(capture, upgrades):
                           hatch_capacity=machine.get("hatch_capacity", {}))
         elif machine.get("water_pump_probe"):
             record.update(status="supported", mechanic="fixed_cycle", **machine["water_pump_probe"])
+        elif machine.get("waste_collector_probe"):
+            probe = machine["waste_collector_probe"]
+            sample = next(value for value in probe["samples"] if value["animals"] == 1)
+            record.update(status="supported", mechanic="fixed_cycle", waste_collection=True,
+                          operation_ticks=sample["deliveries"][0]["tick"], output_mb=sample["deliveries"][0]["amount_mb"],
+                          energy_per_tick=sample["energy_consumed"] / probe["test_ticks"], energy_resource=sample["energy_resource"],
+                          waste_collection_evidence=probe)
         elif machine.get("replication_probe"):
             probe = machine["replication_probe"]
             record.update(status="supported", mechanic="fixed_cycle", operation_ticks=probe["deliveries"][0]["tick"],

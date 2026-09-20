@@ -135,6 +135,14 @@ try {
     assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
     console.log('The eight-hatch irradiation calculation matches Node in the browser Worker.');
   }
+  const waste = worldDataset.recipes?.find(recipe => recipe.id === 'waste_collection|extended_industrialization:electric_waste_collector');
+  if (waste) {
+    const request = {goals: [{recipe: waste.id, resource: waste.primary, rate: 2000 / 15}],
+      available_machines: ['extended_industrialization:electric_waste_collector'], external: [{resource: 'energy:eu'}]};
+    const result = await solveInBrowser(worldDataset, request);
+    assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
+    console.log('Waste collection and its retained live animal match Node in the browser Worker.');
+  }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();
     const worker = new Worker('/kernel/world-worker.js', {type: 'module'});

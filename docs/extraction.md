@@ -1,5 +1,7 @@
 # Runtime extraction evidence
 
+Waste collector probes run each installed tier with zero, one, and two cows in a temporary empty test area. Each case uses 600 actual machine ticks with continuous power and output removal. Bronze, steel, and electric collectors deliver 500, 1,000, and 2,000 mB at ticks 300 and 600. They consume 1 and 2 mB of steam or 4 EU per active tick. No animal means no output or consumption; a second animal does not increase production. The probe removes its cows and machine afterward. Planner routes preserve a live animal as startup stock and state its placement requirement. They assume full rated power and do not exploit partial-energy delivery behavior.
+
 Issue #3 covers the complete dataset and mechanics. The tools here capture evidence from the released pack; they do not yet produce a complete planner dataset.
 
 ## Reference inputs

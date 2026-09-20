@@ -28,6 +28,27 @@ def boiler_operating_points(samples):
 def utility_recipes(capture):
     recipes = []
     for machine in capture["machine_rules"]:
+        if machine.get("waste_collection"):
+            ticks = machine["operation_ticks"]
+            energy = machine["energy_per_tick"] * ticks
+            electric = machine["energy_resource"] == "energy:eu"
+            identity = "waste_collection|" + machine["id"]
+            recipes.append({"id": identity, "name": "Collect manure", "source_id": machine["id"],
+                "origin": "loaded_waste_collector_cycles", "type": "planner:waste_collection",
+                "primary": "fluid:extended_industrialization:manure",
+                "inputs": [] if electric else [{"resource": machine["energy_resource"], "amount": energy}],
+                "outputs": [{"resource": "fluid:extended_industrialization:manure", "amount": machine["output_mb"]}],
+                "configurations": [{"id": identity, "machine": machine["id"], "operations_per_second": 20 / ticks,
+                    "eu_per_operation": energy if electric else 0,
+                    "build_requirements": [{"resource": "item:" + machine["id"], "amount": 1}],
+                    "startup_inputs": [{"resource": "site:live_farm_animal", "amount": 1}],
+                    "capacity": {"operations_per_second": 20 / ticks, "ticks_per_batch": ticks,
+                        "completion_ticks": [ticks], "warmup_ticks": 0, "eu_per_operation": energy if electric else 0,
+                        "peak_eu_per_tick": machine["energy_per_tick"] if electric else 0,
+                        "average_full_load_eu_per_tick": machine["energy_per_tick"] if electric else 0},
+                    "assumptions": ["Keep one live farm animal directly above each collector, within its first three blocks of height.",
+                        "Extra animals do not increase output. Animals are retained, not consumed; acquire and place them before startup.",
+                        "Continuous power and output removal are assumed. The rated energy cost assumes a fully supplied machine."]}]})
         if machine.get("replication"):
             for resource in capture["resources"]:
                 if not resource.get("item_rules", {}).get("replicable"):
@@ -204,6 +225,8 @@ def build_dataset(capture):
                   **({"max_stack_size": entry["item_rules"]["max_stack_size"]} if entry.get("item_rules", {}).get("max_stack_size") else {})}
                  for entry in capture["resources"]]
     resources.append({"id": "energy:eu", "name": "Electricity", "kind": "energy", "unit": "EU"})
+    if any(machine.get("waste_collection") for machine in capture["machine_rules"]):
+        resources.append({"id": "site:live_farm_animal", "name": "Live farm animal above a waste collector", "kind": "site", "unit": "animals"})
     names = {entry["id"]: entry.get("name", entry["id"].split(":", 1)[-1].replace("_", " ")) for entry in resources}
     recipes = []
     unsupported = []

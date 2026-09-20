@@ -958,6 +958,64 @@ public final class PlannerProbe {
         }
     }
 
+    private static JsonObject wasteCollector(net.minecraft.world.level.block.Block block, MinecraftServer server) {
+        var level = server.overworld();
+        var position = new BlockPos(32, 100, 32);
+        level.getChunk(position);
+        if (!level.getBlockState(position).isAir()) throw new IllegalStateException("The temporary waste collector area is occupied.");
+        var animals = new java.util.ArrayList<net.minecraft.world.entity.animal.Cow>();
+        var samples = new JsonArray();
+        try {
+            for (int count = 0; count <= 2; count++) {
+                if (count > 0) {
+                    var cow = net.minecraft.world.entity.EntityType.COW.create(level);
+                    cow.setPos(position.getX() + .5, position.getY() + 1, position.getZ() + .5);
+                    cow.setNoAi(true);
+                    cow.setNoGravity(true);
+                    if (!level.addFreshEntity(cow)) throw new IllegalStateException("The controlled cow could not be added.");
+                    animals.add(cow);
+                }
+                level.setBlock(position, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                level.setBlock(position, block.defaultBlockState(), 2);
+                var machine = (net.swedz.extended_industrialization.machines.blockentity.fluidharvesting.FluidHarvestingMachineBlockEntity) level.getBlockEntity(position);
+                var electric = machine instanceof net.swedz.extended_industrialization.machines.blockentity.fluidharvesting.ElectricFluidHarvestingMachineBlockEntity;
+                var energy = electric ? (aztech.modern_industrialization.machines.components.EnergyComponent) ((net.swedz.extended_industrialization.machines.blockentity.fluidharvesting.ElectricFluidHarvestingMachineBlockEntity) machine).getEnergyComponent() : null;
+                var fluids = machine.getInventory().getFluidStacks();
+                var output = fluids.getLast();
+                long consumed = 0;
+                var deliveries = new JsonArray();
+                for (int tick = 1; tick <= 600; tick++) {
+                    if (electric) energy.insertEu(energy.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                    else fluids.getFirst().setAmount(8000);
+                    long before = electric ? energy.getEu() : fluids.getFirst().getAmount();
+                    machine.tick();
+                    consumed += before - (electric ? energy.getEu() : fluids.getFirst().getAmount());
+                    if (output.getAmount() > 0) {
+                        var delivery = new JsonObject();
+                        delivery.addProperty("tick", tick);
+                        delivery.addProperty("amount_mb", output.getAmount());
+                        deliveries.add(delivery);
+                        output.empty();
+                    }
+                }
+                var sample = new JsonObject();
+                sample.addProperty("animals", count);
+                sample.addProperty("energy_consumed", consumed);
+                sample.addProperty("energy_resource", electric ? "energy:eu" : "fluid:modern_industrialization:steam");
+                sample.add("deliveries", deliveries);
+                samples.add(sample);
+            }
+            var result = new JsonObject();
+            result.add("samples", samples);
+            result.addProperty("test_ticks", 600);
+            result.addProperty("animal_type", "minecraft:cow");
+            return result;
+        } finally {
+            for (var cow : animals) cow.discard();
+            level.setBlock(position, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private static JsonArray irradiationCycles(MachineBlockEntity prototype, MinecraftServer server) throws Exception {
         var result = new JsonArray();
@@ -1066,6 +1124,7 @@ public final class PlannerProbe {
                 }
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity replicator) record.add("replication_probe", replicator(replicator));
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.AbstractWaterPumpBlockEntity) record.add("water_pump_probe", waterPump(block, server));
+                if (id.matches("extended_industrialization:(bronze|steel|electric)_waste_collector")) record.add("waste_collector_probe", wasteCollector(block, server));
                 if (entity instanceof aztech.modern_industrialization.machines.multiblocks.HatchBlockEntity hatch) {
                     record.addProperty("role", "multiblock_part");
                     record.addProperty("hatch_type", hatch.getHatchType().id().toString());

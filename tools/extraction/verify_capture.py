@@ -146,6 +146,15 @@ def verify(runtime: dict, probes: dict) -> dict:
                 or [(sample["neighbor_mask"], sample["source_count"]) for sample in pump["neighbor_samples"]]
                 != [(0, 0), (1, 0), (3, 2), (255, 8)]):
             raise ValueError(f"The loaded {tier} water pump behavior changed.")
+    waste_collectors = {key: value["waste_collector_probe"] for key, value in machines.items() if "waste_collector_probe" in value}
+    for tier, multiplier in (("bronze", 1), ("steel", 2), ("electric", 4)):
+        probe = waste_collectors[f"extended_industrialization:{tier}_waste_collector"]
+        energy = "energy:eu" if tier == "electric" else "fluid:modern_industrialization:steam"
+        expected = [{"animals": count, "energy_consumed": 600 * multiplier if count else 0,
+                     "energy_resource": energy, "deliveries": [{"tick": tick, "amount_mb": multiplier * 500}
+                     for tick in (300, 600)] if count else []} for count in range(3)]
+        if probe["samples"] != expected or probe["test_ticks"] != 600:
+            raise ValueError(f"The loaded {tier} waste collector behavior changed.")
     if items["modern_industrialization:iron_hammer"]["max_damage"] != 1666:
         raise ValueError("The pack's iron hammer durability changed.")
     replication = machines["modern_industrialization:replicator"]["replication_probe"]
@@ -236,6 +245,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "fluid_boiler_warmup": {key: machine["diesel_heavy_water_warmup_probe"] for key, machine in machines.items()
                                 if "diesel_heavy_water_warmup_probe" in machine},
         "water_pumps": pumps,
+        "waste_collectors": waste_collectors,
         "replication": replication,
         "batch_tiers": batch_tiers,
         "recipe_generation": generation,

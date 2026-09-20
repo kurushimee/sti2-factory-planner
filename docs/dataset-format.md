@@ -14,6 +14,8 @@ All recipe amounts are per operation. Item amounts count items, StaTech fluid am
 
 ## Recipes and flows
 
+Retained site requirements can use their own resource IDs. For example, `site:live_farm_animal` is a live animal placed above a waste collector. Its configuration lists one in `startup_inputs`, so the build reports the required count without inventing a recurring animal consumption rate. Such a record describes a prerequisite the player must acquire and place; it does not create an animal or prove the site is ready.
+
 Every recipe has a unique `id`, a `primary` resource, `inputs`, `outputs`, and a `configurations` list. The primary resource must appear among its outputs. `name`, `group`, `source_id`, `type`, and `origin` help players inspect and organize the recipe.
 
 An ordinary flow is `{"resource":"ore","amount":2}`. An input may instead use `{"choices":["oak","birch"],"amount":1}`. Output flows always name one resource. Alternatives share a resource balance and may be pinned by the player. A flow's optional `returns` object maps each chosen input ID to the materials returned per unit of that input. For example, a filled bucket input may return one empty bucket. Do not also add that same return as an unconditional output.

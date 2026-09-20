@@ -11,6 +11,20 @@ const recipe = dataset.recipes.find(value => value.source_id === 'statech:modern
 assert.deepEqual(recipe.process, {duration_ticks: 200, eu_per_tick: 2, type: 'modern_industrialization:macerator'});
 assert.equal(recipe.outputs[0].amount, 6);
 const highs = await loadHighs();
+for (const [tier, amount, energy] of [['bronze', 500, 1], ['steel', 1000, 2], ['electric', 2000, 4]]) {
+  const id = `waste_collection|extended_industrialization:${tier}_waste_collector`;
+  const supply = tier === 'electric' ? 'energy:eu' : 'fluid:modern_industrialization:steam';
+  const plan = solveFactory(highs, dataset, {goals: [{recipe: id, resource: 'fluid:extended_industrialization:manure', rate: amount / 15}],
+    available_machines: [`extended_industrialization:${tier}_waste_collector`], external: [{resource: supply}]});
+  assert.equal(plan.status, 'optimal');
+  assert.equal(plan.lines.length, 1);
+  assert.equal(plan.lines[0].machines, 1);
+  assert.equal(plan.startup.incomplete.length, 0);
+  assert.equal(plan.startup.resources.find(value => value.resource === 'site:live_farm_animal').reusable_stock, 1);
+  assert.ok(Math.abs(plan.external.find(value => value.resource === supply).rate - energy * 20) < 1e-9);
+  assert.ok(Math.abs(plan.startup.resources.find(value => value.resource === 'fluid:extended_industrialization:manure').warmup_output_stock - amount) < 1e-9);
+}
+console.log('Three measured waste collector tiers retain animals as startup stock and size their energy supply.');
 for (const [machine, steam, water, rate, heat] of [
   ['large_steam_boiler', 'steam', 'fluid:minecraft:water', 2560, 4608],
   ['advanced_large_steam_boiler', 'steam', 'fluid:minecraft:water', 10240, 18432],
