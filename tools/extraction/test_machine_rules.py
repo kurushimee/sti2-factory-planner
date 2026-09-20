@@ -4,6 +4,16 @@ from machine_rules import machine_rules
 
 
 class MachineRuleTests(unittest.TestCase):
+    def test_recipe_generators_keep_their_own_structure_requirements(self):
+        siphon, pulse = machine_rules([
+            {"id": "yet_another_industrialization:dragon_egg_energy_siphon", "class": "yai.Siphon",
+             "recipe_generation_probe": [{"eu_delivered_on_completion": 102400}]},
+            {"id": "yet_another_industrialization:pulse_detonation_generator", "class": "yai.Pulse",
+             "recipe_generation_probe": [{"eu_delivered_on_completion": 544000}]}], {})
+        self.assertEqual(siphon["build_inputs"], [{"resource": "item:minecraft:dragon_egg", "amount": 1}])
+        self.assertNotIn("build_inputs", pulse)
+        self.assertEqual(pulse["mechanic"], "fixed_cycle")
+
     def test_steam_multiblocks_keep_hatch_tiers_and_do_not_gain_electric_upgrades(self):
         [rule] = machine_rules([{"id": "test:quarry", "class": "mi.SteamCraftingMultiblockBlockEntity",
                                  "base_eu": 2, "max_eu": 2, "recipe_type": "mi:quarry"}], {"mi:upgrade": {}})

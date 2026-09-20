@@ -236,8 +236,10 @@ def build_dataset(capture):
             record["process"] = {"duration_ticks": entry["duration_ticks"], "eu_per_tick": entry["eu_per_tick"], "type": entry["type"]}
             if generator and generation:
                 evidence = next((value for value in generator["generation_evidence"] if value["recipe"] == entry["source_id"]), None)
-                if not evidence or evidence["recipe_eu"] != 1 or evidence["eu_delivered_on_completion"] != generation["amount"]:
-                    record["unsupported"] = "This generation recipe has no matching completed-craft energy probe."
+                if (not evidence or evidence["recipe_eu"] != 1 or evidence["eu_delivered_on_completion"] != generation["amount"]
+                        or evidence.get("cycle", {}).get("completion_tick") != entry["duration_ticks"]
+                        or evidence.get("cycle", {}).get("generated_eu") != generation["amount"]):
+                    record["unsupported"] = "This generation recipe has no matching loaded crafting-cycle probe."
                 record["process"]["eu_per_tick"] = 0
                 record["name"] = names.get("item:" + generator["id"], generator["id"])
                 record["group"] = "Power"

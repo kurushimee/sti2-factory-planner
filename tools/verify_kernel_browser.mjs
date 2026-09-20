@@ -107,6 +107,15 @@ try {
     assert.deepEqual(boiler.result, solveFactory(await loadHighs(), worldDataset, boilerRequest));
     console.log('The full-catalog high-pressure boiler calculation matches Node in the browser Worker.');
   }
+  const pulse = worldDataset.recipes?.find(recipe => recipe.source_id === 'yet_another_industrialization:pulse_detonation_generator/nuke/64');
+  if (pulse?.primary === 'energy:eu') {
+    const request = {goals: [{recipe: pulse.id, resource: 'energy:eu', rate: 40960000}],
+      routes: {'energy:eu': pulse.id}, available_machines: ['yet_another_industrialization:pulse_detonation_generator'],
+      external: pulse.inputs.map(flow => ({resource: flow.resource}))};
+    const result = await solveInBrowser(worldDataset, request);
+    assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
+    console.log('The 24.576-billion-EU pulse recipe matches Node in the browser Worker.');
+  }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();
     const worker = new Worker('/kernel/world-worker.js', {type: 'module'});

@@ -31899,7 +31899,19 @@
       "accepted_with_empty_hatch": true,
       "eu_delivered_on_completion": 102400,
       "internal_progress_eu": 1,
-      "accepted_with_full_hatch": false
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 100,
+        "generated_eu": 102400,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "yet_another_industrialization:impure_dragon_breath",
+            "amount": 1250
+          }
+        ]
+      }
     },
     {
       "recipe": "statech:yet_another_industrialization/dragon_breath_nutrient",
@@ -31908,7 +31920,189 @@
       "accepted_with_empty_hatch": true,
       "eu_delivered_on_completion": 204800,
       "internal_progress_eu": 1,
-      "accepted_with_full_hatch": false
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 100,
+        "generated_eu": 204800,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "yet_another_industrialization:impure_dragon_breath",
+            "amount": 2500
+          }
+        ]
+      }
+    }
+  ],
+  "pulse_detonation": [
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/industrial_tnt/16",
+      "duration_ticks": 600,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 544000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 600,
+        "generated_eu": 544000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:steam",
+            "amount": 1250
+          }
+        ]
+      }
+    },
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/industrial_tnt/32",
+      "duration_ticks": 800,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 1096000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 800,
+        "generated_eu": 1096000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:steam",
+            "amount": 4000
+          }
+        ]
+      }
+    },
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/industrial_tnt/64",
+      "duration_ticks": 900,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 2320000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 900,
+        "generated_eu": 2320000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:steam",
+            "amount": 6000
+          }
+        ]
+      }
+    },
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/nuke/64",
+      "duration_ticks": 12000,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 24576000000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 12000,
+        "generated_eu": 24576000000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:helium_3",
+            "amount": 2500
+          }
+        ]
+      }
+    },
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/nuke/32",
+      "duration_ticks": 3600,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 4096000000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 3600,
+        "generated_eu": 4096000000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:deuterium",
+            "amount": 20
+          }
+        ]
+      }
+    },
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/nuke/16",
+      "duration_ticks": 2400,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 596000000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 2400,
+        "generated_eu": 596000000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:steam",
+            "amount": 10000
+          }
+        ]
+      }
+    },
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/nuke/8",
+      "duration_ticks": 1200,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 288000000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 1200,
+        "generated_eu": 288000000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:steam",
+            "amount": 10000
+          }
+        ]
+      }
+    },
+    {
+      "recipe": "yet_another_industrialization:pulse_detonation_generator/industrial_tnt/8",
+      "duration_ticks": 500,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 160000,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false,
+      "cycle": {
+        "completion_tick": 500,
+        "generated_eu": 160000,
+        "remaining_items": 0,
+        "remaining_fluid_mb": 0,
+        "fluid_outputs": [
+          {
+            "fluid": "modern_industrialization:steam",
+            "amount": 350
+          }
+        ]
+      }
     }
   ],
   "crafting_rules_count": 7301,

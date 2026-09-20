@@ -129,6 +129,19 @@ def verify(runtime: dict, probes: dict) -> dict:
             or any(value["duration_ticks"] != 100 or value["recipe_eu"] != 1 or value["internal_progress_eu"] != 1
                    or not value["accepted_with_empty_hatch"] or value["accepted_with_full_hatch"] for value in generation)):
         raise ValueError("The loaded dragon-egg siphon burst generation changed.")
+    pulse = machines["yet_another_industrialization:pulse_detonation_generator"]["recipe_generation_probe"]
+    if len(pulse) != 8:
+        raise ValueError("The loaded pulse detonation recipe count changed.")
+    recipe_index = {entry["id"]: entry["recipe"] for entry in recipes if entry["origin"] == "recipe_manager"}
+    for value in [*generation, *pulse]:
+        raw = recipe_index[value["recipe"]]
+        amount = next(condition["amount"] for condition in raw["process_conditions"] if condition["type"] == "yet_another_industrialization:energy_generation")
+        cycle = value["cycle"]
+        if (value["eu_delivered_on_completion"] != amount or cycle["generated_eu"] != amount
+                or cycle["completion_tick"] != raw["duration"] or cycle["remaining_items"] != 0 or cycle["remaining_fluid_mb"] != 0
+                or cycle["fluid_outputs"] != raw.get("fluid_outputs", [])
+                or not value["accepted_with_empty_hatch"] or value["accepted_with_full_hatch"]):
+            raise ValueError(f"The actual generator cycle differs from its recipe: {value['recipe']}.")
     for key, limits, discounts in (("extended_industrialization:large_electric_furnace", [16, 32, 64], [0.75] * 3),
                                    ("industrialization_overdrive:pyrolyse_oven", [1, 4, 8], [0.9, 0.8, 0.75])):
         if ([tier["batch_limit"] for tier in batch_tiers[key]] != limits
@@ -171,6 +184,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "replication": replication,
         "batch_tiers": batch_tiers,
         "recipe_generation": generation,
+        "pulse_detonation": pulse,
         "crafting_rules_count": len(crafting["recipes"]),
         "crafting_samples_unavailable": sum("unavailable" in entry for entry in crafting["recipes"]),
         "crafting_samples": [crafting_index[key] for key in ("minecraft:cake", "minecraft:torch", "modern_industrialization:iron_plate_from_hammer")],

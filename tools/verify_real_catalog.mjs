@@ -34,6 +34,30 @@ for (const [machine, steam, water, rate, heat] of [
   }
 }
 console.log('All four large boilers retain their hot idle losses with coal/water and diesel/heavy-water routes at half load.');
+const pulseRecipes = dataset.recipes.filter(recipe => recipe.type === 'yet_another_industrialization:pulse_detonation_generator');
+assert.equal(pulseRecipes.length, 8);
+for (const recipe of pulseRecipes) {
+  const output = recipe.outputs.find(flow => flow.resource === 'energy:eu');
+  const rate = output.amount * 20 / recipe.process.duration_ticks;
+  const planned = solveFactory(highs, dataset, {goals: [{recipe: recipe.id, resource: 'energy:eu', rate}],
+    routes: {'energy:eu': recipe.id}, available_machines: ['yet_another_industrialization:pulse_detonation_generator'],
+    external: recipe.inputs.map(flow => ({resource: flow.resource}))});
+  assert.equal(planned.status, 'optimal');
+  assert.equal(planned.lines.length, 1);
+  assert.equal(planned.lines[0].machines, 1);
+  assert.equal(planned.power.consumption_eu_per_tick, 0);
+  assert.ok(Math.abs(planned.power.gross_generation_eu_per_tick - rate / 20) < 1e-6);
+  for (const flow of recipe.inputs) {
+    assert.ok(Math.abs(planned.external.find(value => value.resource === flow.resource).rate - flow.amount * 20 / recipe.process.duration_ticks) < 1e-7);
+  }
+  for (const flow of recipe.outputs) {
+    assert.ok(Math.abs(planned.lines[0].outputs.find(value => value.resource === flow.resource).rate - flow.amount * 20 / recipe.process.duration_ticks) < 1e-6);
+  }
+  assert.equal(planned.lines[0].configuration_details.conditions.find(value => value.type === 'planner:energy_output_buffer').capacity_eu, output.amount);
+  assert.equal(planned.startup.incomplete.length, 0);
+  assert.equal(planned.startup.build_requirements.some(flow => flow.resource === 'item:minecraft:dragon_egg'), false);
+}
+console.log('All eight pulse detonation routes preserve one-machine capacity, fuel demand, coproducts, and burst-buffer requirements.');
 const before = performance.now();
 const result = solveFactory(highs, dataset, {
   goals: [{recipe: recipe.id, resource: 'item:modern_industrialization:copper_dust', rate: 12}],

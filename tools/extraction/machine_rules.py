@@ -25,8 +25,9 @@ def machine_rules(capture, upgrades):
                           replication=True, uu_matter_per_item=probe["uu_matter_consumed"] / sum(entry["items"] for entry in probe["deliveries"]))
         elif machine.get("recipe_generation_probe"):
             record.update(status="supported", mechanic="fixed_cycle", energy_generation=True,
-                          generation_evidence=machine["recipe_generation_probe"],
-                          build_inputs=[{"resource": "item:minecraft:dragon_egg", "amount": 1}])
+                          generation_evidence=machine["recipe_generation_probe"])
+            if machine["id"] == "yet_another_industrialization:dragon_egg_energy_siphon":
+                record["build_inputs"] = [{"resource": "item:minecraft:dragon_egg", "amount": 1}]
         elif family in {"BoilerMachineBlockEntity", "SteamBoilerMultiblockBlockEntity"}:
             heater = machine["component_fields"]["aztech.modern_industrialization.machines.components.SteamHeaterComponent"]
             burner = machine["component_fields"]["aztech.modern_industrialization.machines.components.FuelBurningComponent"]

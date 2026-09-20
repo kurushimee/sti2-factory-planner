@@ -639,11 +639,59 @@ public final class PlannerProbe {
             record.addProperty("internal_progress_eu", behavior.consumeEu(1, aztech.modern_industrialization.util.Simulation.ACT));
             energy.insertEu(energy.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
             record.addProperty("accepted_with_full_hatch", recipe.conditionsMatch(() -> machine));
+            record.add("cycle", generationCycle(machine, server, holder));
             records.add(record);
         }
         generator.getEnergyComponents().clear();
         active.set(crafter, null);
         return records;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static JsonObject generationCycle(MachineBlockEntity prototype, MinecraftServer server,
+            net.minecraft.world.item.crafting.RecipeHolder<?> holder) {
+        var machine = (aztech.modern_industrialization.machines.blockentities.multiblocks.AbstractCraftingMultiblockBlockEntity)
+                ((EntityBlock) prototype.getBlockState().getBlock()).newBlockEntity(BlockPos.ZERO, prototype.getBlockState());
+        machine.setLevel(server.overworld());
+        var recipe = (aztech.modern_industrialization.machines.recipe.MachineRecipe) holder.value();
+        var inventory = machine.getMultiblockInventoryComponent();
+        for (var input : recipe.itemInputs) {
+            var slot = aztech.modern_industrialization.inventory.ConfigurableItemStack.standardInputSlot();
+            slot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(input.ingredient().getItems()[0]));
+            slot.setAmount(input.amount());
+            inventory.getItemInputs().add(slot);
+        }
+        for (var input : recipe.fluidInputs) {
+            var slot = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardInputSlot(1000000000);
+            slot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(input.fluid().getStacks()[0].getFluid()));
+            slot.setAmount(input.amount());
+            inventory.getFluidInputs().add(slot);
+        }
+        for (var output : recipe.itemOutputs) inventory.getItemOutputs().add(aztech.modern_industrialization.inventory.ConfigurableItemStack.standardOutputSlot());
+        for (var output : recipe.fluidOutputs) inventory.getFluidOutputs().add(aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardOutputSlot(1000000000));
+        var energy = new aztech.modern_industrialization.machines.components.EnergyComponent(machine, 1000000000000L);
+        ((java.util.List<aztech.modern_industrialization.machines.components.EnergyComponent>)
+                ((aztech.modern_industrialization.api.machine.holder.EnergyListComponentHolder) machine).getEnergyComponents()).add(energy);
+        int ticks = 0;
+        while (energy.getEu() == 0 && ticks <= recipe.duration + 1) {
+            machine.getCrafterComponent().tickRecipe();
+            ticks++;
+        }
+        if (energy.getEu() == 0) throw new IllegalStateException("The actual generator cycle did not complete: " + holder.id());
+        var result = new JsonObject();
+        result.addProperty("completion_tick", ticks);
+        result.addProperty("generated_eu", energy.getEu());
+        result.addProperty("remaining_items", inventory.getItemInputs().stream().mapToLong(slot -> slot.getAmount()).sum());
+        result.addProperty("remaining_fluid_mb", inventory.getFluidInputs().stream().mapToLong(slot -> slot.getAmount()).sum());
+        var outputs = new JsonArray();
+        for (var slot : inventory.getFluidOutputs()) {
+            var output = new JsonObject();
+            output.addProperty("fluid", BuiltInRegistries.FLUID.getKey(slot.getResource().getFluid()).toString());
+            output.addProperty("amount", slot.getAmount());
+            outputs.add(output);
+        }
+        result.add("fluid_outputs", outputs);
+        return result;
     }
 
     private static JsonObject replicator(aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity machine) {
@@ -746,7 +794,10 @@ public final class PlannerProbe {
                 var record = new JsonObject();
                 record.addProperty("id", id);
                 record.addProperty("class", entity.getClass().getName());
-                if (id.equals("yet_another_industrialization:dragon_egg_energy_siphon")) record.add("recipe_generation_probe", recipeGeneration(machine, server));
+                if (id.equals("yet_another_industrialization:dragon_egg_energy_siphon")
+                        || id.equals("yet_another_industrialization:pulse_detonation_generator")) {
+                    record.add("recipe_generation_probe", recipeGeneration(machine, server));
+                }
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity replicator) record.add("replication_probe", replicator(replicator));
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.AbstractWaterPumpBlockEntity) record.add("water_pump_probe", waterPump(block, server));
                 if (entity instanceof aztech.modern_industrialization.machines.multiblocks.HatchBlockEntity hatch) {
