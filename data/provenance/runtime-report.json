@@ -661,6 +661,40 @@
     "fe_per_ae": 2.0,
     "ae_usage_multiplier": 1.0
   },
+  "array_rules": {
+    "extended_industrialization:processing_array": {
+      "shape_capacities": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "upgrades": true
+    },
+    "industrialization_overdrive:multi_processing_array": {
+      "shape_capacities": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "upgrades": true
+    }
+  },
+  "blast_furnace_coils": [
+    {
+      "coil": "modern_industrialization:cupronickel_coil",
+      "recipe_eu_limit": 32
+    },
+    {
+      "coil": "modern_industrialization:kanthal_coil",
+      "recipe_eu_limit": 128
+    },
+    {
+      "coil": "modern_industrialization:tungstensteel_coil",
+      "recipe_eu_limit": 1024
+    }
+  ],
   "loaded_mods": [
     {
       "id": "c2me_fixes_worldgen_threading_issues",

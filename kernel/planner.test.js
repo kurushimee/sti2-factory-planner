@@ -154,3 +154,26 @@ test('mixed generation and idle reserve include support power without burning re
   close(result.power.installed_generation_eu_per_tick, 15);
   assert.equal(line(result, 'generator_b').machines, 2);
 });
+test('capacity goals preserve different loadouts and grow shared upstream production', () => {
+  const data = dataset(['ore', 'part'], [{...recipe('make', 'part', [flow('ore', 2)], [flow('part', 3)]), configurations: [
+    {id: 'slow', machine: 'press', operations_per_second: 1},
+    {id: 'fast', machine: 'press', operations_per_second: 4},
+  ]}]);
+  const result = solveFactory(highs, data, {goals: [
+    {kind: 'capacity', recipe: 'make', configuration: 'slow', machines: 2, resource: 'part'},
+    {kind: 'capacity', recipe: 'make', configuration: 'fast', machines: 1, resource: 'part'},
+  ], external: [{resource: 'ore'}]});
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.lines.find(line => line.configuration === 'slow').machines, 2);
+  assert.equal(result.lines.find(line => line.configuration === 'fast').machines, 1);
+  close(supply(result, 'ore'), 12);
+  close(result.balances.find(balance => balance.resource === 'part').demand, 18);
+});
+
+test('a selected recipe goal still runs when another route supplies its output as a byproduct', () => {
+  const data = dataset(['ore', 'a', 'b'], [recipe('main', 'a', [flow('ore', 1)], [flow('a', 1), flow('b', 10)]),
+    recipe('selected', 'b', [flow('ore', 1)], [flow('b', 1)])]);
+  const result = solveFactory(highs, data, {goals: [{resource: 'a', rate: 1}, {resource: 'b', recipe: 'selected', rate: 1}], external: [{resource: 'ore'}]});
+  assert.equal(result.status, 'optimal');
+  close(line(result, 'selected').operations_per_second, 1);
+});

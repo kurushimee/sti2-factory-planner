@@ -1,5 +1,6 @@
 import {allocateFlows} from './flows.js';
 import {resolveGoals} from './goals.js';
+import {startupRequirements} from './startup.js';
 
 const ENERGY = 'energy:eu';
 
@@ -77,7 +78,8 @@ export function compileFactory(dataset, request, routeChoices = {}) {
     let hasConfiguration = false;
     for (const configuration of recipe.configurations) {
       if (request.disabled_machines?.includes(configuration.machine)) continue;
-      if (own(request.configurations, recipe.id) && own(request.configurations, recipe.id) !== configuration.id) continue;
+      const configurations = own(request.configurations, recipe.id);
+      if (configurations && !(Array.isArray(configurations) ? configurations : [configurations]).includes(configuration.id)) continue;
       const capacity = nonnegative(configuration.operations_per_second, 'Machine capacity');
       if (!capacity) throw new Error(`Zero capacity in ${configuration.id}.`);
       const energy = nonnegative(configuration.eu_per_operation ?? 0, 'Operation energy');
@@ -94,7 +96,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
       bounds.push(`${operation} >= 0`, `${machine} >= 0`);
       integers.push(machine);
       const inputTerms = [];
-      for (const [slot, flow] of recipe.inputs.entries()) {
+      const allInputs = [...recipe.inputs, ...(configuration.inputs ?? [])];
+      for (const [slot, flow] of allInputs.entries()) {
+        nonnegative(flow.amount, 'Configured input amount');
+        for (const resource of flow.choices ?? [flow.resource]) if (!resources.has(resource)) throw new Error(`Unknown configured input ${resource}.`);
         const selected = own(request.ingredients, `${recipe.id}#${slot}`);
         if (selected && !(flow.choices ?? [flow.resource]).includes(selected)) throw new Error(`The pinned ingredient is unavailable in ${recipe.id}, slot ${slot + 1}.`);
         const choices = selected ? [selected] : flow.choices ?? [flow.resource];
@@ -143,6 +148,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   }
   for (const [resource, recipeId] of Object.entries(request.routes ?? {})) {
     if (!routeCandidates.get(resource)?.includes(recipeId)) throw new Error(`Pinned route is unavailable: ${recipeId}.`);
+  }
+  for (const [recipe, minimum] of Object.entries(request.recipe_minimum_rates ?? {})) {
+    const terms = new Map(lines.filter(line => line.recipe.id === recipe).map(line => [line.operation, 1]));
+    constraints.push(`recipe_goal_${constraints.length}: ${expression(terms)} >= ${nonnegative(minimum, 'Recipe goal operation rate')}`);
   }
   const supplies = [];
   for (const supply of request.external ?? []) {
@@ -234,7 +243,7 @@ function decode(model, solution) {
     external_eu_per_tick: externalPower, operating_margin_eu_per_tick: gross + externalPower - consumption - demand,
     installed_margin_eu_per_tick: generationCapacity + firmExternal - consumption - demand, reserve_fraction: model.reserve,
     reserve_basis: 'Installed generation capacity. Standby fuel and bootstrap stocks are separate requirements.'};
-  return {lines, balances, power, steady_state_only: true, external, ...allocateFlows(lines, external, model.demands)};
+  return {lines, balances, power, startup: startupRequirements(lines), steady_state_only: true, external, ...allocateFlows(lines, external, model.demands)};
 }
 
 export function solveFactory(highs, dataset, request) {

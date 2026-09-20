@@ -55,3 +55,18 @@ test('molecular assemblers charge the full final tick and enforce five card slot
   assert.equal(five.eu_per_operation, 100);
   assert.throws(() => machineCapacity({}, machine, {upgrade_count: 6}), /five/);
 });
+test('arrays use their own power limit and reject incompatible machines and shapes', () => {
+  const machine = {mechanic: 'mi_array', base_eu: 8, max_eu: 32, energy_multiplier: 1,
+    shape_capacities: [8, 16, 32, 64], eligible_machines: ['mi:macerator'],
+    upgrade_limit: 64, upgrades: ['mi:turbo']};
+  const setup = {contained_machine: 'mi:macerator', contained_count: 16, shape: 1,
+    upgrade: {id: 'mi:turbo', extra_max_eu: 64}, upgrade_count: 4};
+  const recipe = {duration_ticks: 200, eu_per_tick: 2};
+  const result = machineCapacity(recipe, machine, setup);
+  assert.equal(result.ticks_per_batch, 9);
+  assert.equal(result.energy_per_batch, 6400);
+  assert.equal(result.eu_per_operation, 400);
+  assert.equal(result.peak_eu_per_tick, 768);
+  assert.throws(() => machineCapacity(recipe, machine, {...setup, shape: 0}), /shape/);
+  assert.throws(() => machineCapacity(recipe, machine, {...setup, contained_machine: 'mi:batching_replacement'}), /cannot be placed/);
+});

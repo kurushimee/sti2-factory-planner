@@ -5,6 +5,7 @@ from collections import Counter
 import json
 import hashlib
 from pathlib import Path
+from machine_rules import machine_rules
 
 
 class Unsupported(ValueError):
@@ -144,6 +145,7 @@ def normalize(runtime, probes):
             "resources": sorted(resources, key=lambda value: value["id"]),
             "recipes": sorted(recipes, key=lambda value: value["id"]),
             "machines": sorted(probes["machines"], key=lambda value: value["id"]),
+            "machine_rules": machine_rules(probes["machines"], runtime["data_maps"]["modern_industrialization:machine_upgrades"]),
             "data_maps": runtime["data_maps"], "loaded_mods": probes["loaded_mods"],
             "power_units": probes.get("power_units", {}),
             "coverage": [{"type": key[0], "status": key[1], "count": count}

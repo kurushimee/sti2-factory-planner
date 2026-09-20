@@ -25,3 +25,14 @@ test('conflicting goal routes and unavailable capacity setups fail explicitly', 
   assert.throws(() => resolveGoals(dataset, {goals: [{kind: 'capacity', recipe: 'cut', resource: 'plate', configuration: 'absent', machines: 1}]}), /unavailable/);
   assert.throws(() => resolveGoals(dataset, {goals: [{kind: 'quantity', resource: 'plate', rate: 0, quantity: 20}]}), /positive/);
 });
+test('goal selections preserve prototype-like resource and recipe names', () => {
+  const data = {recipes: [{id: '__proto__', primary: '__proto__', outputs: [{resource: '__proto__', amount: 1}], configurations: [{id: 'setup', operations_per_second: 1}]}]};
+  const result = resolveGoals(data, {goals: [{kind: 'capacity', recipe: '__proto__', resource: '__proto__', configuration: 'setup', machines: 1}]});
+  assert.equal(result.request.routes.__proto__, '__proto__');
+  assert.equal(result.request.configurations.__proto__, 'setup');
+});
+test('independent goals for coproducts share the same recipe operations', () => {
+  const data = {recipes: [{id: 'separate', primary: 'a', outputs: [{resource: 'a', amount: 2}, {resource: 'b', amount: 3}], configurations: []}]};
+  const result = resolveGoals(data, {goals: [{recipe: 'separate', resource: 'a', rate: 4}, {recipe: 'separate', resource: 'b', rate: 6}]});
+  assert.equal(result.request.recipe_minimum_rates.separate, 2);
+});

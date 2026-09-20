@@ -25,6 +25,15 @@ function ceilRatio(numerator, denominator) {
 
 export function machineCapacity(recipe, machine, setup = {}) {
   if (machine.mechanic === 'ae_molecular_assembler') return molecularAssemblerCapacity(machine, setup);
+  if (machine.mechanic === 'mi_array') {
+    const count = integer(setup.contained_count, 'Contained machine count', 1);
+    const shape = integer(setup.shape ?? 0, 'Array shape');
+    const limit = machine.shape_capacities?.[shape];
+    if (!limit || count > limit) throw new Error('The contained machines exceed this array shape.');
+    if (!machine.eligible_machines?.includes(setup.contained_machine)) throw new Error('This machine cannot be placed in the selected array.');
+    if (setup.batch !== undefined && setup.batch > count) throw new Error('The array batch exceeds its contained machine count.');
+    return machineCapacity(recipe, {...machine, mechanic: 'mi_batch', batch_limit: count}, {...setup, batch: setup.batch ?? count});
+  }
   const duration = integer(recipe.duration_ticks, 'Recipe duration', 1);
   const recipeEu = integer(recipe.eu_per_tick, 'Recipe EU/t', 1);
   const total = integer(duration * recipeEu, 'Recipe energy', 1);

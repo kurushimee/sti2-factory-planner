@@ -314,6 +314,26 @@ public final class PlannerProbe {
                 }
                 record.add("components", components);
                 record.add("component_fields", componentFields);
+                if (id.equals("extended_industrialization:processing_array") || id.equals("industrialization_overdrive:multi_processing_array")) {
+                    var capacityMethod = entity.getClass().getDeclaredMethod("getMachineStackSize", int.class);
+                    capacityMethod.setAccessible(true);
+                    var capacities = new JsonArray();
+                    for (int index = 0; index < shapeRecords.size(); index++) capacities.add((Integer) capacityMethod.invoke(entity, index));
+                    record.add("array_shape_capacities", capacities);
+                    record.addProperty("array_allows_upgrades", id.equals("extended_industrialization:processing_array")
+                            ? net.swedz.extended_industrialization.EI.config().allowUpgradesInProcessingArray()
+                            : dev.wp.industrialization_overdrive.IO.config().allowUpgradesInMultiProcessingArray());
+                }
+                if (entity instanceof aztech.modern_industrialization.machines.blockentities.multiblocks.ElectricBlastFurnaceBlockEntity) {
+                    var tiers = new JsonArray();
+                    for (var tier : aztech.modern_industrialization.machines.blockentities.multiblocks.ElectricBlastFurnaceBlockEntity.tiers) {
+                        var value = new JsonObject();
+                        value.addProperty("coil", tier.coilBlockId().toString());
+                        value.addProperty("recipe_eu_limit", tier.maxBaseEu());
+                        tiers.add(value);
+                    }
+                    record.add("coil_tiers", tiers);
+                }
                 record.addProperty("nbt", entity.saveWithFullMetadata(server.registryAccess()).toString());
                 machines.add(record);
             } catch (Exception error) {

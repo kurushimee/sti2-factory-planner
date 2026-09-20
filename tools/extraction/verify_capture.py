@@ -77,6 +77,13 @@ def verify(runtime: dict, probes: dict) -> dict:
         raise ValueError("The pack's processing-array replication blacklist changed.")
     if probes["power_units"] != {"fe_per_eu": 10, "fe_per_ae": 2.0, "ae_usage_multiplier": 1.0}:
         raise ValueError("The loaded power conversions changed.")
+    arrays = {key: {"shape_capacities": machines[key]["array_shape_capacities"], "upgrades": machines[key]["array_allows_upgrades"]}
+              for key in ("extended_industrialization:processing_array", "industrialization_overdrive:multi_processing_array")}
+    if any(value != {"shape_capacities": [8, 16, 32, 64], "upgrades": True} for value in arrays.values()):
+        raise ValueError("The loaded array configuration changed.")
+    coil_tiers = machines["modern_industrialization:electric_blast_furnace"]["coil_tiers"]
+    if [tier["recipe_eu_limit"] for tier in coil_tiers] != [32, 128, 1024]:
+        raise ValueError("The loaded blast furnace coil limits changed.")
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -93,6 +100,8 @@ def verify(runtime: dict, probes: dict) -> dict:
         "item_rules_count": len(items),
         "resolved_custom_ingredients": len(ingredient_rules["resolved"]),
         "power_units": probes["power_units"],
+        "array_rules": arrays,
+        "blast_furnace_coils": coil_tiers,
         "loaded_mods": probes["loaded_mods"],
         "extraction_failures": 0,
         "normalized_dataset_complete": False,
