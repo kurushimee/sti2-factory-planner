@@ -179,6 +179,9 @@ func _request_preview() -> void:
 		return
 	var machine: Dictionary = %GoalMachine.get_item_metadata(%GoalMachine.selected)
 	_selection = {"recipe": _recipe.id, "revision": _revision}
+	if %GoalKind.selected == 2:
+		_selection.quantity = %GoalQuantity.text.strip_edges()
+		_selection.rate = %GoalRate.value
 	if _recipe.has("process"):
 		var upgrade: Dictionary = %GoalUpgrade.get_item_metadata(%GoalUpgrade.selected)
 		var setup: Dictionary = {"upgrade_count": int(%GoalUpgradeCount.value) if !upgrade.is_empty() else 0,
@@ -206,10 +209,7 @@ func show_preview(result: Dictionary) -> void:
 		text += "%s: %s /s%s\n" % [_resource_name(output.resource), String.num(output.rate_per_machine * count, 4), " per machine" if %GoalKind.selected != 1 else ""]
 	text += "%s operations/s per machine · %s EU per operation\n" % [String.num(configuration.operations_per_second, 4), String.num(configuration.get("eu_per_operation", 0), 3)]
 	if %GoalKind.selected == 2:
-		if !%GoalQuantity.text.is_valid_float() || float(%GoalQuantity.text) <= 0:
-			show_error("Enter a positive production quantity.")
-			return
-		text += "Production time after startup: %s seconds.\n" % String.num(float(%GoalQuantity.text) / %GoalRate.value, 2)
+		text += "Production time after startup: %s.\n" % result.production_time.time_display
 	text += "Capacity assumes continuous ingredients. The connected plan supplies the remaining demand."
 	%GoalPreview.text = text
 	get_ok_button().disabled = false
@@ -232,6 +232,6 @@ func _apply() -> void:
 	else:
 		goal.rate = %GoalRate.value
 		if kind == "quantity":
-			goal.quantity = float(%GoalQuantity.text)
+			goal.quantity = %GoalQuantity.text.strip_edges()
 	_selection.configuration = _preview.configuration.id
 	goal_changed.emit(_goal_index, goal, _selection, %GoalPin.button_pressed || kind == "capacity")

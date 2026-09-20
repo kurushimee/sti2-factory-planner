@@ -1,5 +1,6 @@
 import {compileConfiguration} from './configuration.js';
 import {configureRecipe} from './catalog.js';
+import {productionTime} from './quantity.js';
 
 export function previewConfiguration(dataset, request, selection) {
   const recipe = dataset.recipes.find(value => value.id === selection.recipe);
@@ -21,6 +22,8 @@ export function previewConfiguration(dataset, request, selection) {
     configuration = configured.configurations.find(value => value.id === selection.configuration);
   }
   if (!configuration) throw new Error('This configuration is not available with the current unlocks.');
-  return {recipe: recipe.id, revision: selection.revision ?? 0, configuration, outputs: recipe.outputs.map(flow => ({resource: flow.resource,
+  return {recipe: recipe.id, revision: selection.revision ?? 0, configuration,
+    ...(selection.quantity !== undefined ? {production_time: productionTime(selection.quantity, selection.rate)} : {}),
+    outputs: recipe.outputs.map(flow => ({resource: flow.resource,
     rate_per_machine: flow.amount * configuration.operations_per_second}))};
 }

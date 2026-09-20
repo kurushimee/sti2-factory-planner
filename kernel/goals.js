@@ -1,3 +1,5 @@
+import {productionTime} from './quantity.js';
+
 function positive(value, name) {
   if (!Number.isFinite(value) || value <= 0 || value > Number.MAX_SAFE_INTEGER) throw new Error(`${name} must be positive and within the supported numeric range.`);
   return value;
@@ -46,9 +48,7 @@ export function resolveGoals(dataset, request) {
     }
     const target = {index, resource: goal.resource, kind, rate};
     if (kind === 'quantity') {
-      target.quantity = positive(goal.quantity, 'Goal quantity');
-      target.steady_production_seconds = goal.quantity / rate;
-      target.time_basis = 'After startup, at the requested sustained output rate.';
+      Object.assign(target, productionTime(goal.quantity, rate));
     }
     targets.push(target);
     return {...goal, rate};

@@ -99,7 +99,7 @@ static func check_plan(value: Variant) -> String:
 				return "A capacity goal needs a recipe, configuration, and whole-machine count."
 		elif !_positive(goal.get("rate")):
 			return "The goal rate must be positive."
-		if kind == "quantity" && !_positive(goal.get("quantity")):
+		if kind == "quantity" && !_quantity(goal.get("quantity")):
 			return "The production quantity must be positive."
 		if !value.dataset.resources.any(func(resource: Dictionary) -> bool: return resource.id == goal.resource):
 			return "The plan requests an unknown resource: %s" % goal.resource
@@ -119,6 +119,23 @@ static func check_plan(value: Variant) -> String:
 
 static func _positive(value: Variant) -> bool:
 	return (value is float || value is int) && is_finite(float(value)) && value > 0 && value <= 9007199254740991.0
+
+
+static func _quantity(value: Variant) -> bool:
+	if !(value is String):
+		return _positive(value)
+	if value.length() > 2000:
+		return false
+	var expression := RegEx.new()
+	expression.compile("^\\+?(\\d+)(?:\\.(\\d*))?(?:[eE]([+-]?\\d+))?$")
+	var matched := expression.search(value.strip_edges())
+	if !matched:
+		return false
+	var digits := matched.get_string(1) + matched.get_string(2)
+	var exponent := matched.get_string(3)
+	if digits.length() > 1000 || exponent.length() > 5 || digits.replace("0", "").is_empty():
+		return false
+	return absi(exponent.to_int() - matched.get_string(2).length()) <= 1000
 
 
 static func _nonnegative(value: Variant) -> bool:

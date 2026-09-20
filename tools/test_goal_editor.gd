@@ -51,6 +51,28 @@ func _run() -> void:
 	assert(workspace._request.goals.size() == 1)
 	assert(workspace._last_result.targets[0].steady_production_seconds == 600)
 	assert(workspace._positions == positions)
+	dialog.open_goal(workspace._recipes.assemble, workspace._dataset, workspace._request)
+	dialog.get_node("%GoalQuantity").text = "1000000000000000000000000000001"
+	dialog._changed()
+	await workspace.computation.completed
+	await process_frame
+	assert(!dialog.get_ok_button().disabled)
+	assert("Approximately" in dialog.get_node("%GoalPreview").text)
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.2).timeout
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/large-quantity.png")
+	dialog.confirmed.emit()
+	dialog.hide()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace._request.goals[0].quantity == "1000000000000000000000000000001")
+	assert(workspace._last_result.targets[0].completion_ticks_ceil == "10000000000000000000000000000010")
+	assert(PlannerDatasetValidation.check_plan(workspace._snapshot()).is_empty())
+	workspace._undo_action()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace._request.goals[0].quantity == "1200")
 	workspace._undo_action()
 	await workspace.computation.completed
 	await process_frame

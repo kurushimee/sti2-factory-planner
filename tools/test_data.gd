@@ -30,6 +30,10 @@ func _init() -> void:
 	plan.positions.test = [0, "wrong"]
 	assert(!PlannerDatasetValidation.check_plan(plan).is_empty())
 	plan.positions.clear()
+	plan.request.goals[0].quantity = "1000000000000000000000000000001"
+	assert(PlannerDatasetValidation.check_plan(plan).is_empty())
+	plan.request.goals[0].quantity = "1e1001"
+	assert(!PlannerDatasetValidation.check_plan(plan).is_empty())
 	plan.dataset_identity = "different"
 	assert(!PlannerDatasetValidation.check_plan(plan).is_empty())
 	print("Dataset and plan validation checks passed.")
