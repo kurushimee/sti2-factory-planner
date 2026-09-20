@@ -32,7 +32,7 @@ Capacity goals can preserve several loadouts for the same recipe. Each requested
 
 ## Runtime and numeric behavior
 
-`kernel/boiler.js` follows the loaded bronze and steel boiler heater and fuel-buffer tick order. Its cold-start output segments match direct calls to the actual loaded components with continuous coal and water supply. The bronze boiler first reaches full output on tick 3,906; the steel boiler does so on tick 2,417. The probe drains steam each tick so backpressure does not affect these measurements. These schedules still need integration into factory startup and generation planning.
+`kernel/boiler.js` follows the loaded bronze and steel boiler heater and fuel-buffer tick order. Its cold-start output segments match direct calls to the actual loaded components with continuous coal and water supply. The bronze boiler first reaches full output on tick 3,906; the steel boiler does so on tick 2,417. The probe drains steam each tick so backpressure does not affect these measurements. Selected boiler schedules contribute fuel, water, and steam deficits to the conservative startup stock report.
 
 Configuration searches can defer completion schedules with `compute_warmup: false`. The selected allocations reconstruct their schedules before startup stock calculation. This avoids allocating long completion arrays for unused candidate configurations.
 

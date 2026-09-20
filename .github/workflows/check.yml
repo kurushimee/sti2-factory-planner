@@ -72,3 +72,9 @@ jobs:
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_world_review.gd 2>&1 | tee /tmp/world-review-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/world-review-check.log
+      - name: Check graph layout and group editing
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_graph_layout.gd 2>&1 | tee /tmp/layout-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/layout-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_groups.gd 2>&1 | tee /tmp/groups-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/groups-check.log

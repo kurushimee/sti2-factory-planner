@@ -31,7 +31,7 @@ func _run() -> void:
 	dialog.confirmed.emit()
 	dialog.hide()
 	await workspace.computation.completed
-	await process_frame
+	await workspace.layout_settled
 	assert(workspace._request.goals[0].kind == "capacity")
 	assert(workspace._request.goals[0].machines == 3)
 	assert(workspace._last_result.targets[0].rate == 3)

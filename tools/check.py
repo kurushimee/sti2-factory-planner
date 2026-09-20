@@ -16,6 +16,11 @@ def main() -> int:
         path = Path(name)
         if path.suffix.lower() in forbidden or path.name == "level.dat":
             errors.append(f"Private input or build artifact is tracked: {name}")
+        if path.suffix.lower() in {".gd", ".tscn", ".tres", ".py", ".js", ".mjs", ".json", ".md", ".yml", ".toml"}:
+            try:
+                path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                errors.append(f"Text file is not UTF-8: {name}")
     for name in ("AGENTS.md", "docs/delivery.md", "project.godot"):
         if not (root / name).is_file():
             errors.append(f"Required project file is missing: {name}")

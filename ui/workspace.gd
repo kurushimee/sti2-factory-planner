@@ -1,6 +1,8 @@
 class_name PlannerWorkspace
 extends Control
 
+signal layout_settled
+
 @onready var graph: GraphEdit = %Graph
 @onready var computation: PlannerComputation = %Computation
 @onready var recipes_list: ItemList = %Recipes
@@ -30,6 +32,8 @@ var _last_result: Dictionary[String, Variant] = {}
 var _file_action := "import"
 var _job_kind := "solve"
 var _rendering := false
+var _initial_layout := false
+var _unplaced: Array[String] = []
 var _groups: Dictionary[String, Dictionary] = {}
 var _frames: Dictionary[String, GraphFrame] = {}
 var _resizing_group := ""
@@ -53,6 +57,17 @@ func _ready() -> void:
 	%AddGoal.pressed.connect(_add_goal)
 	%RemoveGoal.pressed.connect(_remove_goal)
 	%EditGoal.pressed.connect(_edit_goal)
+	%GroupNameDialog.confirmed.connect(_rename_group)
+	%GroupName.text_submitted.connect(func(_text: String) -> void:
+		if !%GroupNameDialog.get_ok_button().disabled:
+			_rename_group()
+			%GroupNameDialog.hide()
+	)
+	%GroupName.text_changed.connect(func(text: String) -> void: %GroupNameDialog.get_ok_button().disabled = text.strip_edges().is_empty())
+	var group_controls: Array[Control] = [%GroupName, %GroupNameDialog.get_ok_button(), %GroupNameDialog.get_cancel_button()]
+	for index: int in group_controls.size():
+		group_controls[index].focus_next = group_controls[index].get_path_to(group_controls[(index + 1) % group_controls.size()])
+		group_controls[index].focus_previous = group_controls[index].get_path_to(group_controls[(index + group_controls.size() - 1) % group_controls.size()])
 	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request))
 	%FactorySettings.settings_changed.connect(func(request: Dictionary) -> void:
 		_remember()
@@ -276,8 +291,27 @@ func _remove_goal() -> void:
 
 
 func _edit_goal() -> void:
-	if _recipes.has(_selected):
+	if _groups.has(_selected):
+		%GroupNameDialog.set_meta("group_key", _selected)
+		%GroupName.text = _groups[_selected].title
+		%GroupNameDialog.get_ok_button().disabled = false
+		%GroupNameDialog.popup_centered(Vector2i(460, 150))
+		%GroupName.select_all()
+		%GroupName.grab_focus.call_deferred()
+	elif _recipes.has(_selected):
 		%GoalEditor.open_goal(_recipes[_selected], _dataset, _request)
+
+
+func _rename_group() -> void:
+	var key: String = %GroupNameDialog.get_meta("group_key", "")
+	var title: String = %GroupName.text.strip_edges()
+	if !_groups.has(key) || title.is_empty() || _groups[key].title == title:
+		return
+	_remember()
+	_groups[key].title = title
+	_frames[key].title = title
+	_select_node(_frames[key])
+	_autosave()
 
 
 func _preview_goal(selection: Dictionary) -> void:
@@ -380,6 +414,8 @@ func _calculated(result: Dictionary) -> void:
 
 
 func _render_plan(result: Dictionary) -> void:
+	_initial_layout = _positions.is_empty() && _groups.is_empty()
+	_unplaced.clear()
 	_rendering = true
 	graph.clear_connections()
 	for node: PlannerRecipeNode in _nodes.values():
@@ -396,6 +432,8 @@ func _render_plan(result: Dictionary) -> void:
 		node.configure(line, _recipes[line.recipe], _resources)
 		var key := String(line.recipe) + "|" + String(line.configuration)
 		node.set_meta("position_key", key)
+		if !_positions.has(key):
+			_unplaced.append(key)
 		var saved: Array = _positions.get(key, [45 + (index % 2) * 355, 75 + (index / 2) * 300])
 		node.position_offset = Vector2(saved[0], saved[1])
 		_nodes[String(node.name)] = node
@@ -431,16 +469,23 @@ func _settle_node_sizes() -> void:
 	await get_tree().process_frame
 	for node: PlannerRecipeNode in _nodes.values():
 		node.reset_size()
+	if _initial_layout && !_nodes.is_empty():
+		_initial_layout = false
+		_apply_layout()
+	elif !_unplaced.is_empty():
+		_place_new_nodes()
 	if !_pending_view.is_empty():
 		graph.zoom = clampf(float(_pending_view.zoom), graph.zoom_min, graph.zoom_max)
 		graph.scroll_offset = Vector2(_pending_view.scroll[0], _pending_view.scroll[1])
 		_pending_view.clear()
 	_update_membership()
+	layout_settled.emit()
 
 
 func _select_node(node: Node) -> void:
 	if node is GraphFrame:
-		%EditGoal.disabled = true
+		%EditGoal.disabled = false
+		%EditGoal.text = "Rename group"
 		_selected = String(node.name)
 		inspector.text = "[font_size=20]%s[/font_size]\n\nDrag the title to move this group and its members. Resize a border to change membership without moving recipes.\n\nA recipe belongs to the smallest group containing its center. Equal-sized overlaps use the group's stable ID.\n\n%d member nodes" % [PlannerDisplay.markup(node.title), _members.values().count(String(node.name))]
 		%RemoveGoal.text = "Remove group"
@@ -448,6 +493,7 @@ func _select_node(node: Node) -> void:
 		return
 	if !(node is PlannerRecipeNode):
 		return
+	%EditGoal.text = "Edit production goal"
 	_selected = node.recipe_id
 	_inspected_key = node.get_meta("position_key")
 	node.selected = true
@@ -460,15 +506,60 @@ func _select_node(node: Node) -> void:
 
 func _arrange() -> void:
 	_remember()
-	graph.arrange_nodes()
-	_save_positions.call_deferred()
+	_apply_layout()
+
+
+func _apply_layout() -> void:
+	var entries: Array[PlannerGraphLayout.Entry] = []
+	for node: PlannerRecipeNode in _nodes.values():
+		var recipe: Dictionary = _recipes[node.recipe_id]
+		var group: String = recipe.get("group", "Power" if recipe.primary == "energy:eu" else "Production")
+		entries.append(PlannerGraphLayout.Entry.new(node.get_meta("position_key"), group, node.size))
+	var layout := PlannerGraphLayout.arrange(entries, _last_result.get("connections", []))
+	_rendering = true
+	for node: PlannerRecipeNode in _nodes.values():
+		node.position_offset = layout.positions[node.get_meta("position_key")]
+	_groups.clear()
+	var index := 0
+	var bounds := Rect2()
+	for title: String in layout.groups:
+		var rect: Rect2 = layout.groups[title]
+		_groups["category_%d" % index] = {"title": title, "rect": [rect.position.x, rect.position.y, rect.size.x, rect.size.y]}
+		bounds = rect if index == 0 else bounds.merge(rect)
+		index += 1
+	_rendering = false
+	_restore_groups()
+	if bounds.size.x > 0 && bounds.size.y > 0:
+		graph.zoom = clampf(minf((graph.size.x - 60) / bounds.size.x, (graph.size.y - 90) / bounds.size.y), graph.zoom_min, 1.0)
+		graph.scroll_offset = bounds.position * graph.zoom - Vector2(30, 55)
+	_unplaced.clear()
+	_save_positions()
+	status.text = "Recipes arranged into production groups. Drag nodes and groups to adjust the layout."
+
+
+func _place_new_nodes() -> void:
+	var right := 25.0
+	for node: PlannerRecipeNode in _nodes.values():
+		if !node.get_meta("position_key") in _unplaced:
+			right = maxf(right, node.position_offset.x + node.size.x + 80)
+	for frame: GraphFrame in _frames.values():
+		right = maxf(right, frame.position_offset.x + frame.size.x + 80)
+	var y := 75.0
+	for node: PlannerRecipeNode in _nodes.values():
+		if node.get_meta("position_key") in _unplaced:
+			node.position_offset = Vector2(right, y)
+			y += node.size.y + 32
+	_unplaced.clear()
+	_save_positions()
 
 
 func _add_group() -> void:
+	_initial_layout = false
+	_unplaced.clear()
 	_remember()
 	var key := "group_%d" % Time.get_ticks_usec()
 	var position := graph.scroll_offset / graph.zoom + Vector2(25, 55)
-	_groups[key] = {"title": "Production line %d" % (_groups.size() + 1), "rect": [position.x, position.y, 660, 360]}
+	_groups[key] = {"title": "Production line %d" % (_groups.size() + 1), "rect": [position.x, position.y, 660.0, 360.0]}
 	_restore_groups()
 	_autosave()
 	status.text = "Drag the group title to move its members. Resize its border to change membership."

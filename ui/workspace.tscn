@@ -196,6 +196,7 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 text = "Arrange"
+tooltip_text = "Rearrange all recipes into production groups. Undo restores your layout."
 
 [node name="AddGroup" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
 unique_name_in_owner = true
@@ -316,3 +317,18 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 wait_time = 0.5
 one_shot = true
+
+[node name="GroupNameDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Rename production group"
+size = Vector2i(460, 150)
+ok_button_text = "Rename"
+
+[node name="GroupName" type="LineEdit" parent="GroupNameDialog"]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 18.0
+offset_right = 444.0
+offset_bottom = 62.0
+placeholder_text = "Group name"
+max_length = 120

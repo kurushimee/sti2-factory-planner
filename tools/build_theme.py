@@ -21,8 +21,10 @@ styles = {
     "selected": ("2c3d44", "d5a36a", 2),
     "title": ("33464e", "4a606a", 1),
 }
-parts = ['[gd_resource type="Theme" load_steps=13 format=3]',
+parts = ['[gd_resource type="Theme" load_steps=17 format=3]',
          '[ext_resource type="FontFile" path="res://ui/fonts/inter.ttf" id="1"]']
+for index, name in enumerate(("checked", "unchecked", "checked_disabled", "unchecked_disabled"), start=2):
+    parts.append(f'[ext_resource type="Texture2D" path="res://ui/icons/{name}.svg" id="{index}"]')
 for name, (background, border, width) in styles.items():
     parts.append(f'[sub_resource type="StyleBoxFlat" id="{name}"]\nbg_color = {color(background)}\nborder_color = {color(border)}')
     if name == "focus":
@@ -82,4 +84,6 @@ parts += ['TitleLabel/base_type = &"Label"', 'TitleLabel/font_sizes/font_size = 
           'VScrollBar/styles/scroll = SubResource("field")',
           'VScrollBar/styles/grabber = SubResource("button")',
           'VScrollBar/styles/grabber_highlight = SubResource("hover")']
+for index, name in enumerate(("checked", "unchecked", "checked_disabled", "unchecked_disabled"), start=2):
+    parts.append(f'Tree/icons/{name} = ExtResource("{index}")')
 Path("ui/theme.tres").write_text("\n\n".join(parts) + "\n", encoding="utf-8")
