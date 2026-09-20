@@ -394,6 +394,8 @@ ItemList/colors/font_color = Color(0.92941, 0.94118, 0.92157, 1)
 
 PopupMenu/colors/font_color = Color(0.92941, 0.94118, 0.92157, 1)
 
+Tree/colors/font_color = Color(0.92941, 0.94118, 0.92157, 1)
+
 TitleLabel/base_type = &"Label"
 
 TitleLabel/font_sizes/font_size = 23
@@ -429,6 +431,16 @@ ItemList/styles/selected_focus = SubResource("selected")
 ItemList/styles/focus = SubResource("focus")
 
 ItemList/constants/v_separation = 12
+
+Tree/styles/panel = SubResource("field")
+
+Tree/styles/selected = SubResource("pressed")
+
+Tree/styles/selected_focus = SubResource("selected")
+
+Tree/styles/focus = SubResource("focus")
+
+Tree/constants/v_separation = 10
 
 GraphEdit/styles/panel = SubResource("graph")
 

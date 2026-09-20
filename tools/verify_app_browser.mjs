@@ -106,6 +106,17 @@ try {
   await waitPlan(value => value?.request.goals[0]?.rate === 1);
   await page.mouse.click(1390, 40);
   plan = await waitPlan(value => value?.request.goals[0]?.rate === 2);
+  await page.mouse.click(532, 92, {delay: 100});
+  await new Promise(resolve => setTimeout(resolve, 200));
+  await page.mouse.click(955, 182, {delay: 100});
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('25', {delay: 100});
+  await page.keyboard.press('Tab');
+  await page.screenshot({path: `${artifacts}/browser-factory-settings.png`});
+  await page.mouse.click(550, 779, {delay: 100});
+  plan = await waitPlan(value => value?.request.reserve_fraction === 0.25);
+  await page.mouse.click(1320, 40, {delay: 100});
+  plan = await waitPlan(value => !value?.request.reserve_fraction);
   await page.screenshot({path: `${artifacts}/before-invalid-import.png`});
   await page.mouse.click(1270, 773, {delay: 100});
   await new Promise(resolve => setTimeout(resolve, 250));

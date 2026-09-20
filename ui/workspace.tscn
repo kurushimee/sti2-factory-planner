@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://ui/workspace.gd" id="1"]
 [ext_resource type="Theme" path="res://ui/theme.tres" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://ui/world_review.tscn" id="7"]
 [ext_resource type="PackedScene" path="res://ui/feedback.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://ui/goal_editor.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://ui/factory_settings.tscn" id="10"]
 
 [node name="Workspace" type="Control"]
 layout_mode = 3
@@ -201,6 +202,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "New group"
 
+[node name="Settings" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Settings"
+
 [node name="Summary" type="Label" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -300,4 +306,7 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="GoalEditor" parent="." instance=ExtResource("9")]
+unique_name_in_owner = true
+
+[node name="FactorySettings" parent="." instance=ExtResource("10")]
 unique_name_in_owner = true

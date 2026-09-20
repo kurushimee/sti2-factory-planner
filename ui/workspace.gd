@@ -53,6 +53,12 @@ func _ready() -> void:
 	%AddGoal.pressed.connect(_add_goal)
 	%RemoveGoal.pressed.connect(_remove_goal)
 	%EditGoal.pressed.connect(_edit_goal)
+	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request))
+	%FactorySettings.settings_changed.connect(func(request: Dictionary) -> void:
+		_remember()
+		_request.assign(request)
+		_recalculate()
+	)
 	%GoalEditor.preview_requested.connect(_preview_goal)
 	%GoalEditor.goal_changed.connect(_apply_goal)
 	%Arrange.pressed.connect(_arrange)
@@ -87,7 +93,7 @@ func _ready() -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
-		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, graph, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
+		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, graph, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -582,13 +588,19 @@ func _correct_world(corrections: Dictionary) -> void:
 
 
 func _import_json(parsed: Variant) -> void:
-	if parsed is Dictionary && parsed.get("format") == "factory-plan":
+	if parsed is Dictionary && str(parsed.get("format")) == "factory-plan":
 		_remember()
 		_restore_plan(parsed)
-	elif _load_dataset(parsed):
-		_request.goals = []
+	elif PlannerDatasetValidation.check(parsed).is_empty():
+		_remember()
+		_load_dataset(parsed)
+		_request = {"goals": []}
 		_positions.clear()
+		_groups.clear()
+		_world_import.clear()
 		_recalculate()
+	else:
+		_failed(PlannerDatasetValidation.check(parsed))
 
 
 func _cancel() -> void:
@@ -598,7 +610,7 @@ func _cancel() -> void:
 
 
 func _failed(message: String) -> void:
-	if _job_kind == "preview_configuration":
+	if _job_kind == "preview_configuration" && %GoalEditor.visible:
 		%GoalEditor.show_error(message)
 		return
 	%Feedback.error()

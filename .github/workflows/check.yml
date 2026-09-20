@@ -60,3 +60,7 @@ jobs:
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_goal_editor.gd 2>&1 | tee /tmp/goal-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/goal-check.log
+      - name: Check factory settings and undo
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_factory_settings.gd 2>&1 | tee /tmp/settings-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/settings-check.log

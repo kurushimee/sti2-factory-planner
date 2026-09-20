@@ -38,7 +38,7 @@ for control in ("Button", "OptionButton", "MenuButton", "CheckButton", "CheckBox
     for state in ("font_color", "font_hover_color", "font_pressed_color", "font_focus_color"):
         parts.append(f'{control}/colors/{state} = {color("edf0eb")}')
     parts.append(f'{control}/colors/font_disabled_color = {color("a1afb5")}')
-for control in ("Label", "RichTextLabel", "LineEdit", "SpinBox", "ItemList", "PopupMenu"):
+for control in ("Label", "RichTextLabel", "LineEdit", "SpinBox", "ItemList", "PopupMenu", "Tree"):
     parts.append(f'{control}/colors/font_color = {color("edf0eb")}')
 parts += ['TitleLabel/base_type = &"Label"', 'TitleLabel/font_sizes/font_size = 23',
           'SectionLabel/base_type = &"Label"', 'SectionLabel/font_sizes/font_size = 18',
@@ -55,6 +55,11 @@ parts += ['TitleLabel/base_type = &"Label"', 'TitleLabel/font_sizes/font_size = 
           'ItemList/styles/selected_focus = SubResource("selected")',
           'ItemList/styles/focus = SubResource("focus")',
           'ItemList/constants/v_separation = 12',
+          'Tree/styles/panel = SubResource("field")',
+          'Tree/styles/selected = SubResource("pressed")',
+          'Tree/styles/selected_focus = SubResource("selected")',
+          'Tree/styles/focus = SubResource("focus")',
+          'Tree/constants/v_separation = 10',
           'GraphEdit/styles/panel = SubResource("graph")',
           f'GraphEdit/colors/grid_minor = {color("1d292e")}',
           f'GraphEdit/colors/grid_major = {color("29393f")}',
