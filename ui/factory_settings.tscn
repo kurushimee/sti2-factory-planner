@@ -20,6 +20,23 @@ layout_mode = 2
 custom_minimum_size = Vector2(620, 0)
 size_flags_horizontal = 3
 
+[node name="Progression" type="HBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ProgressionPreset" type="OptionButton" parent="Content/Availability/Progression"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Choose a progression stage, then use its machine and upgrade selections. Individual overrides remain available."
+
+[node name="UsePreset" type="Button" parent="Content/Availability/Progression"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Use preset"
+disabled = true
+
 [node name="SettingsCategory" type="OptionButton" parent="Content/Availability"]
 unique_name_in_owner = true
 layout_mode = 2

@@ -12,6 +12,10 @@
     {"id": "motor", "name": "Motor", "unit": "item"},
     {"id": "energy:eu", "name": "Electricity", "unit": "EU"}
   ],
+  "progression": [
+    {"id": "example:extraction", "name": "Extraction and power", "available_machines": ["Ore drill", "Coal drill", "Coal generator"], "available_upgrades": []},
+    {"id": "example:all", "name": "All example machines", "available_machines": ["Ore drill", "Coal drill", "Electric furnace", "Plate press", "Gear cutter", "Assembler", "Coal generator"], "available_upgrades": []}
+  ],
   "recipes": [
     {"id": "mine_ore", "name": "Mine iron ore", "group": "Extraction", "primary": "ore", "inputs": [], "outputs": [{"resource": "ore", "amount": 1}], "configurations": [{"id": "drill", "machine": "Ore drill", "operations_per_second": 2, "eu_per_operation": 20}]},
     {"id": "mine_coal", "name": "Mine coal", "group": "Extraction", "primary": "coal", "inputs": [], "outputs": [{"resource": "coal", "amount": 1}], "configurations": [{"id": "coal_drill", "machine": "Coal drill", "operations_per_second": 2, "eu_per_operation": 10}]},

@@ -93,6 +93,12 @@ export function validateDataset(dataset) {
       for (const condition of recipe.conditions) { object(condition, `${at}.condition`); text(condition.type, `${at}.condition.type`); }
     }
   }
+  records(dataset.progression ?? [], 'progression');
+  for (const preset of dataset.progression ?? []) {
+    text(preset.name, `progression ${preset.id}.name`);
+    references(preset.available_machines, machines, `progression ${preset.id}.available_machines`);
+    references(preset.available_upgrades, upgrades, `progression ${preset.id}.available_upgrades`);
+  }
   for (const machine of dataset.machines ?? []) {
     if (!['supported', 'unsupported', 'structural'].includes(machine.status)) fail(`machine ${machine.id}`, 'unknown support status');
     if (machine.status === 'supported') text(machine.mechanic, `machine ${machine.id}.mechanic`);

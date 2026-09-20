@@ -17,6 +17,7 @@ test('dataset validation rejects malformed references before dependency pruning'
     [data => data.recipes[0].process = {type: 'press', duration_ticks: 1.5, eu_per_tick: 2}, /whole number/],
     [data => data.machines = [{id: 'test:controller', status: 'unsupported', shapes: [{index: 0, cells: [{position: [0, 0, 1], allowed_hatches: [], member_rule: 7}]}]}], /unknown shape member/],
     [data => data.shape_member_rules = [{state_only_verified: true, matching_states: [{Name: 'test:casing', Properties: {axis: 2}}]}], /nonempty text/],
+    [data => data.progression[0].available_machines = ['missing'], /unknown ID/],
   ]) {
     const data = example();
     change(data);

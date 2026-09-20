@@ -111,6 +111,15 @@ try {
   plan = await waitPlan(value => value?.request.goals[0]?.rate === 2);
   await page.mouse.click(532, 92, {delay: 100});
   await new Promise(resolve => setTimeout(resolve, 200));
+  await page.mouse.click(480, 120, {delay: 100});
+  await new Promise(resolve => setTimeout(resolve, 150));
+  await page.screenshot({path: `${artifacts}/browser-progression-menu.png`});
+  await page.keyboard.press('ArrowDown', {delay: 100});
+  await page.keyboard.press('ArrowDown', {delay: 100});
+  await page.keyboard.press('ArrowDown', {delay: 100});
+  await page.keyboard.press('Enter', {delay: 100});
+  await new Promise(resolve => setTimeout(resolve, 150));
+  await page.mouse.click(813, 120, {delay: 100});
   await page.mouse.click(955, 182, {delay: 100});
   await page.keyboard.press('Control+a');
   await page.keyboard.type('25', {delay: 100});
@@ -118,8 +127,10 @@ try {
   await page.screenshot({path: `${artifacts}/browser-factory-settings.png`});
   await page.mouse.click(550, 779, {delay: 100});
   plan = await waitPlan(value => value?.request.reserve_fraction === 0.25);
+  assert.equal(plan.request.progression_preset, 'example:all');
   await page.mouse.click(1320, 40, {delay: 100});
   plan = await waitPlan(value => !value?.request.reserve_fraction);
+  assert.equal(plan.request.progression_preset, undefined);
   await page.screenshot({path: `${artifacts}/before-invalid-import.png`});
   await page.mouse.click(1270, 773, {delay: 100});
   await new Promise(resolve => setTimeout(resolve, 250));

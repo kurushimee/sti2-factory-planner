@@ -6,6 +6,7 @@ static func check(value: Variant) -> String:
 	if !(value is Dictionary) || !_version(value.get("format")) || !(value.get("resources") is Array) || !(value.get("recipes") is Array):
 		return "This file is not a supported planning dataset."
 	var resources: Dictionary[String, bool] = {}
+	var catalog_ids: Dictionary = {"machines": {}, "upgrades": {}}
 	for resource: Variant in value.resources:
 		if !(resource is Dictionary) || !(resource.get("id") is String) || resource.id.is_empty():
 			return "Every resource needs a nonempty text ID."
@@ -22,6 +23,7 @@ static func check(value: Variant) -> String:
 			if ids.has(record.id):
 				return "Duplicate %s ID: %s" % [field, record.id]
 			ids[record.id] = true
+		catalog_ids[field] = ids
 	if !_string_list(value.get("default_machines", [])):
 		return "Default machines must be a list of text IDs."
 	var recipes: Dictionary[String, bool] = {}
@@ -56,6 +58,23 @@ static func check(value: Variant) -> String:
 		for configuration: Variant in recipe.configurations:
 			if !(configuration is Dictionary) || !(configuration.get("id") is String) || !(configuration.get("machine") is String) || !_positive(configuration.get("operations_per_second")):
 				return "Recipe %s has an invalid machine configuration." % recipe.id
+			catalog_ids.machines[configuration.machine] = true
+	if !(value.get("progression", []) is Array):
+		return "Progression presets must be a list."
+	var preset_ids: Dictionary[String, bool] = {}
+	for preset: Variant in value.get("progression", []):
+		if !(preset is Dictionary) || !(preset.get("id") is String) || preset.id.is_empty() || !(preset.get("name") is String) || preset.name.is_empty():
+			return "Every progression preset needs an ID and a name."
+		if preset_ids.has(preset.id):
+			return "Progression preset IDs must be unique."
+		preset_ids[preset.id] = true
+		for field: String in ["machines", "upgrades"]:
+			var selected: Variant = preset.get("available_" + field)
+			if !_string_list(selected):
+				return "Progression presets need machine and upgrade ID lists."
+			for id: String in selected:
+				if !catalog_ids[field].has(id):
+					return "A progression preset references an unknown %s ID: %s" % [field, id]
 	return ""
 
 

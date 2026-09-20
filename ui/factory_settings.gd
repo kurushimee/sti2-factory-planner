@@ -19,6 +19,11 @@ func _ready() -> void:
 	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies"]:
 		%SettingsCategory.add_item(title_text)
 	%SettingsCategory.item_selected.connect(_category_changed)
+	%ProgressionPreset.item_selected.connect(func(index: int) -> void:
+		%UsePreset.disabled = index == 0
+		%ProgressionPreset.tooltip_text = str(_dataset.progression[index - 1].get("description", "")) if index > 0 else "Choose a progression preset."
+	)
+	%UsePreset.pressed.connect(_use_preset)
 	%SettingsSearch.text_changed.connect(_filter)
 	%SettingsEntries.item_edited.connect(_entry_changed)
 	%SettingsEntries.item_selected.connect(_entry_selected)
@@ -32,7 +37,7 @@ func _ready() -> void:
 		%SettingsError.text = "Machine priority must be positive." if value <= 0 else ""
 	)
 	confirmed.connect(_apply)
-	var controls: Array[Control] = [%SettingsCategory, %SettingsSearch, %SettingsEntries, %SettingsPrevious,
+	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %SettingsEntries, %SettingsPrevious,
 		%SettingsNext, %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
 		%Reserve.get_line_edit(), %Overhead.get_line_edit(), %ResourceWeight.get_line_edit(),
 		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), get_ok_button(), get_cancel_button()]
@@ -70,9 +75,32 @@ func open_settings(dataset: Dictionary, request: Dictionary) -> void:
 	%EnergyWeight.value = weights.get("energy", 0.000001)
 	%Reserve.value = _request.get("reserve_fraction", 0) * 100
 	%Overhead.value = _request.get("overhead_eu_per_tick", 0)
+	%SettingsError.text = ""
+	%Progression.visible = !_dataset.get("progression", []).is_empty()
+	%ProgressionPreset.clear()
+	%ProgressionPreset.add_item("Choose a progression preset…")
+	for preset: Dictionary in _dataset.get("progression", []):
+		%ProgressionPreset.add_item(preset.name)
+		if preset.id == _request.get("progression_preset", ""):
+			%ProgressionPreset.select(%ProgressionPreset.item_count - 1)
+	%UsePreset.disabled = %ProgressionPreset.selected == 0
 	_category_changed(%SettingsCategory.selected)
 	popup_centered(Vector2i(1040, 710))
 	%SettingsSearch.grab_focus.call_deferred()
+
+
+func _use_preset() -> void:
+	var index: int = %ProgressionPreset.selected - 1
+	if index < 0:
+		return
+	var preset: Dictionary = _dataset.progression[index]
+	_request.available_machines = preset.available_machines.duplicate()
+	_request.available_upgrades = preset.available_upgrades.duplicate()
+	_request.progression_preset = preset.id
+	%SettingsSearch.clear()
+	_category_changed(%SettingsCategory.selected)
+	%SettingsError.text = "%s selected. You can still change individual machines and upgrades before applying." % preset.name
+	%SettingsEntries.grab_focus.call_deferred()
 
 
 func _category_changed(category: int) -> void:

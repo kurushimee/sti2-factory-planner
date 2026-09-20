@@ -156,6 +156,8 @@ def verify(runtime: dict, probes: dict) -> dict:
         raise ValueError("The loaded hammer lifetime or AE2 reuse behavior changed.")
     if hammer["base_slots"][4]["remainder"].get("components") != {"minecraft:damage": 50}:
         raise ValueError("The loaded hammer crafting action changed.")
+    if [len(chapter["item_tasks"]) for chapter in probes["progression_chapters"]] != [29, 173, 127, 229, 214, 19, 115, 95]:
+        raise ValueError("The released progression chapter item tasks changed.")
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -185,6 +187,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "batch_tiers": batch_tiers,
         "recipe_generation": generation,
         "pulse_detonation": pulse,
+        "progression_chapters": probes["progression_chapters"],
         "crafting_rules_count": len(crafting["recipes"]),
         "crafting_samples_unavailable": sum("unavailable" in entry for entry in crafting["recipes"]),
         "crafting_samples": [crafting_index[key] for key in ("minecraft:cake", "minecraft:torch", "modern_industrialization:iron_plate_from_hammer")],

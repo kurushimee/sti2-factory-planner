@@ -1,6 +1,10 @@
-[gd_resource type="Theme" load_steps=13 format=3]
+[gd_resource type="Theme" load_steps=17 format=3]
 
 [ext_resource type="FontFile" path="res://ui/fonts/inter.ttf" id="1"]
+[ext_resource type="Texture2D" path="res://ui/icons/checked.svg" id="2"]
+[ext_resource type="Texture2D" path="res://ui/icons/unchecked.svg" id="3"]
+[ext_resource type="Texture2D" path="res://ui/icons/checked_disabled.svg" id="4"]
+[ext_resource type="Texture2D" path="res://ui/icons/unchecked_disabled.svg" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="surface"]
 bg_color = Color(0.12549, 0.16078, 0.17647, 1)
@@ -487,3 +491,7 @@ VScrollBar/styles/scroll = SubResource("field")
 VScrollBar/styles/grabber = SubResource("button")
 
 VScrollBar/styles/grabber_highlight = SubResource("hover")
+Tree/icons/checked = ExtResource("2")
+Tree/icons/unchecked = ExtResource("3")
+Tree/icons/checked_disabled = ExtResource("4")
+Tree/icons/unchecked_disabled = ExtResource("5")

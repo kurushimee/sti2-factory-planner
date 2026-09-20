@@ -158,6 +158,7 @@ def normalize(runtime, probes):
             "power_units": probes.get("power_units", {}),
             "shape_member_rules": probes.get("shape_member_rules", []),
             "crafting_rules": probes.get("crafting_rules", {}),
+            "progression_chapters": probes.get("progression_chapters", []),
             "coverage": [{"type": key[0], "status": key[1], "count": count}
                          for key, count in sorted(coverage.items())]}
 

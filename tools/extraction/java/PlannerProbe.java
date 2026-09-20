@@ -240,6 +240,39 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonArray progressionChapters() throws Exception {
+        var result = new JsonArray();
+        try (var paths = Files.list(Path.of("config/ftbquests/quests/chapters"))) {
+            for (var path : paths.sorted().toList()) {
+                if (!path.getFileName().toString().matches("[1-8]__.*\\.snbt")) continue;
+                var chapter = dev.ftb.mods.ftblibrary.snbt.SNBT.tryRead(path);
+                if (chapter == null) throw new IllegalStateException("Could not read progression chapter: " + path);
+                var record = new JsonObject();
+                record.addProperty("file", path.toString().replace('\\', '/'));
+                record.addProperty("id", chapter.getString("id"));
+                record.addProperty("order", chapter.getInt("order_index"));
+                var tasks = new JsonArray();
+                for (var tag : chapter.getList("quests", 10)) {
+                    var quest = (net.minecraft.nbt.CompoundTag) tag;
+                    for (var taskTag : quest.getList("tasks", 10)) {
+                        var task = (net.minecraft.nbt.CompoundTag) taskTag;
+                        if (!task.getString("type").equals("item")) continue;
+                        var item = task.getCompound("item");
+                        if (!item.contains("id")) continue;
+                        var value = new JsonObject();
+                        value.addProperty("quest", quest.getString("id"));
+                        value.addProperty("task", task.getString("id"));
+                        value.addProperty("item", item.getString("id"));
+                        tasks.add(value);
+                    }
+                }
+                record.add("item_tasks", tasks);
+                result.add(record);
+            }
+        }
+        return result;
+    }
+
     private static JsonObject ingredientRules(MinecraftServer server) throws Exception {
         var ops = server.registryAccess().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
         var runtime = com.google.gson.JsonParser.parseString(Files.readString(Path.of("planner-extraction/runtime.json"))).getAsJsonObject();
@@ -913,6 +946,7 @@ public final class PlannerProbe {
         result.add("item_rules", itemRules(server));
         result.add("ingredient_rules", ingredientRules(server));
         result.add("crafting_rules", craftingRules(server));
+        result.add("progression_chapters", progressionChapters());
         var power = new JsonObject();
         power.addProperty("fe_per_eu", aztech.modern_industrialization.config.MIServerConfig.INSTANCE.forgeEnergyPerEu.getAsInt());
         power.addProperty("fe_per_ae", appeng.api.config.PowerUnit.AE.convertTo(appeng.api.config.PowerUnit.FE, 1));

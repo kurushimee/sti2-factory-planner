@@ -6,6 +6,7 @@ from copy import deepcopy
 import json
 from pathlib import Path
 from normalize import resource_identity
+from progression import progression_presets
 
 
 def boiler_operating_points(samples):
@@ -286,6 +287,7 @@ def build_dataset(capture):
             "complete": False, "description": "Captured StaTech recipes with explicit adapter coverage. Development catalog.",
             "resources": resources, "recipes": recipes, "machines": machines, "upgrades": upgrades,
             "shape_member_rules": capture.get("shape_member_rules", []),
+            "progression": progression_presets(capture.get("progression_chapters", []), machines, upgrades, recipes),
             "default_machines": [machine["id"] for machine in machines
                                  if machine["status"] == "supported" and machine.get("mechanic") != "mi_array"],
             "unsupported_entries": unsupported, "loaded_mods": capture["loaded_mods"],

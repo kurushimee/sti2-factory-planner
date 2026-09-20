@@ -44,6 +44,15 @@ func _run() -> void:
 	dialog.get_node("%SupplyCost").value = 2
 	dialog.get_node("%Reserve").value = 25
 	dialog.get_node("%Overhead").value = 4
+	dialog.get_node("%ProgressionPreset").select(2)
+	dialog.get_node("%ProgressionPreset").item_selected.emit(2)
+	assert(!dialog.get_node("%UsePreset").disabled)
+	dialog._use_preset()
+	await process_frame
+	assert(dialog._request.progression_preset == "example:all")
+	assert("Assembler" in dialog._request.available_machines)
+	assert(dialog._request.external[0].limit == 0.5)
+	assert(!workspace._request.has("progression_preset"))
 	if DisplayServer.get_name() != "headless":
 		OS.low_processor_usage_mode = false
 		await create_timer(0.2).timeout
@@ -61,6 +70,7 @@ func _run() -> void:
 	await workspace.computation.completed
 	await process_frame
 	assert(!workspace._request.has("external"))
+	assert(!workspace._request.has("progression_preset"))
 	var original: Dictionary = workspace._request.duplicate(true)
 	original.disabled_machines = ["Assembler"]
 	dialog.open_settings(workspace._dataset, original)
@@ -82,5 +92,23 @@ func _run() -> void:
 	await process_frame
 	assert(workspace._request.external[0].limit == 0.5)
 	assert(workspace._request.goals.size() == 1)
+	for argument: String in OS.get_cmdline_user_args():
+		if !argument.begins_with("--catalog="):
+			continue
+		var catalog: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(argument.trim_prefix("--catalog=")))
+		workspace._import_json(catalog)
+		await workspace.computation.completed
+		await process_frame
+		dialog.open_settings(workspace._dataset, workspace._request)
+		dialog.get_node("%ProgressionPreset").select(3)
+		dialog.get_node("%ProgressionPreset").item_selected.emit(3)
+		dialog._use_preset()
+		assert("ae2:molecular_assembler" in dialog._request.available_machines)
+		assert("modern_industrialization:basic_upgrade" in dialog._request.available_upgrades)
+		assert(!"modern_industrialization:quantum_upgrade" in dialog._request.available_upgrades)
+		if DisplayServer.get_name() != "headless":
+			await create_timer(0.2).timeout
+			await RenderingServer.frame_post_draw
+			root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/progression-settings.png")
 	print("Factory settings passed keyboard supply selection, rate limits, costs, power reserve, overhead, and undo.")
 	quit()

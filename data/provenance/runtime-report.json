@@ -32105,6 +32105,5069 @@
       }
     }
   ],
+  "progression_chapters": [
+    {
+      "file": "config/ftbquests/quests/chapters/1__getting_started.snbt",
+      "id": "37521162FC1896A6",
+      "order": 0,
+      "item_tasks": [
+        {
+          "quest": "74C1F78B349FC947",
+          "task": "7EF2422AEF155FED",
+          "item": "modern_industrialization:forge_hammer"
+        },
+        {
+          "quest": "1BD496A10E957F25",
+          "task": "4DBA932F3E17B7A7",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "339F676C828C790D",
+          "task": "6190BD009D789D58",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4679B4825F85EBB5",
+          "task": "2B9E9E9C9E8AEF1F",
+          "item": "modern_industrialization:iron_large_plate"
+        },
+        {
+          "quest": "35B6D5329AD5C0F9",
+          "task": "133ABB577737B679",
+          "item": "farmingforblockheads:market"
+        },
+        {
+          "quest": "2DA8C540DA9C30D7",
+          "task": "22A02FE049F04A43",
+          "item": "farmersdelight:cutting_board"
+        },
+        {
+          "quest": "0F6AA50379841563",
+          "task": "5ADB3BD3F95DD00E",
+          "item": "farmingforblockheads:feeding_trough"
+        },
+        {
+          "quest": "2BA611005741BE40",
+          "task": "652439700E399AF8",
+          "item": "farmingforblockheads:chicken_nest"
+        },
+        {
+          "quest": "250141B40163F07F",
+          "task": "08E9CCE92AD74778",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7464978AD0091E70",
+          "task": "62B1BCE2CCCFA67A",
+          "item": "usefulslime:slime_sling"
+        },
+        {
+          "quest": "7464978AD0091E70",
+          "task": "51A2A008153BC19B",
+          "item": "usefulslime:slime_boots"
+        },
+        {
+          "quest": "7C22C0CF7E733D13",
+          "task": "50657096074EC9EA",
+          "item": "sophisticatedbackpacks:backpack"
+        },
+        {
+          "quest": "48D186B5AAECDD4E",
+          "task": "0220401C9E22DC6F",
+          "item": "bankstorage:bank_1"
+        },
+        {
+          "quest": "7CB40077EB4E575B",
+          "task": "406C2ED09CA8B2D6",
+          "item": "bankstorage:bank_dock"
+        },
+        {
+          "quest": "69FC7941B3DAFDA5",
+          "task": "35BCE02C75FD5E87",
+          "item": "craftingstation:crafting_station"
+        },
+        {
+          "quest": "568452070C18EBE2",
+          "task": "4CA3D3B005F97D5E",
+          "item": "tankstorage:tank_1"
+        },
+        {
+          "quest": "76D4C6F0EFD1849A",
+          "task": "1414E786929629EE",
+          "item": "tankstorage:tank_dock"
+        },
+        {
+          "quest": "7A29CB04322D488B",
+          "task": "306669829F033913",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "35CA2712BC60C09E",
+          "task": "10E39D3C597D08A7",
+          "item": "minecraft:raw_iron"
+        },
+        {
+          "quest": "35CA2712BC60C09E",
+          "task": "0F68EC5F0446C1E5",
+          "item": "modern_industrialization:raw_tin"
+        },
+        {
+          "quest": "35CA2712BC60C09E",
+          "task": "0689831EE03C1D8F",
+          "item": "minecraft:raw_copper"
+        },
+        {
+          "quest": "35CA2712BC60C09E",
+          "task": "2570759CCAB39BC4",
+          "item": "minecraft:coal"
+        },
+        {
+          "quest": "35CA2712BC60C09E",
+          "task": "304400193E5C0D3A",
+          "item": "modern_industrialization:lignite_coal"
+        },
+        {
+          "quest": "5114DECB3214A07C",
+          "task": "00E3E2F15F8D2A67",
+          "item": "kubejs:copper_pickaxe"
+        },
+        {
+          "quest": "5114DECB3214A07C",
+          "task": "5EF5D8B98F0554DB",
+          "item": "kubejs:copper_axe"
+        },
+        {
+          "quest": "5114DECB3214A07C",
+          "task": "70006679A41702F2",
+          "item": "kubejs:copper_sword"
+        },
+        {
+          "quest": "5114DECB3214A07C",
+          "task": "73200BE91A02495F",
+          "item": "kubejs:copper_shovel"
+        },
+        {
+          "quest": "489042A0D0AF38D3",
+          "task": "4E2C522E26CA4978",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1C9F96C925557637",
+          "task": "1B9AE8D7035F551B",
+          "item": "stcm:prospector_pick"
+        }
+      ]
+    },
+    {
+      "file": "config/ftbquests/quests/chapters/2__steam_age.snbt",
+      "id": "70E1C9FCB66EEC7E",
+      "order": 1,
+      "item_tasks": [
+        {
+          "quest": "412958496FE9150E",
+          "task": "1C6115AFBF99BA30",
+          "item": "modern_industrialization:forge_hammer"
+        },
+        {
+          "quest": "1C02850B615D4688",
+          "task": "277419910E4AD40C",
+          "item": "minecraft:bucket"
+        },
+        {
+          "quest": "6C0000F5F41F4D69",
+          "task": "27D64A7862FCCCE4",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0EF2CBA4F28AC98C",
+          "task": "52655C43F0FB00D4",
+          "item": "hangglider:hang_glider"
+        },
+        {
+          "quest": "171B6274F48C81EA",
+          "task": "7EDDAC45EA4446E2",
+          "item": "hangglider:reinforced_hang_glider"
+        },
+        {
+          "quest": "4518B0E50C0271EE",
+          "task": "55F448AF6C54FB65",
+          "item": "naturescompass:naturescompass"
+        },
+        {
+          "quest": "15786F062E934BFF",
+          "task": "3C003BDAA2455E86",
+          "item": "modern_industrialization:bronze_barrel"
+        },
+        {
+          "quest": "7B0D4508DF6DE961",
+          "task": "2167FC5683E6B56E",
+          "item": "modern_industrialization:bronze_tank"
+        },
+        {
+          "quest": "74B14DB45316C4F8",
+          "task": "0DC65307365F2013",
+          "item": "modern_industrialization:copper_dust"
+        },
+        {
+          "quest": "74B14DB45316C4F8",
+          "task": "14A3135A0EBE81B2",
+          "item": "modern_industrialization:tin_dust"
+        },
+        {
+          "quest": "40F3373B8AFDE427",
+          "task": "21BD3162B2148E8F",
+          "item": "modern_industrialization:fire_clay_dust"
+        },
+        {
+          "quest": "587FF748139BA962",
+          "task": "3C2960471EBC7DD8",
+          "item": "modern_industrialization:bronze_boiler"
+        },
+        {
+          "quest": "78AB0A6DF24A608F",
+          "task": "0D4E7C3A65BB81D0",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "14D630FF21EC6D3F",
+          "task": "505A508321DAEE63",
+          "item": "modern_industrialization:bronze_cutting_machine"
+        },
+        {
+          "quest": "2ACEC02AD4EA03B7",
+          "task": "282491978EF27DA3",
+          "item": "modern_industrialization:bronze_furnace"
+        },
+        {
+          "quest": "20468BAC6863ACE2",
+          "task": "2070AB9270B078F8",
+          "item": "modern_industrialization:bronze_macerator"
+        },
+        {
+          "quest": "7AAF70094208A6E9",
+          "task": "2CEE48BFA90538D0",
+          "item": "modern_industrialization:bronze_compressor"
+        },
+        {
+          "quest": "7758D929EC7EE49B",
+          "task": "79BDD35FF47A825A",
+          "item": "modern_industrialization:bronze_mixer"
+        },
+        {
+          "quest": "38F5AD2112FF7017",
+          "task": "6CC237B9F6D6D5B2",
+          "item": "modern_industrialization:bronze_water_pump"
+        },
+        {
+          "quest": "128B3995CB611A45",
+          "task": "3055DB7310178442",
+          "item": "modern_industrialization:battery_alloy_dust"
+        },
+        {
+          "quest": "0E1B1EBF81B2DA47",
+          "task": "4572C38955E8552F",
+          "item": "modern_industrialization:invar_dust"
+        },
+        {
+          "quest": "49A914FF5521A3CE",
+          "task": "1CDD6A275A3D1296",
+          "item": "modern_industrialization:cupronickel_dust"
+        },
+        {
+          "quest": "3EAFA849053E3EF7",
+          "task": "634746059A3D6871",
+          "item": "modern_industrialization:electrum_dust"
+        },
+        {
+          "quest": "2249BA5F88B191ED",
+          "task": "6CA3452BF9264E24",
+          "item": "minecraft:bricks"
+        },
+        {
+          "quest": "0799245700C72434",
+          "task": "29E01AD43B8CD080",
+          "item": "minecraft:paper"
+        },
+        {
+          "quest": "452D070427B81877",
+          "task": "142259CDB543713D",
+          "item": "modern_industrialization:coke_oven"
+        },
+        {
+          "quest": "452D070427B81877",
+          "task": "0570456BDA6D1664",
+          "item": "minecraft:bricks"
+        },
+        {
+          "quest": "452D070427B81877",
+          "task": "589F426DE0D734E2",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "452D070427B81877",
+          "task": "7F2915A7CEE76E01",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "452D070427B81877",
+          "task": "263444CA8BBFE180",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "452D070427B81877",
+          "task": "6BB46AB516F670EE",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0D0C9043FAA9C215",
+          "task": "2946741B9733C4B3",
+          "item": "modern_industrialization:creosote_bucket"
+        },
+        {
+          "quest": "343127A42BA0B83C",
+          "task": "0481DD309481C339",
+          "item": "modern_industrialization:lubricant_bucket"
+        },
+        {
+          "quest": "1D6BFD70720E391D",
+          "task": "0A414B60C2870A25",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1471CCC149353D56",
+          "task": "7D81E69545534D39",
+          "item": "modern_industrialization:uncooked_steel_dust"
+        },
+        {
+          "quest": "71184B7B25919038",
+          "task": "17678BB0B7804582",
+          "item": "modern_industrialization:raw_synthetic_oil_bucket"
+        },
+        {
+          "quest": "5B2F6D4ECFE51D74",
+          "task": "3971F07743DF942F",
+          "item": "modern_industrialization:steam_blast_furnace"
+        },
+        {
+          "quest": "5B2F6D4ECFE51D74",
+          "task": "6415E4C2F05E3637",
+          "item": "modern_industrialization:fire_clay_bricks"
+        },
+        {
+          "quest": "5B2F6D4ECFE51D74",
+          "task": "4003DF22E9F29CAF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5B2F6D4ECFE51D74",
+          "task": "549173CDF1544314",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5B2F6D4ECFE51D74",
+          "task": "4D2579B878EE1D0D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "579C00BCFE5917B2",
+          "task": "37A727A93DEC9F19",
+          "item": "modern_industrialization:synthetic_oil_bucket"
+        },
+        {
+          "quest": "329F257DC1F01889",
+          "task": "59D769AA8D63FDFE",
+          "item": "modern_industrialization:synthetic_rubber_bucket"
+        },
+        {
+          "quest": "6FEF9845584E6BFA",
+          "task": "1CD7D7DDD4AFD0B1",
+          "item": "modern_industrialization:rubber_sheet"
+        },
+        {
+          "quest": "2121C4F2CF127435",
+          "task": "3535C8293893B9B8",
+          "item": "modern_industrialization:resistor"
+        },
+        {
+          "quest": "2121C4F2CF127435",
+          "task": "20B414AE450EB22A",
+          "item": "modern_industrialization:inductor"
+        },
+        {
+          "quest": "2121C4F2CF127435",
+          "task": "3731CB1F664519BF",
+          "item": "modern_industrialization:analog_circuit_board"
+        },
+        {
+          "quest": "2121C4F2CF127435",
+          "task": "78CCDF87A9E9185C",
+          "item": "modern_industrialization:capacitor"
+        },
+        {
+          "quest": "0C677AFD6CBEE0BC",
+          "task": "5029048D4AFD1A80",
+          "item": "modern_industrialization:analog_circuit"
+        },
+        {
+          "quest": "26A89C51A7B9FFDE",
+          "task": "17FA86FA2ECB3A8C",
+          "item": "modern_industrialization:steel_ingot"
+        },
+        {
+          "quest": "2F8297E50DEF0FC6",
+          "task": "607C07FC3646E270",
+          "item": "modern_industrialization:molten_redstone_bucket"
+        },
+        {
+          "quest": "6FABE2927AFE1BF8",
+          "task": "0E7FFD1684DC471F",
+          "item": "modern_industrialization:soldering_alloy_bucket"
+        },
+        {
+          "quest": "023BA92436AFFCFD",
+          "task": "00AA6ACCED8586A1",
+          "item": "modern_industrialization:config_card"
+        },
+        {
+          "quest": "1CB630CE60F8B860",
+          "task": "2592C37F835AB817",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4609310E0F2CBE02",
+          "task": "76EF5443A73B7B87",
+          "item": "modern_industrialization:steam_quarry"
+        },
+        {
+          "quest": "4609310E0F2CBE02",
+          "task": "7F57354C4506E04C",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "4609310E0F2CBE02",
+          "task": "480C0FE83583225E",
+          "item": "modern_industrialization:steel_machine_casing_pipe"
+        },
+        {
+          "quest": "4609310E0F2CBE02",
+          "task": "52BAF4AB5880BC16",
+          "item": "minecraft:chain"
+        },
+        {
+          "quest": "4609310E0F2CBE02",
+          "task": "4B8D8848A930FAD0",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4609310E0F2CBE02",
+          "task": "7B5A9951D239D081",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4609310E0F2CBE02",
+          "task": "00C980F4D867390D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "05CFEDFD3F943887",
+          "task": "2CBCE5DC699C38DB",
+          "item": "modern_industrialization:bronze_drill"
+        },
+        {
+          "quest": "165A09B8C42579B9",
+          "task": "5046240423CF224B",
+          "item": "modern_industrialization:copper_drill"
+        },
+        {
+          "quest": "06AEE6B2E97A5CA8",
+          "task": "268EC3AC3347DAC7",
+          "item": "moderndynamics:item_pipe"
+        },
+        {
+          "quest": "6758A5BC0D25974B",
+          "task": "7F5E3D0C8D9E6677",
+          "item": "moderndynamics:machine_extender"
+        },
+        {
+          "quest": "3AAC60DF5729CB7F",
+          "task": "293C49D02DE7B047",
+          "item": "moderndynamics:fluid_pipe"
+        },
+        {
+          "quest": "3DA3CFDA837FC891",
+          "task": "4061D0C116B81681",
+          "item": "moderndynamics:extractor"
+        },
+        {
+          "quest": "3DA3CFDA837FC891",
+          "task": "2221B30C6FAFBFEC",
+          "item": "moderndynamics:filter"
+        },
+        {
+          "quest": "3DA3CFDA837FC891",
+          "task": "32AF593B227BD000",
+          "item": "moderndynamics:attractor"
+        },
+        {
+          "quest": "0C6FF5ECDBA86079",
+          "task": "46B59F4F7F0A50B7",
+          "item": "simplemagnets:advancedmagnet"
+        },
+        {
+          "quest": "63243E96CFB7C972",
+          "task": "5B6BEF8C9DD96236",
+          "item": "modern_industrialization:steel_tank"
+        },
+        {
+          "quest": "318F85739D984C5F",
+          "task": "4AE02600FF85CB15",
+          "item": "modern_industrialization:steel_barrel"
+        },
+        {
+          "quest": "593BDCEDCC91B98C",
+          "task": "22CB62FA6077C44E",
+          "item": "modern_industrialization:trash_can"
+        },
+        {
+          "quest": "726994F1ADADFD28",
+          "task": "2CF7D95FA2AB2724",
+          "item": "modern_industrialization:steam_mining_drill"
+        },
+        {
+          "quest": "420CD966462CB7CD",
+          "task": "2E966F9B6CB8B893",
+          "item": "modern_industrialization:steel_packer"
+        },
+        {
+          "quest": "420CD966462CB7CD",
+          "task": "2945F67DE925926E",
+          "item": "modern_industrialization:steel_unpacker"
+        },
+        {
+          "quest": "3D96C9B7CE5C705B",
+          "task": "10BB9C906FC266EA",
+          "item": "explorerscompass:explorerscompass"
+        },
+        {
+          "quest": "0D0026F5BAD33588",
+          "task": "71F8211604C6FC65",
+          "item": "mi_sound_addon:mallet"
+        },
+        {
+          "quest": "4410F770254B4F8F",
+          "task": "2C49049BE7001BD2",
+          "item": "modern_industrialization:steel_upgrade"
+        },
+        {
+          "quest": "0F64D4DF944D4805",
+          "task": "479953BAA1AB9ED6",
+          "item": "modern_industrialization:steel_water_pump"
+        },
+        {
+          "quest": "5E0A9E4DD75BB890",
+          "task": "1E8E47FB01CC422B",
+          "item": "modern_industrialization:steel_boiler"
+        },
+        {
+          "quest": "0697DFDC4CFC970F",
+          "task": "5C5F094FC89A0673",
+          "item": "extended_industrialization:large_steam_macerator"
+        },
+        {
+          "quest": "0697DFDC4CFC970F",
+          "task": "30DB077C163474AA",
+          "item": "modern_industrialization:bronze_plated_bricks"
+        },
+        {
+          "quest": "0697DFDC4CFC970F",
+          "task": "44C11EEF144B8D63",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0697DFDC4CFC970F",
+          "task": "5ACB2533FCDB3FAA",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0697DFDC4CFC970F",
+          "task": "3A2ADE76DB297471",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "3DE517F923E1627D",
+          "task": "0BF1F0C85D242B11",
+          "item": "modern_industrialization:steel_wiremill"
+        },
+        {
+          "quest": "199A02F18040CB8A",
+          "task": "23C98B88322298BA",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1F4A0D43BADF0146",
+          "task": "7FE406DC9DDB4E4D",
+          "item": "modern_industrialization:motor"
+        },
+        {
+          "quest": "1F4A0D43BADF0146",
+          "task": "0E64C9BAB4ADB4F8",
+          "item": "modern_industrialization:pump"
+        },
+        {
+          "quest": "1F4A0D43BADF0146",
+          "task": "2F20BC72CD14BDC9",
+          "item": "modern_industrialization:robot_arm"
+        },
+        {
+          "quest": "1F4A0D43BADF0146",
+          "task": "5E4BADC3704CD76C",
+          "item": "modern_industrialization:piston"
+        },
+        {
+          "quest": "1F4A0D43BADF0146",
+          "task": "3FDD7AC3A2057175",
+          "item": "modern_industrialization:conveyor"
+        },
+        {
+          "quest": "591E854F1CE86E2E",
+          "task": "71F9380F937AE4FB",
+          "item": "modern_industrialization:large_tank"
+        },
+        {
+          "quest": "591E854F1CE86E2E",
+          "task": "4E5ED41F3487D3A4",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "591E854F1CE86E2E",
+          "task": "564F665E0C6756BD",
+          "item": "minecraft:glass"
+        },
+        {
+          "quest": "591E854F1CE86E2E",
+          "task": "602A59028A54CCCB",
+          "item": "modern_industrialization:large_tank_hatch"
+        },
+        {
+          "quest": "2F4E5ADB4CB93AA8",
+          "task": "0665AC7DFD5B76B1",
+          "item": "modern_industrialization:redstone_battery"
+        },
+        {
+          "quest": "31B8B541EED9ADD1",
+          "task": "274FCC71C2015AC4",
+          "item": "modern_industrialization:basic_machine_hull"
+        },
+        {
+          "quest": "509849FB875BE40D",
+          "task": "0F959C7FEC5CD648",
+          "item": "modern_industrialization:portable_storage_unit"
+        },
+        {
+          "quest": "2F5AA3AA2794D431",
+          "task": "7DB7E428ED3B5E1A",
+          "item": "modern_industrialization:configurable_chest"
+        },
+        {
+          "quest": "4FB50C49AE5D30B2",
+          "task": "3BDFF0506CE517F5",
+          "item": "modern_industrialization:large_steam_boiler"
+        },
+        {
+          "quest": "4FB50C49AE5D30B2",
+          "task": "58B3510CDA3EC450",
+          "item": "modern_industrialization:bronze_plated_bricks"
+        },
+        {
+          "quest": "4FB50C49AE5D30B2",
+          "task": "1E9DF90560C1CEBE",
+          "item": "modern_industrialization:heatproof_machine_casing"
+        },
+        {
+          "quest": "4FB50C49AE5D30B2",
+          "task": "104396EA77E164FE",
+          "item": "modern_industrialization:bronze_machine_casing_pipe"
+        },
+        {
+          "quest": "4FB50C49AE5D30B2",
+          "task": "3CE135A5298E5A62",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4FB50C49AE5D30B2",
+          "task": "1FEE1621403E20F6",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4FB50C49AE5D30B2",
+          "task": "47212208CD54413D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "537D76EA2DFCE794",
+          "task": "3FAAAF645D6CC49A",
+          "item": "extended_industrialization:large_steam_furnace"
+        },
+        {
+          "quest": "537D76EA2DFCE794",
+          "task": "704E947DD439D21E",
+          "item": "modern_industrialization:bronze_plated_bricks"
+        },
+        {
+          "quest": "537D76EA2DFCE794",
+          "task": "2BEE5E62350CB9B0",
+          "item": "modern_industrialization:fire_clay_bricks"
+        },
+        {
+          "quest": "537D76EA2DFCE794",
+          "task": "1F0A2F22DEFCA291",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "537D76EA2DFCE794",
+          "task": "2024A3B3CA873BFF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "537D76EA2DFCE794",
+          "task": "603B7FEBD79D0F0D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "12926ADD337786A7",
+          "task": "7FEE1E32B30864CE",
+          "item": "bankstorage:bank_2"
+        },
+        {
+          "quest": "20E6BE71E8BA5585",
+          "task": "290DC8526F2F06B7",
+          "item": "cognition:cognitive_flux"
+        },
+        {
+          "quest": "3B28AE165B04B6EB",
+          "task": "0524B051D756B71F",
+          "item": "cognition:cognitive_amalgam"
+        },
+        {
+          "quest": "55F613974F17ED0A",
+          "task": "564DE3BD02C3CE0A",
+          "item": "cognition:cognitive_alloy"
+        },
+        {
+          "quest": "07437EF0F03724CC",
+          "task": "2209B3625266FAC5",
+          "item": "cognition:experience_obelisk"
+        },
+        {
+          "quest": "5E0C8E80FD41ECC3",
+          "task": "114BB39F7CD134F2",
+          "item": "simplemagnets:basicmagnet"
+        },
+        {
+          "quest": "547CCB129043BEE6",
+          "task": "52AA085735BF5D28",
+          "item": "extended_industrialization:steam_chainsaw"
+        },
+        {
+          "quest": "64ACC11C34E6D116",
+          "task": "53A67A9EE7C607FA",
+          "item": "bankstorage:bank_3"
+        },
+        {
+          "quest": "3D5D5FE41A66780D",
+          "task": "04DF7E002108285E",
+          "item": "sophisticatedbackpacks:iron_backpack"
+        },
+        {
+          "quest": "1C7BF59D48BD8137",
+          "task": "32E22BD1C9540636",
+          "item": "travelanchors:travel_anchor"
+        },
+        {
+          "quest": "1C7BF59D48BD8137",
+          "task": "464503D4ABCA85D8",
+          "item": "travelanchors:travel_staff"
+        },
+        {
+          "quest": "1C56D3421ED7758F",
+          "task": "01B1A759F4888DE6",
+          "item": "extended_industrialization:machine_config_card"
+        },
+        {
+          "quest": "5777143D023A9131",
+          "task": "22519E5AFEEFE6DB",
+          "item": "extended_industrialization:bronze_solar_boiler"
+        },
+        {
+          "quest": "17B61F8F9CAC32E2",
+          "task": "1F4A931FF5D23838",
+          "item": "modern_industrialization:redstone_control_module"
+        },
+        {
+          "quest": "34718CDC46F0441E",
+          "task": "44C1C92F89A331D9",
+          "item": "extended_industrialization:large_configurable_chest"
+        },
+        {
+          "quest": "181F0CD6428732B2",
+          "task": "4FDB7FEDCF9F4563",
+          "item": "sophisticatedstorage:basic_to_copper_tier_upgrade"
+        },
+        {
+          "quest": "6B3BEC96CBAB7760",
+          "task": "4CDF68A9DFBD6961",
+          "item": "sophisticatedstorage:copper_to_iron_tier_upgrade"
+        },
+        {
+          "quest": "37A8157AB01079F0",
+          "task": "1A4C8B1128098C5E",
+          "item": "sophisticatedstorage:iron_to_gold_tier_upgrade"
+        },
+        {
+          "quest": "0E0589CA933ED840",
+          "task": "74081535984EAA6E",
+          "item": "extended_industrialization:steel_solar_boiler"
+        },
+        {
+          "quest": "473E19E8841D003F",
+          "task": "0AE2A52951572011",
+          "item": "extended_industrialization:steel_alloy_smelter"
+        },
+        {
+          "quest": "757DF7D0189251A0",
+          "task": "466DB362793BF81B",
+          "item": "tankstorage:tank_2"
+        },
+        {
+          "quest": "35586140C9917179",
+          "task": "40ECFB1A78CAFCE4",
+          "item": "tankstorage:tank_3"
+        },
+        {
+          "quest": "4964937901EA0CA5",
+          "task": "4377052E0AF3FCAB",
+          "item": "sophisticatedbackpacks:copper_backpack"
+        },
+        {
+          "quest": "1187AF9241E0D7E0",
+          "task": "6A5C059C6474C540",
+          "item": "sophisticatedbackpacks:upgrade_base"
+        },
+        {
+          "quest": "5CFE958DD01C2BB5",
+          "task": "45081657FA20E2FE",
+          "item": "moderndynamics:inhibitor"
+        },
+        {
+          "quest": "32649B0ABE0E98D5",
+          "task": "59C06644B275AFF8",
+          "item": "pipe_connector:pipe_connector"
+        },
+        {
+          "quest": "002E71F111942044",
+          "task": "48A9248295642E75",
+          "item": "functionalstorage:storage_controller"
+        },
+        {
+          "quest": "70B62E5012B80817",
+          "task": "193CA9AD0F2C7814",
+          "item": "functionalstorage:linking_tool"
+        },
+        {
+          "quest": "13FB4D096D94C939",
+          "task": "41C4B6BE72489D1B",
+          "item": "torchmaster:megatorch"
+        },
+        {
+          "quest": "4DB8D413C973602D",
+          "task": "7B49775B44853F74",
+          "item": "yet_another_industrialization:fluid_trash_can_hatch"
+        },
+        {
+          "quest": "4DB8D413C973602D",
+          "task": "5B58143104EB68DF",
+          "item": "yet_another_industrialization:item_trash_can_hatch"
+        },
+        {
+          "quest": "246812614B3AAD68",
+          "task": "249C1CDEB9A4DF13",
+          "item": "yet_another_industrialization:numismatic_generator"
+        },
+        {
+          "quest": "3D7AE8EA3C6820D4",
+          "task": "38679CA9753036A6",
+          "item": "extended_industrialization:steam_farmer"
+        },
+        {
+          "quest": "2FBFC99D4F1597E4",
+          "task": "10F12CAF66B57529",
+          "item": "nomansland:resin"
+        },
+        {
+          "quest": "0F05F3F7EB78DAB5",
+          "task": "48E66ADFA65979F0",
+          "item": "kubejs:steel_helmet"
+        },
+        {
+          "quest": "0F05F3F7EB78DAB5",
+          "task": "62A024A09AD28D30",
+          "item": "kubejs:steel_chestplate"
+        },
+        {
+          "quest": "0F05F3F7EB78DAB5",
+          "task": "461C595621CEBBF6",
+          "item": "kubejs:steel_leggings"
+        },
+        {
+          "quest": "0F05F3F7EB78DAB5",
+          "task": "2FD2CFD9FF612F99",
+          "item": "kubejs:steel_boots"
+        },
+        {
+          "quest": "0F05F3F7EB78DAB5",
+          "task": "11441BB5629F7B2B",
+          "item": "kubejs:steel_pickaxe"
+        },
+        {
+          "quest": "2A5244DADFD63606",
+          "task": "132A6E50E6FFAE77",
+          "item": "kubejs:bronze_helmet"
+        },
+        {
+          "quest": "2A5244DADFD63606",
+          "task": "79973E655935D7C2",
+          "item": "kubejs:bronze_chestplate"
+        },
+        {
+          "quest": "2A5244DADFD63606",
+          "task": "203311C49D0DB1DD",
+          "item": "kubejs:bronze_leggings"
+        },
+        {
+          "quest": "2A5244DADFD63606",
+          "task": "78E3F8E7A9D8CC51",
+          "item": "kubejs:bronze_boots"
+        },
+        {
+          "quest": "2A5244DADFD63606",
+          "task": "041CFA0CD3F2D4C0",
+          "item": "kubejs:bronze_pickaxe"
+        },
+        {
+          "quest": "7740CF1C863603C4",
+          "task": "7C7D6DD46246D099",
+          "item": "kubejs:diamond_upgrade_smithing_template"
+        },
+        {
+          "quest": "5153F5CF738EDDB3",
+          "task": "2CCBE02CACEFBBDC",
+          "item": "sophisticatedstorage:crafting_upgrade"
+        },
+        {
+          "quest": "3D86BF2E19520795",
+          "task": "739794AE0166D905",
+          "item": "stcm:neoforge_hammer"
+        },
+        {
+          "quest": "7C203AFD98845058",
+          "task": "655906BECA10AE2F",
+          "item": "scannable:scanner"
+        },
+        {
+          "quest": "5E56059CE7218C1A",
+          "task": "0D3A9EC5F487119B",
+          "item": "scannable:block_module"
+        },
+        {
+          "quest": "07ED435448676AE4",
+          "task": "73CE12BDAD02CB09",
+          "item": "scannable:common_ores_module"
+        },
+        {
+          "quest": "3B0E44AB704B9254",
+          "task": "2D91AB52C38B4B38",
+          "item": "scannable:rare_ores_module"
+        },
+        {
+          "quest": "0BB2ACE122DB2C7F",
+          "task": "4DA264CE350C7D8A",
+          "item": "scannable:fluid_module"
+        },
+        {
+          "quest": "6544C9B83AC50F85",
+          "task": "4B5B650F3A3C7E37",
+          "item": "scannable:range_module"
+        },
+        {
+          "quest": "3660674CDEFC1C98",
+          "task": "74BCB03070883888",
+          "item": "scannable:entity_module"
+        },
+        {
+          "quest": "20B9111B42503457",
+          "task": "42859EAD9E3098EA",
+          "item": "scannable:friendly_entity_module"
+        },
+        {
+          "quest": "38ADE558FBE30716",
+          "task": "62042BF09379D242",
+          "item": "scannable:hostile_entity_module"
+        },
+        {
+          "quest": "6081A118906B9F85",
+          "task": "270C578D93272146",
+          "item": "justhammers:impact_core"
+        },
+        {
+          "quest": "20CD46333F1F8228",
+          "task": "11BFE5320607A2D9",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "58F0D9E55EF206E7",
+          "task": "490C0AAB7D2C22D4",
+          "item": "mi_utilities:tier_swapper"
+        }
+      ]
+    },
+    {
+      "file": "config/ftbquests/quests/chapters/3__electrical_age.snbt",
+      "id": "21E9255A61D5A82D",
+      "order": 2,
+      "item_tasks": [
+        {
+          "quest": "2969BA6B88D1EC15",
+          "task": "0F55DEF464DB92DD",
+          "item": "modern_industrialization:basic_machine_hull"
+        },
+        {
+          "quest": "65E66BED260A6632",
+          "task": "6368FC849543715B",
+          "item": "modern_industrialization:electric_water_pump"
+        },
+        {
+          "quest": "33106BD719EDE5A5",
+          "task": "4FFACF6EB66C875F",
+          "item": "modern_industrialization:electric_unpacker"
+        },
+        {
+          "quest": "6DC076765D6033C3",
+          "task": "364265C246046EB3",
+          "item": "modern_industrialization:photosynthetic_chamber"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "701705F3D30E4F54",
+          "item": "modern_industrialization:greenhouse"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "27B3D25E19F52E10",
+          "item": "minecraft:grass_block"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "372599E4E95EC4DC",
+          "item": "minecraft:oak_log"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "6D4331B5155A68AB",
+          "item": "minecraft:oak_leaves"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "703DE1FF63D85FBD",
+          "item": "minecraft:glass"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "05683E47D652EE9C",
+          "item": "minecraft:glowstone"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "62AAAC31268D9187",
+          "item": "factory_blocks:metalbox"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "333FF666C4019C93",
+          "item": "factory_blocks:rusty_scaffold"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "39EAEA3EA329458A",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "24E249513077CFCA",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "568B6B0BEFBFBCBC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "3759329D7AB3E02D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "06AB394FC4DB1809",
+          "task": "6FA5D3D6804ECEDC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "19F684E8FC74E971",
+          "task": "66782E25EA4FC08D",
+          "item": "modern_industrialization:polarizer"
+        },
+        {
+          "quest": "54CA233681EC29E6",
+          "task": "2D225EAC4B72B942",
+          "item": "modern_industrialization:electric_packer"
+        },
+        {
+          "quest": "3E87F9A3771AA4A4",
+          "task": "7862D9B62E46AE0D",
+          "item": "modern_industrialization:electric_wiremill"
+        },
+        {
+          "quest": "1107C9B96B0FB6BD",
+          "task": "7A4741BB4AB2E22C",
+          "item": "modern_industrialization:lv_storage_unit"
+        },
+        {
+          "quest": "54A2937E381920FC",
+          "task": "2DB53CC87EE25B92",
+          "item": "modern_industrialization:electric_mixer"
+        },
+        {
+          "quest": "2FA4E183EB7E1413",
+          "task": "7B9DE75B60057C1F",
+          "item": "modern_industrialization:electric_cutting_machine"
+        },
+        {
+          "quest": "741C06785329D26C",
+          "task": "0B45B124D456CA3E",
+          "item": "modern_industrialization:electric_compressor"
+        },
+        {
+          "quest": "43E5FC3194CF1BBC",
+          "task": "64BC655D8E9BB22B",
+          "item": "modern_industrialization:lv_steam_turbine"
+        },
+        {
+          "quest": "011FCD9F3A6FB5C6",
+          "task": "065736B9C519C7AD",
+          "item": "modern_industrialization:lv_diesel_generator"
+        },
+        {
+          "quest": "682E5B8C67942AF8",
+          "task": "67C75C44B8CCD13C",
+          "item": "extended_industrialization:lv_solar_panel"
+        },
+        {
+          "quest": "682E5B8C67942AF8",
+          "task": "16C7A6A9248BCB2D",
+          "item": "extended_industrialization:lv_photovoltaic_cell"
+        },
+        {
+          "quest": "775B112F460EB130",
+          "task": "2604360A89DF2F8D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5FFB2A58D1AADDC0",
+          "task": "3E0C4A5566EBAC7E",
+          "item": "moderndynamics:lv_cable"
+        },
+        {
+          "quest": "725C5828090A1560",
+          "task": "08A3052C3C889E47",
+          "item": "modern_industrialization:electric_furnace"
+        },
+        {
+          "quest": "073D42A6E727665A",
+          "task": "5D5393E3C77A7612",
+          "item": "modern_industrialization:assembler"
+        },
+        {
+          "quest": "7C70B4621C93F658",
+          "task": "1B5635C6C7C40700",
+          "item": "modern_industrialization:electric_macerator"
+        },
+        {
+          "quest": "4915E23CC60FBD06",
+          "task": "45EADA2B1DDC18ED",
+          "item": "extended_industrialization:electric_alloy_smelter"
+        },
+        {
+          "quest": "2BCB2D286CA1B2B1",
+          "task": "7E8EC4C893C0B08F",
+          "item": "modern_industrialization:cupronickel_coil"
+        },
+        {
+          "quest": "45976F62A09069E6",
+          "task": "52FD62CC5C8324B8",
+          "item": "modern_industrialization:electric_blast_furnace"
+        },
+        {
+          "quest": "45976F62A09069E6",
+          "task": "3B162DDE2B19D828",
+          "item": "modern_industrialization:heatproof_machine_casing"
+        },
+        {
+          "quest": "45976F62A09069E6",
+          "task": "4FF9E709C49AD2ED",
+          "item": "modern_industrialization:cupronickel_coil"
+        },
+        {
+          "quest": "45976F62A09069E6",
+          "task": "612027AC4A4A11C0",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "45976F62A09069E6",
+          "task": "349CEA7E862FC482",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "45976F62A09069E6",
+          "task": "49B502911F71C89B",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "300F4E3AAD5B0212",
+          "task": "5CF9A7786FEF9241",
+          "item": "modern_industrialization:aluminum_ingot"
+        },
+        {
+          "quest": "4D79C193C61832E6",
+          "task": "6B059CC872FA4607",
+          "item": "modern_industrialization:aluminum_tank"
+        },
+        {
+          "quest": "6A6FE8745D183151",
+          "task": "5E6D02B79E996157",
+          "item": "modern_industrialization:aluminum_barrel"
+        },
+        {
+          "quest": "1E92F7CFB2F27612",
+          "task": "66E59EB433890568",
+          "item": "modern_industrialization:configurable_tank"
+        },
+        {
+          "quest": "47D3834E67A0995D",
+          "task": "58E96024DEBC9096",
+          "item": "modern_industrialization:advanced_machine_casing"
+        },
+        {
+          "quest": "35F8044D376C6428",
+          "task": "4F6E92D33AEE0004",
+          "item": "modern_industrialization:advanced_machine_hull"
+        },
+        {
+          "quest": "2FFABD480EBC7D1D",
+          "task": "5E56AA48D287E202",
+          "item": "modern_industrialization:silicon_dust"
+        },
+        {
+          "quest": "55A551DC9366416E",
+          "task": "7C4BBC086A611DF7",
+          "item": "modern_industrialization:silicon_battery"
+        },
+        {
+          "quest": "401B2BB7771F2A18",
+          "task": "0FB3205B7AA7EB70",
+          "item": "modern_industrialization:electronic_circuit_board"
+        },
+        {
+          "quest": "401B2BB7771F2A18",
+          "task": "7BDDE32C5F79DDBC",
+          "item": "modern_industrialization:diode"
+        },
+        {
+          "quest": "401B2BB7771F2A18",
+          "task": "683E28FA905F737F",
+          "item": "modern_industrialization:transistor"
+        },
+        {
+          "quest": "323919C5F7774E1B",
+          "task": "09FBB31D69615B5F",
+          "item": "modern_industrialization:electronic_circuit"
+        },
+        {
+          "quest": "1C258EF6AC025D80",
+          "task": "2E515D3A21D90B7B",
+          "item": "sophisticatedbackpacks:gold_backpack"
+        },
+        {
+          "quest": "6AA0D51C9FF2DF97",
+          "task": "22785A2B9F44435E",
+          "item": "bankstorage:bank_4"
+        },
+        {
+          "quest": "174F0D4FABC53DF1",
+          "task": "4A463F60319EB774",
+          "item": "functionalstorage:copper_upgrade"
+        },
+        {
+          "quest": "37D2B90173E5852A",
+          "task": "147B874519812FFC",
+          "item": "industrialization_overdrive:pyrolyse_oven"
+        },
+        {
+          "quest": "37D2B90173E5852A",
+          "task": "35ABA126AB5AA332",
+          "item": "modern_industrialization:bronze_plated_bricks"
+        },
+        {
+          "quest": "37D2B90173E5852A",
+          "task": "7FC54ECF9D0C4DD5",
+          "item": "modern_industrialization:cupronickel_coil"
+        },
+        {
+          "quest": "37D2B90173E5852A",
+          "task": "0365E6610A60A4DB",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "37D2B90173E5852A",
+          "task": "742E9597634D1944",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "37D2B90173E5852A",
+          "task": "7D481262BFED19FC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "37D2B90173E5852A",
+          "task": "384F3106FC142633",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0C79576CA134241A",
+          "task": "509B654B2F61D653",
+          "item": "modern_industrialization:wood_tar_bucket"
+        },
+        {
+          "quest": "21F3205C40C9D424",
+          "task": "76273F22647475F1",
+          "item": "modern_industrialization:basic_upgrade"
+        },
+        {
+          "quest": "5B6A20BD4C70BA52",
+          "task": "30B3254990C33FEA",
+          "item": "modern_industrialization:laser_engraver"
+        },
+        {
+          "quest": "21C04730D77746DC",
+          "task": "459C805DC3D59B70",
+          "item": "ae2:logic_processor"
+        },
+        {
+          "quest": "21C04730D77746DC",
+          "task": "60C9276ACBC788FE",
+          "item": "ae2:calculation_processor"
+        },
+        {
+          "quest": "21C04730D77746DC",
+          "task": "451E65E49EC41D83",
+          "item": "ae2:engineering_processor"
+        },
+        {
+          "quest": "22CF4D2F371D8AF6",
+          "task": "298FED47A30DA0D2",
+          "item": "ae2:memory_card"
+        },
+        {
+          "quest": "37E716F9D27998E9",
+          "task": "297022CFE994635F",
+          "item": "ae2:meteorite_compass"
+        },
+        {
+          "quest": "579E6C7DBE9BD476",
+          "task": "19C84BAA4AFB3DCF",
+          "item": "ae2:controller"
+        },
+        {
+          "quest": "19EAC8C0A6889843",
+          "task": "40421637C30BA958",
+          "item": "ae2:pattern_encoding_terminal"
+        },
+        {
+          "quest": "1B4704766DF1A934",
+          "task": "1D5CD4689F54CE70",
+          "item": "ae2:blank_pattern"
+        },
+        {
+          "quest": "4584D2A76B87D7F0",
+          "task": "3D3626E2C4C6CB08",
+          "item": "ae2:pattern_access_terminal"
+        },
+        {
+          "quest": "528CD35EBF5D20F0",
+          "task": "0555A810B4E1E368",
+          "item": "ae2:crafting_unit"
+        },
+        {
+          "quest": "511ACED1E299766B",
+          "task": "285D9623AEDDB554",
+          "item": "ae2:condenser"
+        },
+        {
+          "quest": "2C1964927A0F7BE3",
+          "task": "3B538D2564C13E17",
+          "item": "ae2:pattern_provider"
+        },
+        {
+          "quest": "3C433173976A9CCC",
+          "task": "0102F5CADB9C8402",
+          "item": "ae2:molecular_assembler"
+        },
+        {
+          "quest": "25FA24C564DC2B3E",
+          "task": "01AA2797A46950A4",
+          "item": "ae2:drive"
+        },
+        {
+          "quest": "700E2D66148EEE63",
+          "task": "1F6A5FDBE2659DED",
+          "item": "ae2:wireless_access_point"
+        },
+        {
+          "quest": "7D5C56146FF2504F",
+          "task": "1CED87097D0EBD3F",
+          "item": "ae2:wireless_crafting_terminal"
+        },
+        {
+          "quest": "7D5C56146FF2504F",
+          "task": "64A105BF20B6D395",
+          "item": "ae2wtlib:wireless_pattern_encoding_terminal"
+        },
+        {
+          "quest": "7D5C56146FF2504F",
+          "task": "23836F01A16CC0C2",
+          "item": "ae2wtlib:wireless_pattern_access_terminal"
+        },
+        {
+          "quest": "281B2EA46AFC8E0A",
+          "task": "1EA2CF0F85C856D6",
+          "item": "ae2:item_storage_cell_1k"
+        },
+        {
+          "quest": "23115026C8C0FE1B",
+          "task": "296EE2958391659B",
+          "item": "ae2:fluid_storage_cell_1k"
+        },
+        {
+          "quest": "4752EA2B05EFD4FF",
+          "task": "7EA85B21DACC10AC",
+          "item": "ae2:fluid_storage_cell_4k"
+        },
+        {
+          "quest": "6FC849265CE586F6",
+          "task": "1B04C95C8AA3EA5F",
+          "item": "ae2:item_storage_cell_4k"
+        },
+        {
+          "quest": "4E4F199196DB7D4B",
+          "task": "3BAB4A6E2E2CB5A6",
+          "item": "ae2:item_storage_cell_16k"
+        },
+        {
+          "quest": "51DE20D35B3FD225",
+          "task": "3C8920C55F432D0E",
+          "item": "ae2:fluid_storage_cell_16k"
+        },
+        {
+          "quest": "6DA55FD46CE460F7",
+          "task": "7417FEBC1D67C97B",
+          "item": "ae2:fluid_storage_cell_64k"
+        },
+        {
+          "quest": "1F9B18D9DD75E5FA",
+          "task": "42FC26E764A0CF1F",
+          "item": "ae2:item_storage_cell_64k"
+        },
+        {
+          "quest": "1CED76365E309FBD",
+          "task": "051324C113711B13",
+          "item": "ae2:item_storage_cell_256k"
+        },
+        {
+          "quest": "05105071C0E09EB7",
+          "task": "497F0BD6A33520C5",
+          "item": "ae2:fluid_storage_cell_256k"
+        },
+        {
+          "quest": "2DBA4AB47A1B5821",
+          "task": "1568B1C13735338C",
+          "item": "ae2wtlib:wireless_universal_terminal"
+        },
+        {
+          "quest": "45AE05F51DB53B0C",
+          "task": "7765CF3F41A253D1",
+          "item": "ae2:growth_accelerator"
+        },
+        {
+          "quest": "56F8299D915D92E1",
+          "task": "548D4CA32C0B0354",
+          "item": "ae2wtlib:quantum_bridge_card"
+        },
+        {
+          "quest": "5370C2CEF127113C",
+          "task": "6B4D92C37569FC94",
+          "item": "ae2:singularity"
+        },
+        {
+          "quest": "5370C2CEF127113C",
+          "task": "10B26D84195C5546",
+          "item": "ae2:tiny_tnt"
+        },
+        {
+          "quest": "13ADC5EC083B64D0",
+          "task": "164DE723265B7AD6",
+          "item": "ae2:quantum_ring"
+        },
+        {
+          "quest": "13ADC5EC083B64D0",
+          "task": "4A3B6F349D0180FC",
+          "item": "ae2:quantum_link"
+        },
+        {
+          "quest": "0EBD2ACAFF4BDF39",
+          "task": "710D87B5C6FB67F2",
+          "item": "ae2:fluix_crystal"
+        },
+        {
+          "quest": "0BED1964F760756C",
+          "task": "1F29BF8250976D16",
+          "item": "ae2:fluix_glass_cable"
+        },
+        {
+          "quest": "46B810CC193254EA",
+          "task": "48B232DCB551EC22",
+          "item": "ae2:me_p2p_tunnel"
+        },
+        {
+          "quest": "224F2C5689DEC455",
+          "task": "0370147827F2F37C",
+          "item": "ae2:terminal"
+        },
+        {
+          "quest": "4BC54781892D5F76",
+          "task": "2C4A604333164FBD",
+          "item": "ae2:import_bus"
+        },
+        {
+          "quest": "4BC54781892D5F76",
+          "task": "6F7FDA6F15BD3A03",
+          "item": "ae2:export_bus"
+        },
+        {
+          "quest": "4BC54781892D5F76",
+          "task": "277BE009125FF38D",
+          "item": "ae2:storage_bus"
+        },
+        {
+          "quest": "4BC54781892D5F76",
+          "task": "121D1FE5A28EF01D",
+          "item": "ae2:toggle_bus"
+        },
+        {
+          "quest": "7BED2B5A2DF937B6",
+          "task": "257EA27AB619962A",
+          "item": "ae2:storage_monitor"
+        },
+        {
+          "quest": "3D9FBCB1A33F11F4",
+          "task": "4DB5B7792C892CA2",
+          "item": "ae2:interface"
+        },
+        {
+          "quest": "44CD586C410285BA",
+          "task": "3E6430DF866046F2",
+          "item": "ae2:conversion_monitor"
+        },
+        {
+          "quest": "27B975AF95A03AB0",
+          "task": "2BF119837F4889B1",
+          "item": "ae2:annihilation_plane"
+        },
+        {
+          "quest": "27B975AF95A03AB0",
+          "task": "22223CCD14FD2C9F",
+          "item": "ae2:formation_plane"
+        },
+        {
+          "quest": "6D7126882F500673",
+          "task": "4DC2131BD8EF3784",
+          "item": "ae2:crafting_terminal"
+        },
+        {
+          "quest": "72CD3E157F8A0EED",
+          "task": "5077C4796279CD55",
+          "item": "ae2:fluix_covered_cable"
+        },
+        {
+          "quest": "5355050A1D19B5DD",
+          "task": "18ECC2FFF53CE41C",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "615E2E96244F0787",
+          "task": "6BD96B9B74E4E186",
+          "item": "ae2:fluix_covered_dense_cable"
+        },
+        {
+          "quest": "4DB9199C90EF1028",
+          "task": "4DD4D8AD0EF5EED9",
+          "item": "ae2:fluix_smart_cable"
+        },
+        {
+          "quest": "3CFDE88A93CFBD93",
+          "task": "7E72FDFE62B5F150",
+          "item": "ae2:fluix_smart_dense_cable"
+        },
+        {
+          "quest": "1250B3CDA965D2DD",
+          "task": "562CD2DB62FB8B06",
+          "item": "tankstorage:tank_4"
+        },
+        {
+          "quest": "7D44CBA637915377",
+          "task": "7E33D983A9E991C6",
+          "item": "industrialization_overdrive:terminal"
+        },
+        {
+          "quest": "2358F7729C50724D",
+          "task": "19FDEE0FC5624C2F",
+          "item": "ae2netanalyser:network_analyser"
+        },
+        {
+          "quest": "0ACCCC58AB7786A5",
+          "task": "5B6AA09164F60EE7",
+          "item": "extended_industrialization:electric_bending_machine"
+        },
+        {
+          "quest": "2E9F840FD6C31065",
+          "task": "7E4C9D4335AB5125",
+          "item": "justhammers:reinforced_impact_core"
+        },
+        {
+          "quest": "4749C508B4B78B5B",
+          "task": "5199A847D0DBF414",
+          "item": "ae2:charger"
+        },
+        {
+          "quest": "46C9C616B0F71B35",
+          "task": "78AD2CE50304DFBC",
+          "item": "phantoms_utilities:spray_can"
+        }
+      ]
+    },
+    {
+      "file": "config/ftbquests/quests/chapters/4__adv_electronics.snbt",
+      "id": "0404FA2EB5C66F71",
+      "order": 3,
+      "item_tasks": [
+        {
+          "quest": "54AA08D0869CB19B",
+          "task": "60A6AF21384F7B66",
+          "item": "modern_industrialization:advanced_machine_hull"
+        },
+        {
+          "quest": "43E313436CB37519",
+          "task": "27C7FB5BB393E833",
+          "item": "modern_industrialization:mv_steam_turbine"
+        },
+        {
+          "quest": "313C3C77F20BB25E",
+          "task": "4DFF5A75226D493B",
+          "item": "extended_industrialization:large_electric_furnace"
+        },
+        {
+          "quest": "313C3C77F20BB25E",
+          "task": "0BEB7E99775FC6E7",
+          "item": "modern_industrialization:heatproof_machine_casing"
+        },
+        {
+          "quest": "313C3C77F20BB25E",
+          "task": "6F7C6653BA1C78B7",
+          "item": "modern_industrialization:cupronickel_coil"
+        },
+        {
+          "quest": "313C3C77F20BB25E",
+          "task": "4AF62BF9F748E005",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "313C3C77F20BB25E",
+          "task": "18FC7235D93165E3",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "313C3C77F20BB25E",
+          "task": "313A236768D509A5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "41B740CCB28C6E5A",
+          "task": "26F6F7158874ACAA",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "30B29F155E57EA0A",
+          "task": "6941DC2D5E5BEBB9",
+          "item": "moderndynamics:mv_cable"
+        },
+        {
+          "quest": "112577E182AC28F3",
+          "task": "6392EE51F79B544E",
+          "item": "modern_industrialization:mv_lv_transformer"
+        },
+        {
+          "quest": "0722462A316A38A2",
+          "task": "01A65C4580B01B03",
+          "item": "modern_industrialization:mv_storage_unit"
+        },
+        {
+          "quest": "186B17ECD172A61D",
+          "task": "6B8C79C5599E67B0",
+          "item": "modern_industrialization:mv_diesel_generator"
+        },
+        {
+          "quest": "216B300DF319ED1A",
+          "task": "1F8F4A3EF8F0D246",
+          "item": "modern_industrialization:oil_drilling_rig"
+        },
+        {
+          "quest": "216B300DF319ED1A",
+          "task": "793445DD76D32723",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "216B300DF319ED1A",
+          "task": "3A5854172CCD1FB2",
+          "item": "modern_industrialization:steel_machine_casing_pipe"
+        },
+        {
+          "quest": "216B300DF319ED1A",
+          "task": "6B3E5D4F918234F2",
+          "item": "minecraft:chain"
+        },
+        {
+          "quest": "216B300DF319ED1A",
+          "task": "605E3482C4127DE0",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "216B300DF319ED1A",
+          "task": "06B95AF21897C47B",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "216B300DF319ED1A",
+          "task": "1C29ABD5A1F5E652",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2601CBE978937794",
+          "task": "49DD54A8416F9C18",
+          "item": "modern_industrialization:aluminum_drill"
+        },
+        {
+          "quest": "3EBBB99A3FC5C7F3",
+          "task": "351BB0A5DA27051A",
+          "item": "modern_industrialization:crude_oil_bucket"
+        },
+        {
+          "quest": "66BB1DFC2C25A782",
+          "task": "45036593059EF756",
+          "item": "modern_industrialization:sulfuric_light_fuel_bucket"
+        },
+        {
+          "quest": "66BB1DFC2C25A782",
+          "task": "4B898D1B3CA8CD39",
+          "item": "modern_industrialization:sulfuric_heavy_fuel_bucket"
+        },
+        {
+          "quest": "66BB1DFC2C25A782",
+          "task": "2F82649EFC89612C",
+          "item": "modern_industrialization:sulfuric_naphtha_bucket"
+        },
+        {
+          "quest": "5556B0DC1C5779DD",
+          "task": "1B73D425BA1C52C6",
+          "item": "modern_industrialization:light_fuel_bucket"
+        },
+        {
+          "quest": "5556B0DC1C5779DD",
+          "task": "2EC078B1847D996F",
+          "item": "modern_industrialization:heavy_fuel_bucket"
+        },
+        {
+          "quest": "5556B0DC1C5779DD",
+          "task": "42DF011A9739D037",
+          "item": "modern_industrialization:naphtha_bucket"
+        },
+        {
+          "quest": "1636AAA1DD4ECC50",
+          "task": "26EF1EEEF30C26B6",
+          "item": "modern_industrialization:sulfuric_acid_bucket"
+        },
+        {
+          "quest": "716069E7FC21AF70",
+          "task": "1598BA16F9F74B94",
+          "item": "modern_industrialization:diesel_bucket"
+        },
+        {
+          "quest": "2CEA505B54E47E93",
+          "task": "63FBF484EBDADCA0",
+          "item": "modern_industrialization:steam_cracked_light_fuel_bucket"
+        },
+        {
+          "quest": "2CEA505B54E47E93",
+          "task": "2E5811BD5A0B0118",
+          "item": "modern_industrialization:steam_cracked_heavy_fuel_bucket"
+        },
+        {
+          "quest": "2CEA505B54E47E93",
+          "task": "65D318B8CEA93797",
+          "item": "modern_industrialization:steam_cracked_naphtha_bucket"
+        },
+        {
+          "quest": "16D396BA471F042E",
+          "task": "759A73E28830F550",
+          "item": "modern_industrialization:ethylene_bucket"
+        },
+        {
+          "quest": "6C9FCFD38214C922",
+          "task": "2EFEDE911010A4B6",
+          "item": "modern_industrialization:ethanol_bucket"
+        },
+        {
+          "quest": "07F7A80F124FA40E",
+          "task": "10B49932A64815FF",
+          "item": "modern_industrialization:raw_biodiesel_bucket"
+        },
+        {
+          "quest": "48BF632D5B8F57B8",
+          "task": "59BAB57A0B9480AA",
+          "item": "modern_industrialization:biodiesel_bucket"
+        },
+        {
+          "quest": "133E843DD991045A",
+          "task": "4917FBDFA465CC54",
+          "item": "modern_industrialization:boosted_diesel_bucket"
+        },
+        {
+          "quest": "6B8AAE4292380FCC",
+          "task": "4AC9B2CAF73C7F9E",
+          "item": "modern_industrialization:diethyl_ether_bucket"
+        },
+        {
+          "quest": "51FFD75BE129D918",
+          "task": "33ADC4974EDFCE23",
+          "item": "modern_industrialization:acrylic_acid_bucket"
+        },
+        {
+          "quest": "29471A87F97288E8",
+          "task": "7FC8DFB99CC4147C",
+          "item": "modern_industrialization:propene_bucket"
+        },
+        {
+          "quest": "7D44039609D08FC4",
+          "task": "58640E5317675EAE",
+          "item": "modern_industrialization:toluene_bucket"
+        },
+        {
+          "quest": "5E22844F7E6C8B34",
+          "task": "11210BC3FAC4B63B",
+          "item": "modern_industrialization:industrial_tnt"
+        },
+        {
+          "quest": "0B23A4FD2BACDD1B",
+          "task": "3DFCDD99BD45CFE8",
+          "item": "modern_industrialization:benzene_bucket"
+        },
+        {
+          "quest": "64DFA6F08BE456FD",
+          "task": "33EA2EBEE7440B0D",
+          "item": "modern_industrialization:caprolactam_bucket"
+        },
+        {
+          "quest": "14F9EFD54739898B",
+          "task": "6B5BE555D9C22842",
+          "item": "modern_industrialization:nylon_bucket"
+        },
+        {
+          "quest": "0E6CEE7FB03E1DB3",
+          "task": "7EF145CAC10F9031",
+          "item": "modern_industrialization:acetylene_bucket"
+        },
+        {
+          "quest": "11361E8B39F8F03C",
+          "task": "0A4EC06B717A4F81",
+          "item": "modern_industrialization:vinyl_chloride_bucket"
+        },
+        {
+          "quest": "1BEF7096D03CBA96",
+          "task": "450BD81628E95848",
+          "item": "modern_industrialization:polyvinyl_chloride_bucket"
+        },
+        {
+          "quest": "2E9C8142FD73B1E9",
+          "task": "0249AE0A5B3A6A36",
+          "item": "modern_industrialization:methane_bucket"
+        },
+        {
+          "quest": "1322F0FA409A6195",
+          "task": "18C26EECEC8083E1",
+          "item": "modern_industrialization:ethylbenzene_bucket"
+        },
+        {
+          "quest": "19C31620727D5A20",
+          "task": "530995764CEE29AC",
+          "item": "modern_industrialization:styrene_bucket"
+        },
+        {
+          "quest": "6F83294615F68716",
+          "task": "5CF3C2C6892B6D09",
+          "item": "modern_industrialization:butadiene_bucket"
+        },
+        {
+          "quest": "39ED7019F3ACB226",
+          "task": "2791786ED711F469",
+          "item": "modern_industrialization:styrene_butadiene_bucket"
+        },
+        {
+          "quest": "16B36E59F82D7938",
+          "task": "6BF7C903BBDE9990",
+          "item": "modern_industrialization:styrene_butadiene_rubber_bucket"
+        },
+        {
+          "quest": "1F46D51397CE34AC",
+          "task": "07B41F4499D8E2EC",
+          "item": "modern_industrialization:large_motor"
+        },
+        {
+          "quest": "1F46D51397CE34AC",
+          "task": "76FA6B33EFE8F7F6",
+          "item": "modern_industrialization:large_pump"
+        },
+        {
+          "quest": "7A0E6729E0460E62",
+          "task": "21D503855303D718",
+          "item": "modern_industrialization:diesel_jetpack"
+        },
+        {
+          "quest": "76859B4AE526D0B1",
+          "task": "52546CB1C74CED20",
+          "item": "modern_industrialization:diesel_mining_drill"
+        },
+        {
+          "quest": "344DDF8418F79BC0",
+          "task": "7606667FD69EC685",
+          "item": "modern_industrialization:diesel_chainsaw"
+        },
+        {
+          "quest": "0F75C95969AB5A54",
+          "task": "057848192A785B3D",
+          "item": "modern_industrialization:advanced_large_steam_boiler"
+        },
+        {
+          "quest": "0F75C95969AB5A54",
+          "task": "043616065BB597A2",
+          "item": "modern_industrialization:bronze_plated_bricks"
+        },
+        {
+          "quest": "0F75C95969AB5A54",
+          "task": "62CB45095E2BE82C",
+          "item": "modern_industrialization:bronze_machine_casing_pipe"
+        },
+        {
+          "quest": "0F75C95969AB5A54",
+          "task": "54CE588FBD33A6CF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0F75C95969AB5A54",
+          "task": "0D6693504C8C86CE",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0F75C95969AB5A54",
+          "task": "2D3AF43538899939",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "6B122F5D5B245180",
+          "task": "416DBC58E4C153E1",
+          "item": "modern_industrialization:electric_quarry"
+        },
+        {
+          "quest": "6B122F5D5B245180",
+          "task": "6626182237E4401F",
+          "item": "minecraft:chain"
+        },
+        {
+          "quest": "6B122F5D5B245180",
+          "task": "3AA84D323DC49A47",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "6B122F5D5B245180",
+          "task": "3185A934C60B2006",
+          "item": "modern_industrialization:steel_machine_casing_pipe"
+        },
+        {
+          "quest": "6B122F5D5B245180",
+          "task": "70B5D68C2F8990BD",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "6B122F5D5B245180",
+          "task": "2E8B8F1991F96FBE",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "6B122F5D5B245180",
+          "task": "183054AF0E270597",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2A5B2CD92B0C2B12",
+          "task": "2BF403044646E54C",
+          "item": "modern_industrialization:steel_drill"
+        },
+        {
+          "quest": "74C1D42994FAB98C",
+          "task": "49CF934265663770",
+          "item": "modern_industrialization:gold_drill"
+        },
+        {
+          "quest": "404C230FBF97A648",
+          "task": "5BF53F21797DAB61",
+          "item": "modern_industrialization:vacuum_freezer"
+        },
+        {
+          "quest": "404C230FBF97A648",
+          "task": "798C53446C3B7204",
+          "item": "modern_industrialization:frostproof_machine_casing"
+        },
+        {
+          "quest": "404C230FBF97A648",
+          "task": "60F319306DFC6303",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "404C230FBF97A648",
+          "task": "27A42D2D4C49C7DD",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "404C230FBF97A648",
+          "task": "6E9A40DA4118BCAC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "742A3EFCBB6C669F",
+          "task": "2A8DA7947F8DC029",
+          "item": "kubejs:concrete_bar"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "6144F4F416F9C581",
+          "item": "modern_industrialization:mob_crusher"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "728D8DDA672A2014",
+          "item": "minecraft:glass"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "1A1FCC5737787D4B",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "759A871CA9EC182F",
+          "item": "modern_industrialization:cupronickel_coil"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "13EAC67F33917489",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "1465848C282046A1",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "2A5B148EF77E20F7",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "6AAE065090FBF8C8",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5247AA1D02690986",
+          "task": "31B5BECCA8FAF040",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0A87510010F677EF",
+          "task": "0061715A02A1C4CE",
+          "item": "modern_industrialization:chemical_reactor"
+        },
+        {
+          "quest": "624471093BF4C5A8",
+          "task": "16E4144E69F695E8",
+          "item": "modern_industrialization:distillery"
+        },
+        {
+          "quest": "77CDEFA4CBDBEBBF",
+          "task": "37BAE650A79A4B32",
+          "item": "modern_industrialization:electrolyzer"
+        },
+        {
+          "quest": "427144C8EF7A57E5",
+          "task": "24AE26369CA162E1",
+          "item": "modern_industrialization:centrifuge"
+        },
+        {
+          "quest": "69651A2E1A859FAC",
+          "task": "1635DB50CC10020F",
+          "item": "modern_industrialization:chlorine_bucket"
+        },
+        {
+          "quest": "6E3D5A646FD3CD7A",
+          "task": "18F76A87BBAC0FAA",
+          "item": "modern_industrialization:hydrochloric_acid_bucket"
+        },
+        {
+          "quest": "2DC8BCFBC2032D9E",
+          "task": "546A79588A78860C",
+          "item": "modern_industrialization:chromium_crushed_dust"
+        },
+        {
+          "quest": "2DC8BCFBC2032D9E",
+          "task": "2EC4F99E619AFC77",
+          "item": "modern_industrialization:ruby_dust"
+        },
+        {
+          "quest": "22A25288F315601E",
+          "task": "047CC03C22C3DDA0",
+          "item": "modern_industrialization:manganese_crushed_dust"
+        },
+        {
+          "quest": "0949D2D8BD487E87",
+          "task": "476EA5E794A8CBF2",
+          "item": "modern_industrialization:chromium_hydrochloric_solution_bucket"
+        },
+        {
+          "quest": "525F1B7E684F1B40",
+          "task": "280CC058F661BE50",
+          "item": "modern_industrialization:manganese_sulfuric_solution_bucket"
+        },
+        {
+          "quest": "3A8FFB7736EB8D34",
+          "task": "53B44F1BFF591DEB",
+          "item": "modern_industrialization:chromium_tiny_dust"
+        },
+        {
+          "quest": "13B6434C8DC787E5",
+          "task": "1404EAA9759D3A50",
+          "item": "modern_industrialization:manganese_tiny_dust"
+        },
+        {
+          "quest": "533C4266A8D1D029",
+          "task": "36709A94F9D36B53",
+          "item": "modern_industrialization:stainless_steel_dust"
+        },
+        {
+          "quest": "0828469D61354400",
+          "task": "2618B5F7EF665D52",
+          "item": "modern_industrialization:fluorine_bucket"
+        },
+        {
+          "quest": "21534F69896E0C20",
+          "task": "5B9BA564F41DE664",
+          "item": "modern_industrialization:chloroform_bucket"
+        },
+        {
+          "quest": "54BA6F783B61FE61",
+          "task": "4015BB5FC9FCEABE",
+          "item": "modern_industrialization:hydrofluoric_acid_bucket"
+        },
+        {
+          "quest": "59C5CC514CF9494D",
+          "task": "535D3655939BD68D",
+          "item": "modern_industrialization:tetrafluoroethylene_bucket"
+        },
+        {
+          "quest": "6005908017FD63C1",
+          "task": "2BC5AEC059279CDD",
+          "item": "modern_industrialization:polytetrafluoroethylene_bucket"
+        },
+        {
+          "quest": "55425F53F0716479",
+          "task": "1F8CE0EC95224011",
+          "item": "modern_industrialization:kanthal_dust"
+        },
+        {
+          "quest": "056BC4F364AB61F5",
+          "task": "2662A851EC9EC282",
+          "item": "modern_industrialization:kanthal_ingot"
+        },
+        {
+          "quest": "75EB9B7B85F791B9",
+          "task": "146EC684756CB57A",
+          "item": "modern_industrialization:kanthal_coil"
+        },
+        {
+          "quest": "52F9AD700340E96F",
+          "task": "0831B94342CAF0E7",
+          "item": "modern_industrialization:stainless_steel_hot_ingot"
+        },
+        {
+          "quest": "1AA4844D1D10B834",
+          "task": "35719345B19E6DB5",
+          "item": "modern_industrialization:stainless_steel_ingot"
+        },
+        {
+          "quest": "74BDD184DC723F51",
+          "task": "08464E03F46876F6",
+          "item": "modern_industrialization:advanced_motor"
+        },
+        {
+          "quest": "74BDD184DC723F51",
+          "task": "2E730093B9759F9A",
+          "item": "modern_industrialization:advanced_pump"
+        },
+        {
+          "quest": "473A7E0E59815A89",
+          "task": "0609ADFE757D584C",
+          "item": "modern_industrialization:air_intake"
+        },
+        {
+          "quest": "3FB5440AC80A5A4F",
+          "task": "1B467522D6E60A9D",
+          "item": "modern_industrialization:oxygen_bucket"
+        },
+        {
+          "quest": "3FB5440AC80A5A4F",
+          "task": "29A6B1D2D040ABE8",
+          "item": "modern_industrialization:nitrogen_bucket"
+        },
+        {
+          "quest": "3FB5440AC80A5A4F",
+          "task": "0AA6E53CEAA9BE12",
+          "item": "modern_industrialization:argon_bucket"
+        },
+        {
+          "quest": "5F7779B00391063B",
+          "task": "1703FF205E972A81",
+          "item": "modern_industrialization:annealed_copper_hot_ingot"
+        },
+        {
+          "quest": "6EBE89C8B00F9AF9",
+          "task": "5BF75B051B72412D",
+          "item": "modern_industrialization:cryofluid_bucket"
+        },
+        {
+          "quest": "37D9B9D06AD67FDD",
+          "task": "741031B5DE097482",
+          "item": "modern_industrialization:annealed_copper_ingot"
+        },
+        {
+          "quest": "505C6D834679BAFD",
+          "task": "2746F94584F161B3",
+          "item": "modern_industrialization:stainless_steel_drill"
+        },
+        {
+          "quest": "4D1A05F24E3ADAAE",
+          "task": "48925ADA39B67673",
+          "item": "modern_industrialization:shale_oil_bucket"
+        },
+        {
+          "quest": "1CD59B728BC791B6",
+          "task": "667D5C77EE0D6C42",
+          "item": "modern_industrialization:neodymium_dust"
+        },
+        {
+          "quest": "1CD59B728BC791B6",
+          "task": "78D35A728424BC6C",
+          "item": "modern_industrialization:yttrium_dust"
+        },
+        {
+          "quest": "1CD59B728BC791B6",
+          "task": "62228BD8BA512410",
+          "item": "modern_industrialization:cadmium_dust"
+        },
+        {
+          "quest": "6674415101329CDE",
+          "task": "1AB78D9172C3EFAB",
+          "item": "modern_industrialization:digital_circuit"
+        },
+        {
+          "quest": "4DEB3A5701AD3744",
+          "task": "63028A9B17E6FDEE",
+          "item": "modern_industrialization:turbo_machine_hull"
+        },
+        {
+          "quest": "7384A097DB48DCA2",
+          "task": "1A16BB3A6B5206EB",
+          "item": "modern_industrialization:digital_circuit_board"
+        },
+        {
+          "quest": "7384A097DB48DCA2",
+          "task": "2477BD86E73AED47",
+          "item": "modern_industrialization:not_gate"
+        },
+        {
+          "quest": "7384A097DB48DCA2",
+          "task": "491F3F278C4C3BCD",
+          "item": "modern_industrialization:and_gate"
+        },
+        {
+          "quest": "7384A097DB48DCA2",
+          "task": "5FCDBCF82FB8D1DF",
+          "item": "modern_industrialization:or_gate"
+        },
+        {
+          "quest": "537B78BA50218123",
+          "task": "5BBF50847D38207E",
+          "item": "modern_industrialization:polyethylene_bucket"
+        },
+        {
+          "quest": "22BE8475E35C1709",
+          "task": "43A00C0D867A35D1",
+          "item": "modern_industrialization:advanced_upgrade"
+        },
+        {
+          "quest": "2AEA76695F411DD9",
+          "task": "0A1F8CAF05C79A9B",
+          "item": "modern_industrialization:stainless_steel_tank"
+        },
+        {
+          "quest": "19A4CFE5915F9F13",
+          "task": "3AB24E2F2358D526",
+          "item": "modern_industrialization:stainless_steel_barrel"
+        },
+        {
+          "quest": "4967744B2F4C6A94",
+          "task": "1DFD49A140C89EE1",
+          "item": "bankstorage:bank_5"
+        },
+        {
+          "quest": "61EA3C1E66FD5ADF",
+          "task": "6E7C1E0D977DFFB8",
+          "item": "extended_industrialization:mv_solar_panel"
+        },
+        {
+          "quest": "61EA3C1E66FD5ADF",
+          "task": "61F12AB68CA780D3",
+          "item": "extended_industrialization:mv_photovoltaic_cell"
+        },
+        {
+          "quest": "58F9A473D6BC91C8",
+          "task": "671BA16C26D9EF28",
+          "item": "extended_industrialization:nano_helmet"
+        },
+        {
+          "quest": "58F9A473D6BC91C8",
+          "task": "684F112A36C56C06",
+          "item": "extended_industrialization:nano_chestplate"
+        },
+        {
+          "quest": "58F9A473D6BC91C8",
+          "task": "0E60254BB46D47CA",
+          "item": "extended_industrialization:nano_leggings"
+        },
+        {
+          "quest": "58F9A473D6BC91C8",
+          "task": "3A2EDCF98E68B2C2",
+          "item": "extended_industrialization:nano_boots"
+        },
+        {
+          "quest": "7E70E521DA85AA93",
+          "task": "74391AFC8A2AEF85",
+          "item": "minecraft:ender_eye"
+        },
+        {
+          "quest": "2478F4D9F70204A9",
+          "task": "78C58624FF32E6A7",
+          "item": "enderstorage:ender_tank"
+        },
+        {
+          "quest": "3EC71BD7C750B856",
+          "task": "608D0D20864ABB4B",
+          "item": "enderstorage:ender_chest"
+        },
+        {
+          "quest": "72BBBDF3ED8F6F1E",
+          "task": "1236C94F6ABACD0B",
+          "item": "enderstorage:ender_pouch"
+        },
+        {
+          "quest": "1BC8C8821CAB3224",
+          "task": "00916F14CC33B0E2",
+          "item": "sophisticatedbackpacks:diamond_backpack"
+        },
+        {
+          "quest": "2E7BA735872B4B94",
+          "task": "589706C973B83DD2",
+          "item": "modern_industrialization:plant_oil_bucket"
+        },
+        {
+          "quest": "2763B0A63FC17046",
+          "task": "072230B213CB81AD",
+          "item": "extended_industrialization:tesla_coil"
+        },
+        {
+          "quest": "53AEBDE8C4CA1429",
+          "task": "24C9089B5B9F2ED9",
+          "item": "extended_industrialization:tesla_receiver"
+        },
+        {
+          "quest": "3C7288BD3918567B",
+          "task": "7CDED56411A34265",
+          "item": "extended_industrialization:large_electric_macerator"
+        },
+        {
+          "quest": "3C7288BD3918567B",
+          "task": "45997D9890D60C51",
+          "item": "extended_industrialization:steel_plated_bricks"
+        },
+        {
+          "quest": "3C7288BD3918567B",
+          "task": "20E4C085DE2834C9",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "3C7288BD3918567B",
+          "task": "6F352A9FCCD9C4BD",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "3C7288BD3918567B",
+          "task": "234DDC2D5DC31273",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0EE203EEEA355636",
+          "task": "20CA390CC221C289",
+          "item": "extended_industrialization:machine_chainer"
+        },
+        {
+          "quest": "23B7A8819520FB36",
+          "task": "63661F22CD4B310D",
+          "item": "extended_industrialization:universal_transformer"
+        },
+        {
+          "quest": "3203928D87BB7B4B",
+          "task": "70392DAB25D5298B",
+          "item": "extended_industrialization:machine_chainer_relay"
+        },
+        {
+          "quest": "3BA24A4B45B26923",
+          "task": "23977FBEF7DE4E25",
+          "item": "extended_industrialization:electric_farmer"
+        },
+        {
+          "quest": "3BA24A4B45B26923",
+          "task": "68D5ACBD8EE94A99",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "3BA24A4B45B26923",
+          "task": "1161F2B61351425B",
+          "item": "modern_industrialization:steel_machine_casing_pipe"
+        },
+        {
+          "quest": "3BA24A4B45B26923",
+          "task": "40BC4C6BAF3BB6C5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "3BA24A4B45B26923",
+          "task": "5CB7170541C955B4",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "3BA24A4B45B26923",
+          "task": "2E6F90D6FA0A7002",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "3BA24A4B45B26923",
+          "task": "3F98D27C8E0BA978",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1BF78FD92C018648",
+          "task": "517D5E6F5CE5C3E7",
+          "item": "extended_industrialization:robot_auto_feeder"
+        },
+        {
+          "quest": "4C36957653876C0B",
+          "task": "2F1E80919BFF6CD5",
+          "item": "modern_industrialization:bronze_drill"
+        },
+        {
+          "quest": "4C36957653876C0B",
+          "task": "4388FEF1FD5660DA",
+          "item": "modern_industrialization:salt_water_bucket"
+        },
+        {
+          "quest": "68F3A8E2A480646C",
+          "task": "1BEB04FC94A637D2",
+          "item": "functionalstorage:gold_upgrade"
+        },
+        {
+          "quest": "26DD8F0FDE61AC95",
+          "task": "277620408F468F64",
+          "item": "extended_industrialization:electric_mining_drill"
+        },
+        {
+          "quest": "3CB32AC6ACE2140C",
+          "task": "4DCE136F516A9000",
+          "item": "extended_industrialization:electric_chainsaw"
+        },
+        {
+          "quest": "291D6AB7CDA01E05",
+          "task": "2ECDD3DA9586010E",
+          "item": "modern_industrialization:ammonia_bucket"
+        },
+        {
+          "quest": "1815584ACACBA8F7",
+          "task": "606CCA4C2A1587AF",
+          "item": "tankstorage:tank_5"
+        },
+        {
+          "quest": "21CB72E94FBBBACC",
+          "task": "0A451970D23EF1FB",
+          "item": "modern_industrialization:liquid_ender_bucket"
+        },
+        {
+          "quest": "487CF916A0FF784D",
+          "task": "741370982E841664",
+          "item": "modern_industrialization:molten_enderium_bucket"
+        },
+        {
+          "quest": "39A4845AB2B8FC83",
+          "task": "2D8CB8348E0EFE30",
+          "item": "modern_industrialization:enderium_ingot"
+        },
+        {
+          "quest": "2D6C1748C88BE8FD",
+          "task": "79B4B09E63A380AA",
+          "item": "bankstorage:bank_link"
+        },
+        {
+          "quest": "6B1443714139D5F7",
+          "task": "5D92242CDC9EEBF5",
+          "item": "tankstorage:tank_link"
+        },
+        {
+          "quest": "7A958D06D18685F0",
+          "task": "6239BD9E3CD7F2BA",
+          "item": "modern_industrialization:kanthal_hot_ingot"
+        },
+        {
+          "quest": "7E054C0032E534F1",
+          "task": "0EB11BEE5D283BBA",
+          "item": "modern_industrialization:turbo_upgrade"
+        },
+        {
+          "quest": "674D567F3CF68D23",
+          "task": "2A4A8D3D6B090505",
+          "item": "extended_industrialization:tesla_handheld_receiver"
+        },
+        {
+          "quest": "6512025C0A70B6EB",
+          "task": "0B1A32D1FE7D48A4",
+          "item": "modern_industrialization:kernite_dust"
+        },
+        {
+          "quest": "641117E0F688F40A",
+          "task": "79AEBB3A0499FD8D",
+          "item": "modern_industrialization:boron_trioxide_dust"
+        },
+        {
+          "quest": "788B6EC0B441EEC8",
+          "task": "27F11AD58BEB27BA",
+          "item": "kubejs:boron_quartz_blend"
+        },
+        {
+          "quest": "6240837365DD23D1",
+          "task": "477C076B8EE7EF8D",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "332D272F473BEE79",
+          "task": "474B2480F3FE7100",
+          "item": "yet_another_industrialization:flight_pylon"
+        },
+        {
+          "quest": "332D272F473BEE79",
+          "task": "5684AC6F41533CBE",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "332D272F473BEE79",
+          "task": "03D44CD9E74F3497",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "312052D981433E12",
+          "task": "560687FFEE30F328",
+          "item": "modern_industrialization:molten_borosilicate_glass_bucket"
+        },
+        {
+          "quest": "27D37976F35BB3E7",
+          "task": "63B0777EEC72CC7A",
+          "item": "yet_another_industrialization:configurable_mixed_storage"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "16AD72D533617C1D",
+          "item": "yet_another_industrialization:dragon_egg_energy_siphon"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "4D476BDE11D3F8D1",
+          "item": "minecraft:dragon_egg"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "65A293A2119C62DF",
+          "item": "minecraft:glass"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "3A9D9C79C18C0B7F",
+          "item": "yet_another_industrialization:steel_plated_end_stone_bricks"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "23E94972F126119A",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "60A2890114181863",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "220375750110AF29",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "16D0778B17CB206A",
+          "task": "256017D09D478568",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5AD00F71DB16C98F",
+          "task": "199946C15B38E05B",
+          "item": "yet_another_industrialization:cryogenic_precipitator"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "555D629C2F760DB0",
+          "item": "mi_tweaks:multi_cutter"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "0CF4A8BE9D1B823A",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "2D3EEB7B4ACA45C2",
+          "item": "xtonesreworked:tank_block_0"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "2B14FD761BC0788B",
+          "item": "iden_decor:caution_block_slab"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "2C4672D46FAF242F",
+          "item": "minecraft:stonecutter"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "79DD44BABD0CFA76",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "0DBA42D932D77B00",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "376C0CF2BECA7215",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2BDFD12377DD5396",
+          "task": "5F9EF52316789DCF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "44888B628FA1A31A",
+          "task": "324091962DC52BCA",
+          "item": "modern_industrialization:boron_trifluoride_bucket"
+        },
+        {
+          "quest": "57277F7FCCD4A983",
+          "task": "0136E82EF2F9E12D",
+          "item": "modern_industrialization:diborane_bucket"
+        },
+        {
+          "quest": "12788247344BA3F1",
+          "task": "73950E387207D1F4",
+          "item": "modern_industrialization:lithium_hydride_dust"
+        },
+        {
+          "quest": "46E61205DE5130E8",
+          "task": "7E581D0285854353",
+          "item": "modern_industrialization:pentaborane_bucket"
+        },
+        {
+          "quest": "1C68E96302EA0DBE",
+          "task": "7EDFA8505F4A2BFD",
+          "item": "kubejs:battery_casing"
+        },
+        {
+          "quest": "26C057394ED8B2D0",
+          "task": "1718386073D0364C",
+          "item": "kubejs:silicon_extremely_p_doped_plate"
+        },
+        {
+          "quest": "29880D54EA068D80",
+          "task": "3AC00193C09F7E40",
+          "item": "justhammers:destructor_core"
+        },
+        {
+          "quest": "144FC8E2FEFC7FE9",
+          "task": "577C4074910F779E",
+          "item": "minecraft:netherite_ingot"
+        },
+        {
+          "quest": "34CE47D65F10BB25",
+          "task": "4E6C652A13A87381",
+          "item": "tacz:gun_smith_table"
+        },
+        {
+          "quest": "34CE47D65F10BB25",
+          "task": "63030E78D640C9CD",
+          "item": "tacz:workbench_a"
+        },
+        {
+          "quest": "34CE47D65F10BB25",
+          "task": "467314CCFCA8E743",
+          "item": "tacz:workbench_c"
+        },
+        {
+          "quest": "0E209B011256E0CF",
+          "task": "41C955E2810C15A3",
+          "item": "yet_another_industrialization:large_storage_unit"
+        },
+        {
+          "quest": "0E209B011256E0CF",
+          "task": "7848EB94A18F5AA2",
+          "item": "yet_another_industrialization:battery_casing"
+        },
+        {
+          "quest": "0E209B011256E0CF",
+          "task": "563ADA8C0B7EC827",
+          "item": "minecraft:redstone_block"
+        },
+        {
+          "quest": "0E209B011256E0CF",
+          "task": "7FD8507C8E8A48CB",
+          "item": "modern_industrialization:basic_machine_hull"
+        },
+        {
+          "quest": "0E209B011256E0CF",
+          "task": "2AFA241D3D935B51",
+          "item": "yet_another_industrialization:large_storage_unit_input_hatch"
+        },
+        {
+          "quest": "0E209B011256E0CF",
+          "task": "27682D85BBC998C3",
+          "item": "yet_another_industrialization:large_storage_unit_output_hatch"
+        },
+        {
+          "quest": "6993EE4512A54506",
+          "task": "1FED97F2FB9095C3",
+          "item": "industrialization_overdrive:upgrade_stacker"
+        }
+      ]
+    },
+    {
+      "file": "config/ftbquests/quests/chapters/5__digital_age.snbt",
+      "id": "443557BD1692EA37",
+      "order": 4,
+      "item_tasks": [
+        {
+          "quest": "72FA131AAB66F1C1",
+          "task": "10DC5B1912B85A5D",
+          "item": "megacells:fluid_storage_cell_4m"
+        },
+        {
+          "quest": "2FA9CCCED8F29ACF",
+          "task": "14ACCA9C427197FF",
+          "item": "megacells:fluid_storage_cell_16m"
+        },
+        {
+          "quest": "2D5E5C45FA70EC70",
+          "task": "12828C75F3223853",
+          "item": "megacells:fluid_storage_cell_64m"
+        },
+        {
+          "quest": "49533E157E964921",
+          "task": "3D0410DE2A3FC158",
+          "item": "megacells:fluid_storage_cell_256m"
+        },
+        {
+          "quest": "11245D1341745D1F",
+          "task": "3125DCFC1A19C21A",
+          "item": "megacells:fluid_storage_cell_1m"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "4635B7611C36E7D4",
+          "item": "mi_tweaks:large_chemical_reactor"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "74FFC8055BDC8022",
+          "item": "modern_industrialization:chemically_inert_ptfe_casing"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "2EBDA75264710963",
+          "item": "modern_industrialization:polytetrafluoroethylene_machine_casing_pipe"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "0432DAB1DD87D21D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "1379DDEF2E577CE4",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "38392AE55D9761DA",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "60348782D06ED859",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7562FC7BC6220AF1",
+          "task": "416A3F9D68C396BC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "2DE22C9E94E162A9",
+          "item": "modern_industrialization:blood_generator"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "35312B4154C76BCB",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "590C74E744D07459",
+          "item": "minecraft:black_stained_glass"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "7AF98BD968890ABD",
+          "item": "architects_palette:osseous_pillar"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "5682B42E3D08A0FF",
+          "item": "architects_palette:redstone_ore_bricks"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "1A170930071AD106",
+          "item": "minecraft:redstone_torch"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "550E86DCC67EE97C",
+          "item": "architects_palette:lit_osseous_skull"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "74203685F0E4E4C9",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1588C024A87F1B21",
+          "task": "6CD638273A5AAC3F",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4F9372602593A2DB",
+          "task": "72FE6C3B96F0EB90",
+          "item": "modern_industrialization:distillation_tower"
+        },
+        {
+          "quest": "4F9372602593A2DB",
+          "task": "2E7FC98AA1AE5022",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "4F9372602593A2DB",
+          "task": "6DB6F821D25419C7",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "4F9372602593A2DB",
+          "task": "74740A3EBB5A39A8",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4F9372602593A2DB",
+          "task": "2E03E6954C143BF7",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4F9372602593A2DB",
+          "task": "5CCB8DFEA1221B32",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "55C954FA3EF76A6D",
+          "task": "33BB11CF611F3871",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7A1A04BBB9727F1A",
+          "task": "438555415CFF3C15",
+          "item": "moderndynamics:hv_cable"
+        },
+        {
+          "quest": "3C3B886AE682713C",
+          "task": "6523114D026250DD",
+          "item": "modern_industrialization:tungsten_dust"
+        },
+        {
+          "quest": "5524086A6986E1C0",
+          "task": "041E5014CB7C12E1",
+          "item": "modern_industrialization:titanium_tiny_dust"
+        },
+        {
+          "quest": "5524086A6986E1C0",
+          "task": "26429EE1035E6649",
+          "item": "modern_industrialization:raw_titanium"
+        },
+        {
+          "quest": "2216B63E764E0EBE",
+          "task": "17F5D9E7AD656557",
+          "item": "modern_industrialization:titanium_ingot"
+        },
+        {
+          "quest": "1442CAA3FC79387D",
+          "task": "043FABC47148F41C",
+          "item": "modern_industrialization:titanium_barrel"
+        },
+        {
+          "quest": "6B794C5D0CAF35A1",
+          "task": "402F2B95CC3EF35A",
+          "item": "modern_industrialization:titanium_tank"
+        },
+        {
+          "quest": "630587BC35741E37",
+          "task": "4468622AE9AAA6FD",
+          "item": "modern_industrialization:gravichestplate"
+        },
+        {
+          "quest": "530E646E005FEBE1",
+          "task": "0FC45A2A00C894E3",
+          "item": "modern_industrialization:pressurizer"
+        },
+        {
+          "quest": "530E646E005FEBE1",
+          "task": "61E68F7DA3007053",
+          "item": "modern_industrialization:solid_titanium_machine_casing"
+        },
+        {
+          "quest": "530E646E005FEBE1",
+          "task": "620B154E974A0F55",
+          "item": "modern_industrialization:titanium_machine_casing_pipe"
+        },
+        {
+          "quest": "530E646E005FEBE1",
+          "task": "4016A4AF6C146437",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "530E646E005FEBE1",
+          "task": "410F27E40E46053E",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "530E646E005FEBE1",
+          "task": "47EC9A39F745DC3F",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2F1DCE7361114A4C",
+          "task": "1EA192A01255245D",
+          "item": "modern_industrialization:high_pressure_large_steam_boiler"
+        },
+        {
+          "quest": "2F1DCE7361114A4C",
+          "task": "2E32E60D0BCFBD6A",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "2F1DCE7361114A4C",
+          "task": "57B847DA6A80F69C",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "2F1DCE7361114A4C",
+          "task": "74FA688B909F9DF5",
+          "item": "modern_industrialization:heatproof_machine_casing"
+        },
+        {
+          "quest": "2F1DCE7361114A4C",
+          "task": "208CFFD6D4B271D1",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2F1DCE7361114A4C",
+          "task": "3BDA06A26C350CF6",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2F1DCE7361114A4C",
+          "task": "41420F8E297CE369",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5D43916C178DE73C",
+          "task": "31FB0511B0F427E3",
+          "item": "modern_industrialization:heat_exchanger"
+        },
+        {
+          "quest": "5D43916C178DE73C",
+          "task": "01989AD043147A48",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "5D43916C178DE73C",
+          "task": "607F07221084BC15",
+          "item": "modern_industrialization:heatproof_machine_casing"
+        },
+        {
+          "quest": "5D43916C178DE73C",
+          "task": "6A7500C77850C91B",
+          "item": "modern_industrialization:frostproof_machine_casing"
+        },
+        {
+          "quest": "5D43916C178DE73C",
+          "task": "51C62F2040DBA3F7",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5D43916C178DE73C",
+          "task": "4B4748570C27191D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5D43916C178DE73C",
+          "task": "7FEC80858FC7EF78",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "381D43AEFB99B390",
+          "task": "1B1933F7A23E5B84",
+          "item": "modern_industrialization:platinum_sulfuric_solution_bucket"
+        },
+        {
+          "quest": "2233CC18FE4BAEE3",
+          "task": "79AC6A04CA27F974",
+          "item": "modern_industrialization:platinum_dust"
+        },
+        {
+          "quest": "7FBD5ED1B6E06B6D",
+          "task": "17D74B2F58E071D9",
+          "item": "modern_industrialization:iridium_tiny_dust"
+        },
+        {
+          "quest": "2F56D5FE486BA699",
+          "task": "5F99860A46E46901",
+          "item": "bankstorage:bank_6"
+        },
+        {
+          "quest": "7367354AA17AB139",
+          "task": "67BCF2E5A88B9BD2",
+          "item": "modern_industrialization:mixed_ingot_blastproof"
+        },
+        {
+          "quest": "7AD01A35E82AF238",
+          "task": "25884FEB2E317CB1",
+          "item": "modern_industrialization:tungsten_nugget"
+        },
+        {
+          "quest": "240E45CC4436DF82",
+          "task": "7DF1E3E15B5263D9",
+          "item": "modern_industrialization:implosion_compressor"
+        },
+        {
+          "quest": "240E45CC4436DF82",
+          "task": "5A7D8C501EA1842A",
+          "item": "modern_industrialization:blastproof_casing"
+        },
+        {
+          "quest": "240E45CC4436DF82",
+          "task": "044FE6D9EA66389E",
+          "item": "modern_industrialization:solid_titanium_machine_casing"
+        },
+        {
+          "quest": "240E45CC4436DF82",
+          "task": "309CDBFF95E3FD95",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "240E45CC4436DF82",
+          "task": "2E7DFAFC32C613CE",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "240E45CC4436DF82",
+          "task": "55525B288D7B8AAF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "38D1B360B947EB90",
+          "task": "2E94D15268BB5E06",
+          "item": "modern_industrialization:hv_steam_turbine"
+        },
+        {
+          "quest": "767003181BB2CAC4",
+          "task": "44AE82810EEE427B",
+          "item": "modern_industrialization:hv_diesel_generator"
+        },
+        {
+          "quest": "6A77C2A638005556",
+          "task": "6D78C21A6B391DE4",
+          "item": "modern_industrialization:hv_storage_unit"
+        },
+        {
+          "quest": "5F9C885003E26E5E",
+          "task": "5DA5932F2BBCE0BB",
+          "item": "extended_industrialization:hv_solar_panel"
+        },
+        {
+          "quest": "5F9C885003E26E5E",
+          "task": "5C0013DFF5C60E34",
+          "item": "extended_industrialization:hv_photovoltaic_cell"
+        },
+        {
+          "quest": "019A9162A50C2E9B",
+          "task": "31935B4AC8646DE3",
+          "item": "modern_industrialization:monocrystalline_silicon"
+        },
+        {
+          "quest": "67FB34ABC3B1A9D4",
+          "task": "44E9E841C3EFAA32",
+          "item": "modern_industrialization:processing_unit_board"
+        },
+        {
+          "quest": "67FB34ABC3B1A9D4",
+          "task": "3A8289768DDF8A13",
+          "item": "modern_industrialization:arithmetic_logic_unit"
+        },
+        {
+          "quest": "67FB34ABC3B1A9D4",
+          "task": "3F43EDF4689F178D",
+          "item": "modern_industrialization:memory_management_unit"
+        },
+        {
+          "quest": "67FB34ABC3B1A9D4",
+          "task": "0289B95CA8CE6B38",
+          "item": "modern_industrialization:random_access_memory"
+        },
+        {
+          "quest": "0E0395254471CED0",
+          "task": "791B3984E15A394C",
+          "item": "modern_industrialization:processing_unit"
+        },
+        {
+          "quest": "18CE795EB630611E",
+          "task": "6071955316B4FE3F",
+          "item": "modern_industrialization:highly_advanced_machine_hull"
+        },
+        {
+          "quest": "5DB4F0A67D4D33A4",
+          "task": "39A089440006A45D",
+          "item": "kubejs:withered_soc"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "465061A36F74B510",
+          "item": "modern_industrialization:boss_crusher"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "78A4AE6A43E3220B",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "6704436F492419E4",
+          "item": "create:rose_quartz_lamp"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "5182235EAE7B0EC2",
+          "item": "modern_industrialization:kanthal_coil"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "6B4329201B90BCF1",
+          "item": "minecraft:obsidian"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "07C37699698B3C0C",
+          "item": "minecraft:tinted_glass"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "7AC9071453F14364",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "22A630F4B6A91000",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "352FD3AB3B5B0202",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "34CAE9ACC28C69FB",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2F85AE19C04F241C",
+          "task": "53C2B544DFD81F09",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "077C957AAB39CC0B",
+          "task": "0337B51A4B07A665",
+          "item": "modern_industrialization:impure_liquid_nether_star_bucket"
+        },
+        {
+          "quest": "593F83B2598F21C2",
+          "task": "2AABFD9B4B36A94C",
+          "item": "modern_industrialization:molten_nether_star_bucket"
+        },
+        {
+          "quest": "7F59229192C7E269",
+          "task": "73D2DE8A3D384FA2",
+          "item": "minecraft:nether_star"
+        },
+        {
+          "quest": "11E7F580298B2843",
+          "task": "77C347F1C2698C3C",
+          "item": "modern_industrialization:high_pressure_advanced_large_steam_boiler"
+        },
+        {
+          "quest": "11E7F580298B2843",
+          "task": "79E230373A67E564",
+          "item": "modern_industrialization:heatproof_machine_casing"
+        },
+        {
+          "quest": "11E7F580298B2843",
+          "task": "58F2D08180C8365D",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "11E7F580298B2843",
+          "task": "1D08233481B041C7",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "11E7F580298B2843",
+          "task": "4E347F375BF3D0FB",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "11E7F580298B2843",
+          "task": "717FB8F4A7EECBB1",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "11E7F580298B2843",
+          "task": "5C2758ED2BD6E4AD",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1A4CF8FC20475A01",
+          "task": "77FB74CD3A9D1966",
+          "item": "modern_industrialization:large_advanced_motor"
+        },
+        {
+          "quest": "1A4CF8FC20475A01",
+          "task": "14B5EC56152474D9",
+          "item": "modern_industrialization:large_advanced_pump"
+        },
+        {
+          "quest": "496935DA068E1739",
+          "task": "54EBD820739A2A0C",
+          "item": "modern_industrialization:highly_advanced_upgrade"
+        },
+        {
+          "quest": "4249FD1A79996FBB",
+          "task": "6D7295881BF74F85",
+          "item": "modern_industrialization:titanium_drill"
+        },
+        {
+          "quest": "72DB6F60EA35389A",
+          "task": "064C50931D57CC28",
+          "item": "megacells:item_storage_cell_1m"
+        },
+        {
+          "quest": "0858B7C4CC389198",
+          "task": "006247EECF0D4577",
+          "item": "megacells:item_storage_cell_4m"
+        },
+        {
+          "quest": "33E951F1FC9E5FBB",
+          "task": "6BFF9BCAF90192E0",
+          "item": "megacells:item_storage_cell_16m"
+        },
+        {
+          "quest": "1AC298419EBB7DA2",
+          "task": "1486B069A9051B97",
+          "item": "megacells:item_storage_cell_64m"
+        },
+        {
+          "quest": "779CFBC9AE792300",
+          "task": "59F60006DC3CFE95",
+          "item": "megacells:item_storage_cell_256m"
+        },
+        {
+          "quest": "03A48A124FB9AB5D",
+          "task": "2E4A0E56C7569100",
+          "item": "extendedae:crystal_assembler"
+        },
+        {
+          "quest": "3D0FC900DA2A116B",
+          "task": "1146BCC81FCA05A5",
+          "item": "extendedae:ex_pattern_provider"
+        },
+        {
+          "quest": "784BFD67397D2D4E",
+          "task": "275A7FE181A40E81",
+          "item": "extendedae:ex_interface"
+        },
+        {
+          "quest": "51AC6E4C38AFEC7A",
+          "task": "65A1C6A2DD126975",
+          "item": "extendedae:ex_drive"
+        },
+        {
+          "quest": "4F5B1981C8FBE1D8",
+          "task": "14EBA059F2F487E8",
+          "item": "extendedae:machine_frame"
+        },
+        {
+          "quest": "07276270AE3094FD",
+          "task": "5B9B222D9088C84F",
+          "item": "extendedae:ex_molecular_assembler"
+        },
+        {
+          "quest": "1F29C93DA3E7F2F3",
+          "task": "6D19512257757E7F",
+          "item": "extendedae:ex_io_port"
+        },
+        {
+          "quest": "1E3B2DB51FDD6CAA",
+          "task": "518A2FCA2186B4B2",
+          "item": "extendedae:ex_pattern_access_part"
+        },
+        {
+          "quest": "75D45A5C2A744114",
+          "task": "193B6BC9CCFB715A",
+          "item": "extendedae:oversize_interface"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "315118ECB261F257",
+          "item": "extendedae:ex_export_bus_part"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "6C98163F4CA5E4DF",
+          "item": "extendedae:ex_import_bus_part"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "1374E72334701723",
+          "item": "extendedae:tag_export_bus"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "356ECD657B3A4321",
+          "item": "extendedae:mod_storage_bus"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "35DF02636B69844C",
+          "item": "extendedae:tag_storage_bus"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "361F9037D5F7F4C4",
+          "item": "extendedae:precise_export_bus"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "4138CC9E172B2BCD",
+          "item": "extendedae:threshold_export_bus"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "01589482FA88D275",
+          "item": "extendedae:precise_storage_bus"
+        },
+        {
+          "quest": "222AC3DC54F99010",
+          "task": "255D1A4ED5D8513E",
+          "item": "extendedae:mod_export_bus"
+        },
+        {
+          "quest": "0A9F180D2ECACEC7",
+          "task": "294E63A63D99E92A",
+          "item": "extendedae:threshold_level_emitter"
+        },
+        {
+          "quest": "3A9BAF7CE8E624A7",
+          "task": "1AD84ED97DD4E5D2",
+          "item": "extendedae:active_formation_plane"
+        },
+        {
+          "quest": "6322AAFBEA2EFE2C",
+          "task": "0C937E46BECF460D",
+          "item": "megacells:accumulation_processor"
+        },
+        {
+          "quest": "328C369BE0EE3940",
+          "task": "1F31D187EC67F8A7",
+          "item": "megacells:sky_steel_ingot"
+        },
+        {
+          "quest": "328C369BE0EE3940",
+          "task": "6D9C221B40C16B87",
+          "item": "megacells:sky_bronze_ingot"
+        },
+        {
+          "quest": "5B497F5E8E946999",
+          "task": "2FDB7D4D00EAD20B",
+          "item": "extendedae:entro_ingot"
+        },
+        {
+          "quest": "7D99CA8AE84C0904",
+          "task": "15E593F121689222",
+          "item": "extendedae:assembler_matrix_wall"
+        },
+        {
+          "quest": "7D99CA8AE84C0904",
+          "task": "4E7F149F9DBA06BE",
+          "item": "extendedae:assembler_matrix_frame"
+        },
+        {
+          "quest": "7D99CA8AE84C0904",
+          "task": "0972953E2113A245",
+          "item": "extendedae:assembler_matrix_glass"
+        },
+        {
+          "quest": "7D99CA8AE84C0904",
+          "task": "56679619E3C0B2FC",
+          "item": "extendedae:assembler_matrix_pattern"
+        },
+        {
+          "quest": "7D99CA8AE84C0904",
+          "task": "26917417BD0A12A3",
+          "item": "extendedae:assembler_matrix_crafter"
+        },
+        {
+          "quest": "7D99CA8AE84C0904",
+          "task": "2B5D4588383095B8",
+          "item": "extendedae:assembler_matrix_speed"
+        },
+        {
+          "quest": "342D1B694B43F25A",
+          "task": "43D768C85712E438",
+          "item": "extendedae:crystal_fixer"
+        },
+        {
+          "quest": "5AEA99914B15FF35",
+          "task": "7681A15665016CEF",
+          "item": "extendedae:wireless_tool"
+        },
+        {
+          "quest": "7F36A76EB91E6AEB",
+          "task": "0623A950951267F5",
+          "item": "extendedae:wireless_connect"
+        },
+        {
+          "quest": "7923688DB9B9FDA3",
+          "task": "02D1FE663B42B9F7",
+          "item": "extended_industrialization:tesla_tower"
+        },
+        {
+          "quest": "7923688DB9B9FDA3",
+          "task": "116B283F521E7260",
+          "item": "extended_industrialization:polished_silver_machine_casing"
+        },
+        {
+          "quest": "7923688DB9B9FDA3",
+          "task": "68D2C588FE9627B8",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7923688DB9B9FDA3",
+          "task": "3096C32AC2C1F85E",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7923688DB9B9FDA3",
+          "task": "3598625CE2CFE263",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "7923688DB9B9FDA3",
+          "task": "2B160FF29A98698F",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "5BFA25F005A19B4B",
+          "task": "36877D83B4CB9396",
+          "item": "functionalstorage:diamond_upgrade"
+        },
+        {
+          "quest": "51490042671E700C",
+          "task": "77E371E6082D6320",
+          "item": "modern_industrialization:turbo_machine_hull"
+        },
+        {
+          "quest": "7A28C8307C136F5B",
+          "task": "6B222E15D0D9F0A5",
+          "item": "modern_industrialization:blastproof_alloy_plate"
+        },
+        {
+          "quest": "6209459F9CC634BA",
+          "task": "471302A66BB017E1",
+          "item": "modern_industrialization:platinum_ingot"
+        },
+        {
+          "quest": "52888D91683D9ED6",
+          "task": "62AEB3308B5BF525",
+          "item": "tankstorage:tank_6"
+        },
+        {
+          "quest": "4128E89534C77053",
+          "task": "62F5B7C560D408C9",
+          "item": "extended_industrialization:nano_gravichestplate"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "7EE36F4B6121E418",
+          "item": "mi_tweaks:bulk_compactor"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "6B2B3EC8B683A3C7",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "65820CDE42252772",
+          "item": "modern_industrialization:desh_block"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "2F3DCAED5D55A673",
+          "item": "modern_industrialization:steel_machine_casing_pipe"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "16B9A9869BA1C70B",
+          "item": "extended_industrialization:steel_plated_bricks"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "30BD86916ECBA628",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "62AB0053CE949237",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0D683B81F758D7A6",
+          "task": "656A2F644BE89F31",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "6A724374C3FADC93",
+          "task": "01496C563F283A02",
+          "item": "modern_industrialization:mixed_ingot_iridium"
+        },
+        {
+          "quest": "32DF938D1E6E89BB",
+          "task": "60EFE879C5821568",
+          "item": "modern_industrialization:large_diesel_generator"
+        },
+        {
+          "quest": "32DF938D1E6E89BB",
+          "task": "651BA0020DCBCBED",
+          "item": "modern_industrialization:solid_titanium_machine_casing"
+        },
+        {
+          "quest": "32DF938D1E6E89BB",
+          "task": "3D0B69BD0DEE9531",
+          "item": "modern_industrialization:titanium_machine_casing_pipe"
+        },
+        {
+          "quest": "32DF938D1E6E89BB",
+          "task": "2498650ADF04C51D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "32DF938D1E6E89BB",
+          "task": "01F4FDF4C13E2F9A",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "34FA4CD2E900F5F2",
+          "task": "0F5D0CFD81B4DF52",
+          "item": "yet_another_industrialization:tempproof_air_intake"
+        },
+        {
+          "quest": "27FFD1F048B42305",
+          "task": "65DE747F38B66A04",
+          "item": "yet_another_industrialization:gelid_liquid_air_bucket"
+        },
+        {
+          "quest": "4629EC25F16167DA",
+          "task": "4D52A615D0BF775B",
+          "item": "yet_another_industrialization:scorching_liquid_air_bucket"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "09AE3C0CF7F21501",
+          "item": "mi_tweaks:high_capacity_packer"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "60D0C5314B1C5B46",
+          "item": "xtonesreworked:tank_block_0"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "5C4C15F98DB8179C",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "54626AB4A779E49F",
+          "item": "iden_decor:iron_sheet_metal"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "4300452980527E46",
+          "item": "iden_decor:medium_box"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "7BA8AE5FB7D8AC6E",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "70389E4EEDC0404A",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "22FD56F3802E6379",
+          "task": "304129E6AEC154C9",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "7064A1C831C0F3B3",
+          "item": "mi_tweaks:high_capacity_unpacker"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "1591D094EA286D21",
+          "item": "iden_decor:iron_sheet_metal"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "3DBF3EFBF0CB72B3",
+          "item": "xtonesreworked:tank_block_0"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "354FC2118A77A961",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "3D96BB908E7FAE92",
+          "item": "iden_decor:medium_box"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "61A8538EA6EDEB76",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "331BA20CF8D60C72",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "26B1EB74BF49A341",
+          "task": "4BB2C2DE694002E5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "7483E4509DCA26B7",
+          "item": "mi_tweaks:large_polarization_machine"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "2FE6E069325D443A",
+          "item": "modern_industrialization:cupronickel_coil"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "299BAC06287AA129",
+          "item": "xtonesreworked:vena_block_3"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "6FDEF51D44BFC3CA",
+          "item": "xtonesreworked:vena_block_4"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "1643F42F8E413795",
+          "item": "xtonesreworked:vena_block_6"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "16790B016B0692C7",
+          "item": "iden_decor:iron_sheet_metal"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "7F2650857801772C",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "0AC49015EF506147",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "2B2D9A8D9BCB18FE",
+          "task": "7C63C3425202B108",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "6447DBA0F50A1EE3",
+          "item": "mi_tweaks:arrayed_wiremill"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "75BF1C0A51D03491",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "4AA1517CC195587D",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "020462815FC981E5",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "324AA471A38F11DF",
+          "item": "factory_blocks:gears"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "4BFE4D105EC3C936",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "2A155D202633F4C3",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E42E8487A626F62",
+          "task": "6736419AE80306D5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4BDF575E8688D537",
+          "task": "579E5FBC24A7F7B7",
+          "item": "modern_industrialization:recycler"
+        },
+        {
+          "quest": "4BDF575E8688D537",
+          "task": "7A1A9AC8422F0084",
+          "item": "kubejs:scrap"
+        },
+        {
+          "quest": "4BDF575E8688D537",
+          "task": "243D48CC192B627B",
+          "item": "kubejs:uu_matter"
+        },
+        {
+          "quest": "52707EF495640F90",
+          "task": "37842E712313FE7E",
+          "item": "minecraft:lava_bucket"
+        },
+        {
+          "quest": "5493DFD65096665C",
+          "task": "356F9278E79C9B45",
+          "item": "modern_industrialization:matter_fabricator"
+        },
+        {
+          "quest": "5D6476860C35F0E5",
+          "task": "7194B7215710344B",
+          "item": "extendedae:ex_charger"
+        },
+        {
+          "quest": "5397B3A1202A4067",
+          "task": "620D1A5E4DCE7CA0",
+          "item": "merequester:requester"
+        }
+      ]
+    },
+    {
+      "file": "config/ftbquests/quests/chapters/6__space_age.snbt",
+      "id": "5C132A91B86C59B5",
+      "order": 5,
+      "item_tasks": [
+        {
+          "quest": "1F7CD79E5CB9821E",
+          "task": "2A11FB574E6CF379",
+          "item": "modern_industrialization:space_probe_launcher"
+        },
+        {
+          "quest": "1F7CD79E5CB9821E",
+          "task": "0787C3391D02F05C",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "1F7CD79E5CB9821E",
+          "task": "78569571B63CA53B",
+          "item": "modern_industrialization:kanthal_coil"
+        },
+        {
+          "quest": "1F7CD79E5CB9821E",
+          "task": "259B84F393C0FFBA",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "1F7CD79E5CB9821E",
+          "task": "0A46D4B198C5A206",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1F7CD79E5CB9821E",
+          "task": "452E54E7A479B3EF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1F7CD79E5CB9821E",
+          "task": "4A70D1B4F105E4F6",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "53E67D11D3D273B1",
+          "task": "47B61D628F75A12F",
+          "item": "kubejs:basic_space_probe"
+        },
+        {
+          "quest": "11825C288F04BC30",
+          "task": "191BC872173E4914",
+          "item": "modern_industrialization:desh_ingot"
+        },
+        {
+          "quest": "0B55848F472EC20D",
+          "task": "2E9664261F86C127",
+          "item": "kubejs:advanced_space_probe"
+        },
+        {
+          "quest": "141AE6600B0DA228",
+          "task": "64613D6D9F937DA6",
+          "item": "kubejs:mki_probe_computer"
+        },
+        {
+          "quest": "1221CAF28FBAF917",
+          "task": "652187EA2E47B93C",
+          "item": "kubejs:mkii_probe_computer"
+        },
+        {
+          "quest": "5CCAA55B945384C9",
+          "task": "7742A19B14715990",
+          "item": "kubejs:highly_advanced_space_probe"
+        },
+        {
+          "quest": "41C6121EB29BDCD0",
+          "task": "4C02393B97234F64",
+          "item": "modern_industrialization:ostrum_ingot"
+        },
+        {
+          "quest": "3DE02D1C71CBD94F",
+          "task": "6BB163C0941FD409",
+          "item": "kubejs:mkiii_probe_computer"
+        },
+        {
+          "quest": "5C676AF9206DA51C",
+          "task": "0D5A07AC9986733E",
+          "item": "modern_industrialization:raw_moon_ice"
+        },
+        {
+          "quest": "3C57C65402826CF2",
+          "task": "60DB2BB09CF91F3A",
+          "item": "modern_industrialization:helium_3_bucket"
+        },
+        {
+          "quest": "21670AF21E774955",
+          "task": "0240C1E283B7302B",
+          "item": "kubejs:space_probe"
+        },
+        {
+          "quest": "6E9A3C5B39C9628F",
+          "task": "5DE3AFB4D818141C",
+          "item": "modern_industrialization:calorite_ingot"
+        }
+      ]
+    },
+    {
+      "file": "config/ftbquests/quests/chapters/7__nuclear_age.snbt",
+      "id": "5336FACFCB9D5E2E",
+      "order": 6,
+      "item_tasks": [
+        {
+          "quest": "2F0042673C0E3910",
+          "task": "6D01601A4DCE21EB",
+          "item": "modern_industrialization:highly_advanced_machine_hull"
+        },
+        {
+          "quest": "64D20685E4A57EED",
+          "task": "5DF0D789E9C3FB8A",
+          "item": "modern_industrialization:ev_storage_unit"
+        },
+        {
+          "quest": "56A30502A268BB60",
+          "task": "2CA24201C3DF4C2F",
+          "item": "modern_industrialization:mixed_plate_nuclear"
+        },
+        {
+          "quest": "3308E0ADE29A5A9E",
+          "task": "745479B476475225",
+          "item": "modern_industrialization:nuclear_alloy_plate"
+        },
+        {
+          "quest": "0C73D9DE1468EBB1",
+          "task": "2D54C4144E8F70F7",
+          "item": "modern_industrialization:nuclear_reactor"
+        },
+        {
+          "quest": "0C73D9DE1468EBB1",
+          "task": "473DE1799305D6C6",
+          "item": "modern_industrialization:nuclear_casing"
+        },
+        {
+          "quest": "0C73D9DE1468EBB1",
+          "task": "4631402EDE7252CA",
+          "item": "modern_industrialization:nuclear_alloy_machine_casing_pipe"
+        },
+        {
+          "quest": "0C73D9DE1468EBB1",
+          "task": "5CBCC1067D85457B",
+          "item": "modern_industrialization:nuclear_fluid_hatch"
+        },
+        {
+          "quest": "0C73D9DE1468EBB1",
+          "task": "767D23D8D80B381B",
+          "item": "modern_industrialization:nuclear_item_hatch"
+        },
+        {
+          "quest": "23D9328B5F627E65",
+          "task": "6D727A1E4A73A2FB",
+          "item": "modern_industrialization:quantum_circuit"
+        },
+        {
+          "quest": "43D2E858079C12E0",
+          "task": "3290AA151AC4CF6E",
+          "item": "modern_industrialization:tritium_bucket"
+        },
+        {
+          "quest": "569821B175311340",
+          "task": "128AB64187BB43D3",
+          "item": "modern_industrialization:superconductor_dust"
+        },
+        {
+          "quest": "257CA8034EA7B1DB",
+          "task": "3C751FA87E6333B2",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5856A6281F140AEF",
+          "task": "3FDAC7A5AECD35FC",
+          "item": "modern_industrialization:tungstensteel_ingot"
+        },
+        {
+          "quest": "0F1DC239BBC3D60F",
+          "task": "63CEF38E23A9D486",
+          "item": "modern_industrialization:quantum_space_probe_launcher"
+        },
+        {
+          "quest": "0F1DC239BBC3D60F",
+          "task": "6919B941716B9C9D",
+          "item": "modern_industrialization:calorite_machine_casing"
+        },
+        {
+          "quest": "0F1DC239BBC3D60F",
+          "task": "34ABDF2CF49BA5BE",
+          "item": "modern_industrialization:calorite_machine_casing_pipe"
+        },
+        {
+          "quest": "0F1DC239BBC3D60F",
+          "task": "6707D9A6E8656A96",
+          "item": "modern_industrialization:tungstensteel_coil"
+        },
+        {
+          "quest": "0F1DC239BBC3D60F",
+          "task": "3C60ABCB2979A2E5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0F1DC239BBC3D60F",
+          "task": "6BBB10733818825E",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0F1DC239BBC3D60F",
+          "task": "20D5069180BE4AED",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4A580712AAD72CFF",
+          "task": "5BD01F861DCFAE2E",
+          "item": "modern_industrialization:uranium_fuel_rod"
+        },
+        {
+          "quest": "494104440623C825",
+          "task": "722465730C1D7FD9",
+          "item": "modern_industrialization:uranium_fuel_rod_depleted"
+        },
+        {
+          "quest": "649FE8A688C74216",
+          "task": "312E64A9AEE91181",
+          "item": "modern_industrialization:quantum_circuit_board"
+        },
+        {
+          "quest": "649FE8A688C74216",
+          "task": "4B292507EA63E071",
+          "item": "modern_industrialization:qubit"
+        },
+        {
+          "quest": "649FE8A688C74216",
+          "task": "39AFBFF28E7BCC78",
+          "item": "modern_industrialization:cooling_cell"
+        },
+        {
+          "quest": "50D18ACF6401C05D",
+          "task": "4F3C9CBE4A6F3D01",
+          "item": "modern_industrialization:nuke"
+        },
+        {
+          "quest": "7BB996EF1FB18B1D",
+          "task": "196F266A5AE6EF00",
+          "item": "modern_industrialization:tungstensteel_tank"
+        },
+        {
+          "quest": "5AE17FE1577DF9E2",
+          "task": "33D65AB6F351D0EB",
+          "item": "modern_industrialization:tungstensteel_barrel"
+        },
+        {
+          "quest": "3DD9AFAD287F29C2",
+          "task": "5A3421ACBA93EF2C",
+          "item": "kubejs:space_probe"
+        },
+        {
+          "quest": "5A0295C9C976F0E0",
+          "task": "08B62B11A69374A6",
+          "item": "modern_industrialization:plutonium_dust"
+        },
+        {
+          "quest": "131D19CE92E22D58",
+          "task": "5952C6953329D48A",
+          "item": "modern_industrialization:uranium_dust"
+        },
+        {
+          "quest": "4E4FF04917B2E624",
+          "task": "107A7DFC9464D67F",
+          "item": "modern_industrialization:uranium_235_dust"
+        },
+        {
+          "quest": "4E4FF04917B2E624",
+          "task": "7B380F15EA293F46",
+          "item": "modern_industrialization:uranium_238_dust"
+        },
+        {
+          "quest": "286BD460010AA281",
+          "task": "1EE4031D49D56740",
+          "item": "modern_industrialization:quantum_machine_hull"
+        },
+        {
+          "quest": "229F2B56037A748B",
+          "task": "09585A61634E37FD",
+          "item": "modern_industrialization:tungstensteel_coil"
+        },
+        {
+          "quest": "630513B2758CEA60",
+          "task": "59EE5CBC0B7063AA",
+          "item": "moderndynamics:ev_cable"
+        },
+        {
+          "quest": "741D66D89EE0C684",
+          "task": "3FB7CBE347998B7C",
+          "item": "modern_industrialization:superconductor_cable"
+        },
+        {
+          "quest": "1999BF05F0242048",
+          "task": "64D8A42998F65CAE",
+          "item": "moderndynamics:superconductor_cable"
+        },
+        {
+          "quest": "5D5E4B7B68987695",
+          "task": "2006115426F3A3C2",
+          "item": "sophisticatedbackpacks:netherite_backpack"
+        },
+        {
+          "quest": "63FF1817F23A7C7A",
+          "task": "768D61EBDFC2D240",
+          "item": "bankstorage:bank_7"
+        },
+        {
+          "quest": "53AEA0E74CE842B5",
+          "task": "508B4707542BE6E6",
+          "item": "functionalstorage:netherite_upgrade"
+        },
+        {
+          "quest": "2296FC027EAF34E2",
+          "task": "3AE4934C709D066D",
+          "item": "modern_industrialization:beryllium_sulfate_bucket"
+        },
+        {
+          "quest": "4CFA1740855847FE",
+          "task": "536B4B262E615A8C",
+          "item": "modern_industrialization:beryllium_hydroxide_bucket"
+        },
+        {
+          "quest": "3E7BA3A61D2C897C",
+          "task": "24A81AB791249D81",
+          "item": "modern_industrialization:beryllium_chloride_bucket"
+        },
+        {
+          "quest": "1AA057FA136ECE2D",
+          "task": "599D47A555E96164",
+          "item": "modern_industrialization:beryllium_dust"
+        },
+        {
+          "quest": "36521C02297A6BBD",
+          "task": "633B0213114A4356",
+          "item": "modern_industrialization:beryllium_ingot"
+        },
+        {
+          "quest": "75A72BD99C4B7FFD",
+          "task": "548305532905AE75",
+          "item": "tankstorage:tank_7"
+        },
+        {
+          "quest": "6D6C2CCEA0CA1D26",
+          "task": "2CBDFB95BD4DD7EC",
+          "item": "industrialization_overdrive:vajra"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "05CA76487CF0F48B",
+          "item": "mi_tweaks:oversized_electrolysis_chamber"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "1B811786AEC3C866",
+          "item": "factory_blocks:circuit"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "6600DF335958F065",
+          "item": "factory_blocks:sturdy"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "320B7A67EA9E9929",
+          "item": "modern_industrialization:tungstensteel_machine_casing"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "142F972716D01A9E",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "4B6EE0C30047A016",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "658B537143219283",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "621BA1142B66F9B9",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "6E5BD7454363EB92",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "33AFB99445AE9B9C",
+          "task": "0786A39A7E7FCE32",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "697B4F51F11CB519",
+          "item": "mi_tweaks:large_scale_assembler"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "69A71906DF934B38",
+          "item": "modern_industrialization:tungstensteel_machine_casing"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "17AF0A84A407DACA",
+          "item": "modern_industrialization:tungstensteel_machine_casing_pipe"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "57919647BA5B2036",
+          "item": "modern_industrialization:turbo_machine_hull"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "4EDE2C04B65ADCC5",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "0E273C559CE9E1F0",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "06BAC3CB56E065A1",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "0254837EBD446226",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7F65BF85A0A6D8F9",
+          "task": "22F166D4A6ABEF35",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "0F1A6127D07A5336",
+          "item": "mi_tweaks:industrial_mixing_machine"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "36C2017C04659D29",
+          "item": "modern_industrialization:enderium_machine_casing"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "0475F8393C434927",
+          "item": "factory_blocks:grate"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "0D17E2C9DBF5DA2C",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "0C69E647AD7B0AF8",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "4B10F5BAEEA6707A",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "2333A33456FE38A5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "12E1F98FD18C46B1",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "01E4CA464D65ED1C",
+          "task": "256C4B8C4420BDF3",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "407BB3516233B9D8",
+          "item": "mi_tweaks:grand_mass_centrifuge"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "565B4C688ED6E455",
+          "item": "modern_industrialization:desh_machine_casing"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "39D24A2F9784B587",
+          "item": "modern_industrialization:desh_machine_casing_pipe"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "246AFACD07303FED",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "722B3E150CE1F77A",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "586CBE0E04B8861D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "5B49E7B1D857C2AC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7614268077A13015",
+          "task": "62611ADCFA7515DE",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "70658F7FAF3AB407",
+          "task": "400E489461A97940",
+          "item": "mi_tweaks:blast_alloy_smelter"
+        },
+        {
+          "quest": "70658F7FAF3AB407",
+          "task": "7FC615CB6D0DEF96",
+          "item": "xtonesreworked:korp_block_4"
+        },
+        {
+          "quest": "70658F7FAF3AB407",
+          "task": "1C9177965A3DFD8D",
+          "item": "xtonesreworked:korp_block_9"
+        },
+        {
+          "quest": "70658F7FAF3AB407",
+          "task": "207C5DDB99011167",
+          "item": "modern_industrialization:tungstensteel_coil"
+        },
+        {
+          "quest": "70658F7FAF3AB407",
+          "task": "12469C71626332C7",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "70658F7FAF3AB407",
+          "task": "5DDC4E77F58A2502",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "70658F7FAF3AB407",
+          "task": "203F7CD723D1C9AC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "0F85F4ACA5A103E1",
+          "task": "18544EE9B96BD719",
+          "item": "modern_industrialization:large_steam_turbine"
+        },
+        {
+          "quest": "216F13398546D8F6",
+          "task": "55375DF9C9174501",
+          "item": "yet_another_industrialization:nuclear_rod_irradiator"
+        },
+        {
+          "quest": "216F13398546D8F6",
+          "task": "751706475A4DE361",
+          "item": "modern_industrialization:nuclear_casing"
+        },
+        {
+          "quest": "216F13398546D8F6",
+          "task": "339112A5F2837326",
+          "item": "modern_industrialization:nuclear_alloy_machine_casing_pipe"
+        },
+        {
+          "quest": "216F13398546D8F6",
+          "task": "22A25C817228E8DD",
+          "item": "modern_industrialization:nuclear_item_hatch"
+        },
+        {
+          "quest": "216F13398546D8F6",
+          "task": "7D18AFEA336B15D5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "246CB36709B2D648",
+          "item": "yet_another_industrialization:pulse_detonation_generator"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "09B89A8F0E0E0A1D",
+          "item": "yet_another_industrialization:detonation_chamber_casing"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "7046989C58EF1415",
+          "item": "modern_industrialization:solid_titanium_machine_casing"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "4532B4F3632B0FC7",
+          "item": "modern_industrialization:titanium_machine_casing_pipe"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "0518376B59D54A78",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "7F977398859D1046",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "3750401D20388C6C",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "481AEE82687B9630",
+          "task": "7152BA35FCEA6C75",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "2967B1670A842223",
+          "item": "mi_tweaks:recycling_factory"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "45D3393690E8D6E7",
+          "item": "modern_industrialization:steel_machine_casing"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "3681B4EADD152221",
+          "item": "modern_industrialization:steel_machine_casing_pipe"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "546CEC5D5EF66741",
+          "item": "minecraft:hopper"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "3BBA0E5A75541494",
+          "item": "trashcans:item_trash_can"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "3166E16A9E0A6EF0",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "20124168FFD87EE9",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "3A7EC3D769168A8F",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "75F6C7CE29A61ED4",
+          "task": "2FB58A17AE8EE45E",
+          "item": "ftbfiltersystem:smart_filter"
+        }
+      ]
+    },
+    {
+      "file": "config/ftbquests/quests/chapters/8__quantum_age.snbt",
+      "id": "1A02A3EECEB4BD3F",
+      "order": 7,
+      "item_tasks": [
+        {
+          "quest": "18765B0B6FE4E653",
+          "task": "2563741FCC5684F4",
+          "item": "modern_industrialization:plasma_turbine"
+        },
+        {
+          "quest": "18765B0B6FE4E653",
+          "task": "7CA685D0F46B0D2D",
+          "item": "modern_industrialization:plasma_handling_iridium_machine_casing"
+        },
+        {
+          "quest": "18765B0B6FE4E653",
+          "task": "3F2B881F769078D9",
+          "item": "modern_industrialization:iridium_machine_casing_pipe"
+        },
+        {
+          "quest": "18765B0B6FE4E653",
+          "task": "29A61A753063745C",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "6CD8A3092DDAC055",
+          "task": "5AFE18340FFE5E62",
+          "item": "modern_industrialization:fusion_reactor"
+        },
+        {
+          "quest": "6CD8A3092DDAC055",
+          "task": "2E6D32482BA24C75",
+          "item": "modern_industrialization:highly_advanced_machine_hull"
+        },
+        {
+          "quest": "6CD8A3092DDAC055",
+          "task": "21C55093608D3C67",
+          "item": "modern_industrialization:fusion_chamber"
+        },
+        {
+          "quest": "6CD8A3092DDAC055",
+          "task": "2925568E6FC1DD32",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "6CD8A3092DDAC055",
+          "task": "00CA8A9D748C7782",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "6CD8A3092DDAC055",
+          "task": "5784BCCD41439C88",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "7F499A3A91F4AC6D",
+          "task": "54C1103C4541AB86",
+          "item": "modern_industrialization:quantum_tank"
+        },
+        {
+          "quest": "7D17913DECB347F1",
+          "task": "6829539DB65C9DFB",
+          "item": "modern_industrialization:quantum_barrel"
+        },
+        {
+          "quest": "4FD7572FC6CC4140",
+          "task": "56439A1B7C633D19",
+          "item": "modern_industrialization:replicator"
+        },
+        {
+          "quest": "0448EA623C79DA7B",
+          "task": "5A02FA5C7A9D4277",
+          "item": "modern_industrialization:superconductor_storage_unit"
+        },
+        {
+          "quest": "3E139335E6F04C69",
+          "task": "368E3E34998545D7",
+          "item": "modern_industrialization:quantum_upgrade"
+        },
+        {
+          "quest": "10943911EAB7196F",
+          "task": "5553AFB2410A673F",
+          "item": "modern_industrialization:singularity"
+        },
+        {
+          "quest": "152140F96FA2944E",
+          "task": "6D351210538120EF",
+          "item": "modern_industrialization:quantum_sword"
+        },
+        {
+          "quest": "1E378F2F641048F1",
+          "task": "440CCB26E0647CDA",
+          "item": "modern_industrialization:quantum_helmet"
+        },
+        {
+          "quest": "1E378F2F641048F1",
+          "task": "70601770FFA024F0",
+          "item": "modern_industrialization:quantum_chestplate"
+        },
+        {
+          "quest": "1E378F2F641048F1",
+          "task": "54FD233050BEB88A",
+          "item": "modern_industrialization:quantum_leggings"
+        },
+        {
+          "quest": "1E378F2F641048F1",
+          "task": "40ACE927E2106954",
+          "item": "modern_industrialization:quantum_boots"
+        },
+        {
+          "quest": "5E0967F2B54D6B34",
+          "task": "19E5DECF84818BA7",
+          "item": "modern_industrialization:uu_matter_bucket"
+        },
+        {
+          "quest": "2FDA67B4920D335D",
+          "task": "5338BDF77B1D032A",
+          "item": "modern_industrialization:quantum_machine_hull"
+        },
+        {
+          "quest": "576E585F8DFC7073",
+          "task": "6375F8A05A7FFFEB",
+          "item": "create:creative_motor"
+        },
+        {
+          "quest": "1EE269859E6DD37B",
+          "task": "61BEBC8E47AB72DB",
+          "item": "create:handheld_worldshaper"
+        },
+        {
+          "quest": "3DDD69F79F436684",
+          "task": "0C5A713E14E1EA34",
+          "item": "modern_industrialization:creative_tank"
+        },
+        {
+          "quest": "1BE7697603B3C94F",
+          "task": "5FB0280A13D4AC75",
+          "item": "modern_industrialization:creative_barrel"
+        },
+        {
+          "quest": "208D9031D68CE1AB",
+          "task": "2EA3D8C6B04CD9AE",
+          "item": "modern_industrialization:creative_storage_unit"
+        },
+        {
+          "quest": "598DBC20FB201711",
+          "task": "053E96DB60908CE0",
+          "item": "modern_industrialization:helium_plasma_bucket"
+        },
+        {
+          "quest": "1E525921822F56AC",
+          "task": "3AADEB3E568C4E35",
+          "item": "modern_industrialization:neutronium_bucket"
+        },
+        {
+          "quest": "4A2F6AA833C88B7C",
+          "task": "1B7BE3F0678FA913",
+          "item": "modern_industrialization:ultradense_metal_ball"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "06B2620A392D7946",
+          "item": "modern_industrialization:singularity_forge"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "255EA85406EF4FEA",
+          "item": "modern_industrialization:calorite_machine_casing"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "3D551EBFC55DE10D",
+          "item": "minecraft:end_rod"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "1D46206E1F1ABBFB",
+          "item": "kubejs:glowing_calorite_pillar"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "0378DDCDD9C93C0D",
+          "item": "modern_industrialization:iridium_machine_casing_pipe"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "6BEE74B879DD78DB",
+          "item": "chisel:llama/purple_wool"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "15D6CFFAD3BB02CE",
+          "item": "modern_industrialization:plasma_handling_iridium_machine_casing"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "381518BE07173AD5",
+          "item": "modern_industrialization:superconductor_coil"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "6BC8E61805B47B44",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "3DB441444B39ECA5",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "550E79BAF5AF89E0",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "78E1B9C83BB915D4",
+          "task": "11E40BA77A3297C0",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "3D8AFE27AFEA8A7F",
+          "item": "modern_industrialization:core_drill"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "276C780D9EC0E052",
+          "item": "modern_industrialization:calorite_machine_casing"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "6D689EB9E5B8BEF2",
+          "item": "modern_industrialization:calorite_machine_casing_pipe"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "33239434FF2D7682",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "1128B1A119FC490A",
+          "item": "modern_industrialization:desh_machine_casing"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "22D198ECB9D2339B",
+          "item": "modern_industrialization:desh_machine_casing_pipe"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "49F07A61BBC909C2",
+          "item": "kubejs:glowing_ostrum_pillar"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "298CDB6F62AD8B01",
+          "item": "kubejs:glowing_steel_pillar"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "0B3DFD02590C4301",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "0E8A5C744F2B7940",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "73F90BF8D8AC9D24",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "0DB892CAB4A72CFF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "20411633D70068EE",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "500F9FE708EE8F1C",
+          "task": "1296C252821C1B7C",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "3C38E4E38D595A8C",
+          "task": "5BDB910ECDD3761F",
+          "item": "kubejs:core_fragment"
+        },
+        {
+          "quest": "790924652E61D23D",
+          "task": "34E2B40FCCAF7AA4",
+          "item": "modern_industrialization:core_slurry_bucket"
+        },
+        {
+          "quest": "7A1577E495B505C5",
+          "task": "6DF9EE96286D1A2E",
+          "item": "extended_industrialization:processing_array"
+        },
+        {
+          "quest": "75A81F0A092043B2",
+          "task": "35D33DFF41199DF5",
+          "item": "industrialization_overdrive:multi_processing_array"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "5349C5EC8EB6D5AB",
+          "item": "mi_tweaks:colossal_blast_furnace"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "137B6E6895C1E4A4",
+          "item": "modern_industrialization:tungstensteel_coil"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "64F4F18D98486C17",
+          "item": "modern_industrialization:ostrum_machine_casing"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "062849811F53218B",
+          "item": "modern_industrialization:calorite_machine_casing"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "2908E18F2811CFC8",
+          "item": "modern_industrialization:calorite_machine_casing_pipe"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "26EB1BB429374674",
+          "item": "kubejs:glowing_calorite_pillar"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "0B9B23D521F4CDEA",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "6A75004713CDF16D",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "590262024D9F3475",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "6394C527C2EC1EDC",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1099D98FC13988AF",
+          "task": "1822765C8613DC61",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "5C4972151AE6A91C",
+          "item": "mi_tweaks:extreme_vacuum_cryofreezer"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "1DD999A85FFD9621",
+          "item": "modern_industrialization:frostproof_machine_casing"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "56732FA21F37DF72",
+          "item": "modern_industrialization:stainless_steel_machine_casing_pipe"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "43D676503EB1A12F",
+          "item": "modern_industrialization:clean_stainless_steel_machine_casing"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "604009B9F16FE238",
+          "item": "modern_industrialization:plasma_handling_iridium_machine_casing"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "40D49B9A0F6A0A08",
+          "item": "kubejs:borosilicate_glass"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "03668A5BAEC4C0A7",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "36E1D91650DDD7D4",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "1F86FDA8B641EC55",
+          "task": "2B2797753FC0C3EF",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "70BE52543FD927B3",
+          "item": "mi_tweaks:macrothermic_confluence_unit"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "1BE640CF224388B1",
+          "item": "modern_industrialization:ostrum_machine_casing_pipe"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "2880C2160BA24665",
+          "item": "modern_industrialization:heatproof_machine_casing"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "170313917E0B4744",
+          "item": "modern_industrialization:frostproof_machine_casing"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "2CAE45FBD925E753",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "42669508B166C6E7",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "0ECA1F32FF71F125",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "629CE2543005AA93",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "5E8335E396D18094",
+          "task": "3B8D0EB3B44C40F6",
+          "item": "ftbfiltersystem:smart_filter"
+        },
+        {
+          "quest": "4BA636804B1524D7",
+          "task": "28FEDAC5D9DDFD94",
+          "item": "extended_industrialization:nano_saber"
+        },
+        {
+          "quest": "784E6AF2CC87C3F2",
+          "task": "21590DBC53E98173",
+          "item": "extended_industrialization:nano_quantum_helmet"
+        },
+        {
+          "quest": "784E6AF2CC87C3F2",
+          "task": "74F69D0EE088D8A7",
+          "item": "extended_industrialization:nano_quantum_chestplate"
+        },
+        {
+          "quest": "784E6AF2CC87C3F2",
+          "task": "0C53A87FE2C95D6A",
+          "item": "extended_industrialization:nano_quantum_leggings"
+        },
+        {
+          "quest": "784E6AF2CC87C3F2",
+          "task": "258F05EB8FE88EFD",
+          "item": "extended_industrialization:nano_quantum_boots"
+        }
+      ]
+    }
+  ],
   "crafting_rules_count": 7301,
   "crafting_samples_unavailable": 46,
   "crafting_samples": [
