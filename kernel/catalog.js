@@ -14,7 +14,7 @@ function *setups(machine, upgrades) {
     if (!machine.upgrades?.includes(upgrade.id)) continue;
     for (let count = 1; count <= machine.upgrade_limit; count++) loadouts.push({upgrade, upgrade_count: count});
   }
-  const shapes = Math.max(machine.recipe_eu_limits?.length ?? 1, machine.fluid_output_limits?.length ?? 1);
+  const shapes = Math.max(machine.batch_tiers?.length ?? 1, machine.recipe_eu_limits?.length ?? 1, machine.fluid_output_limits?.length ?? 1);
   for (const loadout of loadouts) {
     if (machine.mechanic === 'mi_array') {
       for (const contained_machine of machine.eligible_machines) {
@@ -26,7 +26,7 @@ function *setups(machine, upgrades) {
       }
     } else {
       for (let shape = 0; shape < shapes; shape++) {
-        for (let batch = 1; batch <= (machine.batch_limit ?? 1); batch++) {
+        for (let batch = 1; batch <= (machine.batch_tiers?.[shape].batch_limit ?? machine.batch_limit ?? 1); batch++) {
           yield {...loadout, batch, shape};
           if (machine.steel_hatch_variant) yield {...loadout, batch, shape, steel_hatches: true};
         }
@@ -55,7 +55,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
   }
   // A complete pinned setup leaves no loadout choice to search for this recipe.
   const fixedOnly = fixedIds.size > 0 && [...fixedIds].every(id => explicitSetupIds.has(id));
-  const allowedConditions = new Set(['extended_industrialization:runtime_generated_flag', 'modern_industrialization:adjacent_block', 'modern_industrialization:dimension', 'modern_industrialization:biome']);
+  const allowedConditions = new Set(['extended_industrialization:runtime_generated_flag', 'modern_industrialization:adjacent_block', 'modern_industrialization:dimension', 'modern_industrialization:biome', 'planner:energy_output_buffer']);
   for (const condition of recipe.conditions ?? []) {
     if (!allowedConditions.has(condition.type)) return {...recipe, unsupported: `No condition adapter exists for ${condition.type}.`};
     if (condition.dimension && request.available_dimensions && !request.available_dimensions.includes(condition.dimension)) return {...recipe, unsupported: `The required dimension is unavailable: ${condition.dimension}.`};

@@ -368,6 +368,65 @@ public final class PlannerProbe {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
+    private static JsonArray recipeGeneration(MachineBlockEntity machine, MinecraftServer server) throws Exception {
+        var generator = (aztech.modern_industrialization.api.machine.holder.EnergyListComponentHolder) machine;
+        var crafter = ((aztech.modern_industrialization.machines.blockentities.multiblocks.AbstractCraftingMultiblockBlockEntity) machine).getCrafterComponent();
+        var behavior = crafter.getBehavior();
+        var active = CrafterComponent.class.getDeclaredField("activeRecipe");
+        active.setAccessible(true);
+        var energy = new aztech.modern_industrialization.machines.components.EnergyComponent(machine, 1000000000000L);
+        ((java.util.List<aztech.modern_industrialization.machines.components.EnergyComponent>) generator.getEnergyComponents()).add(energy);
+        var records = new JsonArray();
+        for (var holder : server.getRecipeManager().getRecipes()) {
+            if (!(holder.value() instanceof aztech.modern_industrialization.machines.recipe.MachineRecipe recipe)
+                    || recipe.getType() != behavior.recipeType()) continue;
+            var record = new JsonObject();
+            record.addProperty("recipe", holder.id().toString());
+            record.addProperty("duration_ticks", recipe.duration);
+            record.addProperty("recipe_eu", recipe.eu);
+            energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+            record.addProperty("accepted_with_empty_hatch", recipe.conditionsMatch(() -> machine));
+            active.set(crafter, holder);
+            long before = energy.getEu();
+            behavior.onCraft();
+            record.addProperty("eu_delivered_on_completion", energy.getEu() - before);
+            record.addProperty("internal_progress_eu", behavior.consumeEu(1, aztech.modern_industrialization.util.Simulation.ACT));
+            energy.insertEu(energy.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+            record.addProperty("accepted_with_full_hatch", recipe.conditionsMatch(() -> machine));
+            records.add(record);
+        }
+        generator.getEnergyComponents().clear();
+        active.set(crafter, null);
+        return records;
+    }
+
+    private static JsonObject replicator(aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity machine) {
+        var input = machine.getInventory().getItemStacks().get(0);
+        var output = machine.getInventory().getItemStacks().get(1);
+        var matter = machine.getInventory().getFluidStacks().get(0);
+        input.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(net.minecraft.world.item.Items.IRON_INGOT));
+        input.setAmount(1);
+        matter.setAmount(1000);
+        var deliveries = new JsonArray();
+        for (int tick = 1; tick <= 60; tick++) {
+            machine.tick();
+            if (output.getAmount() > 0) {
+                var delivery = new JsonObject();
+                delivery.addProperty("tick", tick);
+                delivery.addProperty("items", output.getAmount());
+                deliveries.add(delivery);
+                output.empty();
+            }
+        }
+        var result = new JsonObject();
+        result.add("deliveries", deliveries);
+        result.addProperty("template_remaining", input.getAmount());
+        result.addProperty("uu_matter_consumed", 1000 - matter.getAmount());
+        result.addProperty("template", "minecraft:iron_ingot");
+        return result;
+    }
+
     private static JsonObject waterPump(net.minecraft.world.level.block.Block block, MinecraftServer server) throws Exception {
         var level = server.overworld();
         var position = new BlockPos(32, 100, 16);
@@ -442,6 +501,8 @@ public final class PlannerProbe {
                 var record = new JsonObject();
                 record.addProperty("id", id);
                 record.addProperty("class", entity.getClass().getName());
+                if (id.equals("yet_another_industrialization:dragon_egg_energy_siphon")) record.add("recipe_generation_probe", recipeGeneration(machine, server));
+                if (entity instanceof aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity replicator) record.add("replication_probe", replicator(replicator));
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.AbstractWaterPumpBlockEntity) record.add("water_pump_probe", waterPump(block, server));
                 if (entity instanceof aztech.modern_industrialization.machines.multiblocks.HatchBlockEntity hatch) {
                     record.addProperty("role", "multiblock_part");
@@ -514,6 +575,17 @@ public final class PlannerProbe {
                         tiers.add(value);
                     }
                     record.add("coil_tiers", tiers);
+                }
+                if (id.equals("extended_industrialization:large_electric_furnace") || id.equals("industrialization_overdrive:pyrolyse_oven")) {
+                    var tiers = new JsonArray();
+                    for (var tier : (java.util.List<?>) entity.getClass().getMethod("getTiers").invoke(null)) {
+                        var value = new JsonObject();
+                        value.addProperty("coil", tier.getClass().getMethod("blockId").invoke(tier).toString());
+                        value.addProperty("batch_limit", (Integer) tier.getClass().getMethod("batchSize").invoke(tier));
+                        value.addProperty("energy_multiplier", (Float) tier.getClass().getMethod("euCostMultiplier").invoke(tier));
+                        tiers.add(value);
+                    }
+                    record.add("batch_tiers", tiers);
                 }
                 record.addProperty("nbt", entity.saveWithFullMetadata(server.registryAccess()).toString());
                 if (id.equals("modern_industrialization:bronze_boiler") || id.equals("modern_industrialization:steel_boiler")) {

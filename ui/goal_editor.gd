@@ -140,7 +140,7 @@ func _machine_changed(_index: int) -> void:
 			%GoalContained.add_item(_resource_name("item:" + contained))
 			%GoalContained.set_item_metadata(%GoalContained.item_count - 1, contained)
 	%GoalBatch.max_value = machine.get("batch_limit", 64 if machine.get("mechanic") == "mi_array" else 1)
-	%GoalShape.max_value = maxi(1, maxi(machine.get("shape_capacities", []).size(), maxi(machine.get("recipe_eu_limits", []).size(), machine.get("fluid_output_limits", []).size())))
+	%GoalShape.max_value = maxi(1, maxi(machine.get("batch_tiers", []).size(), maxi(machine.get("shape_capacities", []).size(), maxi(machine.get("recipe_eu_limits", []).size(), machine.get("fluid_output_limits", []).size()))))
 	%GoalSteel.visible = machine.has("steel_hatch_variant")
 	for control: Control in [%GoalUpgrade, %GoalUpgradeLabel, %GoalUpgradeCount, %GoalUpgradeCountLabel]:
 		control.visible = %GoalUpgrade.item_count > 1

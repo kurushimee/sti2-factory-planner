@@ -4,6 +4,19 @@ from player_dataset import crafting_adapter, utility_recipes
 
 
 class PlayerDatasetTests(unittest.TestCase):
+    def test_replication_requires_a_retained_obtained_template_and_skips_blacklisted_items(self):
+        capture = {"machine_rules": [{"id": "test:replicator", "replication": True, "operation_ticks": 20,
+                                    "uu_matter_per_item": 100}],
+                   "resources": [{"id": "item:test:allowed", "item_rules": {"replicable": True}},
+                                 {"id": "item:test:blocked", "item_rules": {"replicable": False}}]}
+        recipes = utility_recipes(capture)
+        self.assertEqual(len(recipes), 1)
+        recipe = recipes[0]
+        self.assertEqual(recipe["requires_obtained"], ["item:test:allowed"])
+        self.assertTrue(recipe["replication"])
+        self.assertEqual(recipe["inputs"][0]["amount"], 100)
+        self.assertEqual(recipe["configurations"][0]["startup_inputs"], [{"resource": "item:test:allowed", "amount": 1}])
+
     def test_pumps_and_boilers_preserve_fuel_returns_and_obtained_requirements(self):
         capture = {"machine_rules": [
             {"id": "test:pump", "mechanic": "fixed_cycle", "water_multiplier": 2, "operation_ticks": 100,

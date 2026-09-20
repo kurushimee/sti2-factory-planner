@@ -24,6 +24,12 @@ function ceilRatio(numerator, denominator) {
 }
 
 export function machineCapacity(recipe, machine, setup = {}) {
+  if (machine.batch_tiers) {
+    const shape = integer(setup.shape ?? 0, 'Structure variant');
+    const tier = machine.batch_tiers[shape];
+    if (!tier) throw new Error('This structure variant is unavailable.');
+    machine = {...machine, ...tier};
+  }
   if (machine.mechanic === 'fixed_cycle') {
     if (setup.upgrade_count || (setup.batch ?? 1) !== 1) throw new Error('This fixed-cycle machine does not accept upgrades or batching.');
     const ticks = integer(recipe.duration_ticks ?? machine.operation_ticks, 'Operation duration', 1);

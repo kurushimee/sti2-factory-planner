@@ -31,6 +31,9 @@ var _frames: Dictionary[String, GraphFrame] = {}
 var _resizing_group := ""
 var _members: Dictionary[String, String] = {}
 var _world_import: Dictionary[String, Variant] = {}
+var _recipe_matches: Array[String] = []
+var _recipe_page := 0
+const RECIPE_PAGE_SIZE := 150
 
 
 func _ready() -> void:
@@ -45,6 +48,8 @@ func _ready() -> void:
 	computation.failed.connect(_failed)
 	computation.progress.connect(func(message: String) -> void: status.text = message)
 	search.text_changed.connect(_filter_recipes)
+	%PreviousRecipes.pressed.connect(func() -> void: _recipe_page -= 1; _show_recipe_page())
+	%NextRecipes.pressed.connect(func() -> void: _recipe_page += 1; _show_recipe_page())
 	%AddGoal.pressed.connect(_add_goal)
 	%RemoveGoal.pressed.connect(_remove_goal)
 	%EditGoal.pressed.connect(_edit_goal)
@@ -82,7 +87,7 @@ func _ready() -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
-		%Arrange, %AddGroup, graph, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
+		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, graph, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -149,14 +154,30 @@ func _load_dataset(value: Variant) -> bool:
 
 
 func _filter_recipes(query: String) -> void:
-	recipes_list.clear()
+	_recipe_matches.clear()
+	_recipe_page = 0
+	var normalized := query.to_lower()
 	for recipe: Dictionary in _dataset.get("recipes", []):
 		var title: String = recipe.get("name", recipe.id)
-		if !query.is_empty() && !query.to_lower() in (title + " " + recipe.id).to_lower():
+		if !normalized.is_empty() && !normalized in (title + " " + recipe.id).to_lower():
 			continue
+		_recipe_matches.append(recipe.id)
+	_show_recipe_page()
+
+
+func _show_recipe_page() -> void:
+	recipes_list.clear()
+	var first := _recipe_page * RECIPE_PAGE_SIZE
+	var last := mini(first + RECIPE_PAGE_SIZE, _recipe_matches.size())
+	for match_index: int in range(first, last):
+		var recipe: Dictionary = _recipes[_recipe_matches[match_index]]
+		var title: String = recipe.get("name", recipe.id)
 		var index := recipes_list.add_item(title)
 		recipes_list.set_item_metadata(index, recipe.id)
-		recipes_list.set_item_tooltip(index, recipe.id)
+		recipes_list.set_item_tooltip(index, recipe.get("unsupported", recipe.id))
+	%RecipePage.text = "%d–%d / %d" % [first + 1 if last > first else 0, last, _recipe_matches.size()]
+	%PreviousRecipes.disabled = first == 0
+	%NextRecipes.disabled = last >= _recipe_matches.size()
 	if recipes_list.item_count:
 		recipes_list.select(0)
 

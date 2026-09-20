@@ -61,6 +61,35 @@ assert.ok(steamPlan.startup.resources.find(flow => flow.resource === water).quan
 assert.ok(steamPlan.startup.resources.find(flow => flow.resource === steam).quantity > 10000);
 console.log('The real bronze boiler and water pump balance their steam feedback, coal use, and cold-start stocks.');
 
+const iron = 'item:minecraft:iron_ingot';
+const replication = {goals: [{resource: iron, rate: 3}], replication: true, obtained_resources: [iron],
+  available_machines: ['modern_industrialization:replicator'], external: [{resource: 'fluid:modern_industrialization:uu_matter'}]};
+const replicated = solveFactory(highs, dataset, replication);
+assert.equal(replicated.status, 'optimal');
+assert.equal(replicated.lines.length, 1);
+assert.equal(replicated.lines[0].machines, 3);
+assert.equal(replicated.external[0].rate, 300);
+assert.equal(replicated.startup.resources.find(flow => flow.resource === iron).reusable_stock, 3);
+assert.equal(solveFactory(highs, dataset, {...replication, replication: false}).status, 'infeasible');
+assert.equal(solveFactory(highs, dataset, {...replication, obtained_resources: []}).status, 'infeasible');
+assert.ok(!dataset.recipes.some(value => value.id === 'replicate|item:extended_industrialization:processing_array'));
+console.log('Three replicators require three retained templates and 300 mB/s UU matter; disabled replication and absent templates cannot supply iron.');
+
+const siphon = dataset.recipes.find(value => value.source_id === 'statech:yet_another_industrialization/dragon_breath');
+const generated = solveFactory(highs, dataset, {goals: [{recipe: siphon.id, resource: 'energy:eu', rate: 20480}],
+  available_machines: ['yet_another_industrialization:dragon_egg_energy_siphon'],
+  external: [{resource: 'fluid:yet_another_industrialization:dragon_breath'}, {resource: 'item:yet_another_industrialization:dragon_egg_siphon_catalyst'}]});
+assert.equal(generated.status, 'optimal');
+assert.equal(generated.lines.length, 1);
+assert.equal(generated.lines[0].machines, 1);
+assert.equal(generated.lines[0].operations_per_second, 0.2);
+assert.equal(generated.power.gross_generation_eu_per_tick, 1024);
+assert.equal(generated.power.consumption_eu_per_tick, 0);
+assert.equal(generated.lines[0].outputs.find(flow => flow.resource === 'fluid:yet_another_industrialization:impure_dragon_breath').rate, 250);
+assert.equal(generated.lines[0].configuration_details.conditions[0].capacity_eu, 102400);
+assert.equal(generated.startup.build_requirements.find(flow => flow.resource === 'item:minecraft:dragon_egg').amount, 1);
+console.log('The dragon-egg siphon releases 102400 EU every 100 ticks, retains its 250 mB/s coproduct, and requires the full-burst output buffer.');
+
 if (process.argv[3]) {
   const imported = inspectWorld(new Uint8Array(await readFile(process.argv[3])), dataset);
   assert.equal(imported.reconstruction.goals.length, 1);

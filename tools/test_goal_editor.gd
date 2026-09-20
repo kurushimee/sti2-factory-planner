@@ -65,6 +65,13 @@ func _run() -> void:
 
 func _check_catalog(workspace: PlannerWorkspace, path: String) -> void:
 	assert(workspace._load_dataset(JSON.parse_string(FileAccess.get_file_as_string(path))))
+	assert(workspace.recipes_list.item_count == workspace.RECIPE_PAGE_SIZE)
+	workspace.get_node("%NextRecipes").pressed.emit()
+	assert(workspace.recipes_list.get_item_metadata(0) == workspace._dataset.recipes[workspace.RECIPE_PAGE_SIZE].id)
+	workspace._filter_recipes("copper_cluster")
+	assert(workspace._recipe_page == 0 && workspace.recipes_list.item_count > 0)
+	assert("copper_cluster" in workspace.recipes_list.get_item_metadata(0))
+	workspace._filter_recipes("")
 	workspace._request = {"goals": [], "available_machines": ["modern_industrialization:electric_macerator"],
 		"external": [{"resource": "item:spectrum:copper_cluster"}, {"resource": "energy:eu"}]}
 	var recipe: Dictionary = {}
@@ -131,3 +138,25 @@ func _check_catalog(workspace: PlannerWorkspace, path: String) -> void:
 	assert(workspace._last_result.lines[0].machine == "extended_industrialization:processing_array")
 	assert(workspace._last_result.lines[0].configuration_details.setup.contained_count == 16)
 	print("The array editor preserves sixteen contained macerators, batching, and the selected shape.")
+	workspace._request.available_machines.append("extended_industrialization:large_electric_furnace")
+	for candidate: Dictionary in workspace._dataset.recipes:
+		if candidate.get("process", {}).get("type") == "modern_industrialization:furnace" && !candidate.has("unsupported"):
+			recipe = candidate
+			break
+	dialog.open_goal(recipe, workspace._dataset, workspace._request)
+	for index: int in machines.item_count:
+		if machines.get_item_metadata(index).id == "extended_industrialization:large_electric_furnace":
+			machines.select(index)
+			dialog._machine_changed(index)
+	assert(dialog.get_node("%GoalShape").max_value == 3)
+	dialog.get_node("%GoalShape").value = 3
+	dialog.get_node("%GoalBatch").value = 64
+	dialog._changed()
+	await workspace.computation.completed
+	await process_frame
+	assert(!dialog.get_ok_button().disabled)
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.2).timeout
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/furnace-goal-editor.png")
+	dialog.hide()

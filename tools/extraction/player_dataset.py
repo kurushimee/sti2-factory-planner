@@ -10,6 +10,21 @@ from normalize import resource_identity
 def utility_recipes(capture):
     recipes = []
     for machine in capture["machine_rules"]:
+        if machine.get("replication"):
+            for resource in capture["resources"]:
+                if not resource.get("item_rules", {}).get("replicable"):
+                    continue
+                identity = "replicate|" + resource["id"]
+                ticks = machine["operation_ticks"]
+                recipes.append({"id": identity, "name": "Replicate " + resource.get("name", resource["id"]),
+                                "source_id": machine["id"], "origin": "loaded_replication_predicate_and_ticks", "type": "planner:replication",
+                                "primary": resource["id"], "replication": True, "requires_obtained": [resource["id"]],
+                                "inputs": [{"resource": "fluid:modern_industrialization:uu_matter", "amount": machine["uu_matter_per_item"]}],
+                                "outputs": [{"resource": resource["id"], "amount": 1}],
+                                "configurations": [{"id": identity, "machine": machine["id"], "operations_per_second": 20 / ticks,
+                                                    "capacity": {"operations_per_second": 20 / ticks, "ticks_per_batch": ticks, "completion_ticks": [ticks]},
+                                                    "startup_inputs": [{"resource": resource["id"], "amount": 1}],
+                                                    "build_requirements": [{"resource": "item:" + machine["id"], "amount": 1}]}]})
         if machine.get("mechanic") == "fixed_cycle" and "water_multiplier" in machine:
             ticks = machine["operation_ticks"]
             for neighbors in range(1, 9):
@@ -116,6 +131,12 @@ def build_dataset(capture):
                     continue
                 identity = {"resource": flow["choices"][0]} if len(flow["choices"]) == 1 else {"choices": flow["choices"]}
                 target.append({**identity, "amount": amount, "nominal_amount": flow["amount"], "probability": flow["probability"]})
+        generator = next((machine for machine in capture["machine_rules"]
+                          if machine.get("energy_generation") and machine.get("recipe_type") == entry["type"]), None)
+        generation = next((condition for condition in entry.get("conditions", [])
+                           if condition["type"] == "yet_another_industrialization:energy_generation"), None)
+        if generator and generation:
+            outputs.insert(0, {"resource": "energy:eu", "amount": generation["amount"]})
         if not outputs:
             unsupported.append({**record, "reason": "The recipe has no positive material output."})
             continue
@@ -125,6 +146,16 @@ def build_dataset(capture):
                       expected_yields=any(flow["probability"] not in (0, 1) for flow in entry["inputs"] + entry["outputs"]))
         if entry["mechanic"] == "mi_recipe":
             record["process"] = {"duration_ticks": entry["duration_ticks"], "eu_per_tick": entry["eu_per_tick"], "type": entry["type"]}
+            if generator and generation:
+                evidence = next((value for value in generator["generation_evidence"] if value["recipe"] == entry["source_id"]), None)
+                if not evidence or evidence["recipe_eu"] != 1 or evidence["eu_delivered_on_completion"] != generation["amount"]:
+                    record["unsupported"] = "This generation recipe has no matching completed-craft energy probe."
+                record["process"]["eu_per_tick"] = 0
+                record["name"] = names.get("item:" + generator["id"], generator["id"])
+                record["group"] = "Power"
+                record["conditions"] = [condition for condition in record["conditions"] if condition != generation]
+                record["conditions"].append({"type": "planner:energy_output_buffer", "capacity_eu": generation["amount"],
+                                              "single_output_hatch": True})
         else:
             reason = crafting_adapter(entry, record, capture, resource_index, variants)
             if reason:

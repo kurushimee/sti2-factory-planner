@@ -99,6 +99,21 @@ def verify(runtime: dict, probes: dict) -> dict:
             raise ValueError(f"The loaded {tier} water pump behavior changed.")
     if items["modern_industrialization:iron_hammer"]["max_damage"] != 1666:
         raise ValueError("The pack's iron hammer durability changed.")
+    replication = machines["modern_industrialization:replicator"]["replication_probe"]
+    if (replication["deliveries"] != [{"tick": tick, "items": 1} for tick in (20, 40, 60)]
+            or replication["template_remaining"] != 1 or replication["uu_matter_consumed"] != 300):
+        raise ValueError("The loaded replicator throughput or template consumption changed.")
+    batch_tiers = {key: value["batch_tiers"] for key, value in machines.items() if "batch_tiers" in value}
+    generation = machines["yet_another_industrialization:dragon_egg_energy_siphon"]["recipe_generation_probe"]
+    if (len(generation) != 2 or sorted(value["eu_delivered_on_completion"] for value in generation) != [102400, 204800]
+            or any(value["duration_ticks"] != 100 or value["recipe_eu"] != 1 or value["internal_progress_eu"] != 1
+                   or not value["accepted_with_empty_hatch"] or value["accepted_with_full_hatch"] for value in generation)):
+        raise ValueError("The loaded dragon-egg siphon burst generation changed.")
+    for key, limits, discounts in (("extended_industrialization:large_electric_furnace", [16, 32, 64], [0.75] * 3),
+                                   ("industrialization_overdrive:pyrolyse_oven", [1, 4, 8], [0.9, 0.8, 0.75])):
+        if ([tier["batch_limit"] for tier in batch_tiers[key]] != limits
+                or [tier["energy_multiplier"] for tier in batch_tiers[key]] != discounts):
+            raise ValueError(f"The loaded structure tiers changed for {key}.")
     crafting = probes["crafting_rules"]
     if crafting["failures"] or len(crafting["recipes"]) != 7301:
         raise ValueError("The crafting probe failed or its coverage changed.")
@@ -126,6 +141,9 @@ def verify(runtime: dict, probes: dict) -> dict:
         "blast_furnace_coils": coil_tiers,
         "boiler_warmup": boilers,
         "water_pumps": pumps,
+        "replication": replication,
+        "batch_tiers": batch_tiers,
+        "recipe_generation": generation,
         "crafting_rules_count": len(crafting["recipes"]),
         "crafting_samples_unavailable": sum("unavailable" in entry for entry in crafting["recipes"]),
         "crafting_samples": [crafting_index[key] for key in ("minecraft:cake", "minecraft:torch", "modern_industrialization:iron_plate_from_hammer")],

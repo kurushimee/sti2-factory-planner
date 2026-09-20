@@ -6,7 +6,8 @@ def machine_rules(capture, upgrades):
     simple = {"ElectricCraftingMachineBlockEntity", "SteamCraftingMachineBlockEntity",
               "ElectricCraftingMultiblockBlockEntity", "SteamCraftingMultiblockBlockEntity",
               "FusionReactorBlockEntity", "ElectricBlastFurnaceBlockEntity", "DistillationTowerBlockEntity"}
-    batching = {"ElectricMultipliedCraftingMultiblockBlockEntity", "SteamMultipliedCraftingMultiblockBlockEntity"}
+    batching = {"ElectricMultipliedCraftingMultiblockBlockEntity", "SteamMultipliedCraftingMultiblockBlockEntity",
+                "LargeElectricFurnaceBlockEntity", "PyrolyseOvenBlockEntity"}
     for machine in capture:
         family = machine["class"].rsplit(".", 1)[-1]
         record = {"id": machine["id"], "recipe_type": machine.get("recipe_type"),
@@ -16,6 +17,14 @@ def machine_rules(capture, upgrades):
                           upgrades_steam_to_steel=machine.get("upgrades_steam_to_steel", False))
         elif machine.get("water_pump_probe"):
             record.update(status="supported", mechanic="fixed_cycle", **machine["water_pump_probe"])
+        elif machine.get("replication_probe"):
+            probe = machine["replication_probe"]
+            record.update(status="supported", mechanic="fixed_cycle", operation_ticks=probe["deliveries"][0]["tick"],
+                          replication=True, uu_matter_per_item=probe["uu_matter_consumed"] / sum(entry["items"] for entry in probe["deliveries"]))
+        elif machine.get("recipe_generation_probe"):
+            record.update(status="supported", mechanic="fixed_cycle", energy_generation=True,
+                          generation_evidence=machine["recipe_generation_probe"],
+                          build_inputs=[{"resource": "item:minecraft:dragon_egg", "amount": 1}])
         elif family == "BoilerMachineBlockEntity":
             heater = machine["component_fields"]["aztech.modern_industrialization.machines.components.SteamHeaterComponent"]
             burner = machine["component_fields"]["aztech.modern_industrialization.machines.components.FuelBurningComponent"]
@@ -35,6 +44,9 @@ def machine_rules(capture, upgrades):
                           batch_limit=machine.get("batch_limit", 1))
             if modular:
                 record["energy_multiplier"] = machine["batch_energy_probe_output"] / (machine["batch_limit"] * machine["batch_energy_probe_input"])
+                if machine.get("batch_tiers"):
+                    record["batch_tiers"] = machine["batch_tiers"]
+                    record["batch_limit"] = max(tier["batch_limit"] for tier in machine["batch_tiers"])
             if family == "SteamCraftingMultiblockBlockEntity":
                 record["steel_hatch_variant"] = {"base_eu": 4, "max_eu": 4}
             if family == "ElectricBlastFurnaceBlockEntity":

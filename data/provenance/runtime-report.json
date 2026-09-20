@@ -960,6 +960,81 @@
       ]
     }
   },
+  "replication": {
+    "deliveries": [
+      {
+        "tick": 20,
+        "items": 1
+      },
+      {
+        "tick": 40,
+        "items": 1
+      },
+      {
+        "tick": 60,
+        "items": 1
+      }
+    ],
+    "template_remaining": 1,
+    "uu_matter_consumed": 300,
+    "template": "minecraft:iron_ingot"
+  },
+  "batch_tiers": {
+    "extended_industrialization:large_electric_furnace": [
+      {
+        "coil": "modern_industrialization:cupronickel_coil",
+        "batch_limit": 16,
+        "energy_multiplier": 0.75
+      },
+      {
+        "coil": "modern_industrialization:kanthal_coil",
+        "batch_limit": 32,
+        "energy_multiplier": 0.75
+      },
+      {
+        "coil": "modern_industrialization:tungstensteel_coil",
+        "batch_limit": 64,
+        "energy_multiplier": 0.75
+      }
+    ],
+    "industrialization_overdrive:pyrolyse_oven": [
+      {
+        "coil": "modern_industrialization:cupronickel_coil",
+        "batch_limit": 1,
+        "energy_multiplier": 0.9
+      },
+      {
+        "coil": "modern_industrialization:kanthal_coil",
+        "batch_limit": 4,
+        "energy_multiplier": 0.8
+      },
+      {
+        "coil": "modern_industrialization:tungstensteel_coil",
+        "batch_limit": 8,
+        "energy_multiplier": 0.75
+      }
+    ]
+  },
+  "recipe_generation": [
+    {
+      "recipe": "statech:yet_another_industrialization/dragon_breath",
+      "duration_ticks": 100,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 102400,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false
+    },
+    {
+      "recipe": "statech:yet_another_industrialization/dragon_breath_nutrient",
+      "duration_ticks": 100,
+      "recipe_eu": 1,
+      "accepted_with_empty_hatch": true,
+      "eu_delivered_on_completion": 204800,
+      "internal_progress_eu": 1,
+      "accepted_with_full_hatch": false
+    }
+  ],
   "crafting_rules_count": 7301,
   "crafting_samples_unavailable": 46,
   "crafting_samples": [

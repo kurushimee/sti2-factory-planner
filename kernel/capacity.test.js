@@ -12,6 +12,18 @@ test('MI power agrees with the loaded 2.5.8 reference samples', () => {
 
 const macerator = {mechanic: 'mi_crafter', base_eu: 8, max_eu: 32, upgrade_limit: 64, upgrades: ['basic']};
 
+test('coil-dependent batching applies the selected loaded tier before voltage and energy calculations', () => {
+  const report = JSON.parse(readFileSync(new URL('../data/provenance/runtime-report.json', import.meta.url)));
+  const furnace = {mechanic: 'mi_batch', base_eu: 8, max_eu: 32,
+    batch_tiers: report.batch_tiers['extended_industrialization:large_electric_furnace']};
+  const recipe = {duration_ticks: 100, eu_per_tick: 8};
+  const result = machineCapacity(recipe, furnace, {shape: 2, batch: 64});
+  assert.equal(result.energy_per_batch, 38400);
+  assert.equal(result.eu_per_operation, 600);
+  assert.throws(() => machineCapacity(recipe, furnace, {shape: 0, batch: 64}), /batch/);
+  assert.throws(() => machineCapacity(recipe, furnace, {shape: 3}), /variant/);
+});
+
 test('whole ticks determine capacity and final-tick energy', () => {
   const result = machineCapacity({duration_ticks: 200, eu_per_tick: 2}, macerator);
   assert.equal(result.ticks_per_batch, 13);

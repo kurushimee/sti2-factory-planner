@@ -15,6 +15,7 @@ export function compileConfiguration(recipe, machine, setup = {}) {
   const capacity = machineCapacity(recipe, machine, setup);
   const energyResource = machine.energy_resource ?? 'energy:eu';
   const bill = [{resource: `item:${machine.id}`, amount: 1}];
+  for (const flow of machine.build_inputs ?? []) bill.push({...flow});
   if (setup.upgrade_count) bill.push({resource: `item:${setup.upgrade.id}`, amount: setup.upgrade_count});
   if (setup.contained_machine) {
     if (!Number.isSafeInteger(setup.contained_count) || setup.contained_count < 1) throw new Error('An array needs a positive whole count of contained machines.');
