@@ -74,6 +74,7 @@ public final class PlannerProbe {
             if (member == null) throw new IllegalStateException("The bill contains a position outside the loaded template.");
             var state = member.getPreviewState().is(placed) ? member.getPreviewState() : placed.defaultBlockState();
             state = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldState(level, position, state, facing);
+            level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
             level.setBlockAndUpdate(position, state);
             if (!state.isAir()) counts.merge(id, 1, Integer::sum);
         }
@@ -137,6 +138,15 @@ public final class PlannerProbe {
         result.addProperty("energy_consumed", consumed);
         result.addProperty("beryllium_consumed_sample", 64 - source.getAmount());
         if (produced != 8 || tick != 8059 || consumed != 8192000) throw new IllegalStateException("The formed irradiator cycle changed: " + result);
+        // Save active input rods as independent evidence for the world importer.
+        for (var hatch : nuclear) {
+            var slot = hatch.getInventory().getItemStacks().getFirst();
+            slot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(
+                    BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:uranium_fuel_rod"))));
+            slot.setAmount(1);
+            hatch.setChanged();
+        }
+        result.addProperty("saved_input_rods", nuclear.size());
         return result;
     }
 

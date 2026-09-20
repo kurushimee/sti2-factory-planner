@@ -3,7 +3,7 @@ import {readNbt} from './nbt.js';
 import {decodeLz4Stream} from './lz4.js';
 import {reconstructFactory} from './reconstruct.js';
 import {blockStateAt, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
-import {readMachineAssignment} from './saved-machine.js';
+import {readMachineAssignment, inferIrradiatorAssignments} from './saved-machine.js';
 import {associateStructures} from './structure.js';
 
 const MAX_ENTRY = 256 * 1024 * 1024;
@@ -246,6 +246,7 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
   };
   progress({phase: 'matching_structures', completed: 0, total: result.machines.length});
   associateStructures(result, dataset, stateAt);
+  inferIrradiatorAssignments(result, dataset);
   inferProviderAssignments(result, dataset.recipes);
   if (dataset.format === 1) result.reconstruction = reconstructFactory(result, dataset);
   return result;

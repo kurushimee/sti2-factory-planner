@@ -1,5 +1,53 @@
 import {decodePatterns} from './ae2.js';
 
+const locationKey = origin => `${origin.dimension}|${origin.x}|${origin.y}|${origin.z}`;
+
+export function inferIrradiatorAssignments(imported, dataset) {
+  const definitions = new Map((dataset.machines ?? []).map(machine => [machine.id, machine]));
+  for (const machine of imported.machines) {
+    if (definitions.get(machine.id)?.mechanic !== 'irradiator') continue;
+    delete machine.assignment_error;
+    delete machine.configuration_id;
+    machine.recipe_id = null;
+    machine.assignment_evidence = 'unassigned';
+    const fail = message => { machine.assignment_error = message; };
+    if (machine.structure?.status !== 'matching_saved_geometry') {
+      fail('The irradiator needs a uniquely matched structure before its nuclear hatches can establish capacity.'); continue;
+    }
+    const parts = imported.parts.filter(part => part.controller && locationKey(part.controller) === locationKey(machine.origin));
+    const nuclear = parts.filter(part => part.hatch_type === 'modern_industrialization:nuclear_item');
+    machine.saved_setup = {batch: nuclear.length};
+    const occupied = slot => slot?.key?.id && BigInt(slot.amount ?? 0) > 0n;
+    const fuels = nuclear.map(part => part.facts.items?.[0]);
+    if (!nuclear.length || fuels.some(slot => !occupied(slot))) {
+      fail('Some nuclear hatches have no active fuel. Choose the intended fuel and source; depleted output alone does not identify the original rod configuration.'); continue;
+    }
+    const fuelIds = new Set(fuels.map(slot => `item:${slot.key.id}`));
+    if (fuelIds.size !== 1) {
+      fail('The irradiator contains different fuel rods. A shared-source mixed-fuel allocation needs an explicit correction.'); continue;
+    }
+    const sourceSlots = parts.filter(part => part.hatch_type === 'modern_industrialization:item_input')
+      .flatMap(part => part.facts.items ?? []).filter(occupied);
+    const sourceIds = new Set(sourceSlots.map(slot => `item:${slot.key.id}`));
+    if (sourceIds.size !== 1) {
+      fail('The source input is empty or contains different items. Choose the intended neutron source.'); continue;
+    }
+    const matches = (dataset.recipes ?? []).flatMap(recipe => (recipe.configurations ?? []).filter(configuration =>
+      configuration.machine === machine.id && configuration.startup_profile?.kind === 'irradiator'
+      && configuration.startup_profile.batch === nuclear.length
+      && fuelIds.has(configuration.startup_profile.fuel_resource)
+      && sourceIds.has(configuration.startup_profile.source_resource)).map(configuration => ({recipe, configuration})));
+    if (matches.length !== 1) {
+      fail('The saved fuel and neutron source do not identify one supported irradiation configuration.'); continue;
+    }
+    const {recipe, configuration} = matches[0];
+    machine.recipe_id = recipe.id;
+    machine.recipe_type = recipe.type;
+    machine.configuration_id = configuration.id;
+    machine.assignment_evidence = 'saved_nuclear_fuel_and_source_with_unique_hatches';
+  }
+}
+
 export function readMachineAssignment(block, machine, dataset) {
   if (machine.replication) {
     const template = block.items?.[0];

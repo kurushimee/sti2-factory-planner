@@ -38,6 +38,10 @@ LZ4 parsing follows [lz4-java 1.8.0](https://github.com/lz4/lz4-java/tree/1.8.0)
 
 ## Controller and hatch fixture
 
+The irradiator adapter uses a uniquely matched structure, active rods in the first nuclear-hatch slots, and the source input inventory. A uniform fuel and source identifies the captured route and installed hatch count. Empty hatches, mixed fuels, mixed source inputs, and ambiguous structures remain unresolved with a focused correction message. Depleted output does not identify the original rod configuration. The imported rate uses the full replacement cycle, not the remaining life of the saved rod. Ongoing neutron-source consumption also establishes a dependency when inferring end goals.
+
+The irradiation structural probe leaves eight fresh uranium rods installed after verifying its completed cycle. Archive this stopped world and run `node tools/verify_irradiation_capture.mjs <active-world.zip> <player-catalog.json> <report.json> <completed-world.zip>`. The last archive contains the same controller with depleted outputs and no active rods. The check compares these two real saves: the active setup must reconstruct one eight-hatch capacity goal at 0.02 rods per second; the completed setup must remain unresolved.
+
 Run the capture tool with `--structure-fixture` to create an east-facing electric blast furnace at `(64, 100, 0)`, an item input hatch at `(64, 100, 1)`, and a pattern provider at `(65, 100, 1)`. The probe places the current shape and requires the loaded MI `ShapeMatcher` to accept it before saving. The controller has no active recipe; the provider contains the pack’s uncooked-steel-to-steel pattern.
 
 Archive the stopped world and run `node tools/verify_structure_capture.mjs <world.zip> <player-catalog.json> <report.json>`. The check requires the saved hatch relationship and inferred recipe, alongside four reconstructed capacity goals. Shared hatches and missing blocks have separate regression coverage. `verify_app_browser.mjs <world.zip> <player-catalog.json> <player-catalog.json> structure` exercises this fixture in the exported application.

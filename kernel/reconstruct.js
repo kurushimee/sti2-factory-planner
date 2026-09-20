@@ -35,13 +35,16 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     try {
       const setup = {shape: saved.shape ?? 0, upgrade_count: saved.upgrades?.count ?? 0,
         ...(saved.contained_machine?.id ? {contained_machine: saved.contained_machine.id, contained_count: saved.contained_machine.count} : {}),
-        ...(saved.casing?.id ? {casing: saved.casing.id} : {}), ...correction.setup};
+        ...(saved.casing?.id ? {casing: saved.casing.id} : {}), ...saved.saved_setup, ...correction.setup};
       if (saved.upgrades?.id && !setup.upgrade) {
         if (!upgrades.has(saved.upgrades.id)) throw new Error(`The saved upgrade is unknown: ${saved.upgrades.id}.`);
         setup.upgrade = upgrades.get(saved.upgrades.id);
       }
       if (machine.steel_hatch_variant && !Object.hasOwn(setup, 'steel_hatches')) throw new Error('The controller needs an associated hatch tier before its capacity can be established.');
-      const fixed = recipe.configurations.filter(value => value.machine === machine.id);
+      const configurationId = correction.configuration ?? (!correction.recipe ? saved.configuration_id : null);
+      const fixed = recipe.configurations.filter(value => value.machine === machine.id
+        && (!configurationId || value.id === configurationId)
+        && (machine.mechanic !== 'irradiator' || value.startup_profile?.batch === setup.batch));
       const configuration = recipe.process ? compileConfiguration({...recipe, ...recipe.process}, machine, setup)
         : fixed.length === 1 ? fixed[0] : null;
       if (!configuration) throw new Error('Choose a unique machine configuration for this saved utility process.');
@@ -64,7 +67,8 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
   const recipes = new Map(dataset.recipes.map(value => [value.id, value]));
   const consumers = new Map();
   for (const assignment of assignments) {
-    for (const flow of [...recipes.get(assignment.recipe).inputs, ...(assignment.configuration.inputs ?? [])]) {
+    for (const flow of [...recipes.get(assignment.recipe).inputs, ...(assignment.configuration.inputs ?? []),
+      ...(assignment.configuration.operating_points ?? []).flatMap(point => point.inputs ?? [])]) {
       for (const resource of flow.choices ?? [flow.resource]) {
         if (!consumers.has(resource)) consumers.set(resource, new Set());
         consumers.get(resource).add(assignment.recipe);
