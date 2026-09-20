@@ -78,13 +78,17 @@ export function readProviders(block, origin, state) {
 export function inferProviderAssignments(imported, recipes = []) {
   const position = origin => `${origin.dimension}|${origin.x}|${origin.y}|${origin.z}`;
   const machines = new Map(imported.machines.map(machine => [position(machine.origin), machine]));
+  const hatchControllers = new Map((imported.parts ?? []).filter(part => part.controller && /(^|:)item_input$|(^|:)fluid_input$/.test(part.hatch_type))
+    .map(part => [position(part.origin), machines.get(position(part.controller))]));
   const byType = new Map();
   for (const recipe of recipes) {
     if (!byType.has(recipe.type)) byType.set(recipe.type, []);
     byType.get(recipe.type).push(recipe);
   }
   for (const provider of imported.providers) {
-    provider.adjacent_machines = provider.adjacent.map(origin => machines.get(position(origin))).filter(Boolean).map(machine => machine.origin);
+    const targets = provider.adjacent.map(origin => machines.get(position(origin)) ?? hatchControllers.get(position(origin))).filter(Boolean);
+    provider.adjacent_machines = [...new Map(targets.map(machine => [position(machine.origin), machine.origin])).values()];
+    provider.hatch_connections = provider.adjacent.filter(origin => hatchControllers.has(position(origin)));
     for (const origin of provider.adjacent_machines) {
       const machine = machines.get(position(origin));
       const candidates = new Set();

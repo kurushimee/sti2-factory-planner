@@ -85,6 +85,39 @@ export function validateDataset(dataset) {
     if (!['supported', 'unsupported', 'structural'].includes(machine.status)) fail(`machine ${machine.id}`, 'unknown support status');
     if (machine.status === 'supported') text(machine.mechanic, `machine ${machine.id}.mechanic`);
     if (machine.upgrades !== undefined) references(machine.upgrades, upgrades, `machine ${machine.id}.upgrades`);
+    if (machine.shapes !== undefined) {
+      array(machine.shapes, `machine ${machine.id}.shapes`);
+      const indices = new Set();
+      for (const shape of machine.shapes) {
+        const at = `machine ${machine.id}, shape ${shape.index}`;
+        number(shape.index, `${at}.index`, 0, true);
+        if (indices.has(shape.index)) fail(at, 'duplicate shape index');
+        indices.add(shape.index);
+        array(shape.cells, `${at}.cells`);
+        for (const cell of shape.cells) {
+          if (!Array.isArray(cell.position) || cell.position.length !== 3 || cell.position.some(value => !Number.isSafeInteger(value))) fail(at, 'cell position must contain three whole coordinates');
+          array(cell.allowed_hatches, `${at}.allowed_hatches`);
+          for (const hatch of cell.allowed_hatches) text(hatch, `${at}.hatch`);
+          number(cell.member_rule, `${at}.member_rule`, 0, true);
+          if (!dataset.shape_member_rules?.[cell.member_rule]) fail(at, 'unknown shape member rule');
+        }
+      }
+    }
+  }
+  if (dataset.shape_member_rules !== undefined) {
+    array(dataset.shape_member_rules, 'shape_member_rules');
+    for (const [index, rule] of dataset.shape_member_rules.entries()) {
+      const at = `shape_member_rules[${index}]`;
+      object(rule, at);
+      if (typeof rule.state_only_verified !== 'boolean') fail(at, 'state_only_verified must be a boolean');
+      if (!rule.state_only_verified) continue;
+      array(rule.matching_states, `${at}.matching_states`);
+      for (const state of rule.matching_states) {
+        object(state, at); text(state.Name, `${at}.Name`);
+        object(state.Properties ?? {}, `${at}.Properties`);
+        for (const value of Object.values(state.Properties ?? {})) text(value, `${at}.property`);
+      }
+    }
   }
   for (const upgrade of dataset.upgrades ?? []) number(upgrade.extra_max_eu, `upgrade ${upgrade.id}.extra_max_eu`, 0, true);
   if (dataset.default_machines !== undefined) references(dataset.default_machines, machines, 'default_machines');

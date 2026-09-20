@@ -4,6 +4,7 @@ import {decodeLz4Stream} from './lz4.js';
 import {reconstructFactory} from './reconstruct.js';
 import {blockStateAt, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
 import {readMachineAssignment} from './saved-machine.js';
+import {associateStructures} from './structure.js';
 
 const MAX_ENTRY = 256 * 1024 * 1024;
 const MAX_CHUNK = 32 * 1024 * 1024;
@@ -134,12 +135,13 @@ export function zipEntries(bytes) {
   return entries;
 }
 
-export function readRegion(bytes, origin, external = () => null) {
+export function readRegion(bytes, origin, external = () => null, selectedIndices = null) {
   if (bytes.length < 8192 || bytes.length % 4096) throw new Error('A region file has an invalid sector length.');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const chunks = [], errors = [];
   const occupied = new Set([0, 1]);
   for (let index = 0; index < 1024; index++) {
+    if (selectedIndices && !selectedIndices.has(index)) continue;
     const location = view.getUint32(index * 4), sector = location >>> 8, sectors = location & 255;
     if (!location) continue;
     try {
@@ -216,6 +218,34 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
     } catch (error) { result.errors.push({region: region.name, message: error.message}); }
   }
   progress({phase: 'reading_regions', completed: regions.length, total: regions.length});
+  let cachedRegion = null, cachedBytes = null;
+  const cachedChunks = new Map();
+  const stateAt = origin => {
+    const prefix = origin.dimension === 'minecraft:overworld' ? '' : origin.dimension === 'minecraft:the_nether' ? 'DIM-1/'
+      : origin.dimension === 'minecraft:the_end' ? 'DIM1/' : `dimensions/${origin.dimension.replace(':', '/')}/`;
+    const x = Math.floor(origin.x / 512), z = Math.floor(origin.z / 512);
+    const path = `${root}${prefix}region/r.${x}.${z}.mca`;
+    const cx = Math.floor(origin.x / 16), cz = Math.floor(origin.z / 16);
+    const key = `${origin.dimension}|${cx}|${cz}`;
+    if (cachedChunks.has(key)) {
+      const chunk = cachedChunks.get(key);
+      return chunk ? blockStateAt(chunk, origin.x, origin.y, origin.z) : null;
+    }
+    if (cachedRegion !== path) {
+      cachedRegion = path; cachedBytes = null;
+      const entry = byName.get(path);
+      if (entry) cachedBytes = entry.read();
+    }
+    const index = (cz - z * 32) * 32 + cx - x * 32;
+    const parsed = cachedBytes ? readRegion(cachedBytes, {x, z, path},
+      (ex, ez) => byName.get(path.replace(/r\.[^/]+$/, `c.${ex}.${ez}.mcc`))?.read(), new Set([index])) : null;
+    const chunk = parsed?.chunks[0]?.data ?? null;
+    if (cachedChunks.size >= 4) cachedChunks.delete(cachedChunks.keys().next().value);
+    cachedChunks.set(key, chunk);
+    return chunk ? blockStateAt(chunk, origin.x, origin.y, origin.z) : null;
+  };
+  progress({phase: 'matching_structures', completed: 0, total: result.machines.length});
+  associateStructures(result, dataset, stateAt);
   inferProviderAssignments(result, dataset.recipes);
   if (dataset.format === 1) result.reconstruction = reconstructFactory(result, dataset);
   return result;

@@ -227,6 +227,7 @@ def build_dataset(capture):
     return {"format": 1, "identity": capture["identity"], "name": "StaTech Industry 2.0.1",
             "complete": False, "description": "Captured StaTech recipes with explicit adapter coverage. Development catalog.",
             "resources": resources, "recipes": recipes, "machines": machines, "upgrades": upgrades,
+            "shape_member_rules": capture.get("shape_member_rules", []),
             "default_machines": [machine["id"] for machine in machines
                                  if machine["status"] == "supported" and machine.get("mechanic") != "mi_array"],
             "unsupported_entries": unsupported, "loaded_mods": capture["loaded_mods"],

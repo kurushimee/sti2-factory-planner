@@ -12,6 +12,8 @@ def machine_rules(capture, upgrades):
         family = machine["class"].rsplit(".", 1)[-1]
         record = {"id": machine["id"], "recipe_type": machine.get("recipe_type"),
                   "source_class": machine["class"], "status": "unsupported"}
+        if machine.get("shapes"):
+            record["shapes"] = machine["shapes"]
         if machine.get("role") == "multiblock_part":
             record.update(status="structural", role="multiblock_part", hatch_type=machine.get("hatch_type"),
                           upgrades_steam_to_steel=machine.get("upgrades_steam_to_steel", False))

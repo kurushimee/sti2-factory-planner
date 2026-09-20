@@ -1,0 +1,73 @@
+{
+  "archive_sha256": "9a7737cb4ccf39519a1106b47af2181e99b51c1b56efd7313d84b236eb8ffd3f",
+  "controller": {
+    "id": "modern_industrialization:electric_blast_furnace",
+    "origin": {
+      "dimension": "minecraft:overworld",
+      "x": 64,
+      "y": 100,
+      "z": 0,
+      "region": "example/region/r.0.0.mca"
+    },
+    "recipe_id": "statech:modern_industrialization/blast_furnace/steel_ingot_from_uncooked_steel",
+    "recipe_type": "modern_industrialization:blast_furnace",
+    "upgrades": {},
+    "contained_machine": null,
+    "shape": 0,
+    "casing": {},
+    "assignment_evidence": "inferred_from_adjacent_provider",
+    "structure": {
+      "status": "matching_saved_geometry",
+      "evidence": "Deduced from saved block states and captured shape rules.",
+      "hatches": [
+        {
+          "dimension": "minecraft:overworld",
+          "x": 64,
+          "y": 100,
+          "z": 1,
+          "region": "example/region/r.0.0.mca"
+        }
+      ],
+      "problems": []
+    },
+    "provider_candidates": [
+      "statech:modern_industrialization/blast_furnace/steel_ingot_from_uncooked_steel"
+    ]
+  },
+  "hatch": {
+    "origin": {
+      "dimension": "minecraft:overworld",
+      "x": 64,
+      "y": 100,
+      "z": 1,
+      "region": "example/region/r.0.0.mca"
+    },
+    "controller": {
+      "dimension": "minecraft:overworld",
+      "x": 64,
+      "y": 100,
+      "z": 0,
+      "region": "example/region/r.0.0.mca"
+    }
+  },
+  "provider": {
+    "origin": {
+      "dimension": "minecraft:overworld",
+      "x": 65,
+      "y": 100,
+      "z": 1,
+      "region": "example/region/r.0.0.mca",
+      "part": null
+    },
+    "hatch_connections": [
+      {
+        "dimension": "minecraft:overworld",
+        "x": 64,
+        "y": 100,
+        "z": 1
+      }
+    ]
+  },
+  "evidence": "The probe built this fixture and the loaded MI ShapeMatcher accepted it. The importer deduced the saved geometry and hatch-delivered recipe.",
+  "limits": "Geometry does not establish power connectivity, observed production, or arbitrary custom shape predicates."
+}

@@ -12,6 +12,7 @@ def main() -> None:
     parser.add_argument("--jdk", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--fixture", action="store_true", help="Create the controlled import fixture in the isolated test world.")
+    parser.add_argument("--structure-fixture", action="store_true", help="Create and check the isolated multiblock structure fixture.")
     args = parser.parse_args()
     instance = args.instance.resolve()
     argument_file = instance / "libraries/net/neoforged/neoforge/21.1.250/win_args.txt"
@@ -36,6 +37,8 @@ def main() -> None:
                     commands = ["planner_export", "planner_probe"]
                     if args.fixture:
                         commands.extend(line.strip() for line in (Path(__file__).parent / "fixture-commands.txt").read_text().splitlines() if line.strip())
+                    if args.structure_fixture:
+                        commands.extend(["forceload add 48 -16 80 16", "tick freeze", "planner_fixture_structure", "save-all flush"])
                     commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
                     process.stdin.flush()
@@ -46,6 +49,8 @@ def main() -> None:
                 raise RuntimeError(f"Capture did not finish successfully. Inspect {log_path}.")
             if args.fixture and "Planner AE2 fixture created." not in text:
                 raise RuntimeError(f"Fixture creation did not finish successfully. Inspect {log_path}.")
+            if args.structure_fixture and "Planner structure fixture matched:" not in text:
+                raise RuntimeError(f"Structure fixture did not match. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:

@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 
 const root = resolve('builds/web');
 const [worldPath, machineCapturePath, catalogPath, fixtureKind] = process.argv.slice(2);
-const extendedFixture = fixtureKind === 'extended';
+const structureFixture = fixtureKind === 'structure';
+const extendedFixture = fixtureKind === 'extended' || structureFixture;
 const artifacts = resolve('.plans/artifacts/workspace');
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
@@ -157,9 +158,9 @@ try {
   if (catalogPath) {
     const dataset = JSON.parse(await readFile(catalogPath, 'utf8'));
     const catalogPlan = {format: 'factory-plan', version: 1, dataset_identity: dataset.identity, dataset,
-      request: {goals: [], available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler'],
+      request: {goals: [], available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler', ...(structureFixture ? ['modern_industrialization:electric_blast_furnace'] : [])],
         replication: extendedFixture,
-        external: ['item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks'].map(resource => ({resource}))}, positions: {}, groups: {}};
+        external: ['item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks', ...(structureFixture ? ['item:modern_industrialization:uncooked_steel_dust'] : [])].map(resource => ({resource}))}, positions: {}, groups: {}};
     await importFile({name: 'statech-plan.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(catalogPlan))});
     await waitPlan(value => value?.dataset_identity === dataset.identity);
     await page.mouse.click(1320, 40, {delay: 100});
@@ -169,17 +170,18 @@ try {
   }
   if (worldPath) {
     await importFile(worldPath);
-    plan = await waitPlan(value => value?.imported_world?.machines?.length === (extendedFixture ? 6 : 4));
-    assert.equal(plan.imported_world.providers.length, 2);
+    plan = await waitPlan(value => value?.imported_world?.machines?.length === (structureFixture ? 7 : extendedFixture ? 6 : 4));
+    assert.equal(plan.imported_world.providers.length, structureFixture ? 3 : 2);
     assert.deepEqual(plan.imported_world.errors, []);
     if (catalogPath) {
       assert.equal(plan.request.goals[0].kind, 'capacity');
       assert.equal(plan.request.goals[0].machines, 1);
       assert.equal(plan.imported_world.reconstruction.unresolved.length, 3);
       if (extendedFixture) {
-        assert.equal(plan.request.goals.length, 3);
+        assert.equal(plan.request.goals.length, structureFixture ? 4 : 3);
         assert.deepEqual(plan.request.obtained_resources, ['item:minecraft:iron_ingot']);
         assert.equal(plan.request.ingredients['minecraft:crafting_shaped|minecraft:stick#0'], 'item:minecraft:oak_planks');
+        if (structureFixture) assert.equal(plan.imported_world.machines.find(machine => machine.origin.x === 64).structure.status, 'matching_saved_geometry');
       }
     }
     await page.keyboard.press('Escape');

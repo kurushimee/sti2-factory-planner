@@ -156,6 +156,7 @@ def normalize(runtime, probes):
             "machine_rules": machine_rules(probes["machines"], runtime["data_maps"]["modern_industrialization:machine_upgrades"]),
             "data_maps": runtime["data_maps"], "loaded_mods": probes["loaded_mods"],
             "power_units": probes.get("power_units", {}),
+            "shape_member_rules": probes.get("shape_member_rules", []),
             "crafting_rules": probes.get("crafting_rules", {}),
             "coverage": [{"type": key[0], "status": key[1], "count": count}
                          for key, count in sorted(coverage.items())]}

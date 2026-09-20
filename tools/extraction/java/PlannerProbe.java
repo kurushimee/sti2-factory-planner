@@ -26,6 +26,9 @@ public final class PlannerProbe {
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("planner_fixture_structure")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> createStructureFixture(context.getSource().getServer())));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -39,6 +42,56 @@ public final class PlannerProbe {
                         return 0;
                     }
                 }));
+    }
+
+    private static int createStructureFixture(MinecraftServer server) {
+        var level = server.overworld();
+        var controllerPos = new BlockPos(64, 100, 0);
+        var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:electric_blast_furnace"));
+        level.setBlockAndUpdate(controllerPos, block.defaultBlockState());
+        var controller = (aztech.modern_industrialization.machines.multiblocks.MultiblockMachineBlockEntity) level.getBlockEntity(controllerPos);
+        var facing = net.minecraft.core.Direction.EAST;
+        controller.getOrientation().facingDirection = facing;
+        var shape = controller.getActiveShape();
+        var occupied = new java.util.HashSet<BlockPos>();
+        occupied.add(controllerPos);
+        for (var entry : shape.simpleMembers.entrySet()) {
+            var pos = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldPos(controllerPos, facing, entry.getKey());
+            occupied.add(pos);
+            var state = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldState(level, pos, entry.getValue().getPreviewState(), facing);
+            level.setBlockAndUpdate(pos, state);
+        }
+        var hatchBlock = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:steel_item_input_hatch"));
+        BlockPos hatchPos = null, providerPos = null;
+        net.minecraft.core.Direction delivery = null;
+        for (var entry : shape.hatchFlags.entrySet()) {
+            if (entry.getValue().values().stream().noneMatch(type -> type.id().toString().equals("modern_industrialization:item_input"))) continue;
+            var pos = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldPos(controllerPos, facing, entry.getKey());
+            for (var direction : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                var neighbor = pos.relative(direction);
+                if (occupied.contains(neighbor)) continue;
+                hatchPos = pos; providerPos = neighbor; delivery = direction.getOpposite(); break;
+            }
+            if (hatchPos != null) break;
+        }
+        if (hatchPos == null) throw new IllegalStateException("The fixture has no exterior input hatch position.");
+        level.setBlockAndUpdate(hatchPos, hatchBlock.defaultBlockState());
+        level.setBlockAndUpdate(providerPos, appeng.core.definitions.AEBlocks.PATTERN_PROVIDER.block().defaultBlockState()
+                .setValue(appeng.block.crafting.PatternProviderBlock.PUSH_DIRECTION, appeng.block.crafting.PushDirection.valueOf(delivery.name())));
+        var pattern = appeng.core.definitions.AEItems.PROCESSING_PATTERN.stack();
+        var input = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:uncooked_steel_dust"));
+        var output = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:steel_ingot"));
+        pattern.set(appeng.api.ids.AEComponents.ENCODED_PROCESSING_PATTERN, new appeng.crafting.pattern.EncodedProcessingPattern(
+                java.util.List.of(new appeng.api.stacks.GenericStack(appeng.api.stacks.AEItemKey.of(input), 1)),
+                java.util.List.of(new appeng.api.stacks.GenericStack(appeng.api.stacks.AEItemKey.of(output), 1))));
+        var provider = (appeng.blockentity.crafting.PatternProviderBlockEntity) level.getBlockEntity(providerPos);
+        provider.getLogic().getPatternInv().setItemDirect(0, pattern);
+        provider.setChanged(); controller.setChanged();
+        var matcher = controller.createShapeMatcher();
+        matcher.rematch(level);
+        if (!matcher.isMatchSuccessful()) throw new IllegalStateException("The actual MI shape matcher rejected the fixture.");
+        System.out.println("Planner structure fixture matched: controller=" + controllerPos + ", hatch=" + hatchPos + ", provider=" + providerPos);
+        return 1;
     }
 
     private static int createAe2Fixture(MinecraftServer server) {
@@ -394,6 +447,42 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static final java.util.Map<aztech.modern_industrialization.machines.multiblocks.SimpleMember, Integer> memberRules = new java.util.IdentityHashMap<>();
+    private static final java.util.Map<String, Integer> memberRuleIds = new java.util.LinkedHashMap<>();
+    private static final JsonArray shapeMemberRules = new JsonArray();
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static String stateValue(net.minecraft.world.level.block.state.properties.Property property, Comparable value) {
+        return property.getName(value);
+    }
+
+    private static int memberRule(aztech.modern_industrialization.machines.multiblocks.SimpleMember member) {
+        return memberRules.computeIfAbsent(member, value -> {
+            var rule = new JsonObject();
+            String name = value.getClass().getName();
+            rule.addProperty("source_class", name);
+            // These four MI factories only inspect block state. Other predicates can require live block entities.
+            boolean stateOnly = name.matches("aztech\\.modern_industrialization\\.machines\\.multiblocks\\.SimpleMember\\$[1-4]");
+            rule.addProperty("state_only_verified", stateOnly);
+            if (stateOnly) {
+                var states = new JsonArray();
+                for (var block : BuiltInRegistries.BLOCK) for (var state : block.getStateDefinition().getPossibleStates()) {
+                    if (!value.matchesState(state, null)) continue;
+                    var record = new JsonObject();
+                    record.addProperty("Name", BuiltInRegistries.BLOCK.getKey(block).toString());
+                    var properties = new JsonObject();
+                    for (var property : state.getValues().entrySet()) properties.addProperty(property.getKey().getName(), stateValue(property.getKey(), property.getValue()));
+                    record.add("Properties", properties);
+                    states.add(record);
+                }
+                rule.add("matching_states", states);
+            }
+            return memberRuleIds.computeIfAbsent(rule.toString(), key -> {
+                int index = shapeMemberRules.size(); shapeMemberRules.add(rule); return index;
+            });
+        });
+    }
+
     private static JsonArray shapes(Object target, MinecraftServer server) throws Exception {
         var result = new JsonArray();
         var seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<aztech.modern_industrialization.machines.multiblocks.ShapeTemplate, Boolean>());
@@ -415,6 +504,7 @@ public final class PlannerProbe {
                         var position = new JsonArray();
                         position.add(entry.getKey().getX()); position.add(entry.getKey().getY()); position.add(entry.getKey().getZ());
                         cell.add("position", position);
+                        cell.addProperty("member_rule", memberRule(entry.getValue()));
                         cell.addProperty("preview_block", BuiltInRegistries.BLOCK.getKey(entry.getValue().getPreviewState().getBlock()).toString());
                         var options = new JsonArray();
                         for (var stack : entry.getValue().getItemPreviewState(server.registryAccess()).getItems()) options.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
@@ -725,6 +815,7 @@ public final class PlannerProbe {
         }
         result.add("loaded_mods", mods);
         result.add("machines", machines);
+        result.add("shape_member_rules", shapeMemberRules);
         result.add("failures", failures);
         result.add("arithmetic", arithmetic);
         result.add("item_rules", itemRules(server));
