@@ -11,6 +11,25 @@ const recipe = dataset.recipes.find(value => value.source_id === 'statech:modern
 assert.deepEqual(recipe.process, {duration_ticks: 200, eu_per_tick: 2, type: 'modern_industrialization:macerator'});
 assert.equal(recipe.outputs[0].amount, 6);
 const highs = await loadHighs();
+for (const [machine, steam, water, rate, heat] of [
+  ['large_steam_boiler', 'steam', 'fluid:minecraft:water', 2560, 4608],
+  ['advanced_large_steam_boiler', 'steam', 'fluid:minecraft:water', 10240, 18432],
+  ['high_pressure_large_steam_boiler', 'high_pressure_steam', 'fluid:modern_industrialization:high_pressure_water', 2560, 36864],
+  ['high_pressure_advanced_large_steam_boiler', 'high_pressure_steam', 'fluid:modern_industrialization:high_pressure_water', 10240, 147456],
+]) {
+  const id = `boiling|modern_industrialization:${machine}|64000`;
+  const resource = `fluid:modern_industrialization:${steam}`;
+  const planned = solveFactory(highs, dataset, {goals: [{recipe: id, resource, rate}],
+    available_machines: [`modern_industrialization:${machine}`], routes: {[resource]: id},
+    external: [{resource: water}, {resource: 'item:minecraft:coal'}]});
+  assert.equal(planned.status, 'optimal');
+  assert.equal(planned.lines.length, 1);
+  assert.equal(planned.lines[0].machines, 1);
+  assert.ok(Math.abs(planned.external.find(value => value.resource === 'item:minecraft:coal').rate - heat / 64000) < 1e-9);
+  assert.ok(Math.abs(planned.external.find(value => value.resource === water).rate - rate / 16) < 1e-9);
+  assert.equal(planned.startup.incomplete.length, 0);
+}
+console.log('All four large boilers retain their hot idle losses and pressure-specific water use at half load.');
 const before = performance.now();
 const result = solveFactory(highs, dataset, {
   goals: [{recipe: recipe.id, resource: 'item:modern_industrialization:copper_dust', rate: 12}],

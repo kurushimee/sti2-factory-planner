@@ -99,18 +99,31 @@ export function compileFactory(dataset, request, routeChoices = {}) {
       bounds.push(`${operation} >= 0`, `${machine} >= 0`);
       integers.push(machine);
       const inputTerms = [];
-      const allInputs = [...recipe.inputs, ...(configuration.inputs ?? [])];
-      for (const [slot, flow] of allInputs.entries()) {
+      const allInputs = [...recipe.inputs, ...(configuration.inputs ?? [])].map(flow => ({flow, variable: operation}));
+      if (configuration.operating_points) {
+        const allocations = new Map([[machine, -1]]);
+        const production = new Map([[operation, -1]]);
+        for (const [pointIndex, point] of configuration.operating_points.entries()) {
+          const variable = `p${index}_${pointIndex}`;
+          bounds.push(`${variable} >= 0`);
+          allocations.set(variable, 1);
+          production.set(variable, point.operations_per_second);
+          for (const flow of point.inputs) allInputs.push({flow, variable});
+        }
+        constraints.push(`operating_machines_${index}: ${expression(allocations)} = 0`);
+        constraints.push(`operating_output_${index}: ${expression(production)} = 0`);
+      }
+      for (const [slot, {flow, variable: consumption}] of allInputs.entries()) {
         nonnegative(flow.amount, 'Configured input amount');
         for (const resource of flow.choices ?? [flow.resource]) if (!resources.has(resource)) throw new Error(`Unknown configured input ${resource}.`);
         const selected = own(request.ingredients, `${recipe.id}#${slot}`);
         if (selected && !(flow.choices ?? [flow.resource]).includes(selected)) throw new Error(`The pinned ingredient is unavailable in ${recipe.id}, slot ${slot + 1}.`);
         const choices = selected ? [selected] : flow.choices ?? [flow.resource];
         if (choices.length === 1) {
-          add(rows.get(choices[0]), operation, -flow.amount);
-          inputTerms.push({resource: choices[0], variable: operation, coefficient: flow.amount, slot});
+          add(rows.get(choices[0]), consumption, -flow.amount);
+          inputTerms.push({resource: choices[0], variable: consumption, coefficient: flow.amount, slot});
         } else {
-          const alternatives = new Map([[operation, -flow.amount]]);
+          const alternatives = new Map([[consumption, -flow.amount]]);
           choices.forEach((resource, choice) => {
             const variable = `a${index}_${slot}_${choice}`;
             alternatives.set(variable, 1);
@@ -123,7 +136,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
       }
       const returnTerms = [];
       for (const term of inputTerms) {
-        const returns = own(allInputs[term.slot].returns, term.resource) ?? [];
+        const returns = own(allInputs[term.slot].flow.returns, term.resource) ?? [];
         for (const returned of returns) {
           if (!resources.has(returned.resource) || returned.resource === ENERGY) throw new Error(`Invalid returned material in ${recipe.id}.`);
           nonnegative(returned.amount, 'Returned amount per input unit');

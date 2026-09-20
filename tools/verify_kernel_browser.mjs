@@ -9,11 +9,16 @@ import {zipSync, gzipSync} from 'fflate';
 import {inspectWorld} from '../kernel/world.js';
 
 const root = new URL('../', import.meta.url);
-const dataset = {format: 1, resources: [{id: 'ore'}, {id: 'plate'}], recipes: [{
-  id: 'smelt', primary: 'plate', inputs: [{resource: 'ore', amount: 1}], outputs: [{resource: 'plate', amount: 2}],
+const dataset = {format: 1, resources: ['ore', 'plate', 'fuel', 'steam'].map(id => ({id})), recipes: [{
+  id: 'smelt', primary: 'plate', inputs: [{resource: 'ore', amount: 1}, {resource: 'steam', amount: 10}], outputs: [{resource: 'plate', amount: 2}],
   configurations: [{id: 'furnace', machine: 'furnace', operations_per_second: 3}],
+}, {
+  id: 'boil', primary: 'steam', inputs: [], outputs: [{resource: 'steam', amount: 1}],
+  configurations: [{id: 'boiler', machine: 'boiler', operations_per_second: 100,
+    operating_points: [{operations_per_second: 0, inputs: [{resource: 'fuel', amount: 8}]},
+      {operations_per_second: 100, inputs: [{resource: 'fuel', amount: 10}]}]}],
 }]};
-const request = {goals: [{resource: 'plate', rate: 14}], external: [{resource: 'ore'}]};
+const request = {goals: [{resource: 'plate', rate: 14}], external: [{resource: 'ore'}, {resource: 'fuel'}]};
 const expected = solveFactory(await loadHighs(), dataset, request);
 const bundle = await build({entryPoints: ['kernel/world-worker.js'], bundle: true, write: false, format: 'esm', platform: 'browser'});
 const [worldPath, machinesPath] = process.argv.slice(2);

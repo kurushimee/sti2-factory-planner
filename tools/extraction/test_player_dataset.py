@@ -1,9 +1,24 @@
 import unittest
 
-from player_dataset import crafting_adapter, utility_recipes, tool_recipe_variants
+from player_dataset import crafting_adapter, utility_recipes, tool_recipe_variants, boiler_operating_points
 
 
 class PlayerDatasetTests(unittest.TestCase):
+    def test_boiler_envelope_keeps_idle_loss_and_whole_tick_rounding(self):
+        samples = [{"steam_per_tick": x, "fuel_eu_per_tick": y} for x, y in [(0, 205), (1, 205), (2, 206), (3, 206), (6, 206)]]
+        self.assertEqual(boiler_operating_points(samples), [(0, 205), (1, 205), (6, 206)])
+        capture = {"machine_rules": [{"id": "test:boiler", "mechanic": "mi_boiler", "eu_per_burn_tick": 20,
+                    "item_fuel_multiplier": 2, "steam_to_water": 16, "max_eu_per_tick": 48,
+                    "continuous": True, "eu_per_steam_mb": 8, "hot_running_probe": samples}],
+                   "resources": [{"id": "item:test:fuel", "item_rules": {"burn_ticks": 100}}]}
+        [recipe] = utility_recipes(capture)
+        config = recipe["configurations"][0]
+        self.assertEqual(config["operations_per_second"], 120)
+        self.assertEqual(recipe["primary"], "fluid:modern_industrialization:high_pressure_steam")
+        self.assertEqual(recipe["inputs"], [{"resource": "fluid:modern_industrialization:high_pressure_water", "amount": 1 / 16}])
+        self.assertEqual(config["operating_points"][0]["inputs"][0]["amount"], 205 * 20 / 4000)
+        self.assertNotIn("hot_running_probe", config["startup_profile"]["rule"])
+
     def test_tool_replacement_requires_verified_lifetime_and_ae2_reuse(self):
         entry = {"source_id": "modern_industrialization:iron_plate_from_hammer", "raw": {"kubejs:ingredient_actions": [
             {"action": {"damage": 50, "type": "damage"}, "filter": {"item": {"tag": "modern_industrialization:forge_hammer_tools"}}}]}}

@@ -63,6 +63,18 @@ export function validateDataset(dataset) {
       for (const field of ['eu_per_operation', 'idle_eu_per_tick']) if (configuration[field] !== undefined) number(configuration[field], `${location}.${field}`);
       if (configuration.build_cost !== undefined) number(configuration.build_cost, `${location}.build_cost`, Number.MIN_VALUE);
       for (const field of ['inputs', 'startup_inputs', 'build_requirements']) if (configuration[field] !== undefined) flows(configuration[field], `${location}.${field}`, field === 'inputs');
+      if (configuration.operating_points !== undefined) {
+        array(configuration.operating_points, `${location}.operating_points`);
+        let previous = -1;
+        for (const point of configuration.operating_points) {
+          object(point, `${location}.operating_point`);
+          number(point.operations_per_second, `${location}.operating_point.operations_per_second`);
+          if (point.operations_per_second <= previous || point.operations_per_second > configuration.operations_per_second) fail(location, 'operating points must increase through the supported capacity');
+          previous = point.operations_per_second;
+          flows(point.inputs, `${location}.operating_point.inputs`, true);
+        }
+        if (configuration.operating_points[0]?.operations_per_second !== 0 || previous !== configuration.operations_per_second) fail(location, 'operating points must include zero and full capacity');
+      }
     }
     if (recipe.process !== undefined) {
       object(recipe.process, `${at}.process`);

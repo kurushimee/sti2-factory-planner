@@ -16,6 +16,29 @@ function line(result, id) { return result.lines.find(entry => entry.recipe === i
 function supply(result, id) { return result.external.find(entry => entry.resource === id)?.rate ?? 0; }
 function close(actual, expected) { assert(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`); }
 
+test('hot operating points retain fixed fuel losses, whole machines and fuel containers', () => {
+  const boiler = recipe('boiler', 'steam', [flow('water', 1 / 16)], [flow('steam', 1)], 100);
+  const config = boiler.configurations[0];
+  config.operating_points = [[0, 8], [20, 8], [100, 10]].map(([rate, fuel]) => ({
+    operations_per_second: rate, inputs: [{choices: ['coal', 'can'], amount: fuel,
+      returns: {can: [flow('empty', 1)]}}],
+  }));
+  const data = dataset(['steam', 'water', 'coal', 'can', 'empty'], [boiler]);
+  data.default_machines = ['boiler'];
+  for (const [demand, machines, fuel] of [[10, 1, 8], [60, 1, 9], [100, 1, 10], [120, 2, 18]]) {
+    const result = solveFactory(highs, data, {goals: [{resource: 'steam', rate: demand}],
+      external: [{resource: 'water'}, {resource: 'coal', cost: 2}, {resource: 'can', cost: 1}]});
+    assert.equal(result.status, 'optimal');
+    assert.equal(line(result, 'boiler').machines, machines);
+    close(supply(result, 'water'), demand / 16);
+    close(supply(result, 'can'), fuel);
+    close(supply(result, 'coal'), 0);
+    close(line(result, 'boiler').outputs.find(value => value.resource === 'empty').rate, fuel);
+  }
+  assert.notEqual(solveFactory(highs, data, {goals: [{resource: 'steam', rate: 10}],
+    external: [{resource: 'water'}, {resource: 'coal', limit: 7.99}]}).status, 'optimal');
+});
+
 test('demand just above whole capacity requires another machine without a presolve error', () => {
   const data = JSON.parse(readFileSync(new URL('../data/example.json', import.meta.url)));
   const result = solveFactory(highs, data, {goals: [{recipe: 'assemble', resource: 'motor', rate: 2.000001}]});

@@ -93,6 +93,20 @@ def verify(runtime: dict, probes: dict) -> dict:
     boilers = {key: machines[key]["coal_warmup_probe"] for key in ("modern_industrialization:bronze_boiler", "modern_industrialization:steel_boiler")}
     if [value["first_full_output_tick"] for value in boilers.values()] != [3906, 2417]:
         raise ValueError("The loaded cold-boiler warm-up changed.")
+    large_boilers = {}
+    for key, machine in machines.items():
+        if machine["class"].endswith(".SteamBoilerMultiblockBlockEntity"):
+            heater = machine["component_fields"]["aztech.modern_industrialization.machines.components.SteamHeaterComponent"]
+            probe = machine["coal_warmup_probe"]
+            maximum = heater["SteamHeaterComponent.maxEuProduction"]
+            pressure = probe["eu_per_steam_mb"]
+            if len(probe["hot_running_probe"]) != maximum // pressure + 1:
+                raise ValueError(f"The hot boiler probe is incomplete for {key}.")
+            large_boilers[key] = {"rule": {"max_eu_per_tick": maximum, "eu_per_degree": heater["SteamHeaterComponent.euPerDegree"],
+                                           "temperature_max": heater["TemperatureComponent.temperatureMax"], "continuous": True,
+                                           "eu_per_steam_mb": pressure}, "probe": probe}
+    if len(large_boilers) != 4:
+        raise ValueError("The loaded large boiler count changed.")
     pumps = {key: value["water_pump_probe"] for key, value in machines.items() if "water_pump_probe" in value}
     for tier, multiplier in (("bronze", 1), ("steel", 2), ("electric", 16)):
         pump = pumps[f"modern_industrialization:{tier}_water_pump"]
@@ -150,6 +164,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "array_rules": arrays,
         "blast_furnace_coils": coil_tiers,
         "boiler_warmup": boilers,
+        "large_boilers": large_boilers,
         "water_pumps": pumps,
         "replication": replication,
         "batch_tiers": batch_tiers,

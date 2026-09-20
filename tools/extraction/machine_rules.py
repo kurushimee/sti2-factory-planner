@@ -27,7 +27,7 @@ def machine_rules(capture, upgrades):
             record.update(status="supported", mechanic="fixed_cycle", energy_generation=True,
                           generation_evidence=machine["recipe_generation_probe"],
                           build_inputs=[{"resource": "item:minecraft:dragon_egg", "amount": 1}])
-        elif family == "BoilerMachineBlockEntity":
+        elif family in {"BoilerMachineBlockEntity", "SteamBoilerMultiblockBlockEntity"}:
             heater = machine["component_fields"]["aztech.modern_industrialization.machines.components.SteamHeaterComponent"]
             burner = machine["component_fields"]["aztech.modern_industrialization.machines.components.FuelBurningComponent"]
             record.update(status="supported", mechanic="mi_boiler", max_eu_per_tick=heater["SteamHeaterComponent.maxEuProduction"],
@@ -35,6 +35,13 @@ def machine_rules(capture, upgrades):
                           continuous=heater["SteamHeaterComponent.requiresContinuousOperation"],
                           item_fuel_multiplier=burner["FuelBurningComponent.burningItemEuMultiplier"],
                           eu_per_burn_tick=burner["FuelBurningComponent.EU_PER_BURN_TICK"], steam_to_water=heater["SteamHeaterComponent.STEAM_TO_WATER"])
+            record["eu_per_steam_mb"] = 8 if heater["SteamHeaterComponent.acceptHighPressure"] and not heater["SteamHeaterComponent.acceptLowPressure"] else 1
+            if family == "SteamBoilerMultiblockBlockEntity":
+                probe = machine.get("coal_warmup_probe", {})
+                if not probe.get("hot_running_probe"):
+                    record.update(status="unsupported", mechanic="unverified_boiler", reason="The large boiler needs its loaded hot-running output and fuel probe.")
+                else:
+                    record["hot_running_probe"] = probe["hot_running_probe"]
         elif family in simple | batching:
             steam = family.startswith("Steam")
             modular = family in batching

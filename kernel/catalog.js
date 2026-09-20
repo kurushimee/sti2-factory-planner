@@ -113,7 +113,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
   const comparable = new Map();
   for (const configuration of configurations.values()) {
     if (constrainedIds.has(configuration.id)) continue;
-    const key = JSON.stringify([configuration.eu_per_operation, configuration.inputs, configuration.conditions, configuration.startup_inputs]);
+    const key = JSON.stringify([configuration.eu_per_operation, configuration.inputs, configuration.operating_points, configuration.conditions, configuration.startup_inputs]);
     if (!comparable.has(key)) comparable.set(key, []);
     comparable.get(key).push(configuration);
   }
@@ -141,7 +141,9 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
   const queue = [...needed];
   for (const recipe of dataset.recipes) {
     checkBudget();
-    for (const output of [...recipe.outputs, ...recipe.inputs.flatMap(flow => Object.values(flow.returns ?? {}).flat())]) {
+    const inputs = [...recipe.inputs, ...recipe.configurations.flatMap(configuration => [
+      ...(configuration.inputs ?? []), ...(configuration.operating_points ?? []).flatMap(point => point.inputs)])];
+    for (const output of [...recipe.outputs, ...inputs.flatMap(flow => Object.values(flow.returns ?? {}).flat())]) {
       if (!producers.has(output.resource)) producers.set(output.resource, []);
       producers.get(output.resource).push(recipe);
     }
@@ -159,7 +161,9 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
       for (const flow of configured.inputs) for (const resource of flow.choices ?? [flow.resource]) addResource(resource);
       for (const configuration of configured.configurations) {
         if (configuration.eu_per_operation || configuration.idle_eu_per_tick) addResource('energy:eu');
-        for (const flow of configuration.inputs ?? []) for (const resource of flow.choices ?? [flow.resource]) addResource(resource);
+        for (const flow of [...(configuration.inputs ?? []), ...(configuration.operating_points ?? []).flatMap(point => point.inputs)]) {
+          for (const resource of flow.choices ?? [flow.resource]) addResource(resource);
+        }
       }
     }
   }

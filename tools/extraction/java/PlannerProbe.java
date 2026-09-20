@@ -531,6 +531,9 @@ public final class PlannerProbe {
             if (component instanceof aztech.modern_industrialization.machines.components.FuelBurningComponent value) burner = value;
         }
         if (heater == null || burner == null) throw new IllegalStateException("The reference boiler has no heater or burner.");
+        int pressure = heater.acceptHighPressure && !heater.acceptLowPressure ? 8 : 1;
+        var inputFluid = pressure == 8 ? aztech.modern_industrialization.MIFluids.HIGH_PRESSURE_WATER.asFluid() : net.minecraft.world.level.material.Fluids.WATER;
+        long maximum = heater.maxEuProduction / pressure;
         var water = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardInputSlot(1000000);
         var steam = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardOutputSlot(1000000);
         var coal = aztech.modern_industrialization.inventory.ConfigurableItemStack.standardInputSlot();
@@ -540,7 +543,7 @@ public final class PlannerProbe {
         long previous = -1;
         int ticks = 0;
         while (ticks < 100000) {
-            water.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(net.minecraft.world.level.material.Fluids.WATER));
+            water.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(inputFluid));
             water.setAmount(1000000);
             coal.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(net.minecraft.world.item.Items.COAL));
             coal.setAmount(64);
@@ -552,7 +555,7 @@ public final class PlannerProbe {
             produced += amount;
             waterUsed += 1000000 - water.getAmount();
             coalUsed += 64 - coal.getAmount();
-            deficit = Math.max(deficit, heater.maxEuProduction * ticks - produced);
+            deficit = Math.max(deficit, maximum * ticks - produced);
             if (previous != amount) {
                 segment = new JsonObject();
                 segment.addProperty("first_tick", ticks);
@@ -561,7 +564,7 @@ public final class PlannerProbe {
                 previous = amount;
             }
             segment.addProperty("last_tick", ticks);
-            if (amount == heater.maxEuProduction) break;
+            if (amount == maximum) break;
         }
         if (ticks == 100000) throw new IllegalStateException("The reference boiler did not reach full output.");
         var result = new JsonObject();
@@ -571,6 +574,26 @@ public final class PlannerProbe {
         result.addProperty("coal_consumed", coalUsed);
         result.addProperty("steam_deficit", deficit);
         result.add("output_segments", segments);
+        var running = new JsonArray();
+        for (long output = 0; output <= maximum; output++) {
+            var limitedSteam = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardOutputSlot(output);
+            water.setAmount(1000000);
+            heater.increaseTemperature(1000000);
+            var before = new net.minecraft.nbt.CompoundTag();
+            before.putLong("burningEuBuffer", 1000000000L);
+            burner.readNbt(before, server.registryAccess(), false);
+            heater.tick(java.util.List.of(water), java.util.List.of(limitedSteam));
+            burner.tick(java.util.List.of(), java.util.List.of(), false);
+            var after = new net.minecraft.nbt.CompoundTag();
+            burner.writeNbt(after, server.registryAccess());
+            if (limitedSteam.getAmount() != output) throw new IllegalStateException("The hot boiler did not match its constrained output.");
+            var point = new JsonObject();
+            point.addProperty("steam_per_tick", output);
+            point.addProperty("fuel_eu_per_tick", 1000000000L - after.getLong("burningEuBuffer"));
+            running.add(point);
+        }
+        result.add("hot_running_probe", running);
+        result.addProperty("eu_per_steam_mb", pressure);
         return result;
     }
 
@@ -794,7 +817,8 @@ public final class PlannerProbe {
                     record.add("batch_tiers", tiers);
                 }
                 record.addProperty("nbt", entity.saveWithFullMetadata(server.registryAccess()).toString());
-                if (id.equals("modern_industrialization:bronze_boiler") || id.equals("modern_industrialization:steel_boiler")) {
+                if (entity instanceof aztech.modern_industrialization.machines.blockentities.BoilerMachineBlockEntity
+                        || entity instanceof aztech.modern_industrialization.machines.blockentities.multiblocks.SteamBoilerMultiblockBlockEntity) {
                     record.add("coal_warmup_probe", boilerWarmup(machine, server));
                 }
                 machines.add(record);

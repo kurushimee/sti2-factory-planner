@@ -8,6 +8,20 @@ from pathlib import Path
 from normalize import resource_identity
 
 
+def boiler_operating_points(samples):
+    """Keep the lower fuel envelope of the captured whole-tick dispatch points."""
+    hull = []
+    for point in samples:
+        x, y = point["steam_per_tick"], point["fuel_eu_per_tick"]
+        while len(hull) >= 2:
+            a, b = hull[-2:]
+            if (b[0] - a[0]) * (y - b[1]) > (b[1] - a[1]) * (x - b[0]):
+                break
+            hull.pop()
+        hull.append((x, y))
+    return hull
+
+
 def utility_recipes(capture):
     recipes = []
     for machine in capture["machine_rules"]:
@@ -71,10 +85,26 @@ def utility_recipes(capture):
                             "outputs": [{"resource": "fluid:modern_industrialization:steam", "amount": 1}],
                             "configurations": [{"id": identity, "machine": machine["id"], "operations_per_second": machine["max_eu_per_tick"] * 20,
                                                 "build_requirements": [{"resource": "item:" + machine["id"], "amount": 1}],
-                                                "startup_profile": {"kind": "boiler", "rule": machine,
+                                                "startup_profile": {"kind": "boiler", "rule": {key: value for key, value in machine.items() if key not in {"hot_running_probe", "shapes"}},
                                                                     "fuel": {"kind": "item", "eu_per_unit": energy}, "fuel_resources": choices,
                                                                     "water_resource": "fluid:minecraft:water", "steam_resource": "fluid:modern_industrialization:steam"},
                                                 "assumptions": ["Fuel arrives continuously. Returned containers are removed from the input slot before refilling it."]}]})
+            if machine.get("continuous"):
+                recipe = recipes[-1]
+                configuration = recipe["configurations"][0]
+                pressure = machine["eu_per_steam_mb"]
+                water_id = "fluid:modern_industrialization:high_pressure_water" if pressure == 8 else "fluid:minecraft:water"
+                steam_id = "fluid:modern_industrialization:high_pressure_steam" if pressure == 8 else "fluid:modern_industrialization:steam"
+                recipe["primary"] = steam_id
+                recipe["outputs"][0]["resource"] = steam_id
+                recipe["inputs"] = [{"resource": water_id, "amount": 1 / machine["steam_to_water"]}]
+                configuration["operations_per_second"] /= pressure
+                configuration["operating_points"] = [
+                    {"operations_per_second": steam * 20,
+                     "inputs": [{"choices": choices, "amount": heat * 20 / energy, "returns": returns}]}
+                    for steam, heat in boiler_operating_points(machine["hot_running_probe"])]
+                configuration["startup_profile"].update(water_resource=water_id, steam_resource=steam_id)
+                configuration["assumptions"].append("The boiler stays hot. Steam buffering permits periodic whole-tick withdrawal at the captured efficient operating points; fuel includes continuous heat loss and heat insertion rounding.")
     return recipes
 
 

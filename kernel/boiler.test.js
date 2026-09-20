@@ -19,3 +19,17 @@ test('cold boiler schedules match actual loaded MI heater and burner ticks', () 
 test('fluid fuel must fit the real boiler refill threshold', () => {
   assert.throws(() => boilerWarmup({max_eu_per_tick: 8, eu_per_degree: 8, temperature_max: 1500}, {kind: 'fluid', eu_per_unit: 1000}), /threshold/);
 });
+
+test('large and high-pressure boiler startup agrees with the loaded pack', () => {
+  const reference = JSON.parse(readFileSync(new URL('../data/provenance/runtime-report.json', import.meta.url))).large_boilers;
+  assert.equal(Object.keys(reference).length, 4);
+  for (const {rule, probe} of Object.values(reference)) {
+    const actual = boilerWarmup(rule, {kind: 'item', eu_per_unit: 64000});
+    assert.equal(actual.first_full_output_tick, probe.first_full_output_tick);
+    assert.equal(actual.steam_produced, probe.steam_produced);
+    assert.equal(actual.water_consumed, probe.water_consumed);
+    assert.equal(actual.fuel_consumed, probe.coal_consumed);
+    assert.equal(actual.steam_deficit, probe.steam_deficit);
+    assert.deepEqual(actual.output_segments, probe.output_segments);
+  }
+});
