@@ -262,11 +262,18 @@ function decode(model, solution) {
 }
 
 export function solveFactory(highs, dataset, request) {
+  const duration = nonnegative(request.time_limit_ms ?? 20000, 'Calculation time limit');
+  const deadline = Date.now() + duration;
   validateDataset(dataset);
-  dataset = prepareDataset(dataset, request);
+  const exhausted = new Error('The configuration search reached its time limit.');
+  try {
+    dataset = prepareDataset(dataset, request, () => { if (Date.now() >= deadline) throw exhausted; });
+  } catch (error) {
+    if (error !== exhausted) throw error;
+    return {status: 'limit', phase: 'configuration', optimal: false, incumbent: null, branches: 0};
+  }
   const resolved = resolveGoals(dataset, request);
   request = resolved.request;
-  const deadline = Date.now() + (request.time_limit_ms ?? 20000);
   const branches = [{}];
   let best = null;
   let visited = 0;
@@ -275,6 +282,7 @@ export function solveFactory(highs, dataset, request) {
     if (Date.now() >= deadline) return {status: 'limit', optimal: false, incumbent: best, branches: visited};
     const choices = branches.pop();
     const model = compileFactory(dataset, request, choices);
+    if (Date.now() >= deadline) return {status: 'limit', phase: 'model', optimal: false, incumbent: best, branches: visited};
     lastExclusions = model.exclusions;
     const solution = highs.solve(model.text, {output_flag: false, time_limit: Math.max(0.01, (deadline - Date.now()) / 1000),
       mip_rel_gap: 0, mip_feasibility_tolerance: 1e-9, primal_feasibility_tolerance: 1e-9});

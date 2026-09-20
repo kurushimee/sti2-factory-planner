@@ -61,3 +61,31 @@ test('complete capacity targets compile their explicit array loadouts without en
   assert.equal(configured.configurations.length, 1);
   assert.equal(configured.configurations[0].id, configuration.id);
 });
+
+test('automatic array search removes oversized contents while explicit installed setups remain available', () => {
+  const array = {...machine, id: 'array', mechanic: 'mi_array', shape_capacities: [8, 16, 32, 64], energy_multiplier: 0.75,
+    eligible_machines: ['press'], contained_recipe_types: {press: 'press'}};
+  const data = {...dataset, machines: [array]};
+  let compactCount = 0, fullCount = 0;
+  const compact = configureRecipe(recipe, data, {}, false, () => compactCount++);
+  const full = configureRecipe(recipe, data, {limits: {[`${recipe.id}|unused`]: 0}}, false, () => fullCount++);
+  assert.equal(compactCount, 64);
+  assert.equal(fullCount, 2080);
+  for (const candidate of full.configurations) {
+    assert.ok(compact.configurations.some(value => value.operations_per_second === candidate.operations_per_second &&
+      value.eu_per_operation === candidate.eu_per_operation && value.build_cost <= candidate.build_cost));
+  }
+  const setup = {contained_machine: 'press', contained_count: 16, batch: 1, shape: 1};
+  const id = compileConfiguration({...recipe, ...recipe.process}, array, setup).id;
+  const explicit = configureRecipe(recipe, data, {machine_setups: {[recipe.id]: [{machine: array.id, setup}]}});
+  assert.ok(explicit.configurations.some(value => value.id === id));
+});
+
+test('configuration preparation observes the calculation budget inside loadout enumeration', async () => {
+  const start = performance.now();
+  const result = solveFactory(await loadHighs(), dataset, {goals: [{resource: 'plate', rate: 1}], time_limit_ms: 0});
+  assert.equal(result.status, 'limit');
+  assert.equal(result.phase, 'configuration');
+  assert.equal(result.optimal, false);
+  assert.ok(performance.now() - start < 1000);
+});

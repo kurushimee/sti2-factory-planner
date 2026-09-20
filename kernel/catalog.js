@@ -8,7 +8,7 @@ function own(record, key) { return record && Object.hasOwn(record, key) ? record
 
 function *concatenate(first, second) { yield* first; yield* second; }
 
-function *setups(machine, upgrades) {
+function *setups(machine, upgrades, preserveCounts) {
   const loadouts = [{upgrade_count: 0}];
   for (const upgrade of upgrades) {
     if (!machine.upgrades?.includes(upgrade.id)) continue;
@@ -21,7 +21,9 @@ function *setups(machine, upgrades) {
         const maximum = Math.max(...machine.shape_capacities);
         for (let contained_count = 1; contained_count <= maximum; contained_count++) {
           const shape = machine.shape_capacities.findIndex(limit => limit >= contained_count);
-          for (let batch = 1; batch <= contained_count; batch++) yield {...loadout, contained_machine, contained_count, batch, shape};
+          // A larger contained count costs more but cannot accelerate a smaller batch.
+          const firstBatch = preserveCounts ? 1 : contained_count;
+          for (let batch = firstBatch; batch <= contained_count; batch++) yield {...loadout, contained_machine, contained_count, batch, shape};
         }
       }
     } else {
@@ -35,7 +37,7 @@ function *setups(machine, upgrades) {
   }
 }
 
-export function configureRecipe(recipe, dataset, request = {}, explicitOnly = false) {
+export function configureRecipe(recipe, dataset, request = {}, explicitOnly = false, checkBudget = () => {}) {
   if ((recipe.requires_obtained ?? []).some(resource => !request.obtained_resources?.includes(resource))) return {...recipe, unsupported: 'This route requires an item the player has already obtained.'};
   if (!recipe.process || recipe.unsupported) {
     const configurations = recipe.configurations.filter(value => enabled(value.machine, request.available_machines ?? dataset.default_machines, request.disabled_machines));
@@ -55,6 +57,8 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
   }
   // A complete pinned setup leaves no loadout choice to search for this recipe.
   const fixedOnly = fixedIds.size > 0 && [...fixedIds].every(id => explicitSetupIds.has(id));
+  const constrainedIds = new Set([request.installed, request.limits, request.dispatch].flatMap(value => Object.keys(value ?? {})));
+  const preserveCounts = fixedIds.size > 0 || [...constrainedIds].some(id => id.startsWith(`${recipe.id}|`));
   const allowedConditions = new Set(['extended_industrialization:runtime_generated_flag', 'modern_industrialization:adjacent_block', 'modern_industrialization:dimension', 'modern_industrialization:biome', 'planner:energy_output_buffer']);
   for (const condition of recipe.conditions ?? []) {
     if (!allowedConditions.has(condition.type)) return {...recipe, unsupported: `No condition adapter exists for ${condition.type}.`};
@@ -66,7 +70,8 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
     if (machine.recipe_type !== recipe.process.type && !Object.values(machine.contained_recipe_types ?? {}).includes(recipe.process.type)) continue;
     const matched = machine.mechanic === 'mi_array' ? {...machine, eligible_machines: machine.eligible_machines.filter(id => machine.contained_recipe_types[id] === recipe.process.type && enabled(id, request.available_machines ?? dataset.default_machines, request.disabled_machines))} : machine;
     const explicit = (own(request.machine_setups, recipe.id) ?? []).filter(value => value.machine === machine.id).map(value => value.setup);
-    for (const setup of concatenate(explicit, explicitOnly || fixedOnly ? [] : setups(matched, upgrades))) {
+    for (const setup of concatenate(explicit, explicitOnly || fixedOnly ? [] : setups(matched, upgrades, preserveCounts))) {
+      checkBudget();
       try {
         const configuration = compileConfiguration({...recipe, ...recipe.process}, matched, {...setup, compute_warmup: false});
         configuration.conditions = recipe.conditions ?? [];
@@ -95,19 +100,18 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
   for (const id of (Array.isArray(pinned) ? pinned : pinned ? [pinned] : [])) explicitIds.add(id);
   const best = new Map();
   for (const configuration of configurations.values()) {
+    if (constrainedIds.has(configuration.id)) continue;
     const key = JSON.stringify([configuration.operations_per_second, configuration.eu_per_operation, configuration.inputs, configuration.conditions, configuration.startup_inputs]);
     if (!best.has(key) || best.get(key).build_cost > configuration.build_cost) best.set(key, configuration);
   }
   const kept = new Map([...best.values()].map(value => [value.id, value]));
-  if ([request.installed, request.limits, request.dispatch].some(value => value && Object.keys(value).length)) {
-    for (const configuration of configurations.values()) kept.set(configuration.id, configuration);
-  }
+  for (const id of constrainedIds) if (configurations.has(id)) kept.set(id, configurations.get(id));
   for (const id of explicitIds) if (configurations.has(id)) kept.set(id, configurations.get(id));
   return {...recipe, configurations: [...kept.values()], configuration_diagnostics: [...rejected],
     ...(!kept.size ? {unsupported: rejected.size ? [...rejected].join(' ') : 'No available machine supports this recipe.'} : {})};
 }
 
-export function prepareDataset(dataset, request) {
+export function prepareDataset(dataset, request, checkBudget = () => {}) {
   if (!dataset.recipes.some(recipe => recipe.process) && !request.available_machines && !dataset.default_machines) return dataset;
   const producers = new Map();
   const selected = new Map();
@@ -115,6 +119,7 @@ export function prepareDataset(dataset, request) {
   if (request.overhead_eu_per_tick) needed.add('energy:eu');
   const queue = [...needed];
   for (const recipe of dataset.recipes) {
+    checkBudget();
     for (const output of [...recipe.outputs, ...recipe.inputs.flatMap(flow => Object.values(flow.returns ?? {}).flat())]) {
       if (!producers.has(output.resource)) producers.set(output.resource, []);
       producers.get(output.resource).push(recipe);
@@ -126,7 +131,8 @@ export function prepareDataset(dataset, request) {
       if (selected.has(recipe.id) || request.disabled_recipes?.includes(recipe.id) || (recipe.replication && !request.replication)) continue;
       const pin = own(request.routes, recipe.primary);
       if (pin && pin !== recipe.id) continue;
-      const configured = configureRecipe(recipe, dataset, request);
+      checkBudget();
+      const configured = configureRecipe(recipe, dataset, request, false, checkBudget);
       selected.set(recipe.id, configured);
       if (configured.unsupported) continue;
       for (const flow of configured.inputs) for (const resource of flow.choices ?? [flow.resource]) addResource(resource);
