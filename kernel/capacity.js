@@ -63,13 +63,13 @@ export function machineCapacity(recipe, machine, setup = {}) {
   const efficiencyLimit = Number((missing * 600n + BigInt(energy) - 1n) / BigInt(energy));
   const completions = [];
   let elapsed = 0;
-  for (let efficiency = 0; efficiency < efficiencyLimit; efficiency++) {
+  for (let efficiency = 0; setup.compute_warmup !== false && efficiency < efficiencyLimit; efficiency++) {
     const power = miPower(0, energy, base, max, efficiency);
     elapsed = integer(elapsed + ceilRatio(energy, power), 'Warm-up duration');
     completions.push(elapsed);
   }
   // Include the first full-speed operation so the buffer also covers discrete output delivery.
-  completions.push(elapsed + ticks);
+  if (setup.compute_warmup !== false) completions.push(elapsed + ticks);
   const rate = batch * 20 / ticks;
   let maximumDeficit = 0;
   completions.forEach((time, index) => {
@@ -83,7 +83,7 @@ export function machineCapacity(recipe, machine, setup = {}) {
     average_full_load_eu_per_tick: energy / ticks,
     peak_eu_per_tick: peak,
     efficiency_limit: efficiencyLimit,
-    warmup_ticks: elapsed,
+    warmup_ticks: setup.compute_warmup === false ? null : elapsed,
     completion_ticks: completions,
     output_buffer_operations: maximumDeficit,
     assumptions: ['Ingredients arrive continuously.', 'The power connection can supply the peak draw.', 'Outputs can always be accepted.', 'No overdrive or lubricant is applied.'],

@@ -13,8 +13,13 @@ export function startupRequirements(lines) {
     const key = `${line.recipe}|${line.configuration}`;
     const configuration = line.configuration_details;
     for (const flow of configuration.build_requirements ?? []) builds.set(flow.resource, (builds.get(flow.resource) ?? 0) + flow.amount * line.machines);
-    const capacity = configuration.capacity;
-    if (!capacity?.completion_ticks || !capacity.ticks_per_batch) {
+    let capacity = configuration.capacity;
+    if (configuration.capacity_input && !capacity?.completion_ticks?.length) {
+      const input = configuration.capacity_input;
+      capacity = machineCapacity(input.recipe, input.machine, {...input.setup, compute_warmup: true});
+      configuration.capacity = capacity;
+    }
+    if (!capacity?.completion_ticks?.length || !capacity.ticks_per_batch) {
       incomplete.push({recipe: line.recipe, configuration: line.configuration, reason: 'No verified cold-start completion schedule is available.'});
       continue;
     }
@@ -40,3 +45,4 @@ export function startupRequirements(lines) {
       'Probabilistic recipes use expected quantities, not a guarantee against random shortages.',
       'An idle restart may require replenishing this stock. Scheduling repeated passive restarts is not established by this bound.']};
 }
+import {machineCapacity} from './capacity.js';

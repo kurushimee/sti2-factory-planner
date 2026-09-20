@@ -1,6 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startupRequirements} from './startup.js';
+import {compileConfiguration} from './configuration.js';
+
+test('selected deferred configurations recover the same cold-start stocks', () => {
+  const recipe = {id: 'press', duration_ticks: 200, eu_per_tick: 2};
+  const machine = {id: 'press', mechanic: 'mi_crafter', base_eu: 8, max_eu: 32};
+  const evaluate = compute_warmup => {
+    const configuration = compileConfiguration(recipe, machine, {compute_warmup});
+    return startupRequirements([{recipe: 'press', configuration: configuration.id, machines: 2,
+      operations_per_second: 1, inputs: [{resource: 'ingot', rate: 1}],
+      outputs: [{resource: 'plate', rate: 1}], configuration_details: configuration}]);
+  };
+  assert.deepEqual(evaluate(false), evaluate(true));
+});
 
 test('startup stocks combine shared producer deficits and separate first input loads', () => {
   const line = (recipe, machines) => ({recipe, configuration: 'test', machines, operations_per_second: machines,

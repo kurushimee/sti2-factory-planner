@@ -28,6 +28,10 @@ Capacity goals can preserve several loadouts for the same recipe. Each requested
 
 ## Runtime and numeric behavior
 
+`kernel/boiler.js` follows the loaded bronze and steel boiler heater and fuel-buffer tick order. Its cold-start output segments match direct calls to the actual loaded components with continuous coal and water supply. The bronze boiler first reaches full output on tick 3,906; the steel boiler does so on tick 2,417. The probe drains steam each tick so backpressure does not affect these measurements. These schedules still need integration into factory startup and generation planning.
+
+Configuration searches can defer completion schedules with `compute_warmup: false`. The selected allocations reconstruct their schedules before startup stock calculation. This avoids allocating long completion arrays for unused candidate configurations.
+
 The same HiGHS 1.15.3 WebAssembly runtime executes the model in Node and in a browser Worker. `kernel/desktop.js` accepts input and output file paths and publishes a complete JSON result through a temporary file and rename. The Windows development package bundles Node. `kernel/worker.js` uses local web assets and phase messages. Both adapters connect to Godot through `ui/computation.gd`; cancelling terminates the process or Worker.
 
 Inputs outside JavaScript's safe integer range are rejected where integer arithmetic is required. Resource balances and whole-machine capacities are checked after solving. Results report each resource balance's numerical tolerance. Large coefficients and near-degenerate models still need broader endgame validation; the trillion-unit regression case is a focused check, not that validation.

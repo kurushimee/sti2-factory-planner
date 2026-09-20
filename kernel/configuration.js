@@ -26,5 +26,6 @@ export function compileConfiguration(recipe, machine, setup = {}) {
     eu_per_operation: energyResource === 'energy:eu' ? capacity.eu_per_operation : 0,
     inputs: energyResource === 'energy:eu' ? [] : [{resource: energyResource, amount: capacity.eu_per_operation}],
     build_cost: (machine.build_cost ?? 1) + (setup.upgrade_count ?? 0) * (setup.upgrade?.build_cost ?? 1) + (setup.contained_count ?? 0), build_requirements: bill, setup, capacity,
+    capacity_input: {recipe: {duration_ticks: recipe.duration_ticks, eu_per_tick: recipe.eu_per_tick}, machine, setup},
     assumptions: capacity.assumptions};
 }

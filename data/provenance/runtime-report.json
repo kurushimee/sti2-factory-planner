@@ -695,6 +695,156 @@
       "recipe_eu_limit": 1024
     }
   ],
+  "boiler_warmup": {
+    "modern_industrialization:bronze_boiler": {
+      "first_full_output_tick": 3906,
+      "steam_produced": 19240,
+      "water_consumed": 1203,
+      "coal_consumed": 1,
+      "steam_deficit": 12008,
+      "output_segments": [
+        {
+          "first_tick": 1,
+          "steam_per_tick": 0,
+          "last_tick": 276
+        },
+        {
+          "first_tick": 277,
+          "steam_per_tick": 1,
+          "last_tick": 476
+        },
+        {
+          "first_tick": 477,
+          "steam_per_tick": 2,
+          "last_tick": 710
+        },
+        {
+          "first_tick": 711,
+          "steam_per_tick": 3,
+          "last_tick": 990
+        },
+        {
+          "first_tick": 991,
+          "steam_per_tick": 4,
+          "last_tick": 1339
+        },
+        {
+          "first_tick": 1340,
+          "steam_per_tick": 5,
+          "last_tick": 1806
+        },
+        {
+          "first_tick": 1807,
+          "steam_per_tick": 6,
+          "last_tick": 2506
+        },
+        {
+          "first_tick": 2507,
+          "steam_per_tick": 7,
+          "last_tick": 3905
+        },
+        {
+          "first_tick": 3906,
+          "steam_per_tick": 8,
+          "last_tick": 3906
+        }
+      ]
+    },
+    "modern_industrialization:steel_boiler": {
+      "first_full_output_tick": 2417,
+      "steam_produced": 26656,
+      "water_consumed": 1666,
+      "coal_consumed": 2,
+      "steam_deficit": 12016,
+      "output_segments": [
+        {
+          "first_tick": 1,
+          "steam_per_tick": 0,
+          "last_tick": 95
+        },
+        {
+          "first_tick": 96,
+          "steam_per_tick": 1,
+          "last_tick": 142
+        },
+        {
+          "first_tick": 143,
+          "steam_per_tick": 2,
+          "last_tick": 192
+        },
+        {
+          "first_tick": 193,
+          "steam_per_tick": 3,
+          "last_tick": 246
+        },
+        {
+          "first_tick": 247,
+          "steam_per_tick": 4,
+          "last_tick": 304
+        },
+        {
+          "first_tick": 305,
+          "steam_per_tick": 5,
+          "last_tick": 367
+        },
+        {
+          "first_tick": 368,
+          "steam_per_tick": 6,
+          "last_tick": 437
+        },
+        {
+          "first_tick": 438,
+          "steam_per_tick": 7,
+          "last_tick": 515
+        },
+        {
+          "first_tick": 516,
+          "steam_per_tick": 8,
+          "last_tick": 603
+        },
+        {
+          "first_tick": 604,
+          "steam_per_tick": 9,
+          "last_tick": 703
+        },
+        {
+          "first_tick": 704,
+          "steam_per_tick": 10,
+          "last_tick": 819
+        },
+        {
+          "first_tick": 820,
+          "steam_per_tick": 11,
+          "last_tick": 959
+        },
+        {
+          "first_tick": 960,
+          "steam_per_tick": 12,
+          "last_tick": 1134
+        },
+        {
+          "first_tick": 1135,
+          "steam_per_tick": 13,
+          "last_tick": 1367
+        },
+        {
+          "first_tick": 1368,
+          "steam_per_tick": 14,
+          "last_tick": 1717
+        },
+        {
+          "first_tick": 1718,
+          "steam_per_tick": 15,
+          "last_tick": 2416
+        },
+        {
+          "first_tick": 2417,
+          "steam_per_tick": 16,
+          "last_tick": 2417
+        }
+      ]
+    }
+  },
   "loaded_mods": [
     {
       "id": "c2me_fixes_worldgen_threading_issues",

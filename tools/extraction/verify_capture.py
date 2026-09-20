@@ -84,6 +84,9 @@ def verify(runtime: dict, probes: dict) -> dict:
     coil_tiers = machines["modern_industrialization:electric_blast_furnace"]["coil_tiers"]
     if [tier["recipe_eu_limit"] for tier in coil_tiers] != [32, 128, 1024]:
         raise ValueError("The loaded blast furnace coil limits changed.")
+    boilers = {key: machines[key]["coal_warmup_probe"] for key in ("modern_industrialization:bronze_boiler", "modern_industrialization:steel_boiler")}
+    if [value["first_full_output_tick"] for value in boilers.values()] != [3906, 2417]:
+        raise ValueError("The loaded cold-boiler warm-up changed.")
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -102,6 +105,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "power_units": probes["power_units"],
         "array_rules": arrays,
         "blast_furnace_coils": coil_tiers,
+        "boiler_warmup": boilers,
         "loaded_mods": probes["loaded_mods"],
         "extraction_failures": 0,
         "normalized_dataset_complete": False,

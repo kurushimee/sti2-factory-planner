@@ -245,6 +245,57 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonObject boilerWarmup(MachineBlockEntity machine, MinecraftServer server) {
+        aztech.modern_industrialization.machines.components.SteamHeaterComponent heater = null;
+        aztech.modern_industrialization.machines.components.FuelBurningComponent burner = null;
+        for (var component : machine.components) {
+            if (component instanceof aztech.modern_industrialization.machines.components.SteamHeaterComponent value) heater = value;
+            if (component instanceof aztech.modern_industrialization.machines.components.FuelBurningComponent value) burner = value;
+        }
+        if (heater == null || burner == null) throw new IllegalStateException("The reference boiler has no heater or burner.");
+        var water = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardInputSlot(1000000);
+        var steam = aztech.modern_industrialization.inventory.ConfigurableFluidStack.standardOutputSlot(1000000);
+        var coal = aztech.modern_industrialization.inventory.ConfigurableItemStack.standardInputSlot();
+        long produced = 0, waterUsed = 0, coalUsed = 0, deficit = 0;
+        var segments = new JsonArray();
+        JsonObject segment = null;
+        long previous = -1;
+        int ticks = 0;
+        while (ticks < 100000) {
+            water.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(net.minecraft.world.level.material.Fluids.WATER));
+            water.setAmount(1000000);
+            coal.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(net.minecraft.world.item.Items.COAL));
+            coal.setAmount(64);
+            steam.empty();
+            heater.tick(java.util.List.of(water), java.util.List.of(steam));
+            burner.tick(java.util.List.of(coal), java.util.List.of(), true);
+            ticks++;
+            long amount = steam.getAmount();
+            produced += amount;
+            waterUsed += 1000000 - water.getAmount();
+            coalUsed += 64 - coal.getAmount();
+            deficit = Math.max(deficit, heater.maxEuProduction * ticks - produced);
+            if (previous != amount) {
+                segment = new JsonObject();
+                segment.addProperty("first_tick", ticks);
+                segment.addProperty("steam_per_tick", amount);
+                segments.add(segment);
+                previous = amount;
+            }
+            segment.addProperty("last_tick", ticks);
+            if (amount == heater.maxEuProduction) break;
+        }
+        if (ticks == 100000) throw new IllegalStateException("The reference boiler did not reach full output.");
+        var result = new JsonObject();
+        result.addProperty("first_full_output_tick", ticks);
+        result.addProperty("steam_produced", produced);
+        result.addProperty("water_consumed", waterUsed);
+        result.addProperty("coal_consumed", coalUsed);
+        result.addProperty("steam_deficit", deficit);
+        result.add("output_segments", segments);
+        return result;
+    }
+
     private static int export(MinecraftServer server) throws Exception {
         var machines = new JsonArray();
         var failures = new JsonArray();
@@ -335,6 +386,9 @@ public final class PlannerProbe {
                     record.add("coil_tiers", tiers);
                 }
                 record.addProperty("nbt", entity.saveWithFullMetadata(server.registryAccess()).toString());
+                if (id.equals("modern_industrialization:bronze_boiler") || id.equals("modern_industrialization:steel_boiler")) {
+                    record.add("coal_warmup_probe", boilerWarmup(machine, server));
+                }
                 machines.add(record);
             } catch (Exception error) {
                 var failure = new JsonObject();
