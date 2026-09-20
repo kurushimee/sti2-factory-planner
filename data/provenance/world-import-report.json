@@ -1,0 +1,163 @@
+{
+  "archive_sha256": "0520d76e5653d7c55949f16e8e657412eedb94ff42b4d2699da727c1edeac25b",
+  "data_version": 3955,
+  "machines": [
+    {
+      "id": "modern_industrialization:electric_macerator",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "recipe_id": "statech:modern_industrialization/macerator/copper_dust_from_copper_cluster",
+      "recipe_type": "modern_industrialization:macerator",
+      "upgrades": {
+        "count": 8,
+        "id": "modern_industrialization:advanced_upgrade"
+      },
+      "contained_machine": null,
+      "shape": null,
+      "casing": {},
+      "assignment_evidence": "saved_active_recipe",
+      "provider_candidates": []
+    },
+    {
+      "id": "modern_industrialization:assembler",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 2,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "recipe_id": null,
+      "recipe_type": "modern_industrialization:assembler",
+      "upgrades": {},
+      "contained_machine": null,
+      "shape": null,
+      "casing": {},
+      "assignment_evidence": "unassigned"
+    },
+    {
+      "id": "extended_industrialization:processing_array",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 4,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "recipe_id": null,
+      "recipe_type": "modern_industrialization:macerator",
+      "upgrades": {
+        "count": 4,
+        "id": "modern_industrialization:turbo_upgrade"
+      },
+      "contained_machine": {
+        "count": 16,
+        "id": "modern_industrialization:electric_macerator"
+      },
+      "shape": 1,
+      "casing": {},
+      "assignment_evidence": "unassigned"
+    },
+    {
+      "id": "industrialization_overdrive:multi_processing_array",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 6,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "recipe_id": null,
+      "recipe_type": "modern_industrialization:distillation_tower",
+      "upgrades": {},
+      "contained_machine": {
+        "count": 8,
+        "id": "modern_industrialization:distillation_tower"
+      },
+      "shape": 0,
+      "casing": {},
+      "assignment_evidence": "unassigned"
+    }
+  ],
+  "providers": [
+    {
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": -1,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.-1.0.mca",
+        "part": null
+      },
+      "directions": [
+        "east"
+      ],
+      "patterns": [
+        {
+          "slot": 0,
+          "item": "ae2:processing_pattern",
+          "kind": "processing",
+          "inputs": [
+            {
+              "resource": "item:spectrum:copper_cluster",
+              "amount": 1,
+              "components": {}
+            }
+          ],
+          "outputs": [
+            {
+              "resource": "item:modern_industrialization:copper_dust",
+              "amount": 6,
+              "components": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 1,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca",
+        "part": "west"
+      },
+      "directions": [
+        "west"
+      ],
+      "patterns": [
+        {
+          "slot": 0,
+          "item": "ae2:processing_pattern",
+          "kind": "processing",
+          "inputs": [
+            {
+              "resource": "item:spectrum:copper_cluster",
+              "amount": 1,
+              "components": {}
+            }
+          ],
+          "outputs": [
+            {
+              "resource": "item:modern_industrialization:copper_dust",
+              "amount": 6,
+              "components": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "evidence": "Saved configuration; no observed production rate.",
+  "limitations": [
+    "The fixture controllers are unformed.",
+    "Inferred end goals and requester settings are not verified by this fixture."
+  ]
+}

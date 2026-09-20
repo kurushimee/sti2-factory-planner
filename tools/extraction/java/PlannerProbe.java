@@ -25,6 +25,9 @@ public final class PlannerProbe {
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> createAe2Fixture(context.getSource().getServer())));
         event.getDispatcher().register(Commands.literal("planner_probe")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
@@ -35,6 +38,32 @@ public final class PlannerProbe {
                         return 0;
                     }
                 }));
+    }
+
+    private static int createAe2Fixture(MinecraftServer server) {
+        var level = server.overworld();
+        var providerPos = new BlockPos(-1, 100, 0);
+        var cablePos = new BlockPos(1, 100, 0);
+        level.setBlockAndUpdate(providerPos, appeng.core.definitions.AEBlocks.PATTERN_PROVIDER.block()
+                .defaultBlockState().setValue(appeng.block.crafting.PatternProviderBlock.PUSH_DIRECTION,
+                        appeng.block.crafting.PushDirection.EAST));
+        level.setBlockAndUpdate(cablePos, appeng.core.definitions.AEBlocks.CABLE_BUS.block().defaultBlockState());
+        var pattern = appeng.core.definitions.AEItems.PROCESSING_PATTERN.stack();
+        var input = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("spectrum:copper_cluster"));
+        var output = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:copper_dust"));
+        pattern.set(appeng.api.ids.AEComponents.ENCODED_PROCESSING_PATTERN,
+                new appeng.crafting.pattern.EncodedProcessingPattern(
+                        java.util.List.of(new appeng.api.stacks.GenericStack(appeng.api.stacks.AEItemKey.of(input), 1)),
+                        java.util.List.of(new appeng.api.stacks.GenericStack(appeng.api.stacks.AEItemKey.of(output), 6))));
+        var provider = (appeng.blockentity.crafting.PatternProviderBlockEntity) level.getBlockEntity(providerPos);
+        provider.getLogic().getPatternInv().setItemDirect(0, pattern.copy());
+        provider.setChanged();
+        var cable = (appeng.blockentity.networking.CableBusBlockEntity) level.getBlockEntity(cablePos);
+        var part = cable.addPart(appeng.core.definitions.AEParts.PATTERN_PROVIDER.get(), net.minecraft.core.Direction.WEST, null);
+        part.getLogic().getPatternInv().setItemDirect(0, pattern.copy());
+        cable.setChanged();
+        System.out.println("Planner AE2 fixture created.");
+        return 1;
     }
 
     private static void optionalNumber(JsonObject record, Object target, String method, String key) {
