@@ -1,6 +1,6 @@
 # STI2 Factory Planner
 
-This repository starts as a stock Godot 4.7.2 GDScript project using the GL Compatibility renderer. There is no main scene, application architecture, or test framework yet. Check the current files before relying on that starting state; update these facts as the application grows.
+This project uses stock Godot 4.7.2 and the GL Compatibility renderer. Runtime extraction tools and an isolated JavaScript calculation kernel exist, but there is no main scene or usable application yet. Check the current files before relying on that state; update these facts as the application grows.
 
 ## Automatic project plans
 
@@ -25,6 +25,7 @@ Use [project-plans](.agents/skills/project-plans/SKILL.md) for every request in 
 | GDScript, resources, scenes, or class naming | [GDScript conventions](docs/gdscript_conventions.md) |
 | Engine commands, MCP, or verification | [Godot tooling](docs/godot_tooling.md) |
 | Pack inputs, runtime extraction, or machine rules | [Extraction evidence](docs/extraction.md) |
+| Calculation kernel, objectives, or numerical checks | [Planning kernel](docs/planning-kernel.md) |
 | Visible UI, scenes, animation, materials, or effects | [visual-verify](.agents/skills/visual-verify/SKILL.md), alongside the relevant UI or shader skill |
 
 Keep reusable calculations and planning rules independent of scene nodes when practical, so they can be tested without rendering. Choose concrete folders and state boundaries when implementing the relevant feature; record durable decisions in project docs.

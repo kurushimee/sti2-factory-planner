@@ -8,3 +8,4 @@
 /private/
 __pycache__/
 *.pyc
+/node_modules/
