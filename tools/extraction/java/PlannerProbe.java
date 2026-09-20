@@ -26,6 +26,12 @@ public final class PlannerProbe {
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("planner_check_structure_bill")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return checkStructureBill(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_structure")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createStructureFixture(context.getSource().getServer())));
@@ -42,6 +48,46 @@ public final class PlannerProbe {
                         return 0;
                     }
                 }));
+    }
+
+    private static int checkStructureBill(MinecraftServer server) throws Exception {
+        var bill = com.google.gson.JsonParser.parseString(Files.readString(Path.of("planner-structure-bill.json"))).getAsJsonObject();
+        var level = server.overworld();
+        var origin = new BlockPos(128, 100, 0);
+        var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(bill.get("machine").getAsString()));
+        level.setBlockAndUpdate(origin, block.defaultBlockState());
+        var controller = (aztech.modern_industrialization.machines.multiblocks.MultiblockMachineBlockEntity) level.getBlockEntity(origin);
+        var facing = net.minecraft.core.Direction.NORTH;
+        controller.getOrientation().facingDirection = facing;
+        var shape = controller.getActiveShape();
+        var counts = new java.util.TreeMap<String, Integer>();
+        for (var value : bill.getAsJsonArray("placements")) {
+            var entry = value.getAsJsonObject();
+            var xyz = entry.getAsJsonArray("position");
+            var relative = new BlockPos(xyz.get(0).getAsInt(), xyz.get(1).getAsInt(), xyz.get(2).getAsInt());
+            var position = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldPos(origin, facing, relative);
+            String id = entry.get("block").getAsString();
+            var placed = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(id));
+            var member = shape.simpleMembers.get(relative);
+            if (member == null) throw new IllegalStateException("The bill contains a position outside the loaded template.");
+            var state = member.getPreviewState().is(placed) ? member.getPreviewState() : placed.defaultBlockState();
+            state = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldState(level, position, state, facing);
+            level.setBlockAndUpdate(position, state);
+            if (!state.isAir()) counts.merge(id, 1, Integer::sum);
+        }
+        var matcher = controller.createShapeMatcher();
+        matcher.rematch(level);
+        if (!matcher.isMatchSuccessful()) throw new IllegalStateException("The loaded shape matcher rejected the planned structural bill.");
+        var result = new JsonObject();
+        result.addProperty("machine", bill.get("machine").getAsString());
+        result.addProperty("shape_match", true);
+        var quantities = new JsonObject();
+        counts.forEach(quantities::addProperty);
+        result.add("placed_blocks_excluding_controller", quantities);
+        Files.writeString(Path.of("planner-extraction", "structure-bill-check.json"), new GsonBuilder().setPrettyPrinting().create().toJson(result));
+        controller.setChanged();
+        System.out.println("Planner structural bill matched the loaded world structure.");
+        return 1;
     }
 
     private static int createStructureFixture(MinecraftServer server) {

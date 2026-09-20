@@ -12,6 +12,8 @@ static func check(value: Variant) -> String:
 			return "Every resource needs a nonempty text ID."
 		if resources.has(resource.id):
 			return "Duplicate resource ID: %s" % resource.id
+		if resource.has("max_stack_size") && (!_positive(resource.max_stack_size) || resource.max_stack_size < 1 || floor(resource.max_stack_size) != resource.max_stack_size):
+			return "Resource %s needs a positive whole stack limit." % resource.id
 		resources[resource.id] = true
 	for field: String in ["machines", "upgrades"]:
 		if !(value.get(field, []) is Array):

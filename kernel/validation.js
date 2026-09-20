@@ -28,6 +28,7 @@ export function validateDataset(dataset) {
   object(dataset, 'dataset');
   if (dataset.format !== 1) fail('dataset.format', 'unsupported version');
   const resources = records(dataset.resources, 'resources');
+  for (const resource of dataset.resources) if (resource.max_stack_size !== undefined) number(resource.max_stack_size, `resource ${resource.id}.max_stack_size`, 1, true);
   records(dataset.recipes, 'recipes');
   const machines = records(dataset.machines ?? [], 'machines');
   const upgrades = records(dataset.upgrades ?? [], 'upgrades');

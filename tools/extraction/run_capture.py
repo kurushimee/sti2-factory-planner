@@ -13,6 +13,7 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--fixture", action="store_true", help="Create the controlled import fixture in the isolated test world.")
     parser.add_argument("--structure-fixture", action="store_true", help="Create and check the isolated multiblock structure fixture.")
+    parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     args = parser.parse_args()
     instance = args.instance.resolve()
     argument_file = instance / "libraries/net/neoforged/neoforge/21.1.250/win_args.txt"
@@ -35,6 +36,8 @@ def main() -> None:
                 text = log_path.read_text(encoding="utf-8", errors="replace")
                 if not sent and "Dedicated server took" in text:
                     commands = ["planner_export", "planner_probe"]
+                    if args.structure_bill:
+                        commands.append("planner_check_structure_bill")
                     if args.fixture:
                         commands.extend(line.strip() for line in (Path(__file__).parent / "fixture-commands.txt").read_text().splitlines() if line.strip())
                     if args.structure_fixture:
@@ -49,6 +52,8 @@ def main() -> None:
                 raise RuntimeError(f"Capture did not finish successfully. Inspect {log_path}.")
             if args.fixture and "Planner AE2 fixture created." not in text:
                 raise RuntimeError(f"Fixture creation did not finish successfully. Inspect {log_path}.")
+            if args.structure_bill and "Planner structural bill matched the loaded world structure." not in text:
+                raise RuntimeError(f"The structural bill did not match. Inspect {log_path}.")
             if args.structure_fixture and "Planner structure fixture matched:" not in text:
                 raise RuntimeError(f"Structure fixture did not match. Inspect {log_path}.")
         finally:

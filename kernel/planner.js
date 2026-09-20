@@ -3,6 +3,7 @@ import {resolveGoals} from './goals.js';
 import {startupRequirements} from './startup.js';
 import {prepareDataset} from './catalog.js';
 import {validateDataset} from './validation.js';
+import {attachStructureBills} from './structure_bill.js';
 
 const ENERGY = 'energy:eu';
 
@@ -317,5 +318,10 @@ export function solveFactory(highs, dataset, request) {
       best = {...decoded, targets: resolved.targets, objective: solution.ObjectiveValue, exclusions: model.exclusions};
     }
   }
-  return best ? {...best, status: 'optimal', optimal: true, branches: visited} : {status: 'infeasible', optimal: false, exclusions: lastExclusions, branches: visited};
+  if (best) {
+    attachStructureBills(best, dataset);
+    best.startup = startupRequirements(best.lines);
+    return {...best, status: 'optimal', optimal: true, branches: visited};
+  }
+  return {status: 'infeasible', optimal: false, exclusions: lastExclusions, branches: visited};
 }

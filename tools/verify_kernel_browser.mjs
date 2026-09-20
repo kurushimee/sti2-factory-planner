@@ -46,6 +46,7 @@ const server = createServer(async (incoming, response) => {
     }
     const files = {
       '/kernel/worker.js': 'kernel/worker.js', '/kernel/planner.js': 'kernel/planner.js',
+      '/kernel/structure_bill.js': 'kernel/structure_bill.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/goals.js': 'kernel/goals.js',
       '/kernel/startup.js': 'kernel/startup.js',
@@ -115,6 +116,15 @@ try {
     const result = await solveInBrowser(worldDataset, request);
     assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
     console.log('The 24.576-billion-EU pulse recipe matches Node in the browser Worker.');
+  }
+  const steel = worldDataset.recipes?.find(recipe => recipe.primary === 'item:modern_industrialization:steel_ingot' && recipe.process?.type === 'modern_industrialization:blast_furnace');
+  if (steel) {
+    const request = {goals: [{recipe: steel.id, resource: steel.primary, rate: 1}], available_machines: ['modern_industrialization:electric_blast_furnace'],
+      external: [{resource: 'energy:eu'}, ...steel.inputs.map(flow => ({resource: flow.resource ?? flow.choices[0]}))]};
+    const result = await solveInBrowser(worldDataset, request);
+    assert.equal(result.result.lines[0].configuration_details.structure.status, 'sized');
+    assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
+    console.log('The complete blast-furnace bill matches Node in the browser Worker.');
   }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();

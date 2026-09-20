@@ -199,7 +199,8 @@ def crafting_adapter(entry, record, capture, resources, variants):
 def build_dataset(capture):
     resource_index = {entry["id"]: entry for entry in capture["resources"]}
     variants = {}
-    resources = [{key: value for key, value in entry.items() if key != "item_rules"}
+    resources = [{**{key: value for key, value in entry.items() if key != "item_rules"},
+                  **({"max_stack_size": entry["item_rules"]["max_stack_size"]} if entry.get("item_rules", {}).get("max_stack_size") else {})}
                  for entry in capture["resources"]]
     resources.append({"id": "energy:eu", "name": "Electricity", "kind": "energy", "unit": "EU"})
     names = {entry["id"]: entry.get("name", entry["id"].split(":", 1)[-1].replace("_", " ")) for entry in resources}

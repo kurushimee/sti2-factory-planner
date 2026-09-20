@@ -15,6 +15,9 @@ func _init() -> void:
 	malformed = dataset.duplicate(true)
 	malformed.progression[0].available_machines = ["missing"]
 	assert(!PlannerDatasetValidation.check(malformed).is_empty())
+	malformed = dataset.duplicate(true)
+	malformed.resources[0].max_stack_size = 0
+	assert(!PlannerDatasetValidation.check(malformed).is_empty())
 	var plan := {"format": "factory-plan", "version": 1, "dataset": dataset, "dataset_identity": "example:1", "request": {"goals": [{"resource": "ore", "rate": 1}]}, "positions": {}, "groups": {}}
 	assert(PlannerDatasetValidation.check_plan(plan).is_empty())
 	for invalid: Variant in [null, "wrong", 2, {}]:

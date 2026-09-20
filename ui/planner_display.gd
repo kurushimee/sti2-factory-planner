@@ -68,6 +68,15 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 	var process: Dictionary = recipe.get("process", {})
 	if !process.is_empty():
 		text += "Recipe: %s ticks at %s EU/t before machine modifiers\n" % [number(process.get("duration_ticks", 0)), number(process.get("eu_per_tick", 0))]
+	var structure: Dictionary = configuration.get("structure", {})
+	if !configuration.get("build_requirements", []).is_empty():
+		text += "\n[b]Build requirements per machine[/b]\n"
+		for part: Dictionary in configuration.build_requirements:
+			text += "%s × %s\n" % [number(part.amount), markup(resources.get(part.resource, readable_name(part.resource)))]
+	if structure.get("status") == "unsupported":
+		text += "Structure incomplete: " + markup(structure.reason) + "\n"
+	elif structure.get("status") == "sized":
+		text += "Hatches hold a full batch and meet the stated power limits. Selection minimizes hatch count; material-cost optimization is not included.\n"
 	var key := String(line.recipe) + "|" + String(line.configuration)
 	var stock_text := ""
 	for stock: Dictionary in startup.get("resources", []):
