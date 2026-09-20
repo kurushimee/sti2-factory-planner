@@ -83,5 +83,3 @@ function exportPlannerData(server) {
     console.info('PLANNER_EXPORT_COMPLETE recipes=' + recipes.length + ' failures=' + failures.length);
 }
 ServerEvents.basicCommand('planner_export', event => exportPlannerData(event.server));
-
-
