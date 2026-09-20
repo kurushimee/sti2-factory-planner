@@ -1,5 +1,6 @@
 import {Inflate, Unzlib, Gunzip} from 'fflate';
 import {readNbt} from './nbt.js';
+import {reconstructFactory} from './reconstruct.js';
 import {blockStateAt, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
 
 const MAX_ENTRY = 256 * 1024 * 1024;
@@ -164,5 +165,6 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
   }
   progress({phase: 'reading_regions', completed: regions.length, total: regions.length});
   inferProviderAssignments(result, dataset.recipes);
+  if (dataset.format === 1) result.reconstruction = reconstructFactory(result, dataset);
   return result;
 }

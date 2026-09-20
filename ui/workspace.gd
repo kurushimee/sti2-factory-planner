@@ -55,6 +55,12 @@ func _ready() -> void:
 	%Redo.pressed.connect(_redo_action)
 	%Cancel.pressed.connect(_cancel)
 	%Replication.toggled.connect(_replication_changed)
+	%ReviewWorld.pressed.connect(func() -> void: %WorldReview.open_review(_world_import, _dataset))
+	%WorldReview.corrections_requested.connect(_correct_world)
+	%Sounds.toggled.connect(func(enabled: bool) -> void: %Feedback.enabled = enabled; _autosave())
+	%ReducedMotion.toggled.connect(func(_enabled: bool) -> void: _autosave())
+	%Feedback.bind_controls(self)
+	_setup_focus()
 	files.file_selected.connect(_file_selected)
 	graph.node_selected.connect(_select_node)
 	graph.end_node_move.connect(_save_positions)
@@ -69,6 +75,20 @@ func _ready() -> void:
 	if "--capture" in OS.get_cmdline_user_args():
 		_request.goals = [{"resource": "motor", "rate": 2.0, "recipe": "assemble"}]
 		_recalculate()
+
+
+func _setup_focus() -> void:
+	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
+		%Arrange, %AddGroup, graph, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
+	graph.focus_mode = Control.FOCUS_ALL
+	for index: int in controls.size():
+		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
+		controls[index].focus_previous = controls[index].get_path_to(controls[(index + controls.size() - 1) % controls.size()])
+	for action: String in ["ui_focus_next", "ui_focus_prev"]:
+		var event := InputEventJoypadButton.new()
+		event.button_index = JOY_BUTTON_RIGHT_SHOULDER if action == "ui_focus_next" else JOY_BUTTON_LEFT_SHOULDER
+		if !InputMap.action_has_event(action, event):
+			InputMap.action_add_event(action, event)
 
 
 func _process(_delta: float) -> void:
@@ -111,7 +131,9 @@ func _load_dataset(value: Variant) -> bool:
 	if !error.is_empty():
 		_failed(error)
 		return false
-	_dataset.assign(value)
+	var next_dataset: Dictionary[String, Variant] = {}
+	next_dataset.assign(value)
+	_dataset = next_dataset
 	_recipes.clear()
 	_resources.clear()
 	for resource: Dictionary in _dataset.resources:
@@ -145,7 +167,7 @@ func _add_goal() -> void:
 	var recipe: Dictionary = _recipes[id]
 	var existing := false
 	for goal: Dictionary in _request.goals:
-		if goal.get("recipe") == id:
+		if goal.get("recipe") == id && goal.get("kind", "rate") == "rate":
 			goal.rate += rate.value
 			existing = true
 	if !existing:
@@ -176,22 +198,36 @@ func _recalculate() -> void:
 	_job_kind = "solve"
 	%Cancel.disabled = false
 	var request := _request.duplicate(true)
-	request.routes = {}
-	for goal: Dictionary in request.goals:
-		if goal.has("recipe"):
-			request.routes[goal.resource] = goal.recipe
 	computation.submit({"dataset": _dataset, "request": request})
 
 
 func _calculated(result: Dictionary) -> void:
 	%Cancel.disabled = true
-	if _job_kind == "import_world":
+	if _job_kind in ["import_world", "correct_world"]:
+		var apply_empty: bool = _job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("goals", []).is_empty()
 		_remember()
 		_world_import.assign(result)
+		%ReviewWorld.disabled = false
+		var reconstruction: Dictionary = result.get("reconstruction", {})
+		var goals: Array = reconstruction.get("goals", [])
+		if !goals.is_empty() || apply_empty:
+			_request.goals = goals.duplicate(true)
+			_request.machine_setups = reconstruction.get("machine_setups", {}).duplicate(true)
+			_request.erase("routes")
+			_request.erase("configurations")
+			var available: Array = _request.get("available_machines", _dataset.get("default_machines", [])).duplicate()
+			for setups: Array in _request.machine_setups.values():
+				for setup: Dictionary in setups:
+					if !setup.machine in available:
+						available.append(setup.machine)
+			if !available.is_empty():
+				_request.available_machines = available
 		_autosave()
-		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d entries need an adapter; %d read errors.\n\nSaved configuration has been retained. Goal reconstruction is not connected yet." % [result.machines.size(), result.providers.size(), result.unsupported.size(), result.errors.size()]
+		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
 		%Notice.popup_centered()
 		status.text = "World configuration read locally."
+		if !goals.is_empty() || apply_empty:
+			_recalculate()
 		return
 	if result.get("status") != "optimal":
 		_failed("The goals could not be solved (%s). Check available routes and supplies. The previous graph is preserved." % result.get("status", "unknown"))
@@ -250,6 +286,10 @@ func _render_plan(result: Dictionary) -> void:
 		tween.tween_property(graph, "modulate:a", 1.0, 0.18).from(0.5)
 	if !_nodes.is_empty():
 		_select_node(_nodes.values()[0])
+	else:
+		_selected = ""
+		inspector.text = "Select a recipe and add a goal to start planning."
+		%RemoveGoal.disabled = true
 
 
 func _select_node(node: Node) -> void:
@@ -379,7 +419,8 @@ func _snapshot() -> Dictionary:
 	for node: PlannerRecipeNode in _nodes.values():
 		_positions[node.get_meta("position_key")] = [node.position_offset.x, node.position_offset.y]
 	return {"format": "factory-plan", "version": 1, "dataset_identity": _dataset.get("identity", "custom"), "dataset": _dataset,
-		"request": _request.duplicate(true), "positions": _positions.duplicate(true), "groups": _groups.duplicate(true), "imported_world": _world_import.duplicate(true)}
+		"request": _request.duplicate(true), "positions": _positions.duplicate(true), "groups": _groups.duplicate(true), "imported_world": _world_import.duplicate(true),
+		"preferences": {"sound": %Sounds.button_pressed, "reduced_motion": %ReducedMotion.button_pressed}}
 
 
 func _remember() -> void:
@@ -414,6 +455,11 @@ func _restore_plan(value: Variant) -> void:
 	_positions.assign(value.get("positions", {}))
 	_groups.assign(value.get("groups", {}))
 	_world_import.assign(value.get("imported_world", {}))
+	%ReviewWorld.disabled = _world_import.is_empty()
+	var preferences: Dictionary = value.get("preferences", {})
+	%Sounds.set_pressed_no_signal(preferences.get("sound", false))
+	%Feedback.enabled = %Sounds.button_pressed
+	%ReducedMotion.set_pressed_no_signal(preferences.get("reduced_motion", false))
 	%Replication.set_pressed_no_signal(_request.get("replication", false))
 	_recalculate()
 
@@ -463,6 +509,12 @@ func _import_world(path: String) -> void:
 	computation.submit({"kind": "import_world", "path": path, "dataset": _dataset})
 
 
+func _correct_world(corrections: Dictionary) -> void:
+	_job_kind = "correct_world"
+	%Cancel.disabled = false
+	computation.submit({"kind": "reconstruct_world", "world": _world_import, "corrections": corrections, "dataset": _dataset})
+
+
 func _import_json(parsed: Variant) -> void:
 	if parsed is Dictionary && parsed.get("format") == "factory-plan":
 		_remember()
@@ -480,6 +532,7 @@ func _cancel() -> void:
 
 
 func _failed(message: String) -> void:
+	%Feedback.error()
 	%Cancel.disabled = true
 	status.text = message
 	status.tooltip_text = message

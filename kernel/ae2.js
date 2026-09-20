@@ -91,10 +91,12 @@ export function inferProviderAssignments(imported, recipes = []) {
       for (const pattern of provider.patterns) {
         if (pattern.kind !== 'processing') continue;
         for (const recipe of byType.get(machine.recipe_type) ?? []) {
-          if (recipe.status !== 'normalized' || !recipe.outputs.length) continue;
-          const outputs = recipe.outputs;
+          if ((recipe.status && recipe.status !== 'normalized') || recipe.unsupported || !recipe.outputs.length) continue;
+          const normalizedFlow = flow => ({...flow, choices: flow.choices ?? [flow.resource], probability: flow.probability ?? 1});
+          const outputs = recipe.outputs.map(normalizedFlow);
+          const inputs = recipe.inputs.map(normalizedFlow).filter(flow => flow.probability !== 0);
           if (outputs.some(flow => flow.probability !== 1 || flow.choices.length !== 1)) continue;
-          if (pattern.outputs.length !== outputs.length || pattern.inputs.length !== recipe.inputs.length) continue;
+          if (pattern.outputs.length !== outputs.length || pattern.inputs.length !== inputs.length) continue;
           if ([...pattern.inputs, ...pattern.outputs].some(flow => Object.keys(flow.components).length)) continue;
           const first = pattern.outputs.find(flow => flow.resource === outputs[0].choices[0]);
           if (!first) continue;
@@ -107,7 +109,7 @@ export function inferProviderAssignments(imported, recipes = []) {
               return matches(flows, expected, index + 1, new Set([...used, candidate]));
             });
           };
-          if (matches(pattern.inputs, recipe.inputs) && matches(pattern.outputs, outputs)) candidates.add(recipe.source_id);
+          if (matches(pattern.inputs, inputs) && matches(pattern.outputs, outputs)) candidates.add(recipe.source_id ?? recipe.id);
         }
       }
       machine.provider_candidates = [...new Set([...(machine.provider_candidates ?? []), ...candidates])];

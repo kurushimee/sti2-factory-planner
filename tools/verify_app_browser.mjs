@@ -5,7 +5,7 @@ import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
 const root = resolve('builds/web');
-const [worldPath, machineCapturePath] = process.argv.slice(2);
+const [worldPath, machineCapturePath, catalogPath] = process.argv.slice(2);
 const artifacts = resolve('.plans/artifacts/workspace');
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
@@ -37,7 +37,7 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/embed`);
   let frame = page.frames().find(frame => frame !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
-  await page.mouse.click(145, 729);
+  await page.mouse.click(145, 729, {delay: 100});
   const savedPlan = async () => frame.evaluate(() => new Promise((resolve, reject) => {
     const open = indexedDB.open('factory-planner', 1);
     open.onerror = () => reject(open.error);
@@ -54,7 +54,11 @@ try {
     if (plan?.request.goals.length) break;
     await new Promise(resolve => setTimeout(resolve, 100));
   }
-  assert.equal(plan?.request.goals[0].rate, 1);
+  if (plan?.request.goals[0]?.rate !== 1) {
+    await page.screenshot({path: `${artifacts}/initial-failure.png`});
+    console.log(errors);
+  }
+  assert.equal(plan?.request.goals[0]?.rate, 1);
   await page.mouse.click(425, 92);
   await new Promise(resolve => setTimeout(resolve, 200));
   const grouped = await savedPlan();
@@ -85,7 +89,7 @@ try {
     await (await chooser).setFiles(payload);
   };
   const waitPlan = async predicate => {
-    for (let attempt = 0; attempt < 100; attempt++) {
+    for (let attempt = 0; attempt < 200; attempt++) {
       const current = await savedPlan();
       if (predicate(current)) return current;
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -106,13 +110,46 @@ try {
   await importFile({name: 'broken.json', mimeType: 'application/json', buffer: Buffer.from('{not valid JSON')});
   await new Promise(resolve => setTimeout(resolve, 200));
   assert.deepEqual(await savedPlan(), plan);
+  if (catalogPath) {
+    const dataset = JSON.parse(await readFile(catalogPath, 'utf8'));
+    const catalogPlan = {format: 'factory-plan', version: 1, dataset_identity: dataset.identity, dataset,
+      request: {goals: [], available_machines: ['modern_industrialization:electric_macerator'],
+        external: [{resource: 'item:spectrum:copper_cluster'}, {resource: 'energy:eu'}]}, positions: {}, groups: {}};
+    await importFile({name: 'statech-plan.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(catalogPlan))});
+    await waitPlan(value => value?.dataset_identity === dataset.identity);
+    await page.mouse.click(1320, 40, {delay: 100});
+    await waitPlan(value => value?.dataset_identity === 'example:1');
+    await page.mouse.click(1390, 40, {delay: 100});
+    await waitPlan(value => value?.dataset_identity === dataset.identity);
+  }
   if (worldPath) {
     await importFile(worldPath);
     plan = await waitPlan(value => value?.imported_world?.machines?.length === 4);
     assert.equal(plan.imported_world.providers.length, 2);
     assert.deepEqual(plan.imported_world.errors, []);
+    if (catalogPath) {
+      assert.equal(plan.request.goals[0].kind, 'capacity');
+      assert.equal(plan.request.goals[0].machines, 1);
+      assert.equal(plan.imported_world.reconstruction.unresolved.length, 3);
+    }
+    await page.keyboard.press('Escape');
+    if (catalogPath) {
+      await page.mouse.click(1010, 40, {delay: 100});
+      await page.mouse.click(370, 267, {delay: 100});
+      await page.mouse.click(930, 655, {delay: 100});
+      await page.mouse.click(550, 750, {delay: 100});
+      plan = await waitPlan(value => value?.request.goals.length === 0 && value.imported_world?.corrections?.['minecraft:overworld|0|100|0']?.goal === false);
+      assert.equal(plan.imported_world.reconstruction.unresolved.length, 3);
+      await page.keyboard.press('Escape');
+    }
+    await page.mouse.click(1010, 40, {delay: 100});
+    await new Promise(resolve => setTimeout(resolve, 150));
+    await page.screenshot({path: `${artifacts}/world-review.png`});
+    await page.keyboard.press('Tab');
     await page.keyboard.press('Escape');
   }
+  await page.mouse.click(1200, 871, {delay: 100});
+  plan = await waitPlan(value => value?.preferences?.sound === true);
   await page.screenshot({path: `${artifacts}/browser.png`});
   const downloadEvent = page.waitForEvent('download');
   await page.mouse.click(1225, 40);

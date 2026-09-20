@@ -2,6 +2,7 @@ import {readFile, writeFile, rename} from 'node:fs/promises';
 import loadHighs from 'highs';
 import {solveFactory} from './planner.js';
 import {inspectWorld} from './world.js';
+import {reconstructFactory} from './reconstruct.js';
 
 const [input, output] = process.argv.slice(2);
 if (!input || !output) throw new Error('Provide an input job path and an output result path.');
@@ -10,6 +11,9 @@ try {
   const job = JSON.parse(await readFile(input, 'utf8'));
   if (job.kind === 'import_world') {
     result = {id: job.id, result: inspectWorld(new Uint8Array(await readFile(job.path)), job.dataset)};
+  } else if (job.kind === 'reconstruct_world') {
+    result = {id: job.id, result: {...job.world, corrections: job.corrections,
+      reconstruction: reconstructFactory(job.world, job.dataset, job.corrections)}};
   } else {
     const highs = await loadHighs();
     result = {id: job.id, result: solveFactory(highs, job.dataset, job.request)};

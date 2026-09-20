@@ -1,6 +1,6 @@
 # STI2 Factory Planner
 
-This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The development workspace runs the shared JavaScript solver with a fictional example dataset. Runtime extraction, intermediate normalization, and world-reading tools exist. The complete StaTech dataset, mechanics, save reconstruction, and release are still in progress; do not present development exports as the finished product.
+This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The development workspace defaults to a fictional example dataset. The shared JavaScript solver also accepts the private captured StaTech catalog, and world import reconstructs supported capacity goals with editable assignments. The complete bundled dataset, mechanics, importer coverage, and release are still in progress; do not present development exports as the finished product.
 
 ## Automatic project plans
 
@@ -37,3 +37,5 @@ Keep reusable calculations and planning rules independent of scene nodes when pr
 Use the configured Godot MCP when its inspection, runtime, or engine-documentation tools fit the task. Pass `F:/sti2-factory-planner` as the absolute project path. Use the stock engine documented in the tooling guide; `NG_Godot.exe` belongs to `F:/3-souls` only.
 
 After adding or renaming a `class_name`, refresh the editor cache with a headless import. Run checks that cover the changed behavior and broaden them when failures or wider scope justify it. Do not claim a test framework exists before it is installed. Render and inspect every visual edit, fix visible defects, and distinguish static checks, isolated rendering, and confirmation in the actual application in the final report.
+
+Core checks are `npm test`, `python -m unittest discover -s tools/extraction -p 'test_*.py'`, and the documented engine with `--headless --path . --script tools/test_data.gd` or `tools/test_ui.gd`. Exported browser checks and private capture commands are in the linked guides. Keep dataset objects immutable when saving undo snapshots; loading a dataset must replace the dictionary rather than mutate snapshots that share it.

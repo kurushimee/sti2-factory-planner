@@ -25,6 +25,8 @@ parts = ['[gd_resource type="Theme" load_steps=13 format=3]',
          '[ext_resource type="FontFile" path="res://ui/fonts/inter.ttf" id="1"]']
 for name, (background, border, width) in styles.items():
     parts.append(f'[sub_resource type="StyleBoxFlat" id="{name}"]\nbg_color = {color(background)}\nborder_color = {color(border)}')
+    if name == "focus":
+        parts.append("draw_center = false")
     for side in ("left", "right", "top", "bottom"):
         parts.append(f'border_width_{side} = {width}\ncontent_margin_{side} = {12 if side in ("left", "right") else 8}.0')
     for corner in ("top_left", "top_right", "bottom_left", "bottom_right"):

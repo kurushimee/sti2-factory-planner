@@ -52,3 +52,7 @@ jobs:
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_data.gd 2>&1 | tee /tmp/data-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/data-check.log
+      - name: Check keyboard focus and interface audio
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_ui.gd 2>&1 | tee /tmp/ui-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/ui-check.log

@@ -126,6 +126,8 @@ corner_radius_bottom_right = 5
 bg_color = Color(0.17647, 0.22353, 0.24314, 1)
 border_color = Color(0.92941, 0.78039, 0.58824, 1)
 
+draw_center = false
+
 border_width_left = 2
 content_margin_left = 12.0
 

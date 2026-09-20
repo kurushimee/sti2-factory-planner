@@ -1,0 +1,34 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://ui/feedback.gd" id="1"]
+[ext_resource type="AudioStream" path="res://ui/audio/hover.wav" id="2"]
+[ext_resource type="AudioStream" path="res://ui/audio/confirm.wav" id="3"]
+[ext_resource type="AudioStream" path="res://ui/audio/cancel.wav" id="4"]
+[ext_resource type="AudioStream" path="res://ui/audio/error.wav" id="5"]
+
+[node name="Feedback" type="Node"]
+script = ExtResource("1")
+
+[node name="HoverTone" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("2")
+bus = &"UI"
+volume_db = -24.0
+
+[node name="ConfirmTone" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("3")
+bus = &"UI"
+volume_db = -20.0
+
+[node name="CancelTone" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("4")
+bus = &"UI"
+volume_db = -22.0
+
+[node name="ErrorTone" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("5")
+bus = &"UI"
+volume_db = -20.0
