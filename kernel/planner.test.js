@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import loadHighs from 'highs';
+import {readFileSync} from 'node:fs';
 import {solveFactory} from './planner.js';
 
 const highs = await loadHighs();
@@ -14,6 +15,14 @@ function dataset(resources, recipes) {
 function line(result, id) { return result.lines.find(entry => entry.recipe === id); }
 function supply(result, id) { return result.external.find(entry => entry.resource === id)?.rate ?? 0; }
 function close(actual, expected) { assert(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`); }
+
+test('demand just above whole capacity requires another machine without a presolve error', () => {
+  const data = JSON.parse(readFileSync(new URL('../data/example.json', import.meta.url)));
+  const result = solveFactory(highs, data, {goals: [{recipe: 'assemble', resource: 'motor', rate: 2.000001}]});
+  assert.equal(result.status, 'optimal');
+  assert.equal(line(result, 'assemble').machines, 3);
+  assert.ok(line(result, 'assemble').operations_per_second >= 2.000001 - 1e-9);
+});
 
 test('creative infrastructure cannot bootstrap itself before the player obtains it', () => {
   const data = dataset(['creative', 'energy:eu'], [

@@ -73,7 +73,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
       grouped.set(configuration.id, goal);
       goals.push(goal);
       machineSetups[recipe.id] ??= [];
-      machineSetups[recipe.id].push({machine: configuration.machine, setup: assignment.setup});
+      machineSetups[recipe.id].push({machine: configuration.machine, setup: assignment.setup, configuration: configuration.id});
     }
     const goal = grouped.get(configuration.id);
     goal.machines++;

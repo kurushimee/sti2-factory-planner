@@ -47,6 +47,9 @@ func _ready() -> void:
 	search.text_changed.connect(_filter_recipes)
 	%AddGoal.pressed.connect(_add_goal)
 	%RemoveGoal.pressed.connect(_remove_goal)
+	%EditGoal.pressed.connect(_edit_goal)
+	%GoalEditor.preview_requested.connect(_preview_goal)
+	%GoalEditor.goal_changed.connect(_apply_goal)
 	%Arrange.pressed.connect(_arrange)
 	%AddGroup.pressed.connect(_add_group)
 	%Import.pressed.connect(_choose_import)
@@ -79,7 +82,7 @@ func _ready() -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
-		%Arrange, %AddGroup, graph, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
+		%Arrange, %AddGroup, graph, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -188,6 +191,41 @@ func _remove_goal() -> void:
 	_recalculate()
 
 
+func _edit_goal() -> void:
+	if _recipes.has(_selected):
+		%GoalEditor.open_goal(_recipes[_selected], _dataset, _request)
+
+
+func _preview_goal(selection: Dictionary) -> void:
+	_job_kind = "preview_configuration"
+	computation.submit({"kind": _job_kind, "dataset": _dataset, "request": _request, "selection": selection})
+
+
+func _apply_goal(index: int, goal: Dictionary, selection: Dictionary, pin: bool) -> void:
+	_remember()
+	if index >= 0:
+		if _request.goals[index].has("origins"):
+			goal.origins = _request.goals[index].origins
+		_request.goals[index] = goal
+	else:
+		_request.goals.append(goal)
+	if selection.has("setup"):
+		if !_request.has("machine_setups"):
+			_request.machine_setups = {}
+		if !_request.machine_setups.has(goal.recipe):
+			_request.machine_setups[goal.recipe] = []
+		var setup: Dictionary = {"machine": selection.machine, "setup": selection.setup, "configuration": selection.configuration}
+		if !setup in _request.machine_setups[goal.recipe]:
+			_request.machine_setups[goal.recipe].append(setup)
+	if !_request.has("configurations"):
+		_request.configurations = {}
+	if pin && goal.kind != "capacity":
+		_request.configurations[goal.recipe] = selection.configuration
+	else:
+		_request.configurations.erase(goal.recipe)
+	_recalculate()
+
+
 func _replication_changed(enabled: bool) -> void:
 	_remember()
 	_request.replication = enabled
@@ -203,6 +241,10 @@ func _recalculate() -> void:
 
 func _calculated(result: Dictionary) -> void:
 	%Cancel.disabled = true
+	if _job_kind == "preview_configuration":
+		%GoalEditor.show_preview(result)
+		status.text = "Configuration preview updated. Apply the goal to recalculate its support."
+		return
 	if _job_kind in ["import_world", "correct_world"]:
 		var apply_empty: bool = _job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("goals", []).is_empty()
 		_remember()
@@ -290,10 +332,12 @@ func _render_plan(result: Dictionary) -> void:
 		_selected = ""
 		inspector.text = "Select a recipe and add a goal to start planning."
 		%RemoveGoal.disabled = true
+		%EditGoal.disabled = true
 
 
 func _select_node(node: Node) -> void:
 	if node is GraphFrame:
+		%EditGoal.disabled = true
 		_selected = String(node.name)
 		inspector.text = "[font_size=20]%s[/font_size]\n\nDrag the title to move this group and its members. Resize a border to change membership without moving recipes.\n\nA recipe belongs to the smallest group containing its center. Equal-sized overlaps use the group's stable ID.\n\n%d member nodes" % [node.title, _members.values().count(String(node.name))]
 		%RemoveGoal.text = "Remove group"
@@ -302,6 +346,7 @@ func _select_node(node: Node) -> void:
 	if !(node is PlannerRecipeNode):
 		return
 	_selected = node.recipe_id
+	%EditGoal.disabled = false
 	var line: Dictionary = node.allocation
 	var text := "[font_size=20]%s[/font_size]\n\n%d × %s\n\n[b]Production[/b]\n" % [node.title, int(line.machines), line.machine]
 	for flow: Dictionary in line.outputs:
@@ -532,6 +577,9 @@ func _cancel() -> void:
 
 
 func _failed(message: String) -> void:
+	if _job_kind == "preview_configuration":
+		%GoalEditor.show_error(message)
+		return
 	%Feedback.error()
 	%Cancel.disabled = true
 	status.text = message

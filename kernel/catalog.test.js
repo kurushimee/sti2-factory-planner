@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import loadHighs from 'highs';
 import {configureRecipe, prepareDataset} from './catalog.js';
 import {solveFactory} from './planner.js';
+import {compileConfiguration} from './configuration.js';
 
 const machine = {id: 'press', status: 'supported', mechanic: 'mi_crafter', recipe_type: 'press', base_eu: 8, max_eu: 32,
   upgrades: ['upgrade'], upgrade_limit: 3};
@@ -46,4 +47,17 @@ test('unverified conditions and unresolved catalyst choices remain explicit excl
   assert.match(configureRecipe({...recipe, catalysts: [{choices: ['a', 'b'], amount: 1}]}, dataset).unsupported, /reusable ingredient/);
   const chosen = configureRecipe({...recipe, catalysts: [{choices: ['a', 'b'], amount: 1}]}, dataset, {catalysts: {'plate#0': 'b'}});
   assert.deepEqual(chosen.configurations[0].startup_inputs, [{resource: 'b', amount: 1}]);
+});
+
+test('complete capacity targets compile their explicit array loadouts without enumerating others', () => {
+  const array = {...machine, id: 'array', mechanic: 'mi_array', shape_capacities: [8, 16, 32, 64],
+    eligible_machines: ['press'], contained_recipe_types: {press: 'press'}, energy_multiplier: 1};
+  const setup = {contained_machine: 'press', contained_count: 16, batch: 16, shape: 1};
+  const configuration = compileConfiguration({...recipe, ...recipe.process}, array, setup);
+  const configured = configureRecipe(recipe, {...dataset, machines: [machine, array]}, {
+    goals: [{recipe: recipe.id, kind: 'capacity', configuration: configuration.id, machines: 2}],
+    machine_setups: {[recipe.id]: [{machine: 'array', setup}]}, available_upgrades: ['upgrade'],
+  });
+  assert.equal(configured.configurations.length, 1);
+  assert.equal(configured.configurations[0].id, configuration.id);
 });

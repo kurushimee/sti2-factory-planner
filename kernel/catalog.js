@@ -35,7 +35,7 @@ function *setups(machine, upgrades) {
   }
 }
 
-export function configureRecipe(recipe, dataset, request = {}) {
+export function configureRecipe(recipe, dataset, request = {}, explicitOnly = false) {
   if ((recipe.requires_obtained ?? []).some(resource => !request.obtained_resources?.includes(resource))) return {...recipe, unsupported: 'This route requires an item the player has already obtained.'};
   if (!recipe.process || recipe.unsupported) {
     const configurations = recipe.configurations.filter(value => enabled(value.machine, request.available_machines ?? dataset.default_machines, request.disabled_machines));
@@ -45,6 +45,16 @@ export function configureRecipe(recipe, dataset, request = {}) {
   const upgrades = (dataset.upgrades ?? []).filter(upgrade => enabled(upgrade.id, request.available_upgrades ?? [], request.disabled_upgrades));
   const configurations = new Map();
   const rejected = new Set();
+  const pinnedSelection = own(request.configurations, recipe.id);
+  const fixedIds = new Set(Array.isArray(pinnedSelection) ? pinnedSelection : pinnedSelection ? [pinnedSelection] : []);
+  for (const goal of request.goals ?? []) if (goal.recipe === recipe.id && goal.kind === 'capacity') fixedIds.add(goal.configuration);
+  const explicitSetupIds = new Set();
+  for (const value of own(request.machine_setups, recipe.id) ?? []) {
+    const machine = machines.find(candidate => candidate.id === value.machine);
+    if (machine) explicitSetupIds.add(compileConfiguration({...recipe, ...recipe.process}, machine, {...value.setup, compute_warmup: false}).id);
+  }
+  // A complete pinned setup leaves no loadout choice to search for this recipe.
+  const fixedOnly = fixedIds.size > 0 && [...fixedIds].every(id => explicitSetupIds.has(id));
   const allowedConditions = new Set(['extended_industrialization:runtime_generated_flag', 'modern_industrialization:adjacent_block', 'modern_industrialization:dimension', 'modern_industrialization:biome']);
   for (const condition of recipe.conditions ?? []) {
     if (!allowedConditions.has(condition.type)) return {...recipe, unsupported: `No condition adapter exists for ${condition.type}.`};
@@ -56,7 +66,7 @@ export function configureRecipe(recipe, dataset, request = {}) {
     if (machine.recipe_type !== recipe.process.type && !Object.values(machine.contained_recipe_types ?? {}).includes(recipe.process.type)) continue;
     const matched = machine.mechanic === 'mi_array' ? {...machine, eligible_machines: machine.eligible_machines.filter(id => machine.contained_recipe_types[id] === recipe.process.type && enabled(id, request.available_machines ?? dataset.default_machines, request.disabled_machines))} : machine;
     const explicit = (own(request.machine_setups, recipe.id) ?? []).filter(value => value.machine === machine.id).map(value => value.setup);
-    for (const setup of concatenate(explicit, setups(matched, upgrades))) {
+    for (const setup of concatenate(explicit, explicitOnly || fixedOnly ? [] : setups(matched, upgrades))) {
       try {
         const configuration = compileConfiguration({...recipe, ...recipe.process}, matched, {...setup, compute_warmup: false});
         configuration.conditions = recipe.conditions ?? [];

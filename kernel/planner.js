@@ -274,7 +274,8 @@ export function solveFactory(highs, dataset, request) {
     const choices = branches.pop();
     const model = compileFactory(dataset, request, choices);
     lastExclusions = model.exclusions;
-    const solution = highs.solve(model.text, {output_flag: false, time_limit: Math.max(0.01, (deadline - Date.now()) / 1000), mip_rel_gap: 0});
+    const solution = highs.solve(model.text, {output_flag: false, time_limit: Math.max(0.01, (deadline - Date.now()) / 1000),
+      mip_rel_gap: 0, mip_feasibility_tolerance: 1e-9, primal_feasibility_tolerance: 1e-9});
     visited++;
     if (solution.Status === 'Infeasible') continue;
     if (solution.Status !== 'Optimal') return {status: 'limit', solver_status: solution.Status, optimal: false, incumbent: best, branches: visited};
