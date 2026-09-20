@@ -845,6 +845,180 @@
       ]
     }
   },
+  "crafting_rules_count": 7301,
+  "crafting_samples_unavailable": 46,
+  "crafting_samples": [
+    {
+      "id": "minecraft:cake",
+      "class": "net.minecraft.world.item.crafting.ShapedRecipe",
+      "output": {
+        "id": "minecraft:cake",
+        "count": 1
+      },
+      "base_slots": [
+        {
+          "slot": 0,
+          "input": {
+            "id": "minecraft:milk_bucket",
+            "count": 1
+          },
+          "remainder": {
+            "id": "minecraft:bucket",
+            "count": 1
+          }
+        },
+        {
+          "slot": 1,
+          "input": {
+            "id": "minecraft:milk_bucket",
+            "count": 1
+          },
+          "remainder": {
+            "id": "minecraft:bucket",
+            "count": 1
+          }
+        },
+        {
+          "slot": 2,
+          "input": {
+            "id": "minecraft:milk_bucket",
+            "count": 1
+          },
+          "remainder": {
+            "id": "minecraft:bucket",
+            "count": 1
+          }
+        },
+        {
+          "slot": 3,
+          "input": {
+            "id": "minecraft:sugar",
+            "count": 1
+          }
+        },
+        {
+          "slot": 4,
+          "input": {
+            "id": "minecraft:egg",
+            "count": 1
+          }
+        },
+        {
+          "slot": 5,
+          "input": {
+            "id": "minecraft:sugar",
+            "count": 1
+          }
+        },
+        {
+          "slot": 6,
+          "input": {
+            "id": "minecraft:wheat",
+            "count": 1
+          }
+        },
+        {
+          "slot": 7,
+          "input": {
+            "id": "minecraft:wheat",
+            "count": 1
+          }
+        },
+        {
+          "slot": 8,
+          "input": {
+            "id": "minecraft:wheat",
+            "count": 1
+          }
+        }
+      ],
+      "remainder_implementations": [
+        "net.minecraft.world.item.crafting.Recipe"
+      ]
+    },
+    {
+      "id": "minecraft:torch",
+      "class": "net.minecraft.world.item.crafting.ShapedRecipe",
+      "output": {
+        "id": "minecraft:torch",
+        "count": 4
+      },
+      "base_slots": [
+        {
+          "slot": 0,
+          "input": {
+            "id": "minecraft:coal",
+            "count": 1
+          }
+        },
+        {
+          "slot": 1,
+          "input": {
+            "id": "minecraft:stick",
+            "count": 1
+          }
+        }
+      ],
+      "remainder_implementations": [
+        "net.minecraft.world.item.crafting.Recipe"
+      ]
+    },
+    {
+      "id": "modern_industrialization:iron_plate_from_hammer",
+      "class": "dev.latvian.mods.kubejs.recipe.special.ShapelessKubeJSRecipe",
+      "output": {
+        "id": "modern_industrialization:iron_plate",
+        "count": 1
+      },
+      "base_slots": [
+        {
+          "slot": 0,
+          "input": {
+            "id": "minecraft:iron_ingot",
+            "count": 1
+          }
+        },
+        {
+          "slot": 1,
+          "input": {
+            "id": "minecraft:iron_ingot",
+            "count": 1
+          }
+        },
+        {
+          "slot": 2,
+          "input": {
+            "id": "minecraft:iron_ingot",
+            "count": 1
+          }
+        },
+        {
+          "slot": 3,
+          "input": {
+            "id": "minecraft:iron_ingot",
+            "count": 1
+          }
+        },
+        {
+          "slot": 4,
+          "input": {
+            "id": "modern_industrialization:iron_hammer",
+            "count": 1
+          },
+          "remainder": {
+            "id": "modern_industrialization:iron_hammer",
+            "count": 1,
+            "components": {
+              "minecraft:damage": 50
+            }
+          }
+        }
+      ],
+      "remainder_implementations": [
+        "dev.latvian.mods.kubejs.recipe.special.ShapelessKubeJSRecipe"
+      ]
+    }
+  ],
   "loaded_mods": [
     {
       "id": "c2me_fixes_worldgen_threading_issues",

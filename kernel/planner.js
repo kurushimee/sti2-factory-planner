@@ -1,6 +1,7 @@
 import {allocateFlows} from './flows.js';
 import {resolveGoals} from './goals.js';
 import {startupRequirements} from './startup.js';
+import {prepareDataset} from './catalog.js';
 
 const ENERGY = 'energy:eu';
 
@@ -118,6 +119,17 @@ export function compileFactory(dataset, request, routeChoices = {}) {
           constraints.push(`ingredient_${index}_${slot}: ${expression(alternatives)} = 0`);
         }
       }
+      const returnTerms = [];
+      for (const term of inputTerms) {
+        const returns = own(allInputs[term.slot].returns, term.resource) ?? [];
+        for (const returned of returns) {
+          if (!resources.has(returned.resource) || returned.resource === ENERGY) throw new Error(`Invalid returned material in ${recipe.id}.`);
+          nonnegative(returned.amount, 'Returned amount per input unit');
+          const coefficient = term.coefficient * returned.amount;
+          add(rows.get(returned.resource), term.variable, coefficient);
+          returnTerms.push({resource: returned.resource, variable: term.variable, coefficient});
+        }
+      }
       for (const flow of recipe.outputs) add(rows.get(flow.resource), operation, flow.amount);
       if (energy) add(rows.get(ENERGY), operation, -energy);
       if (idle) add(rows.get(ENERGY), machine, -idle * 20);
@@ -138,7 +150,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
         if (dispatch.minimum !== undefined) constraints.push(`dispatch_min_${index}: ${operation} >= ${nonnegative(dispatch.minimum, 'Minimum operation rate')}`);
         if (dispatch.maximum !== undefined) constraints.push(`dispatch_max_${index}: ${operation} <= ${nonnegative(dispatch.maximum, 'Maximum operation rate')}`);
       }
-      lines.push({recipe, configuration, operation, machine, inputTerms});
+      lines.push({recipe, configuration, operation, machine, inputTerms, returnTerms});
       hasConfiguration = true;
     }
     if (hasConfiguration) {
@@ -209,7 +221,8 @@ function decode(model, solution) {
     utilization: value(line.operation) / (Math.round(value(line.machine)) * line.configuration.operations_per_second),
     inputs: combineFlows(line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable)}))),
     ingredient_choices: line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable), slot: term.slot})).filter(flow => flow.rate > 1e-12),
-    outputs: combineFlows(line.recipe.outputs.map(flow => ({resource: flow.resource, rate: flow.amount * value(line.operation)}))),
+    outputs: combineFlows([...line.recipe.outputs.map(flow => ({resource: flow.resource, rate: flow.amount * value(line.operation)})),
+      ...line.returnTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable)}))]),
     power_eu_per_tick: value(line.operation) * (line.configuration.eu_per_operation ?? 0) / 20 + Math.round(value(line.machine)) * (line.configuration.idle_eu_per_tick ?? 0),
     generation_capacity_eu_per_tick: line.recipe.outputs.filter(flow => flow.resource === ENERGY).reduce((sum, flow) => sum + flow.amount, 0) * Math.round(value(line.machine)) * line.configuration.operations_per_second / 20,
     configuration_details: line.configuration,
@@ -247,6 +260,7 @@ function decode(model, solution) {
 }
 
 export function solveFactory(highs, dataset, request) {
+  dataset = prepareDataset(dataset, request);
   const resolved = resolveGoals(dataset, request);
   request = resolved.request;
   const deadline = Date.now() + (request.time_limit_ms ?? 20000);

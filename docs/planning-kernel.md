@@ -16,6 +16,10 @@ The returned plan describes a steady-state balance. It does not yet establish bo
 
 ## Capacity rules
 
+`kernel/catalog.js` compiles configurations from the portable machine and process records. It follows every producer of a needed resource, including coproduct suppliers, and then follows their inputs and power requirements. Available-machine and upgrade lists constrain the generated loadouts. Every permitted upgrade count and batch size is considered. Arrays enumerate contained counts and supported shapes when enabled. Equal steady-state capacity and operating inputs can share the cheaper build option; explicit choices and installed constraints preserve alternatives. Startup and full construction costs are not part of this dominance comparison yet.
+
+Ingredient flows may include `returns`, keyed by the chosen input resource. Each returned amount is per consumed input unit. The model ties that output to the actual ingredient-choice variable, so choosing one container cannot create another container's remainder. Results and graph flows include these returned materials.
+
 `kernel/capacity.js` implements the independently captured MI crafter power samples and the Tesseract percentage-batching transform. Capacities use whole ticks. Upgrade compatibility and count limits are checked against supplied machine records. Batching transforms use Java float rounding before the integer cast, matching the source's arithmetic. Efficiency increases once per completed operation or batch. The output buffer calculation includes delivery before the first completed recipe, including machines without a warm-up phase.
 
 The MI evaluator assumes continuous ingredients, space for outputs, and no overdrive or lubricant. Its ordinary and batching mechanics are named `mi_crafter` and `mi_batch`. Applying them to generators, alternate efficiency hooks, steam catalysts, or a different addon without an adapter is an error. The computed per-machine output deficit is not itself a whole-factory buffer schedule.

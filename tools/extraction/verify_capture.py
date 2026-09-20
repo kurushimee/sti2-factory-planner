@@ -87,6 +87,13 @@ def verify(runtime: dict, probes: dict) -> dict:
     boilers = {key: machines[key]["coal_warmup_probe"] for key in ("modern_industrialization:bronze_boiler", "modern_industrialization:steel_boiler")}
     if [value["first_full_output_tick"] for value in boilers.values()] != [3906, 2417]:
         raise ValueError("The loaded cold-boiler warm-up changed.")
+    crafting = probes["crafting_rules"]
+    if crafting["failures"] or len(crafting["recipes"]) != 7301:
+        raise ValueError("The crafting probe failed or its coverage changed.")
+    crafting_index = {entry["id"]: entry for entry in crafting["recipes"]}
+    hammer = crafting_index["modern_industrialization:iron_plate_from_hammer"]
+    if hammer["base_slots"][4]["remainder"].get("components") != {"minecraft:damage": 50}:
+        raise ValueError("The loaded hammer crafting action changed.")
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -106,6 +113,9 @@ def verify(runtime: dict, probes: dict) -> dict:
         "array_rules": arrays,
         "blast_furnace_coils": coil_tiers,
         "boiler_warmup": boilers,
+        "crafting_rules_count": len(crafting["recipes"]),
+        "crafting_samples_unavailable": sum("unavailable" in entry for entry in crafting["recipes"]),
+        "crafting_samples": [crafting_index[key] for key in ("minecraft:cake", "minecraft:torch", "modern_industrialization:iron_plate_from_hammer")],
         "loaded_mods": probes["loaded_mods"],
         "extraction_failures": 0,
         "normalized_dataset_complete": False,

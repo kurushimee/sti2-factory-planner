@@ -1,3 +1,5 @@
+import {machineCapacity} from './capacity.js';
+
 export function startupRequirements(lines) {
   const resources = new Map();
   const incomplete = [];
@@ -45,4 +47,3 @@ export function startupRequirements(lines) {
       'Probabilistic recipes use expected quantities, not a guarantee against random shortages.',
       'An idle restart may require replenishing this stock. Scheduling repeated passive restarts is not established by this bound.']};
 }
-import {machineCapacity} from './capacity.js';

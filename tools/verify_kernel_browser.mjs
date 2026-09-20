@@ -45,6 +45,8 @@ const server = createServer(async (incoming, response) => {
       '/kernel/goals.js': 'kernel/goals.js',
       '/kernel/startup.js': 'kernel/startup.js',
       '/kernel/capacity.js': 'kernel/capacity.js',
+      '/kernel/catalog.js': 'kernel/catalog.js',
+      '/kernel/configuration.js': 'kernel/configuration.js',
       '/vendor/highs.mjs': 'node_modules/highs/build/highs.mjs', '/vendor/highs.wasm': 'node_modules/highs/build/highs.wasm',
     };
     if (!files[path]) { response.writeHead(404); response.end(); return; }

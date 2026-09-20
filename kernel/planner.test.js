@@ -15,6 +15,21 @@ function line(result, id) { return result.lines.find(entry => entry.recipe === i
 function supply(result, id) { return result.external.find(entry => entry.resource === id)?.rate ?? 0; }
 function close(actual, expected) { assert(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`); }
 
+test('alternative ingredient remainders follow the selected input without creating other containers', () => {
+  const data = dataset(['bottle', 'can', 'empty_bottle', 'empty_can', 'product'], [
+    recipe('consume', 'product', [{choices: ['bottle', 'can'], amount: 2,
+      returns: {bottle: [{resource: 'empty_bottle', amount: 1}], can: [{resource: 'empty_can', amount: 1}]}}], [flow('product', 1)]),
+  ]);
+  const result = solveFactory(highs, data, {goals: [{resource: 'product', rate: 3}],
+    external: [{resource: 'bottle', cost: 2}, {resource: 'can', cost: 1}]});
+  assert.equal(result.status, 'optimal');
+  assert.equal(supply(result, 'can'), 6);
+  assert.equal(supply(result, 'bottle'), 0);
+  assert.deepEqual(line(result, 'consume').outputs, [{resource: 'product', rate: 3}, {resource: 'empty_can', rate: 6}]);
+  const fixed = solveFactory(highs, data, {goals: [{resource: 'product', rate: 3}], ingredients: {'consume#0': 'bottle'}, external: [{resource: 'bottle'}]});
+  assert.equal(fixed.balances.find(value => value.resource === 'empty_bottle').net, 6);
+});
+
 test('shared and independent intermediate goals retain their combined demand', () => {
   const data = dataset(['ore', 'plate', 'gear', 'wire'], [
     recipe('smelt', 'plate', [flow('ore', 1)], [flow('plate', 1)], 4),

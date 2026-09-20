@@ -115,7 +115,7 @@ def normalize_recipe(entry, tags, resolutions=None, variants=None):
 
 
 def normalize(runtime, probes):
-    if runtime["failures"] or probes["failures"] or probes.get("item_rules", {}).get("failures") or probes.get("ingredient_rules", {}).get("failures"):
+    if runtime["failures"] or probes["failures"] or probes.get("item_rules", {}).get("failures") or probes.get("ingredient_rules", {}).get("failures") or probes.get("crafting_rules", {}).get("failures"):
         raise ValueError("Resolve capture failures before normalizing the dataset.")
     variants = {}
     resolutions = {canonical({key: value for key, value in entry["ingredient"].items() if key not in ("amount", "probability")}): entry
@@ -148,6 +148,7 @@ def normalize(runtime, probes):
             "machine_rules": machine_rules(probes["machines"], runtime["data_maps"]["modern_industrialization:machine_upgrades"]),
             "data_maps": runtime["data_maps"], "loaded_mods": probes["loaded_mods"],
             "power_units": probes.get("power_units", {}),
+            "crafting_rules": probes.get("crafting_rules", {}),
             "coverage": [{"type": key[0], "status": key[1], "count": count}
                          for key, count in sorted(coverage.items())]}
 

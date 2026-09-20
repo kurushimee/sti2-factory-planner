@@ -206,6 +206,76 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonObject craftingRules(MinecraftServer server) throws Exception {
+        var ops = server.registryAccess().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
+        var records = new JsonArray();
+        var failures = new JsonArray();
+        for (var holder : server.getRecipeManager().getAllRecipesFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING)) {
+            var recipe = holder.value();
+            if (!(recipe instanceof net.minecraft.world.item.crafting.ShapedRecipe)
+                    && !(recipe instanceof net.minecraft.world.item.crafting.ShapelessRecipe)) continue;
+            var record = new JsonObject();
+            record.addProperty("id", holder.id().toString());
+            record.addProperty("class", recipe.getClass().getName());
+            try {
+                var ingredients = recipe.getIngredients();
+                int width = recipe instanceof net.minecraft.world.item.crafting.ShapedRecipe shaped ? shaped.getWidth() : 3;
+                int height = recipe instanceof net.minecraft.world.item.crafting.ShapedRecipe shaped ? shaped.getHeight() : 3;
+                var base = new java.util.ArrayList<net.minecraft.world.item.ItemStack>();
+                boolean emptyIngredient = false;
+                for (var ingredient : ingredients) {
+                    var options = ingredient.getItems();
+                    if (!ingredient.isEmpty() && options.length == 0) emptyIngredient = true;
+                    base.add(options.length == 0 ? net.minecraft.world.item.ItemStack.EMPTY : options[0].copyWithCount(1));
+                }
+                while (base.size() < width * height) base.add(net.minecraft.world.item.ItemStack.EMPTY);
+                if (emptyIngredient) {
+                    record.addProperty("unavailable", "An ingredient has no displayed matching stacks.");
+                    records.add(record);
+                    continue;
+                }
+                var input = net.minecraft.world.item.crafting.CraftingInput.of(width, height, base);
+                if (!recipe.matches(input, server.overworld())) {
+                    record.addProperty("unavailable", "The displayed base ingredients do not match this recipe's extra requirements.");
+                    records.add(record);
+                    continue;
+                }
+                var output = recipe.assemble(input, server.registryAccess());
+                if (output.isEmpty()) {
+                    record.addProperty("unavailable", "This input combination produces an empty result.");
+                    records.add(record);
+                    continue;
+                }
+                record.add("output", net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, output).getOrThrow());
+                var remaining = recipe.getRemainingItems(input);
+                var samples = new JsonArray();
+                for (int slot = 0; slot < base.size(); slot++) {
+                    if (base.get(slot).isEmpty()) continue;
+                    var sample = new JsonObject();
+                    sample.addProperty("slot", slot);
+                    sample.add("input", net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, base.get(slot)).getOrThrow());
+                    if (!remaining.get(slot).isEmpty()) sample.add("remainder", net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, remaining.get(slot)).getOrThrow());
+                    samples.add(sample);
+                }
+                record.add("base_slots", samples);
+                var declarations = new JsonArray();
+                for (var method : recipe.getClass().getMethods()) {
+                    if (method.getName().equals("getRemainingItems") && !method.isBridge()) declarations.add(method.getDeclaringClass().getName());
+                }
+                record.add("remainder_implementations", declarations);
+                records.add(record);
+            } catch (Exception error) {
+                record.addProperty("error", error.toString());
+                failures.add(record);
+            }
+        }
+        var result = new JsonObject();
+        result.add("recipes", records);
+        result.add("failures", failures);
+        result.addProperty("scope", "One matching displayed input combination per shaped or shapeless recipe. Alternative combinations need separate rules or checks.");
+        return result;
+    }
+
     private static JsonArray shapes(Object target, MinecraftServer server) throws Exception {
         var result = new JsonArray();
         var seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<aztech.modern_industrialization.machines.multiblocks.ShapeTemplate, Boolean>());
@@ -411,6 +481,7 @@ public final class PlannerProbe {
         result.add("arithmetic", arithmetic);
         result.add("item_rules", itemRules(server));
         result.add("ingredient_rules", ingredientRules(server));
+        result.add("crafting_rules", craftingRules(server));
         var power = new JsonObject();
         power.addProperty("fe_per_eu", aztech.modern_industrialization.config.MIServerConfig.INSTANCE.forgeEnergyPerEu.getAsInt());
         power.addProperty("fe_per_ae", appeng.api.config.PowerUnit.AE.convertTo(appeng.api.config.PowerUnit.FE, 1));
