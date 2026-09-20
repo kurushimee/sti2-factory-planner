@@ -1,6 +1,6 @@
 import {machineCapacity} from './capacity.js';
 
-export function compileConfiguration(recipe, machine, setup = {}) {
+export function compileConfiguration(recipe, machine, setup = {}, capacityCache) {
   if (!machine.id || !recipe.id) throw new Error('A machine configuration needs machine and recipe identities.');
   const recipeType = machine.mechanic === 'mi_array' ? machine.contained_recipe_types?.[setup.contained_machine] : machine.recipe_type;
   if (recipe.type && recipeType && recipe.type !== recipeType) throw new Error('The selected machine cannot run this recipe type.');
@@ -12,7 +12,15 @@ export function compileConfiguration(recipe, machine, setup = {}) {
     if (!machine.steel_hatch_variant) throw new Error('This machine has no steel-hatch tier.');
     machine = {...machine, ...machine.steel_hatch_variant};
   }
-  const capacity = machineCapacity(recipe, machine, setup);
+  const cacheKey = capacityCache ? JSON.stringify([machine.id, recipe.duration_ticks, recipe.eu_per_tick, setup]) : null;
+  let capacity = capacityCache?.get(cacheKey);
+  if (!capacity) {
+    capacity = machineCapacity(recipe, machine, setup);
+    if (capacityCache) {
+      if (capacityCache.size >= 25000) capacityCache.delete(capacityCache.keys().next().value);
+      capacityCache.set(cacheKey, capacity);
+    }
+  }
   const energyResource = machine.energy_resource ?? 'energy:eu';
   const bill = [{resource: `item:${machine.id}`, amount: 1}];
   for (const flow of machine.build_inputs ?? []) bill.push({...flow});

@@ -8,11 +8,22 @@ function own(record, key) { return record && Object.hasOwn(record, key) ? record
 
 function *concatenate(first, second) { yield* first; yield* second; }
 
-function *setups(machine, upgrades, preserveCounts) {
+function *setups(machine, upgrades, preserveCounts, process) {
   const loadouts = [{upgrade_count: 0}];
-  for (const upgrade of upgrades) {
-    if (!machine.upgrades?.includes(upgrade.id)) continue;
-    for (let count = 1; count <= machine.upgrade_limit; count++) loadouts.push({upgrade, upgrade_count: count});
+  const maximumBatch = Math.max(machine.batch_limit ?? 1, ...(machine.shape_capacities ?? []), ...(machine.batch_tiers ?? []).map(tier => tier.batch_limit));
+  const multiplier = Math.max(machine.energy_multiplier ?? 1, ...(machine.batch_tiers ?? []).map(tier => tier.energy_multiplier));
+  const totalEnergy = process.duration_ticks * process.eu_per_tick;
+  const saturationBound = Math.max(totalEnergy, Math.trunc(Math.fround(Math.fround(totalEnergy * maximumBatch) * Math.fround(multiplier))));
+  const compatible = upgrades.filter(upgrade => machine.upgrades?.includes(upgrade.id));
+  for (const upgrade of compatible) {
+    if (!preserveCounts && machine.mechanic !== 'ae_molecular_assembler' && compatible.some(other => other !== upgrade &&
+      other.extra_max_eu >= upgrade.extra_max_eu && (other.build_cost ?? 1) <= (upgrade.build_cost ?? 1) &&
+      (other.extra_max_eu > upgrade.extra_max_eu || (other.build_cost ?? 1) < (upgrade.build_cost ?? 1)))) continue;
+    for (let count = 1; count <= machine.upgrade_limit; count++) {
+      // Once the upgrades alone cover every possible batch in one tick, further copies cannot help.
+      if (!preserveCounts && upgrade.extra_max_eu > 0 && Number.isFinite(saturationBound) && count > Math.max(1, Math.ceil(saturationBound / upgrade.extra_max_eu))) break;
+      loadouts.push({upgrade, upgrade_count: count});
+    }
   }
   const shapes = Math.max(machine.batch_tiers?.length ?? 1, machine.recipe_eu_limits?.length ?? 1, machine.fluid_output_limits?.length ?? 1);
   for (const loadout of loadouts) {
@@ -37,7 +48,7 @@ function *setups(machine, upgrades, preserveCounts) {
   }
 }
 
-export function configureRecipe(recipe, dataset, request = {}, explicitOnly = false, checkBudget = () => {}) {
+export function configureRecipe(recipe, dataset, request = {}, explicitOnly = false, checkBudget = () => {}, capacityCache) {
   if ((recipe.requires_obtained ?? []).some(resource => !request.obtained_resources?.includes(resource))) return {...recipe, unsupported: 'This route requires an item the player has already obtained.'};
   if (!recipe.process || recipe.unsupported) {
     const configurations = recipe.configurations.filter(value => enabled(value.machine, request.available_machines ?? dataset.default_machines, request.disabled_machines));
@@ -70,10 +81,10 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
     if (machine.recipe_type !== recipe.process.type && !Object.values(machine.contained_recipe_types ?? {}).includes(recipe.process.type)) continue;
     const matched = machine.mechanic === 'mi_array' ? {...machine, eligible_machines: machine.eligible_machines.filter(id => machine.contained_recipe_types[id] === recipe.process.type && enabled(id, request.available_machines ?? dataset.default_machines, request.disabled_machines))} : machine;
     const explicit = (own(request.machine_setups, recipe.id) ?? []).filter(value => value.machine === machine.id).map(value => value.setup);
-    for (const setup of concatenate(explicit, explicitOnly || fixedOnly ? [] : setups(matched, upgrades, preserveCounts))) {
+    for (const setup of concatenate(explicit, explicitOnly || fixedOnly ? [] : setups(matched, upgrades, preserveCounts, recipe.process))) {
       checkBudget();
       try {
-        const configuration = compileConfiguration({...recipe, ...recipe.process}, matched, {...setup, compute_warmup: false});
+        const configuration = compileConfiguration({...recipe, ...recipe.process}, matched, {...setup, compute_warmup: false}, capacityCache);
         configuration.conditions = recipe.conditions ?? [];
         configuration.startup_inputs = [];
         for (const [index, catalyst] of (recipe.catalysts ?? []).entries()) {
@@ -88,7 +99,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
       } catch (error) { rejected.add(error.message); }
     }
   }
-  // Identical rates and operating inputs leave the build objective as the only steady-state difference.
+  // Compare capacity only when operating inputs, conditions, and retained startup materials match.
   // Explicit setups remain available even when another configuration has a lower build cost.
   const explicitIds = new Set((own(request.machine_setups, recipe.id) ?? []).map(value => {
     const machine = machines.find(candidate => candidate.id === value.machine);
@@ -98,13 +109,21 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
   for (const goal of request.goals ?? []) if (goal.recipe === recipe.id && goal.configuration) explicitIds.add(goal.configuration);
   const pinned = own(request.configurations, recipe.id);
   for (const id of (Array.isArray(pinned) ? pinned : pinned ? [pinned] : [])) explicitIds.add(id);
-  const best = new Map();
+  const comparable = new Map();
   for (const configuration of configurations.values()) {
     if (constrainedIds.has(configuration.id)) continue;
-    const key = JSON.stringify([configuration.operations_per_second, configuration.eu_per_operation, configuration.inputs, configuration.conditions, configuration.startup_inputs]);
-    if (!best.has(key) || best.get(key).build_cost > configuration.build_cost) best.set(key, configuration);
+    const key = JSON.stringify([configuration.eu_per_operation, configuration.inputs, configuration.conditions, configuration.startup_inputs]);
+    if (!comparable.has(key)) comparable.set(key, []);
+    comparable.get(key).push(configuration);
   }
-  const kept = new Map([...best.values()].map(value => [value.id, value]));
+  const kept = new Map();
+  for (const candidates of comparable.values()) {
+    candidates.sort((a, b) => b.operations_per_second - a.operations_per_second || a.build_cost - b.build_cost);
+    let cost = Infinity;
+    for (const candidate of candidates) {
+      if (candidate.build_cost < cost) { kept.set(candidate.id, candidate); cost = candidate.build_cost; }
+    }
+  }
   for (const id of constrainedIds) if (configurations.has(id)) kept.set(id, configurations.get(id));
   for (const id of explicitIds) if (configurations.has(id)) kept.set(id, configurations.get(id));
   return {...recipe, configurations: [...kept.values()], configuration_diagnostics: [...rejected],
@@ -114,6 +133,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
 export function prepareDataset(dataset, request, checkBudget = () => {}) {
   if (!dataset.recipes.some(recipe => recipe.process) && !request.available_machines && !dataset.default_machines) return dataset;
   const producers = new Map();
+  const capacityCache = new Map();
   const selected = new Map();
   const needed = new Set((request.goals ?? []).map(goal => goal.resource));
   if (request.overhead_eu_per_tick) needed.add('energy:eu');
@@ -132,7 +152,7 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
       const pin = own(request.routes, recipe.primary);
       if (pin && pin !== recipe.id) continue;
       checkBudget();
-      const configured = configureRecipe(recipe, dataset, request, false, checkBudget);
+      const configured = configureRecipe(recipe, dataset, request, false, checkBudget, capacityCache);
       selected.set(recipe.id, configured);
       if (configured.unsupported) continue;
       for (const flow of configured.inputs) for (const resource of flow.choices ?? [flow.resource]) addResource(resource);

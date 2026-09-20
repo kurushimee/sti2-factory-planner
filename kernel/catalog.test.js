@@ -89,3 +89,30 @@ test('configuration preparation observes the calculation budget inside loadout e
   assert.equal(result.optimal, false);
   assert.ok(performance.now() - start < 1000);
 });
+
+test('upgrade dominance and one-tick saturation preserve the full cost-capacity frontier', () => {
+  const fast = {id: 'fast', extra_max_eu: 1000000, build_cost: 1};
+  const data = {...dataset, upgrades: [...dataset.upgrades, fast], machines: [{...machine, upgrades: ['upgrade', 'fast'], upgrade_limit: 64}]};
+  const request = {available_upgrades: ['upgrade', 'fast']};
+  let count = 0;
+  const compact = configureRecipe(recipe, data, request, false, () => count++);
+  assert.equal(count, 2);
+  const full = configureRecipe(recipe, data, {...request, limits: {[`${recipe.id}|unused`]: 0}});
+  const frontier = result => result.configurations.map(value => [value.operations_per_second, value.eu_per_operation, value.build_cost]);
+  assert.deepEqual(frontier(compact), frontier(full));
+  const expensive = {...data, upgrades: [dataset.upgrades[0], {...fast, build_cost: 10}]};
+  const choices = configureRecipe(recipe, expensive, request).configurations;
+  assert.ok(choices.some(value => value.setup.upgrade?.id === 'upgrade'));
+  assert.ok(choices.some(value => value.setup.upgrade?.id === 'fast'));
+  const setup = {upgrade: dataset.upgrades[0], upgrade_count: 2};
+  const pinned = configureRecipe(recipe, data, {...request, machine_setups: {[recipe.id]: [{machine: machine.id, setup}]}});
+  assert.ok(pinned.configurations.some(value => value.setup.upgrade?.id === 'upgrade' && value.setup.upgrade_count === 2));
+});
+
+test('capacity caching cannot transfer results between datasets with different machine rules', () => {
+  const request = {goals: [{resource: 'plate', rate: 2}]};
+  const original = prepareDataset(dataset, request).recipes[0].configurations[0];
+  const changed = prepareDataset({...dataset, machines: [{...machine, max_eu: 64}]}, request).recipes[0].configurations[0];
+  assert.equal(original.operations_per_second, 2);
+  assert.equal(changed.operations_per_second, 4);
+});
