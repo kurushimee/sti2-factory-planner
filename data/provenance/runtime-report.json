@@ -251,8 +251,467 @@
   "resource_count": 11805,
   "tag_count": 2347,
   "machine_count": 211,
+  "hatch_capacities": {
+    "modern_industrialization:bronze_item_input_hatch": {
+      "item_slots": [
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:bronze_item_output_hatch": {
+      "item_slots": [
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:steel_item_input_hatch": {
+      "item_slots": [
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:steel_item_output_hatch": {
+      "item_slots": [
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:advanced_item_input_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:advanced_item_output_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:turbo_item_input_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:turbo_item_output_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:highly_advanced_item_input_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:highly_advanced_item_output_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:bronze_fluid_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        4000
+      ]
+    },
+    "modern_industrialization:bronze_fluid_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        4000
+      ]
+    },
+    "modern_industrialization:steel_fluid_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        16000
+      ]
+    },
+    "modern_industrialization:steel_fluid_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        16000
+      ]
+    },
+    "modern_industrialization:advanced_fluid_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        64000
+      ]
+    },
+    "modern_industrialization:advanced_fluid_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        64000
+      ]
+    },
+    "modern_industrialization:turbo_fluid_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        256000
+      ]
+    },
+    "modern_industrialization:turbo_fluid_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        256000
+      ]
+    },
+    "modern_industrialization:highly_advanced_fluid_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        1024000
+      ]
+    },
+    "modern_industrialization:highly_advanced_fluid_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        1024000
+      ]
+    },
+    "modern_industrialization:lv_energy_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 19200,
+      "cable_eu_per_tick": 32
+    },
+    "modern_industrialization:lv_energy_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 19200,
+      "cable_eu_per_tick": 32
+    },
+    "modern_industrialization:mv_energy_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 76800,
+      "cable_eu_per_tick": 128
+    },
+    "modern_industrialization:mv_energy_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 76800,
+      "cable_eu_per_tick": 128
+    },
+    "modern_industrialization:hv_energy_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 614400,
+      "cable_eu_per_tick": 1024
+    },
+    "modern_industrialization:hv_energy_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 614400,
+      "cable_eu_per_tick": 1024
+    },
+    "modern_industrialization:ev_energy_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 4915200,
+      "cable_eu_per_tick": 8192
+    },
+    "modern_industrialization:ev_energy_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 4915200,
+      "cable_eu_per_tick": 8192
+    },
+    "modern_industrialization:superconductor_energy_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 76800000000,
+      "cable_eu_per_tick": 128000000
+    },
+    "modern_industrialization:superconductor_energy_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 76800000000,
+      "cable_eu_per_tick": 128000000
+    },
+    "modern_industrialization:nuclear_item_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "modern_industrialization:nuclear_fluid_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        64000,
+        64000,
+        64000
+      ]
+    },
+    "modern_industrialization:large_tank_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": []
+    },
+    "yet_another_industrialization:large_storage_unit_input_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": []
+    },
+    "yet_another_industrialization:large_storage_unit_output_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": []
+    },
+    "yet_another_industrialization:item_trash_can_hatch": {
+      "item_slots": [
+        64,
+        64
+      ],
+      "fluid_slots_mb": []
+    },
+    "yet_another_industrialization:fluid_trash_can_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [
+        16000
+      ]
+    },
+    "yet_another_industrialization:bronze_mixed_input_hatch": {
+      "item_slots": [
+        64
+      ],
+      "fluid_slots_mb": [
+        4000
+      ]
+    },
+    "yet_another_industrialization:bronze_mixed_output_hatch": {
+      "item_slots": [
+        64
+      ],
+      "fluid_slots_mb": [
+        4000
+      ]
+    },
+    "yet_another_industrialization:steel_mixed_input_hatch": {
+      "item_slots": [
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        16000
+      ]
+    },
+    "yet_another_industrialization:steel_mixed_output_hatch": {
+      "item_slots": [
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        16000
+      ]
+    },
+    "yet_another_industrialization:advanced_mixed_input_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        64000
+      ]
+    },
+    "yet_another_industrialization:advanced_mixed_output_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        64000
+      ]
+    },
+    "yet_another_industrialization:turbo_mixed_input_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        256000
+      ]
+    },
+    "yet_another_industrialization:turbo_mixed_output_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        256000
+      ]
+    },
+    "yet_another_industrialization:highly_advanced_mixed_input_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        1024000
+      ]
+    },
+    "yet_another_industrialization:highly_advanced_mixed_output_hatch": {
+      "item_slots": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "fluid_slots_mb": [
+        1024000
+      ]
+    },
+    "extended_industrialization:lv_tesla_receiver_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 19200,
+      "cable_eu_per_tick": 32
+    },
+    "extended_industrialization:mv_tesla_receiver_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 76800,
+      "cable_eu_per_tick": 128
+    },
+    "extended_industrialization:hv_tesla_receiver_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 614400,
+      "cable_eu_per_tick": 1024
+    },
+    "extended_industrialization:ev_tesla_receiver_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 4915200,
+      "cable_eu_per_tick": 8192
+    },
+    "extended_industrialization:superconductor_tesla_receiver_hatch": {
+      "item_slots": [],
+      "fluid_slots_mb": [],
+      "energy_eu": 76800000000,
+      "cable_eu_per_tick": 128000000
+    }
+  },
+  "boiler_shape_blocks": {
+    "large_steam_boiler": {
+      "modern_industrialization:bronze_plated_bricks": 24,
+      "modern_industrialization:bronze_machine_casing_pipe": 2,
+      "modern_industrialization:heatproof_machine_casing": 9
+    },
+    "advanced_large_steam_boiler": {
+      "modern_industrialization:bronze_plated_bricks": 32,
+      "modern_industrialization:bronze_machine_casing_pipe": 3,
+      "modern_industrialization:heatproof_machine_casing": 9
+    },
+    "high_pressure_large_steam_boiler": {
+      "modern_industrialization:clean_stainless_steel_machine_casing": 24,
+      "modern_industrialization:stainless_steel_machine_casing_pipe": 2,
+      "modern_industrialization:heatproof_machine_casing": 9
+    },
+    "high_pressure_advanced_large_steam_boiler": {
+      "modern_industrialization:clean_stainless_steel_machine_casing": 32,
+      "modern_industrialization:stainless_steel_machine_casing_pipe": 3,
+      "modern_industrialization:heatproof_machine_casing": 9
+    }
+  },
   "multiblock_part_types": 52,
-  "machines_with_shape_templates": 60,
+  "machines_with_shape_templates": 64,
   "arithmetic": [
     {
       "machine": "modern_industrialization:electric_macerator",

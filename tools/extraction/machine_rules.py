@@ -16,7 +16,8 @@ def machine_rules(capture, upgrades):
             record["shapes"] = machine["shapes"]
         if machine.get("role") == "multiblock_part":
             record.update(status="structural", role="multiblock_part", hatch_type=machine.get("hatch_type"),
-                          upgrades_steam_to_steel=machine.get("upgrades_steam_to_steel", False))
+                          upgrades_steam_to_steel=machine.get("upgrades_steam_to_steel", False),
+                          hatch_capacity=machine.get("hatch_capacity", {}))
         elif machine.get("water_pump_probe"):
             record.update(status="supported", mechanic="fixed_cycle", **machine["water_pump_probe"])
         elif machine.get("replication_probe"):

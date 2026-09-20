@@ -521,13 +521,16 @@ public final class PlannerProbe {
         var seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<aztech.modern_industrialization.machines.multiblocks.ShapeTemplate, Boolean>());
         for (Class<?> type = target.getClass(); type != null && !type.getName().startsWith("net.minecraft."); type = type.getSuperclass()) {
             for (var field : type.getDeclaredFields()) {
-                if (field.getType() != aztech.modern_industrialization.machines.multiblocks.ShapeTemplate[].class) continue;
+                boolean single = field.getType() == aztech.modern_industrialization.machines.multiblocks.ShapeTemplate.class;
+                if (!single && field.getType() != aztech.modern_industrialization.machines.multiblocks.ShapeTemplate[].class) continue;
                 field.setAccessible(true);
-                var templates = (aztech.modern_industrialization.machines.multiblocks.ShapeTemplate[]) field.get(target);
+                var templates = single
+                        ? new aztech.modern_industrialization.machines.multiblocks.ShapeTemplate[]{(aztech.modern_industrialization.machines.multiblocks.ShapeTemplate) field.get(target)}
+                        : (aztech.modern_industrialization.machines.multiblocks.ShapeTemplate[]) field.get(target);
                 if (templates == null) continue;
                 for (int index = 0; index < templates.length; index++) {
                     var template = templates[index];
-                    if (!seen.add(template)) continue;
+                    if (template == null || !seen.add(template)) continue;
                     var shape = new JsonObject();
                     shape.addProperty("field", field.getName());
                     shape.addProperty("index", index);
@@ -837,6 +840,20 @@ public final class PlannerProbe {
                     record.addProperty("role", "multiblock_part");
                     record.addProperty("hatch_type", hatch.getHatchType().id().toString());
                     record.addProperty("upgrades_steam_to_steel", hatch.upgradesToSteel());
+                    var capacities = new JsonObject();
+                    var itemSlots = new JsonArray();
+                    for (var slot : hatch.getInventory().getItemStacks()) itemSlots.add(slot.getCapacity());
+                    var fluidSlots = new JsonArray();
+                    for (var slot : hatch.getInventory().getFluidStacks()) fluidSlots.add(slot.getCapacity());
+                    capacities.add("item_slots", itemSlots);
+                    capacities.add("fluid_slots_mb", fluidSlots);
+                    if (hatch instanceof aztech.modern_industrialization.api.machine.holder.EnergyComponentHolder energy) {
+                        capacities.addProperty("energy_eu", energy.getEnergyComponent().getCapacity());
+                    }
+                    if (hatch instanceof aztech.modern_industrialization.api.energy.CableTierHolder cable) {
+                        capacities.addProperty("cable_eu_per_tick", cable.getCableTier().getEu());
+                    }
+                    record.add("hatch_capacity", capacities);
                 }
                 var shapeRecords = shapes(entity, server);
                 record.add("shapes", shapeRecords);
@@ -847,8 +864,11 @@ public final class PlannerProbe {
                 var componentFields = new JsonObject();
                 for (Object component : machine.components) {
                     if (component instanceof aztech.modern_industrialization.machines.components.ActiveShapeComponent) {
-                        shapeRecords = shapes(component, server);
-                        record.add("shapes", shapeRecords);
+                        var componentShapes = shapes(component, server);
+                        if (!componentShapes.isEmpty()) {
+                            shapeRecords = componentShapes;
+                            record.add("shapes", shapeRecords);
+                        }
                     }
                     components.add(component.getClass().getName());
                     componentFields.add(component.getClass().getName(), scalarFields(component));

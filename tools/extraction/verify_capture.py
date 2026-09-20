@@ -158,6 +158,24 @@ def verify(runtime: dict, probes: dict) -> dict:
         raise ValueError("The loaded hammer crafting action changed.")
     if [len(chapter["item_tasks"]) for chapter in probes["progression_chapters"]] != [29, 173, 127, 229, 214, 19, 115, 95]:
         raise ValueError("The released progression chapter item tasks changed.")
+    hatch_capacities = {key: machine["hatch_capacity"] for key, machine in machines.items() if machine.get("hatch_capacity")}
+    expected_hatches = {
+        "bronze_item_input_hatch": {"item_slots": [64], "fluid_slots_mb": []},
+        "highly_advanced_item_output_hatch": {"item_slots": [64] * 15, "fluid_slots_mb": []},
+        "bronze_fluid_input_hatch": {"item_slots": [], "fluid_slots_mb": [4000]},
+        "highly_advanced_fluid_output_hatch": {"item_slots": [], "fluid_slots_mb": [1024000]},
+        "superconductor_energy_output_hatch": {"item_slots": [], "fluid_slots_mb": [], "energy_eu": 76800000000, "cable_eu_per_tick": 128000000},
+    }
+    for key, expected in expected_hatches.items():
+        if hatch_capacities.get("modern_industrialization:" + key) != expected:
+            raise ValueError("The loaded hatch capacity changed: " + key)
+    boiler_shapes = {}
+    for name, count in [("large_steam_boiler", 35), ("advanced_large_steam_boiler", 44),
+                        ("high_pressure_large_steam_boiler", 35), ("high_pressure_advanced_large_steam_boiler", 44)]:
+        shape = machines["modern_industrialization:" + name]["shapes"]
+        if len(shape) != 1 or len(shape[0]["cells"]) != count:
+            raise ValueError("The loaded boiler structure changed: " + name)
+        boiler_shapes[name] = dict(Counter(cell["preview_block"] for cell in shape[0]["cells"]))
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -167,6 +185,8 @@ def verify(runtime: dict, probes: dict) -> dict:
         "resource_count": len(resource_keys),
         "tag_count": len(runtime["tags"]),
         "machine_count": len(machines),
+        "hatch_capacities": hatch_capacities,
+        "boiler_shape_blocks": boiler_shapes,
         "multiblock_part_types": sum(machine.get("role") == "multiblock_part" for machine in machines.values()),
         "machines_with_shape_templates": sum(bool(machine.get("shapes")) for machine in machines.values()),
         "arithmetic": probes["arithmetic"],
