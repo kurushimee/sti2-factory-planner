@@ -1,0 +1,17 @@
+{
+  "machine": "yet_another_industrialization:nuclear_rod_irradiator",
+  "shape_match": true,
+  "placed_blocks_excluding_controller": {
+    "modern_industrialization:bronze_item_input_hatch": 1,
+    "modern_industrialization:hv_energy_input_hatch": 1,
+    "modern_industrialization:nuclear_alloy_machine_casing_pipe": 27,
+    "modern_industrialization:nuclear_casing": 79,
+    "modern_industrialization:nuclear_item_hatch": 8
+  },
+  "startup_cycle": {
+    "completion_tick": 8059,
+    "depleted_rods": 8,
+    "energy_consumed": 8192000,
+    "beryllium_consumed_sample": 4
+  }
+}

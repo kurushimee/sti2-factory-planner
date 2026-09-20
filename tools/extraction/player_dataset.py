@@ -8,6 +8,7 @@ from pathlib import Path
 from normalize import resource_identity
 from progression import progression_presets
 from grouping import production_group
+from irradiation import irradiation_recipes
 
 
 def boiler_operating_points(samples):
@@ -285,6 +286,7 @@ def build_dataset(capture):
                 "usage_multiplier": capture["power_units"]["ae_usage_multiplier"]}]
     resources.extend(value for key, value in variants.items() if key not in resource_index)
     recipes.extend(utility_recipes(capture))
+    recipes.extend(irradiation_recipes(capture))
     for recipe in recipes:
         recipe["group"] = production_group(recipe)
     return {"format": 1, "identity": capture["identity"], "name": "StaTech Industry 2.0.1",

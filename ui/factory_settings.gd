@@ -146,7 +146,7 @@ func _category_changed(category: int) -> void:
 			for resource: Dictionary in _dataset.resources:
 				_entries.append({"id": resource.id, "name": resource.get("name", resource.id)})
 		5:
-			var supported := RegEx.create_from_string("^modern_industrialization:(bronze|steel|advanced|turbo|highly_advanced|lv|mv|hv|ev|superconductor)_(item|fluid|energy)_(input|output)_hatch$")
+			var supported := RegEx.create_from_string("^modern_industrialization:((bronze|steel|advanced|turbo|highly_advanced|lv|mv|hv|ev|superconductor)_(item|fluid|energy)_(input|output)|nuclear_item)_hatch$")
 			for machine: Dictionary in _dataset.get("machines", []):
 				if machine.has("hatch_capacity"):
 					_entries.append({"id": machine.id, "name": _names.get("item:" + str(machine.id), machine.id),

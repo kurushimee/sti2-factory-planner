@@ -126,6 +126,15 @@ try {
     assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
     console.log('The complete blast-furnace bill matches Node in the browser Worker.');
   }
+  const irradiation = worldDataset.recipes?.find(recipe => recipe.id === 'irradiate|item:modern_industrialization:uranium_fuel_rod|modern_industrialization:beryllium_block');
+  if (irradiation) {
+    const request = {goals: [{recipe: irradiation.id, resource: irradiation.primary, rate: 0.02}],
+      available_machines: ['yet_another_industrialization:nuclear_rod_irradiator'],
+      external: [{resource: 'energy:eu'}, {resource: 'item:modern_industrialization:uranium_fuel_rod'}, {resource: 'item:modern_industrialization:beryllium_block'}]};
+    const result = await solveInBrowser(worldDataset, request);
+    assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
+    console.log('The eight-hatch irradiation calculation matches Node in the browser Worker.');
+  }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();
     const worker = new Worker('/kernel/world-worker.js', {type: 'module'});

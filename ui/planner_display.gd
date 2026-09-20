@@ -65,6 +65,9 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 		text += "%s ticks per batch at full speed\n%s %s per operation\n%s %s/t peak per machine\n" % [number(capacity.ticks_per_batch), number(capacity.get("eu_per_operation", 0)), energy_unit, number(capacity.get("peak_eu_per_tick", 0)), energy_unit]
 		if capacity.get("warmup_ticks") != null:
 			text += "%s s to full-speed operation\n" % number(float(capacity.warmup_ticks) / 20.0)
+	var discovery_ticks: float = configuration.get("startup_profile", {}).get("discovery_delay_ticks", 0)
+	if discovery_ticks > 0:
+		text += "Up to %s s for initial source discovery\n" % number(discovery_ticks / 20.0)
 	var process: Dictionary = recipe.get("process", {})
 	if !process.is_empty():
 		text += "Recipe: %s ticks at %s EU/t before machine modifiers\n" % [number(process.get("duration_ticks", 0)), number(process.get("eu_per_tick", 0))]

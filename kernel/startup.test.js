@@ -4,6 +4,18 @@ import {startupRequirements} from './startup.js';
 import {compileConfiguration} from './configuration.js';
 import {boilerWarmup} from './boiler.js';
 
+test('irradiator stocks cover source discovery and whole initial rods at every hatch', () => {
+  const result = startupRequirements([{recipe: 'irradiate', configuration: 'eight', machines: 2,
+    operations_per_second: 0.04, inputs: [{resource: 'rod', rate: 0.04}, {resource: 'source', rate: 0.01}],
+    outputs: [{resource: 'depleted', rate: 0.04}], configuration_details: {startup_profile: {
+      kind: 'irradiator', fuel_resource: 'rod', source_resource: 'source', source_per_second: 0.005,
+      batch: 8, cycle_ticks: 8000, discovery_delay_ticks: 59}}}]);
+  assert.equal(result.resources.find(value => value.resource === 'rod').first_operation_stock, 16);
+  assert.equal(result.resources.find(value => value.resource === 'source').first_operation_stock, 6);
+  assert.ok(Math.abs(result.resources.find(value => value.resource === 'depleted').warmup_output_stock - 16.118) < 1e-10);
+  assert.deepEqual(result.incomplete, []);
+});
+
 test('boiler startup stocks cover every delivery tick at full and partial demand', () => {
   const rule = {max_eu_per_tick: 8, eu_per_degree: 8, temperature_max: 1500};
   const fuel = {kind: 'item', eu_per_unit: 32000};

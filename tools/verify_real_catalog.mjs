@@ -45,6 +45,26 @@ for (const machine of dataset.machines.filter(value => value.mechanic === 'buffe
   assert.equal(planned.lines[0].configuration_details.structure.status, 'sized', planned.lines[0].configuration_details.structure.reason);
 }
 console.log('All four buffered generator multiblocks have hatch bills at their full rated power.');
+const irradiation = dataset.recipes.filter(value => value.type === 'planner:irradiation');
+assert.equal(irradiation.length, 30);
+for (const recipe of irradiation) {
+  for (const configuration of [recipe.configurations[0], recipe.configurations.at(-1)]) {
+    const profile = configuration.startup_profile;
+    const rate = configuration.operations_per_second * recipe.outputs[0].amount;
+    const planned = solveFactory(highs, dataset, {goals: [{recipe: recipe.id, resource: recipe.primary, rate}],
+      routes: {[recipe.primary]: recipe.id}, configurations: {[recipe.id]: configuration.id},
+      available_machines: [configuration.machine], external: [recipe.inputs[0], {resource: profile.source_resource}, {resource: 'energy:eu'}]});
+    assert.equal(planned.status, 'optimal');
+    assert.equal(planned.lines[0].machines, 1);
+    assert.ok(Math.abs(planned.power.consumption_eu_per_tick - configuration.idle_eu_per_tick) < 1e-7);
+    assert.ok(Math.abs(planned.external.find(value => value.resource === profile.source_resource).rate - profile.source_per_second) < 1e-10);
+    assert.equal(planned.lines[0].configuration_details.structure.status, 'sized');
+    assert.equal(planned.startup.build_requirements.find(value => value.resource === 'item:modern_industrialization:nuclear_item_hatch').amount, profile.batch);
+    assert.equal(planned.startup.resources.find(value => value.resource === profile.fuel_resource).first_operation_stock, profile.batch);
+    assert.equal(planned.startup.incomplete.length, 0);
+  }
+}
+console.log('All 30 irradiation routes preserve source costs, power, startup stocks, and one/eight nuclear hatch bills.');
 const pulseRecipes = dataset.recipes.filter(recipe => recipe.type === 'yet_another_industrialization:pulse_detonation_generator');
 assert.equal(pulseRecipes.length, 8);
 for (const recipe of pulseRecipes) {

@@ -29,6 +29,13 @@ def machine_rules(capture, upgrades):
                           generation_evidence=machine["recipe_generation_probe"])
             if machine["id"] == "yet_another_industrialization:dragon_egg_energy_siphon":
                 record["build_inputs"] = [{"resource": "item:minecraft:dragon_egg", "amount": 1}]
+        elif machine.get("irradiation_probe"):
+            nuclear_hatches = sum("modern_industrialization:nuclear_item" in cell["allowed_hatches"]
+                                 for cell in machine["shapes"][0]["cells"])
+            if nuclear_hatches != max(sample["hatches"] for sample in machine["irradiation_probe"]):
+                raise ValueError("The irradiation probe and structure hatch limit disagree.")
+            record.update(status="supported", mechanic="irradiator", nuclear_hatch_limit=nuclear_hatches,
+                          irradiation_evidence=machine["irradiation_probe"])
         elif family in {"BoilerMachineBlockEntity", "SteamBoilerMultiblockBlockEntity"}:
             heater = machine["component_fields"]["aztech.modern_industrialization.machines.components.SteamHeaterComponent"]
             burner = machine["component_fields"]["aztech.modern_industrialization.machines.components.FuelBurningComponent"]

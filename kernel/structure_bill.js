@@ -1,6 +1,7 @@
 class StructureCapacityError extends Error {}
 
 function requiredCopies(part, demand) {
+  if (demand.count) return demand.count;
   const capacity = part.hatch_capacity;
   if (demand.items?.length) {
     const slots = capacity.item_slots;
@@ -91,7 +92,7 @@ export function structureContext(dataset) {
   const recipes = new Map(dataset.recipes.map(value => [value.id, value]));
   const resources = new Map((dataset.resources ?? []).map(value => [value.id, value]));
   const hatches = [...definitions.values()].filter(value => value.id.startsWith('modern_industrialization:') && value.hatch_capacity &&
-    /:(?:bronze|steel|advanced|turbo|highly_advanced|lv|mv|hv|ev|superconductor)_(?:item|fluid|energy)_(?:input|output)_hatch$/.test(value.id));
+    /:(?:(?:bronze|steel|advanced|turbo|highly_advanced|lv|mv|hv|ev|superconductor)_(?:item|fluid|energy)_(?:input|output)|nuclear_item)_hatch$/.test(value.id));
   return {definitions, recipes, resources, hatches, billCache: new WeakMap()};
 }
 
@@ -120,7 +121,11 @@ export function attachStructureBills(result, dataset, options = {}, context = st
         entries.push({resource, amount, ...(!fluid ? {max_stack_size: max} : {})});
       };
       const profile = configuration.startup_profile;
-      if (profile?.kind === 'boiler') {
+      if (profile?.kind === 'irradiator') {
+        const type = 'modern_industrialization:nuclear_item';
+        demands.set(type, {type, count: profile.batch});
+        add('input', profile.source_resource, 1);
+      } else if (profile?.kind === 'boiler') {
         const rule = profile.rule;
         const steam = rule.max_eu_per_tick / (rule.eu_per_steam_mb ?? 1);
         add('input', profile.water_resource, Math.ceil(steam / rule.steam_to_water));
@@ -146,7 +151,7 @@ export function attachStructureBills(result, dataset, options = {}, context = st
         for (const catalyst of configuration.startup_inputs ?? []) add('input', catalyst.resource, catalyst.amount);
         for (const output of recipe.outputs) add('output', output.resource, (output.nominal_amount ?? output.amount) * batch);
       }
-      if (configuration.eu_per_operation > 0) {
+      if (configuration.eu_per_operation > 0 || configuration.idle_eu_per_tick > 0) {
         const type = 'modern_industrialization:energy_input';
         demands.set(type, {type, energy: {buffer: configuration.capacity.peak_eu_per_tick,
           rate: configuration.capacity.average_full_load_eu_per_tick}});

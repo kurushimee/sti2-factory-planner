@@ -175,7 +175,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
     }
   }
   for (const [resource, recipeId] of Object.entries(request.routes ?? {})) {
-    if (!routeCandidates.get(resource)?.includes(recipeId)) throw new Error(`Pinned route is unavailable: ${recipeId}.`);
+    if (!routeCandidates.get(resource)?.includes(recipeId)) {
+      const reason = exclusions.find(value => value.recipe === recipeId)?.reason;
+      throw new Error(`Pinned route is unavailable: ${recipeId}.${reason ? ` ${reason}` : ''}`);
+    }
   }
   for (const [recipe, minimum] of Object.entries(request.recipe_minimum_rates ?? {})) {
     const terms = new Map(lines.filter(line => line.recipe.id === recipe).map(line => [line.operation, 1]));

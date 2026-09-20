@@ -53,8 +53,10 @@ public final class PlannerProbe {
     private static int checkStructureBill(MinecraftServer server) throws Exception {
         var bill = com.google.gson.JsonParser.parseString(Files.readString(Path.of("planner-structure-bill.json"))).getAsJsonObject();
         var level = server.overworld();
-        var origin = new BlockPos(128, 100, 0);
+        var coordinates = bill.getAsJsonArray("origin");
+        var origin = coordinates == null ? new BlockPos(128, 100, 0) : new BlockPos(coordinates.get(0).getAsInt(), coordinates.get(1).getAsInt(), coordinates.get(2).getAsInt());
         var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(bill.get("machine").getAsString()));
+        level.setBlockAndUpdate(origin, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
         level.setBlockAndUpdate(origin, block.defaultBlockState());
         var controller = (aztech.modern_industrialization.machines.multiblocks.MultiblockMachineBlockEntity) level.getBlockEntity(origin);
         var facing = net.minecraft.core.Direction.NORTH;
@@ -84,10 +86,58 @@ public final class PlannerProbe {
         var quantities = new JsonObject();
         counts.forEach(quantities::addProperty);
         result.add("placed_blocks_excluding_controller", quantities);
+        if (bill.get("machine").getAsString().equals("yet_another_industrialization:nuclear_rod_irradiator")) {
+            result.add("startup_cycle", formedIrradiatorCycle(controller, matcher, server));
+        }
         Files.writeString(Path.of("planner-extraction", "structure-bill-check.json"), new GsonBuilder().setPrettyPrinting().create().toJson(result));
         controller.setChanged();
         System.out.println("Planner structural bill matched the loaded world structure.");
         return 1;
+    }
+
+    private static JsonObject formedIrradiatorCycle(MachineBlockEntity machine,
+            aztech.modern_industrialization.machines.multiblocks.ShapeMatcher matcher, MinecraftServer server) {
+        var nuclear = new java.util.ArrayList<aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch>();
+        var energy = new java.util.ArrayList<aztech.modern_industrialization.machines.components.EnergyComponent>();
+        aztech.modern_industrialization.inventory.ConfigurableItemStack source = null;
+        for (var hatch : matcher.getMatchedHatches()) {
+            hatch.appendEnergyInputs(energy);
+            if (hatch instanceof aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch value) {
+                var slot = value.getInventory().getItemStacks().getFirst();
+                slot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(
+                        BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:uranium_fuel_rod"))));
+                slot.setAmount(1);
+                nuclear.add(value);
+            } else if (hatch.getHatchType() == aztech.modern_industrialization.machines.multiblocks.HatchTypes.ITEM_INPUT) {
+                source = hatch.getInventory().getItemStacks().getFirst();
+                source.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(
+                        BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:beryllium_block"))));
+                source.setAmount(64);
+            }
+        }
+        if (source == null || nuclear.size() != 8 || energy.isEmpty()) throw new IllegalStateException("The irradiator fixture has incorrect hatches.");
+        // Release the inspection matcher so the controller can claim its own hatches.
+        matcher.unlinkHatches();
+        var levelData = (net.minecraft.world.level.storage.ServerLevelData) server.overworld().getLevelData();
+        long previousTime = levelData.getGameTime(), consumed = 0, produced = 0;
+        int tick = 0;
+        try {
+            while (produced == 0 && tick < 10000) {
+                levelData.setGameTime(++tick);
+                for (var component : energy) component.insertEu(component.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                long before = energy.stream().mapToLong(component -> component.getEu()).sum();
+                ((aztech.modern_industrialization.util.Tickable) machine).tick();
+                consumed += before - energy.stream().mapToLong(component -> component.getEu()).sum();
+                produced = nuclear.stream().mapToLong(hatch -> hatch.getInventory().getItemStacks().stream().skip(1).mapToLong(slot -> slot.getAmount()).sum()).sum();
+            }
+        } finally { levelData.setGameTime(previousTime); }
+        var result = new JsonObject();
+        result.addProperty("completion_tick", tick);
+        result.addProperty("depleted_rods", produced);
+        result.addProperty("energy_consumed", consumed);
+        result.addProperty("beryllium_consumed_sample", 64 - source.getAmount());
+        if (produced != 8 || tick != 8059 || consumed != 8192000) throw new IllegalStateException("The formed irradiator cycle changed: " + result);
+        return result;
     }
 
     private static int createStructureFixture(MinecraftServer server) {
