@@ -1,3 +1,10 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Local plans, verification captures, and scratch artifacts
+/.plans/
+/builds/
+/private/
+__pycache__/
+*.pyc
