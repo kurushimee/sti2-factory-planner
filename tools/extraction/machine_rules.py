@@ -12,7 +12,18 @@ def machine_rules(capture, upgrades):
         record = {"id": machine["id"], "recipe_type": machine.get("recipe_type"),
                   "source_class": machine["class"], "status": "unsupported"}
         if machine.get("role") == "multiblock_part":
-            record.update(status="structural", role="multiblock_part")
+            record.update(status="structural", role="multiblock_part", hatch_type=machine.get("hatch_type"),
+                          upgrades_steam_to_steel=machine.get("upgrades_steam_to_steel", False))
+        elif machine.get("water_pump_probe"):
+            record.update(status="supported", mechanic="fixed_cycle", **machine["water_pump_probe"])
+        elif family == "BoilerMachineBlockEntity":
+            heater = machine["component_fields"]["aztech.modern_industrialization.machines.components.SteamHeaterComponent"]
+            burner = machine["component_fields"]["aztech.modern_industrialization.machines.components.FuelBurningComponent"]
+            record.update(status="supported", mechanic="mi_boiler", max_eu_per_tick=heater["SteamHeaterComponent.maxEuProduction"],
+                          eu_per_degree=heater["SteamHeaterComponent.euPerDegree"], temperature_max=heater["TemperatureComponent.temperatureMax"],
+                          continuous=heater["SteamHeaterComponent.requiresContinuousOperation"],
+                          item_fuel_multiplier=burner["FuelBurningComponent.burningItemEuMultiplier"],
+                          eu_per_burn_tick=burner["FuelBurningComponent.EU_PER_BURN_TICK"], steam_to_water=heater["SteamHeaterComponent.STEAM_TO_WATER"])
         elif family in simple | batching:
             steam = family.startswith("Steam")
             modular = family in batching

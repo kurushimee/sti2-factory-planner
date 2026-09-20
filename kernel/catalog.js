@@ -36,6 +36,7 @@ function *setups(machine, upgrades) {
 }
 
 export function configureRecipe(recipe, dataset, request = {}) {
+  if ((recipe.requires_obtained ?? []).some(resource => !request.obtained_resources?.includes(resource))) return {...recipe, unsupported: 'This route requires an item the player has already obtained.'};
   if (!recipe.process || recipe.unsupported) {
     const configurations = recipe.configurations.filter(value => enabled(value.machine, request.available_machines ?? dataset.default_machines, request.disabled_machines));
     return {...recipe, configurations, ...(!configurations.length && !recipe.unsupported ? {unsupported: 'No available machine supports this recipe.'} : {})};

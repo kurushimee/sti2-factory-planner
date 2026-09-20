@@ -1,4 +1,5 @@
 import {machineCapacity} from './capacity.js';
+import {boilerWarmup} from './boiler.js';
 
 export function startupRequirements(lines) {
   const resources = new Map();
@@ -15,6 +16,25 @@ export function startupRequirements(lines) {
     const key = `${line.recipe}|${line.configuration}`;
     const configuration = line.configuration_details;
     for (const flow of configuration.build_requirements ?? []) builds.set(flow.resource, (builds.get(flow.resource) ?? 0) + flow.amount * line.machines);
+    if (configuration.startup_profile?.kind === 'boiler' && line.operations_per_second > 0) {
+      const profile = configuration.startup_profile;
+      const schedule = boilerWarmup(profile.rule, profile.fuel);
+      const demand = line.operations_per_second / line.machines / 20;
+      let produced = 0, deficit = 0;
+      for (const segment of schedule.output_segments) {
+        const length = segment.last_tick - segment.first_tick + 1;
+        deficit = Math.max(deficit, segment.first_tick * demand - produced,
+          segment.last_tick * demand - produced - (length - 1) * segment.steam_per_tick);
+        produced += length * segment.steam_per_tick;
+      }
+      for (const flow of line.outputs) add(flow.resource, 'warmup_output_stock', line.machines *
+        (flow.resource === profile.steam_resource ? deficit : schedule.first_full_output_tick * flow.rate / line.machines / 20), key);
+      const fuelInputs = line.inputs.filter(flow => profile.fuel_resources.includes(flow.resource));
+      const fuelRate = fuelInputs.reduce((sum, flow) => sum + flow.rate, 0);
+      for (const flow of fuelInputs) add(flow.resource, 'first_operation_stock', Math.ceil(schedule.fuel_consumed * flow.rate / fuelRate) * line.machines, key);
+      add(profile.water_resource, 'first_operation_stock', schedule.water_consumed * line.machines, key);
+      continue;
+    }
     let capacity = configuration.capacity;
     if (configuration.capacity_input && !capacity?.completion_ticks?.length) {
       const input = configuration.capacity_input;

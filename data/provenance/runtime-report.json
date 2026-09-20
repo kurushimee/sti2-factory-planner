@@ -293,6 +293,7 @@
   "generator_rules": {
     "modern_industrialization:lv_steam_turbine": {
       "max_eu_per_tick": 32,
+      "standard_item_fuels": false,
       "multiplier": 1.0,
       "fuels": [
         {
@@ -303,6 +304,7 @@
     },
     "modern_industrialization:mv_steam_turbine": {
       "max_eu_per_tick": 128,
+      "standard_item_fuels": false,
       "multiplier": 1.0,
       "fuels": [
         {
@@ -313,6 +315,7 @@
     },
     "modern_industrialization:hv_steam_turbine": {
       "max_eu_per_tick": 512,
+      "standard_item_fuels": false,
       "multiplier": 1.0,
       "fuels": [
         {
@@ -323,6 +326,7 @@
     },
     "modern_industrialization:lv_diesel_generator": {
       "max_eu_per_tick": 64,
+      "standard_item_fuels": false,
       "multiplier": 2.0,
       "fuels": [
         {
@@ -381,6 +385,7 @@
     },
     "modern_industrialization:mv_diesel_generator": {
       "max_eu_per_tick": 256,
+      "standard_item_fuels": false,
       "multiplier": 2.0,
       "fuels": [
         {
@@ -439,6 +444,7 @@
     },
     "modern_industrialization:hv_diesel_generator": {
       "max_eu_per_tick": 1024,
+      "standard_item_fuels": false,
       "multiplier": 2.0,
       "fuels": [
         {
@@ -497,6 +503,7 @@
     },
     "modern_industrialization:large_diesel_generator": {
       "max_eu_per_tick": 16384,
+      "standard_item_fuels": false,
       "multiplier": 2.0,
       "fuels": [
         {
@@ -555,6 +562,7 @@
     },
     "modern_industrialization:large_steam_turbine": {
       "max_eu_per_tick": 16384,
+      "standard_item_fuels": false,
       "multiplier": 1.0,
       "fuels": [
         {
@@ -577,6 +585,7 @@
     },
     "modern_industrialization:plasma_turbine": {
       "max_eu_per_tick": 1048576,
+      "standard_item_fuels": false,
       "multiplier": 1.0,
       "fuels": [
         {
@@ -587,6 +596,7 @@
     },
     "modern_industrialization:blood_generator": {
       "max_eu_per_tick": 8192,
+      "standard_item_fuels": false,
       "multiplier": 1.0,
       "fuels": [
         {
@@ -601,6 +611,7 @@
     },
     "yet_another_industrialization:numismatic_generator": {
       "max_eu_per_tick": 1048576,
+      "standard_item_fuels": false,
       "multiplier": 1.0,
       "fuels": [
         {
@@ -841,6 +852,110 @@
           "first_tick": 2417,
           "steam_per_tick": 16,
           "last_tick": 2417
+        }
+      ]
+    }
+  },
+  "water_pumps": {
+    "modern_industrialization:bronze_water_pump": {
+      "water_multiplier": 1,
+      "operation_ticks": 100,
+      "energy_consumed_in_200_ticks": 200,
+      "energy_resource": "fluid:modern_industrialization:steam",
+      "neighbor_samples": [
+        {
+          "neighbor_mask": 0,
+          "source_count": 0
+        },
+        {
+          "neighbor_mask": 1,
+          "source_count": 0
+        },
+        {
+          "neighbor_mask": 3,
+          "source_count": 2
+        },
+        {
+          "neighbor_mask": 255,
+          "source_count": 8
+        }
+      ],
+      "deliveries": [
+        {
+          "tick": 100,
+          "water_mb": 1000
+        },
+        {
+          "tick": 200,
+          "water_mb": 1000
+        }
+      ]
+    },
+    "modern_industrialization:steel_water_pump": {
+      "water_multiplier": 2,
+      "operation_ticks": 100,
+      "energy_consumed_in_200_ticks": 200,
+      "energy_resource": "fluid:modern_industrialization:steam",
+      "neighbor_samples": [
+        {
+          "neighbor_mask": 0,
+          "source_count": 0
+        },
+        {
+          "neighbor_mask": 1,
+          "source_count": 0
+        },
+        {
+          "neighbor_mask": 3,
+          "source_count": 2
+        },
+        {
+          "neighbor_mask": 255,
+          "source_count": 8
+        }
+      ],
+      "deliveries": [
+        {
+          "tick": 100,
+          "water_mb": 2000
+        },
+        {
+          "tick": 200,
+          "water_mb": 2000
+        }
+      ]
+    },
+    "modern_industrialization:electric_water_pump": {
+      "water_multiplier": 16,
+      "operation_ticks": 100,
+      "energy_consumed_in_200_ticks": 200,
+      "energy_resource": "energy:eu",
+      "neighbor_samples": [
+        {
+          "neighbor_mask": 0,
+          "source_count": 0
+        },
+        {
+          "neighbor_mask": 1,
+          "source_count": 0
+        },
+        {
+          "neighbor_mask": 3,
+          "source_count": 2
+        },
+        {
+          "neighbor_mask": 255,
+          "source_count": 8
+        }
+      ],
+      "deliveries": [
+        {
+          "tick": 100,
+          "water_mb": 16000
+        },
+        {
+          "tick": 200,
+          "water_mb": 16000
         }
       ]
     }

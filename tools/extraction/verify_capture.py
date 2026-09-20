@@ -87,6 +87,18 @@ def verify(runtime: dict, probes: dict) -> dict:
     boilers = {key: machines[key]["coal_warmup_probe"] for key in ("modern_industrialization:bronze_boiler", "modern_industrialization:steel_boiler")}
     if [value["first_full_output_tick"] for value in boilers.values()] != [3906, 2417]:
         raise ValueError("The loaded cold-boiler warm-up changed.")
+    pumps = {key: value["water_pump_probe"] for key, value in machines.items() if "water_pump_probe" in value}
+    for tier, multiplier in (("bronze", 1), ("steel", 2), ("electric", 16)):
+        pump = pumps[f"modern_industrialization:{tier}_water_pump"]
+        expected_energy = "energy:eu" if tier == "electric" else "fluid:modern_industrialization:steam"
+        if (pump["water_multiplier"] != multiplier or pump["operation_ticks"] != 100
+                or pump["energy_consumed_in_200_ticks"] != 200 or pump["energy_resource"] != expected_energy
+                or pump["deliveries"] != [{"tick": tick, "water_mb": multiplier * 1000} for tick in (100, 200)]
+                or [(sample["neighbor_mask"], sample["source_count"]) for sample in pump["neighbor_samples"]]
+                != [(0, 0), (1, 0), (3, 2), (255, 8)]):
+            raise ValueError(f"The loaded {tier} water pump behavior changed.")
+    if items["modern_industrialization:iron_hammer"]["max_damage"] != 1666:
+        raise ValueError("The pack's iron hammer durability changed.")
     crafting = probes["crafting_rules"]
     if crafting["failures"] or len(crafting["recipes"]) != 7301:
         raise ValueError("The crafting probe failed or its coverage changed.")
@@ -113,6 +125,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "array_rules": arrays,
         "blast_furnace_coils": coil_tiers,
         "boiler_warmup": boilers,
+        "water_pumps": pumps,
         "crafting_rules_count": len(crafting["recipes"]),
         "crafting_samples_unavailable": sum("unavailable" in entry for entry in crafting["recipes"]),
         "crafting_samples": [crafting_index[key] for key in ("minecraft:cake", "minecraft:torch", "modern_industrialization:iron_plate_from_hammer")],

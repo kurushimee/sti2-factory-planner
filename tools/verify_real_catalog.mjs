@@ -39,6 +39,28 @@ assert.equal(crafted.lines.find(line => line.recipe === cake.id).outputs.find(fl
 assert.equal(crafted.power.consumption_eu_per_tick, 2);
 console.log('Captured cake crafting returns six buckets per second at two cakes per second.');
 
+const steam = 'fluid:modern_industrialization:steam';
+const water = 'fluid:minecraft:water';
+const boiler = 'boiling|modern_industrialization:bronze_boiler|32000';
+const pump = 'water_pumping|modern_industrialization:bronze_water_pump|8';
+const steamPlan = solveFactory(highs, dataset, {
+  goals: [{recipe: boiler, resource: steam, rate: 150}],
+  routes: {[steam]: boiler, [water]: pump},
+  available_machines: ['modern_industrialization:bronze_boiler', 'modern_industrialization:bronze_water_pump'],
+  external: [{resource: 'item:minecraft:coal'}],
+});
+assert.equal(steamPlan.status, 'optimal');
+assert.equal(steamPlan.lines.length, 2);
+const steamRate = 150 / (1 - 1 / 160);
+assert.ok(Math.abs(steamPlan.lines.find(line => line.recipe === boiler).operations_per_second - steamRate) < 1e-8);
+assert.ok(Math.abs(steamPlan.external[0].rate - steamRate / 32000) < 1e-10);
+assert.equal(steamPlan.lines.find(line => line.recipe === boiler).machines, 1);
+assert.equal(steamPlan.lines.find(line => line.recipe === pump).machines, 1);
+assert.equal(steamPlan.startup.incomplete.length, 0);
+assert.ok(steamPlan.startup.resources.find(flow => flow.resource === water).quantity >= 1203);
+assert.ok(steamPlan.startup.resources.find(flow => flow.resource === steam).quantity > 10000);
+console.log('The real bronze boiler and water pump balance their steam feedback, coal use, and cold-start stocks.');
+
 if (process.argv[3]) {
   const imported = inspectWorld(new Uint8Array(await readFile(process.argv[3])), dataset);
   assert.equal(imported.reconstruction.goals.length, 1);

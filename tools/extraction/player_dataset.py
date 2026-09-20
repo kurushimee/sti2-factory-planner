@@ -7,6 +7,61 @@ from pathlib import Path
 from normalize import resource_identity
 
 
+def utility_recipes(capture):
+    recipes = []
+    for machine in capture["machine_rules"]:
+        if machine.get("mechanic") == "fixed_cycle" and "water_multiplier" in machine:
+            ticks = machine["operation_ticks"]
+            for neighbors in range(1, 9):
+                amount = machine["water_multiplier"] * neighbors * 125
+                identity = "water_pumping|" + machine["id"] + "|" + str(neighbors)
+                electric = machine["energy_resource"] == "energy:eu"
+                condition = {"type": "planner:water_neighbors", "sources": neighbors, "diagonal_requires_adjacent_cardinal": True}
+                capacity = {"operations_per_second": 20 / ticks, "ticks_per_batch": ticks, "energy_per_batch": ticks,
+                            "eu_per_operation": ticks, "average_full_load_eu_per_tick": 1, "peak_eu_per_tick": 1,
+                            "efficiency_limit": 0, "warmup_ticks": 0, "completion_ticks": [ticks]}
+                recipes.append({"id": identity, "name": "Pump water with " + str(neighbors) + " adjacent sources", "group": "Extraction",
+                                "source_id": machine["id"], "type": "planner:water_pumping", "origin": "loaded_machine_ticks",
+                                "primary": "fluid:minecraft:water", "inputs": [] if electric else [{"resource": machine["energy_resource"], "amount": ticks}],
+                                "outputs": [{"resource": "fluid:minecraft:water", "amount": amount}], "conditions": [condition],
+                                "configurations": [{"id": identity, "machine": machine["id"], "operations_per_second": 20 / ticks,
+                                                    "eu_per_operation": ticks if electric else 0, "capacity": capacity, "conditions": [condition],
+                                                    "build_requirements": [{"resource": "item:" + machine["id"], "amount": 1}]}]})
+        if machine.get("mechanic") != "mi_boiler":
+            continue
+        groups = {}
+        for resource in capture["resources"]:
+            rules = resource.get("item_rules", {})
+            if rules.get("burn_ticks", 0) <= 0:
+                continue
+            energy = int(rules["burn_ticks"] * machine["eu_per_burn_tick"] * machine["item_fuel_multiplier"])
+            obtained = resource["id"] == "item:create:creative_blaze_cake"
+            groups.setdefault((energy, obtained), []).append(resource)
+        for (energy, obtained), fuels in sorted(groups.items()):
+            identity = "boiling|" + machine["id"] + "|" + str(energy) + ("|obtained" if obtained else "")
+            choices = [fuel["id"] for fuel in fuels]
+            returns = {}
+            for fuel in fuels:
+                remainder = fuel["item_rules"].get("crafting_remainder")
+                if remainder:
+                    if remainder.get("components"):
+                        raise ValueError("A boiler fuel remainder needs a component adapter.")
+                    returns[fuel["id"]] = [{"resource": "item:" + remainder["id"], "amount": remainder.get("count", 1)}]
+            recipes.append({"id": identity, "name": "Boil steam", "group": "Power", "source_id": machine["id"],
+                            "type": "planner:boiling", "origin": "loaded_heater_and_fuel_rules", "primary": "fluid:modern_industrialization:steam",
+                            "requires_obtained": choices if obtained else [],
+                            "inputs": [{"choices": choices, "amount": 1 / energy, "returns": returns},
+                                       {"resource": "fluid:minecraft:water", "amount": 1 / machine["steam_to_water"]}],
+                            "outputs": [{"resource": "fluid:modern_industrialization:steam", "amount": 1}],
+                            "configurations": [{"id": identity, "machine": machine["id"], "operations_per_second": machine["max_eu_per_tick"] * 20,
+                                                "build_requirements": [{"resource": "item:" + machine["id"], "amount": 1}],
+                                                "startup_profile": {"kind": "boiler", "rule": machine,
+                                                                    "fuel": {"kind": "item", "eu_per_unit": energy}, "fuel_resources": choices,
+                                                                    "water_resource": "fluid:minecraft:water", "steam_resource": "fluid:modern_industrialization:steam"},
+                                                "assumptions": ["Fuel arrives continuously. Returned containers are removed from the input slot before refilling it."]}]})
+    return recipes
+
+
 def crafting_adapter(entry, record, capture, resources, variants):
     evidence = next((value for value in capture.get("crafting_rules", {}).get("recipes", []) if value["id"] == entry["source_id"]), None)
     standard = {"net.minecraft.world.item.crafting.ShapedRecipe", "net.minecraft.world.item.crafting.ShapelessRecipe",
@@ -99,6 +154,7 @@ def build_dataset(capture):
                 "eu_per_ae": capture["power_units"]["fe_per_ae"] / capture["power_units"]["fe_per_eu"],
                 "usage_multiplier": capture["power_units"]["ae_usage_multiplier"]}]
     resources.extend(value for key, value in variants.items() if key not in resource_index)
+    recipes.extend(utility_recipes(capture))
     return {"format": 1, "identity": capture["identity"], "name": "StaTech Industry 2.0.1",
             "complete": False, "description": "Captured StaTech recipes with explicit adapter coverage. Development catalog.",
             "resources": resources, "recipes": recipes, "machines": machines, "upgrades": upgrades,

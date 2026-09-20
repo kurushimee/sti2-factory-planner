@@ -107,6 +107,7 @@ public final class PlannerProbe {
     private static JsonObject fuelRules(FluidItemConsumerComponent consumer) throws Exception {
         var result = new JsonObject();
         result.addProperty("max_eu_per_tick", consumer.maxEuProduction);
+        result.addProperty("standard_item_fuels", consumer.itemEUProductionMap.isStandardFuels());
         var multiplierField = FluidItemConsumerComponent.class.getDeclaredField("euMultiplier");
         multiplierField.setAccessible(true);
         double multiplier = multiplierField.getDouble(consumer);
@@ -146,6 +147,7 @@ public final class PlannerProbe {
                 var stack = new net.minecraft.world.item.ItemStack(item);
                 record.addProperty("name", stack.getHoverName().getString());
                 record.addProperty("max_stack_size", stack.getMaxStackSize());
+                record.addProperty("max_damage", stack.getMaxDamage());
                 record.addProperty("burn_ticks", stack.getBurnTime(null));
                 record.addProperty("replicable", (Boolean) replicate.invoke(null, stack));
                 var remainder = stack.getCraftingRemainingItem();
@@ -366,6 +368,63 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonObject waterPump(net.minecraft.world.level.block.Block block, MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var position = new BlockPos(32, 100, 16);
+        level.getChunk(position);
+        int[] dx = {-1, 0, 1, 1, 1, 0, -1, -1};
+        int[] dz = {-1, -1, -1, 0, 1, 1, 1, 0};
+        var positions = new java.util.ArrayList<BlockPos>();
+        positions.add(position);
+        for (int i = 0; i < 8; i++) positions.add(position.offset(dx[i], 0, dz[i]));
+        for (var target : positions) if (!level.getBlockState(target).isAir()) throw new IllegalStateException("The temporary pump test area is occupied: " + target);
+        try {
+            level.setBlock(position, block.defaultBlockState(), 2);
+            var pump = (aztech.modern_industrialization.machines.blockentities.AbstractWaterPumpBlockEntity) level.getBlockEntity(position);
+            var multiplier = pump.getClass().getDeclaredMethod("getWaterMultiplier");
+            multiplier.setAccessible(true);
+            var sourceCount = aztech.modern_industrialization.machines.blockentities.AbstractWaterPumpBlockEntity.class.getDeclaredMethod("getWaterSourceCount");
+            sourceCount.setAccessible(true);
+            var samples = new JsonArray();
+            for (int mask : new int[]{0, 1, 3, 255}) {
+                for (int i = 0; i < 8; i++) level.setBlock(positions.get(i + 1),
+                        ((mask >> i) & 1) != 0 ? net.minecraft.world.level.block.Blocks.WATER.defaultBlockState() : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                var sample = new JsonObject();
+                sample.addProperty("neighbor_mask", mask);
+                sample.addProperty("source_count", (Integer) sourceCount.invoke(pump));
+                samples.add(sample);
+            }
+            var fluids = pump.getInventory().getFluidStacks();
+            var output = fluids.get(fluids.size() - 1);
+            boolean electric = pump instanceof aztech.modern_industrialization.machines.blockentities.ElectricWaterPumpBlockEntity;
+            if (electric) ((aztech.modern_industrialization.machines.blockentities.ElectricWaterPumpBlockEntity) pump).getEnergyComponent()
+                    .insertEu(1000, aztech.modern_industrialization.util.Simulation.ACT);
+            else fluids.get(0).setAmount(1000);
+            var deliveries = new JsonArray();
+            for (int tick = 1; tick <= 200; tick++) {
+                pump.tick();
+                if (output.getAmount() > 0) {
+                    var delivery = new JsonObject();
+                    delivery.addProperty("tick", tick);
+                    delivery.addProperty("water_mb", output.getAmount());
+                    deliveries.add(delivery);
+                    output.empty();
+                }
+            }
+            long remaining = electric ? ((aztech.modern_industrialization.machines.blockentities.ElectricWaterPumpBlockEntity) pump).getEnergyComponent().getEu() : fluids.get(0).getAmount();
+            var result = new JsonObject();
+            result.addProperty("water_multiplier", (Integer) multiplier.invoke(pump));
+            result.addProperty("operation_ticks", 100);
+            result.addProperty("energy_consumed_in_200_ticks", 1000 - remaining);
+            result.addProperty("energy_resource", electric ? "energy:eu" : "fluid:modern_industrialization:steam");
+            result.add("neighbor_samples", samples);
+            result.add("deliveries", deliveries);
+            return result;
+        } finally {
+            for (var target : positions) level.setBlock(target, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+        }
+    }
+
     private static int export(MinecraftServer server) throws Exception {
         var machines = new JsonArray();
         var failures = new JsonArray();
@@ -383,6 +442,7 @@ public final class PlannerProbe {
                 var record = new JsonObject();
                 record.addProperty("id", id);
                 record.addProperty("class", entity.getClass().getName());
+                if (entity instanceof aztech.modern_industrialization.machines.blockentities.AbstractWaterPumpBlockEntity) record.add("water_pump_probe", waterPump(block, server));
                 if (entity instanceof aztech.modern_industrialization.machines.multiblocks.HatchBlockEntity hatch) {
                     record.addProperty("role", "multiblock_part");
                     record.addProperty("hatch_type", hatch.getHatchType().id().toString());

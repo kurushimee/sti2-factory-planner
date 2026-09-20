@@ -68,6 +68,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
     }
     for (const output of recipe.outputs) if (!output.resource) throw new Error('Recipe outputs need a concrete resource.');
     const reason = recipe.unsupported ||
+      ((recipe.requires_obtained ?? []).some(resource => !request.obtained_resources?.includes(resource)) ? 'This route requires an item the player has already obtained.' : '') ||
       (recipe.replication && !request.replication ? 'Replication is disabled.' : '') ||
       (request.disabled_recipes?.includes(recipe.id) ? 'The recipe is disabled.' : '');
     if (reason) {

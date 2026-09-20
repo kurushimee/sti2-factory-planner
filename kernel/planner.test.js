@@ -15,6 +15,18 @@ function line(result, id) { return result.lines.find(entry => entry.recipe === i
 function supply(result, id) { return result.external.find(entry => entry.resource === id)?.rate ?? 0; }
 function close(actual, expected) { assert(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`); }
 
+test('creative infrastructure cannot bootstrap itself before the player obtains it', () => {
+  const data = dataset(['creative', 'energy:eu'], [
+    recipe('make', 'creative', [flow('energy:eu', 10)], [flow('creative', 1)]),
+    {...recipe('creative_power', 'energy:eu', [], [flow('energy:eu', 100)]), requires_obtained: ['creative']},
+  ]);
+  const request = {goals: [{resource: 'creative', rate: 1}]};
+  assert.notEqual(solveFactory(highs, data, request).status, 'optimal');
+  const result = solveFactory(highs, data, {...request, obtained_resources: ['creative']});
+  assert.equal(result.status, 'optimal');
+  close(line(result, 'creative_power').operations_per_second, 0.1);
+});
+
 test('alternative ingredient remainders follow the selected input without creating other containers', () => {
   const data = dataset(['bottle', 'can', 'empty_bottle', 'empty_can', 'product'], [
     recipe('consume', 'product', [{choices: ['bottle', 'can'], amount: 2,

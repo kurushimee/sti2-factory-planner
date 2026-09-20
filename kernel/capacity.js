@@ -24,6 +24,15 @@ function ceilRatio(numerator, denominator) {
 }
 
 export function machineCapacity(recipe, machine, setup = {}) {
+  if (machine.mechanic === 'fixed_cycle') {
+    if (setup.upgrade_count || (setup.batch ?? 1) !== 1) throw new Error('This fixed-cycle machine does not accept upgrades or batching.');
+    const ticks = integer(recipe.duration_ticks ?? machine.operation_ticks, 'Operation duration', 1);
+    const power = integer(recipe.eu_per_tick ?? 0, 'Operation power');
+    return {operations_per_second: 20 / ticks, ticks_per_batch: ticks, energy_per_batch: ticks * power,
+      eu_per_operation: ticks * power, average_full_load_eu_per_tick: power, peak_eu_per_tick: power,
+      efficiency_limit: 0, warmup_ticks: 0, completion_ticks: [ticks], output_buffer_operations: 1,
+      assumptions: ['The stated environmental conditions hold.', 'Inputs arrive continuously and outputs are accepted.']};
+  }
   if (machine.mechanic === 'ae_molecular_assembler') return molecularAssemblerCapacity(machine, setup);
   if (machine.mechanic === 'mi_array') {
     const count = integer(setup.contained_count, 'Contained machine count', 1);

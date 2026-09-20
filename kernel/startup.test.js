@@ -2,6 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startupRequirements} from './startup.js';
 import {compileConfiguration} from './configuration.js';
+import {boilerWarmup} from './boiler.js';
+
+test('boiler startup stocks cover every delivery tick at full and partial demand', () => {
+  const rule = {max_eu_per_tick: 8, eu_per_degree: 8, temperature_max: 1500};
+  const fuel = {kind: 'item', eu_per_unit: 32000};
+  const schedule = boilerWarmup(rule, fuel);
+  for (const rate of [160, 80, 1]) {
+    const result = startupRequirements([{recipe: 'boil', configuration: 'bronze', machines: 1,
+      operations_per_second: rate, inputs: [{resource: 'coal', rate: rate / 32000}, {resource: 'water', rate: rate / 16}],
+      outputs: [{resource: 'steam', rate}], configuration_details: {startup_profile: {kind: 'boiler', rule, fuel,
+        fuel_resources: ['coal'], water_resource: 'water', steam_resource: 'steam'}}}]);
+    let remaining = result.resources.find(value => value.resource === 'steam').quantity;
+    for (const segment of schedule.output_segments) for (let tick = segment.first_tick; tick <= segment.last_tick; tick++) {
+      remaining -= rate / 20;
+      assert.ok(remaining >= -1e-8, `Steam runs out before tick ${tick} at ${rate} mB/s.`);
+      remaining += segment.steam_per_tick;
+    }
+    assert.equal(result.resources.find(value => value.resource === 'water').quantity, 1203);
+    assert.equal(result.resources.find(value => value.resource === 'coal').quantity, 1);
+    assert.equal(result.incomplete.length, 0);
+  }
+});
 
 test('selected deferred configurations recover the same cold-start stocks', () => {
   const recipe = {id: 'press', duration_ticks: 200, eu_per_tick: 2};
