@@ -50,14 +50,31 @@
         const db = await database;
         const transaction = db.transaction('plans', 'readwrite');
         transaction.objectStore('plans').put(plan, 'autosave');
+        if (plan.view) transaction.objectStore('plans').put({dataset_identity: plan.dataset_identity, view: plan.view}, 'workspace-view');
+        else transaction.objectStore('plans').delete('workspace-view');
         transaction.onerror = () => files.push({kind: 'error', message: 'Browser storage failed. Export your plan to keep a portable copy.'});
+      } catch (error) { files.push({kind: 'error', message: `Browser storage is unavailable: ${error.message}`}); }
+    },
+    async saveView(record) {
+      try {
+        const db = await database;
+        const transaction = db.transaction('plans', 'readwrite');
+        transaction.objectStore('plans').put(record, 'workspace-view');
+        transaction.onerror = () => files.push({kind: 'error', message: 'Browser storage could not save the workspace view.'});
       } catch (error) { files.push({kind: 'error', message: `Browser storage is unavailable: ${error.message}`}); }
     },
     async restore() {
       try {
         const db = await database;
-        const request = db.transaction('plans').objectStore('plans').get('autosave');
-        request.onsuccess = () => { if (request.result) files.push({kind: 'json', value: request.result}); };
+        const transaction = db.transaction('plans');
+        const request = transaction.objectStore('plans').get('autosave');
+        const view = transaction.objectStore('plans').get('workspace-view');
+        transaction.oncomplete = () => {
+          if (!request.result) return;
+          if (view.result?.dataset_identity === request.result.dataset_identity) request.result.view = view.result.view;
+          files.push({kind: 'json', value: request.result});
+        };
+        transaction.onerror = () => files.push({kind: 'error', message: 'Browser storage could not restore the saved plan.'});
       } catch (error) { files.push({kind: 'error', message: `Browser storage is unavailable: ${error.message}`}); }
     },
   };

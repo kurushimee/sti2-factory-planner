@@ -19,6 +19,9 @@ var _positions: Dictionary[String, Variant] = {}
 var _recipes: Dictionary[String, Dictionary] = {}
 var _resources: Dictionary[String, String] = {}
 var _inspected_key := ""
+var _last_view := Vector3(INF, INF, INF)
+var _last_view_key := ""
+var _pending_view: Dictionary = {}
 var _nodes: Dictionary[String, PlannerRecipeNode] = {}
 var _undo: Array[Dictionary] = []
 var _redo: Array[Dictionary] = []
@@ -71,6 +74,7 @@ func _ready() -> void:
 	%Sounds.toggled.connect(func(enabled: bool) -> void: %Feedback.enabled = enabled; _autosave())
 	%ReducedMotion.toggled.connect(func(_enabled: bool) -> void: _autosave())
 	%Feedback.bind_controls(self)
+	%ViewSaveDelay.timeout.connect(_save_view)
 	_setup_focus()
 	files.file_selected.connect(_file_selected)
 	graph.node_selected.connect(_select_node)
@@ -82,7 +86,12 @@ func _ready() -> void:
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("window.plannerBridge.restore()")
 	elif FileAccess.file_exists("user://autosave.json"):
-		_restore_plan(JSON.parse_string(FileAccess.get_file_as_string("user://autosave.json")))
+		var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://autosave.json"))
+		if saved is Dictionary && FileAccess.file_exists("user://workspace-view.json"):
+			var view: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://workspace-view.json"))
+			if view is Dictionary && view.get("dataset_identity") == saved.get("dataset_identity") && PlannerDatasetValidation.check_view(view.get("view")).is_empty():
+				saved.view = view.view
+		_restore_plan(saved)
 	search.grab_focus.call_deferred()
 	if "--capture" in OS.get_cmdline_user_args():
 		_request.goals = [{"resource": "motor", "rate": 2.0, "recipe": "assemble"}]
@@ -149,6 +158,11 @@ func _graph_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	var view := Vector3(graph.zoom, graph.scroll_offset.x, graph.scroll_offset.y)
+	if view != _last_view || _inspected_key != _last_view_key:
+		_last_view = view
+		_last_view_key = _inspected_key
+		%ViewSaveDelay.start()
 	if !OS.has_feature("web"):
 		return
 	var response: Variant = JavaScriptBridge.eval("window.plannerBridge.pollFile()")
@@ -417,6 +431,10 @@ func _settle_node_sizes() -> void:
 	await get_tree().process_frame
 	for node: PlannerRecipeNode in _nodes.values():
 		node.reset_size()
+	if !_pending_view.is_empty():
+		graph.zoom = clampf(float(_pending_view.zoom), graph.zoom_min, graph.zoom_max)
+		graph.scroll_offset = Vector2(_pending_view.scroll[0], _pending_view.scroll[1])
+		_pending_view.clear()
 	_update_membership()
 
 
@@ -544,6 +562,7 @@ func _snapshot() -> Dictionary:
 	for node: PlannerRecipeNode in _nodes.values():
 		_positions[node.get_meta("position_key")] = [node.position_offset.x, node.position_offset.y]
 	return {"format": "factory-plan", "version": 1, "dataset_identity": _dataset.get("identity", "custom"), "dataset": _dataset,
+		"view": _pending_view.duplicate(true) if !_pending_view.is_empty() else _view_snapshot(),
 		"request": _request.duplicate(true), "positions": _positions.duplicate(true), "groups": _groups.duplicate(true), "imported_world": _world_import.duplicate(true),
 		"preferences": {"sound": %Sounds.button_pressed, "reduced_motion": %ReducedMotion.button_pressed}}
 
@@ -577,6 +596,9 @@ func _restore_plan(value: Variant) -> void:
 	if !_load_dataset(value.dataset):
 		return
 	_request.assign(value.request)
+	%ViewSaveDelay.stop()
+	_pending_view = value.get("view", {"zoom": 1.0, "scroll": [0, 0], "inspected": ""}).duplicate(true)
+	_inspected_key = _pending_view.get("inspected", "")
 	_positions.assign(value.get("positions", {}))
 	_groups.assign(value.get("groups", {}))
 	_world_import.assign(value.get("imported_world", {}))
@@ -596,6 +618,23 @@ func _autosave() -> void:
 	var file := FileAccess.open("user://autosave.json", FileAccess.WRITE)
 	file.store_string(JSON.stringify(_snapshot()))
 	file.close()
+	_save_view()
+
+
+func _view_snapshot() -> Dictionary:
+	return {"zoom": graph.zoom, "scroll": [graph.scroll_offset.x, graph.scroll_offset.y], "inspected": _inspected_key}
+
+
+func _save_view() -> void:
+	if _dataset.is_empty() || !_pending_view.is_empty():
+		return
+	var record := {"dataset_identity": _dataset.get("identity", "custom"), "view": _view_snapshot()}
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.plannerBridge.saveView(%s)" % JSON.stringify(record))
+	else:
+		var file := FileAccess.open("user://workspace-view.json", FileAccess.WRITE)
+		file.store_string(JSON.stringify(record))
+		file.close()
 
 
 func _choose_import() -> void:

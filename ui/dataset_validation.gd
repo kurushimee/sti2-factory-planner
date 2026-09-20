@@ -109,11 +109,19 @@ static func check_plan(value: Variant) -> String:
 	for point: Variant in value.get("positions", {}).values():
 		if !_coordinates(point, 2):
 			return "The plan contains an invalid node position."
+	if value.has("view") && !check_view(value.view).is_empty():
+		return check_view(value.view)
 	for group: Variant in value.get("groups", {}).values():
 		if !(group is Dictionary) || !(group.get("title") is String) || !_coordinates(group.get("rect"), 4):
 			return "The plan contains an invalid group boundary."
 		if group.rect[2] <= 0 || group.rect[3] <= 0:
 			return "Group boundaries must have positive width and height."
+	return ""
+
+
+static func check_view(value: Variant) -> String:
+	if !(value is Dictionary) || !_positive(value.get("zoom")) || value.zoom > 100 || !_coordinates(value.get("scroll"), 2) || !(value.get("inspected", "") is String):
+		return "The plan contains an invalid workspace view."
 	return ""
 
 

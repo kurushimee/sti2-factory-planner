@@ -42,6 +42,10 @@ func _run() -> void:
 	for sample: Vector2 in samples:
 		peak = maxf(peak, maxf(absf(sample.x), absf(sample.y)))
 	assert(peak > 0.001 && peak < 0.1)
+	workspace._inspected_key = ""
+	workspace._pending_view.clear()
+	workspace.graph.zoom = 1.0
+	workspace.graph.scroll_offset = Vector2.ZERO
 	workspace._request = {"goals": [{"resource": "motor", "rate": 2.0, "recipe": "assemble"}]}
 	workspace._recalculate()
 	await workspace.computation.completed
@@ -76,19 +80,49 @@ func _run() -> void:
 	await process_frame
 	cancel.button_index = JOY_BUTTON_B
 	cancel.pressed = true
-	Input.parse_input_event(cancel)
-	await process_frame
+	Input.parse_input_event(cancel.duplicate())
+	if workspace.get_node("%GoalEditor").visible:
+		await workspace.get_node("%GoalEditor").visibility_changed
 	cancel.pressed = false
-	Input.parse_input_event(cancel)
+	Input.parse_input_event(cancel.duplicate())
 	assert(!workspace.get_node("%GoalEditor").visible)
 	workspace.graph.grab_focus()
 	await process_frame
 	cancel.pressed = true
-	Input.parse_input_event(cancel)
+	Input.parse_input_event(cancel.duplicate())
 	await process_frame
 	cancel.pressed = false
-	Input.parse_input_event(cancel)
+	Input.parse_input_event(cancel.duplicate())
 	assert(root.gui_get_focus_owner() == workspace.search)
+	var saved_plan_text := FileAccess.get_file_as_string("user://autosave.json")
+	workspace.graph.zoom = 0.8
+	workspace.graph.scroll_offset = Vector2(100, 200)
+	await create_timer(0.7).timeout
+	var view: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("user://workspace-view.json"))
+	assert(is_equal_approx(view.view.zoom, 0.8))
+	assert(view.view.scroll == [100.0, 200.0])
+	assert(FileAccess.get_file_as_string("user://autosave.json") == saved_plan_text)
+	var snapshot := workspace._snapshot()
+	workspace.graph.zoom = 1.0
+	workspace.graph.scroll_offset = Vector2.ZERO
+	workspace._restore_plan(snapshot)
+	await workspace.computation.completed
+	await process_frame
+	await process_frame
+	assert(is_equal_approx(workspace.graph.zoom, 0.8))
+	assert(workspace.graph.scroll_offset.is_equal_approx(Vector2(100, 200)))
+	assert(workspace._inspected_key == selected)
+	workspace.queue_free()
+	await process_frame
+	workspace = load("res://ui/workspace.tscn").instantiate()
+	root.add_child(workspace)
+	OS.low_processor_usage_mode = false
+	await workspace.computation.completed
+	await process_frame
+	await process_frame
+	assert(is_equal_approx(workspace.graph.zoom, 0.8))
+	assert(workspace.graph.scroll_offset.is_equal_approx(Vector2(100, 200)))
+	assert(workspace._inspected_key == selected)
 	if DisplayServer.get_name() != "headless":
 		await create_timer(0.25).timeout
 		for node: PlannerRecipeNode in workspace._nodes.values():
@@ -96,4 +130,5 @@ func _run() -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/graph-navigation.png")
 	print("Keyboard and gamepad focus navigation passed. The UI audio bus mixed a quiet confirmation tone with peak ", peak, ".")
+	print("Workspace pan, zoom, and inspection survived portable restoration and a fresh workspace instance without rewriting the dataset during navigation.")
 	quit()

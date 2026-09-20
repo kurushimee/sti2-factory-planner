@@ -40,15 +40,16 @@ try {
   let frame = page.frames().find(frame => frame !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
   await page.mouse.click(145, 729, {delay: 100});
-  const savedPlan = async () => frame.evaluate(() => new Promise((resolve, reject) => {
+  const savedRecord = async key => frame.evaluate(key => new Promise((resolve, reject) => {
     const open = indexedDB.open('factory-planner', 1);
     open.onerror = () => reject(open.error);
     open.onsuccess = () => {
-      const get = open.result.transaction('plans').objectStore('plans').get('autosave');
+      const get = open.result.transaction('plans').objectStore('plans').get(key);
       get.onsuccess = () => { resolve(get.result); open.result.close(); };
       get.onerror = () => reject(get.error);
     };
-  }));
+  }), key);
+  const savedPlan = () => savedRecord('autosave');
   await page.waitForFunction(() => true);
   let plan;
   for (let attempt = 0; attempt < 100; attempt++) {
@@ -200,8 +201,21 @@ try {
     await page.keyboard.press('Tab');
     await page.keyboard.press('Escape');
   }
+  const previousView = await savedRecord('workspace-view');
+  const planBeforeView = await savedPlan();
+  await page.mouse.move(810, 425);
+  await page.mouse.down({button: 'middle'});
+  await page.mouse.move(925, 460, {steps: 8});
+  await page.mouse.up({button: 'middle'});
+  await page.mouse.click(482, 147, {delay: 100});
+  await new Promise(resolve => setTimeout(resolve, 750));
+  const viewRecord = await savedRecord('workspace-view');
+  assert.notDeepEqual(viewRecord.view.scroll, previousView.view.scroll);
+  assert.notEqual(viewRecord.view.zoom, previousView.view.zoom);
+  assert.deepEqual(await savedPlan(), planBeforeView);
   await page.mouse.click(1200, 871, {delay: 100});
   plan = await waitPlan(value => value?.preferences?.sound === true);
+  assert.deepEqual(plan.view, viewRecord.view);
   await page.screenshot({path: `${artifacts}/browser.png`});
   const downloadEvent = page.waitForEvent('download');
   await page.mouse.click(1225, 40);
@@ -213,6 +227,9 @@ try {
   frame = page.frames().find(frame => frame !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
   assert.deepEqual(await savedPlan(), plan);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  assert.deepEqual((await savedRecord('workspace-view')).view, viewRecord.view);
+  await page.screenshot({path: `${artifacts}/browser-view-restored.png`});
   assert.equal(await frame.evaluate(() => crossOriginIsolated), false);
   assert.deepEqual(errors, []);
   console.log('The embedded Godot export passed goals, group movement and resizing, plan import, undo/redo, malformed-file recovery, download, and IndexedDB reload.');

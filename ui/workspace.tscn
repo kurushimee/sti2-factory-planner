@@ -311,3 +311,8 @@ unique_name_in_owner = true
 
 [node name="FactorySettings" parent="." instance=ExtResource("10")]
 unique_name_in_owner = true
+
+[node name="ViewSaveDelay" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.5
+one_shot = true

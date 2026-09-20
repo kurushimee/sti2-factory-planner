@@ -30,6 +30,11 @@ func _init() -> void:
 	plan.positions.test = [0, "wrong"]
 	assert(!PlannerDatasetValidation.check_plan(plan).is_empty())
 	plan.positions.clear()
+	plan.view = {"zoom": 0.8, "scroll": [100, -200], "inspected": "line"}
+	assert(PlannerDatasetValidation.check_plan(plan).is_empty())
+	plan.view.zoom = 0
+	assert(!PlannerDatasetValidation.check_plan(plan).is_empty())
+	plan.erase("view")
 	plan.request.goals[0].quantity = "1000000000000000000000000000001"
 	assert(PlannerDatasetValidation.check_plan(plan).is_empty())
 	plan.request.goals[0].quantity = "1e1001"
