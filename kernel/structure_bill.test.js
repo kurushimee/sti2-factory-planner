@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {structureBill, attachStructureBills} from './structure_bill.js';
+import {configureRecipe} from './catalog.js';
 
 const rules = [{state_only_verified: true, matching_states: [{Name: 'test:casing'}]}];
 const cell = (x, types) => ({position: [x, 0, 0], member_rule: 0, preview_block: 'test:casing', preview_items: ['test:casing'], allowed_hatches: types});
@@ -82,4 +83,28 @@ test('buffered generators size fuel and energy hatches for one production tick',
   attachStructureBills({lines: [{machine: machine.id, recipe: 'generate', configuration_details: configuration}]}, data);
   assert.equal(configuration.structure.status, 'sized', configuration.structure.reason);
   assert.equal(configuration.build_requirements.length, 2);
+});
+
+test('fixed input configurations exclude impossible hatches before solving without mutating the catalog', () => {
+  const input = 'modern_industrialization:item_input';
+  const output = 'modern_industrialization:item_output';
+  const machine = {id: 'test:press', shapes: [{index: 0, cells: [cell(0, [input]), cell(1, [output])]}]};
+  const small = 'modern_industrialization:bronze_item_input_hatch';
+  const large = 'modern_industrialization:steel_item_input_hatch';
+  const out = 'modern_industrialization:bronze_item_output_hatch';
+  const recipe = {id: 'press', inputs: [{resource: 'item:ore', amount: 40}], outputs: [{resource: 'item:plate', amount: 1}],
+    configurations: [1, 2].map(batch => ({id: `batch${batch}`, machine: machine.id, setup: {batch}, capacity: {}, operations_per_second: batch}))};
+  const data = {resources: [{id: 'item:ore', max_stack_size: 64}, {id: 'item:plate', max_stack_size: 64}], recipes: [recipe],
+    shape_member_rules: rules, machines: [machine, part(small, input, {item_slots: [64]}),
+      part(large, input, {item_slots: [64, 64]}), part(out, output, {item_slots: [64]})]};
+  const original = structuredClone(data);
+  const restricted = configureRecipe(recipe, data, {available_parts: [small, out]});
+  assert.deepEqual(restricted.configurations.map(value => value.id), ['batch1']);
+  assert.match(restricted.configuration_diagnostics.join(' '), /do not fit/);
+  assert.equal(configureRecipe(recipe, data).configurations.length, 2);
+  assert.deepEqual(data, original);
+  const result = {lines: [{recipe: recipe.id, machine: machine.id, configuration_details: restricted.configurations[0]}]};
+  const bill = structuredClone(result.lines[0].configuration_details.build_requirements);
+  attachStructureBills(result, data);
+  assert.deepEqual(result.lines[0].configuration_details.build_requirements, bill);
 });

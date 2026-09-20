@@ -1,3 +1,5 @@
+class StructureCapacityError extends Error {}
+
 function requiredCopies(part, demand) {
   const capacity = part.hatch_capacity;
   if (demand.items?.length) {
@@ -50,7 +52,10 @@ export function structureBill(shape, rules, hatches, demands, options = {}) {
     .sort((a, b) => a.count - b.count || (a.part.hatch_capacity.cable_eu_per_tick ?? 0) - (b.part.hatch_capacity.cable_eu_per_tick ?? 0) ||
       (a.part.hatch_capacity.fluid_slots_mb?.[0] ?? 0) - (b.part.hatch_capacity.fluid_slots_mb?.[0] ?? 0) ||
       (a.part.hatch_capacity.item_slots?.length ?? 0) - (b.part.hatch_capacity.item_slots?.length ?? 0) || a.part.id.localeCompare(b.part.id)));
-  if (variants.some(values => !values.length)) throw new Error('Available hatches cannot hold a complete batch or carry the required power.');
+  if (variants.some(values => !values.length)) throw new StructureCapacityError('Available hatches cannot hold a complete batch or carry the required power.');
+  const cacheKey = options.cache ? JSON.stringify(variants.map(values => values.map(value => [value.part.id, value.count]))) : null;
+  const cached = options.cache?.get(shape)?.get(cacheKey);
+  if (cached) return cached;
   let selected = null, assignment = null, visits = 0;
   const search = (index, parts) => {
     if (++visits > 50000) throw new Error('The structure hatch search reached its limit.');
@@ -63,7 +68,7 @@ export function structureBill(shape, rules, hatches, demands, options = {}) {
     for (const variant of variants[index]) search(index + 1, [...parts, ...Array(variant.count).fill(variant.part)]);
   };
   search(0, []);
-  if (!selected) throw new Error('The required hatches do not fit the allowed structure positions.');
+  if (!selected) throw new StructureCapacityError('The required hatches do not fit the allowed structure positions.');
   const quantities = new Map();
   const placements = cells.map((cell, index) => {
     const hatch = assignment.has(index) ? selected[assignment.get(index)] : null;
@@ -71,21 +76,32 @@ export function structureBill(shape, rules, hatches, demands, options = {}) {
     if (item) quantities.set(`item:${item}`, (quantities.get(`item:${item}`) ?? 0) + 1);
     return {position: cell.position, block: hatch?.id ?? cell.preview_block, ...(hatch ? {hatch_type: hatch.hatch_type} : {})};
   });
-  return {build_requirements: [...quantities].map(([resource, amount]) => ({resource, amount})), placements,
+  const report = {build_requirements: [...quantities].map(([resource, amount]) => ({resource, amount})), placements,
     assumptions: ['The controller is counted separately.', 'Hatch selection minimizes installed hatch count, then prefers lower capacities; it is not a material-cost optimum.',
       'External transport must keep the selected hatches supplied and drained.', 'Placement coordinates use the captured controller-relative orientation.']};
+  if (options.cache) {
+    if (!options.cache.has(shape)) options.cache.set(shape, new Map());
+    options.cache.get(shape).set(cacheKey, report);
+  }
+  return report;
 }
 
-export function attachStructureBills(result, dataset) {
+export function structureContext(dataset) {
   const definitions = new Map((dataset.machines ?? []).map(value => [value.id, value]));
   const recipes = new Map(dataset.recipes.map(value => [value.id, value]));
-  const resources = new Map(dataset.resources.map(value => [value.id, value]));
+  const resources = new Map((dataset.resources ?? []).map(value => [value.id, value]));
   const hatches = [...definitions.values()].filter(value => value.id.startsWith('modern_industrialization:') && value.hatch_capacity &&
     /:(?:bronze|steel|advanced|turbo|highly_advanced|lv|mv|hv|ev|superconductor)_(?:item|fluid|energy)_(?:input|output)_hatch$/.test(value.id));
+  return {definitions, recipes, resources, hatches, billCache: new WeakMap()};
+}
+
+export function attachStructureBills(result, dataset, options = {}, context = structureContext(dataset)) {
+  const {definitions, recipes, resources, hatches} = context;
   for (const line of result.lines ?? []) {
     const machine = definitions.get(line.machine);
     if (!machine?.shapes?.length) continue;
     const configuration = line.configuration_details;
+    if (configuration.structure?.status === 'sized') continue;
     try {
       const recipe = recipes.get(line.recipe);
       const setup = configuration.setup ?? {};
@@ -144,12 +160,26 @@ export function attachStructureBills(result, dataset) {
       }
       const shape = machine.shapes.find(value => value.index === (setup.shape ?? 0));
       const report = structureBill(shape, dataset.shape_member_rules ?? [], hatches, [...demands.values()],
-        machine.steel_hatch_variant ? {steel: Boolean(setup.steel_hatches)} : {});
+        {...options, cache: context.billCache, ...(machine.steel_hatch_variant ? {steel: Boolean(setup.steel_hatches)} : {})});
       configuration.structure = {status: 'sized', ...report};
       configuration.build_requirements = [...configuration.build_requirements ?? [], ...report.build_requirements];
     } catch (error) {
-      configuration.structure = {status: 'unsupported', reason: error.message};
+      configuration.structure = {status: 'unsupported', infeasible: error instanceof StructureCapacityError, reason: error.message};
     }
   }
   return result;
+}
+
+export function checkFixedStructure(recipe, configuration, dataset, request, context) {
+  if (!context.definitions.get(configuration.machine)?.shapes?.length) return;
+  const inputs = [...recipe.inputs, ...(configuration.inputs ?? []),
+    ...(configuration.operating_points ?? []).flatMap(point => point.inputs)];
+  const choices = inputs.map((flow, slot) => ({slot, resource: request.ingredients?.[`${recipe.id}#${slot}`] ??
+    (flow.resource || (flow.choices?.length === 1 ? flow.choices[0] : null))}));
+  // Unresolved alternatives require storage checks after their material allocation is known.
+  if (choices.some(choice => !choice.resource)) return;
+  attachStructureBills({lines: [{recipe: recipe.id, machine: configuration.machine,
+    configuration_details: configuration, ingredient_choices: choices}]}, dataset,
+  {allowed_parts: request.available_parts}, context);
+  if (configuration.structure?.infeasible) throw new Error(configuration.structure.reason);
 }

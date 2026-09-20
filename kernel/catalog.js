@@ -1,4 +1,5 @@
 import {compileConfiguration} from './configuration.js';
+import {structureContext, checkFixedStructure} from './structure_bill.js';
 
 function enabled(id, selected, disabled) {
   return (!selected || selected.includes(id)) && !disabled?.includes(id);
@@ -48,11 +49,17 @@ function *setups(machine, upgrades, preserveCounts, process) {
   }
 }
 
-export function configureRecipe(recipe, dataset, request = {}, explicitOnly = false, checkBudget = () => {}, capacityCache) {
+export function configureRecipe(recipe, dataset, request = {}, explicitOnly = false, checkBudget = () => {}, capacityCache, structures = structureContext(dataset)) {
   if ((recipe.requires_obtained ?? []).some(resource => !request.obtained_resources?.includes(resource))) return {...recipe, unsupported: 'This route requires an item the player has already obtained.'};
   if (!recipe.process || recipe.unsupported) {
-    const configurations = recipe.configurations.filter(value => enabled(value.machine, request.available_machines ?? dataset.default_machines, request.disabled_machines));
-    return {...recipe, configurations, ...(!configurations.length && !recipe.unsupported ? {unsupported: 'No available machine supports this recipe.'} : {})};
+    const rejected = new Set();
+    const configurations = recipe.configurations.filter(value => enabled(value.machine, request.available_machines ?? dataset.default_machines, request.disabled_machines))
+      .map(value => structuredClone(value)).filter(value => {
+        try { checkFixedStructure(recipe, value, dataset, request, structures); return true; }
+        catch (error) { rejected.add(error.message); return false; }
+      });
+    return {...recipe, configurations, configuration_diagnostics: [...rejected],
+      ...(!configurations.length && !recipe.unsupported ? {unsupported: [...rejected].join(' ') || 'No available machine supports this recipe.'} : {})};
   }
   const machines = dataset.machines ?? [];
   const upgrades = (dataset.upgrades ?? []).filter(upgrade => enabled(upgrade.id, request.available_upgrades ?? [], request.disabled_upgrades));
@@ -96,6 +103,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
         for (const condition of recipe.conditions ?? []) {
           if (condition.block) configuration.build_requirements.push({resource: `item:${condition.block}`, amount: 1});
         }
+        checkFixedStructure(recipe, configuration, dataset, request, structures);
         configurations.set(configuration.id, configuration);
       } catch (error) { rejected.add(error.message); }
     }
@@ -132,9 +140,11 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
 }
 
 export function prepareDataset(dataset, request, checkBudget = () => {}) {
-  if (!dataset.recipes.some(recipe => recipe.process) && !request.available_machines && !dataset.default_machines) return dataset;
+  if (!dataset.recipes.some(recipe => recipe.process) && !request.available_machines && !dataset.default_machines &&
+    !dataset.machines?.some(machine => machine.shapes?.length)) return dataset;
   const producers = new Map();
   const capacityCache = new Map();
+  const structures = structureContext(dataset);
   const selected = new Map();
   const needed = new Set((request.goals ?? []).map(goal => goal.resource));
   if (request.overhead_eu_per_tick) needed.add('energy:eu');
@@ -155,7 +165,7 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
       const pin = own(request.routes, recipe.primary);
       if (pin && pin !== recipe.id) continue;
       checkBudget();
-      const configured = configureRecipe(recipe, dataset, request, false, checkBudget, capacityCache);
+      const configured = configureRecipe(recipe, dataset, request, false, checkBudget, capacityCache, structures);
       selected.set(recipe.id, configured);
       if (configured.unsupported) continue;
       for (const flow of configured.inputs) for (const resource of flow.choices ?? [flow.resource]) addResource(resource);

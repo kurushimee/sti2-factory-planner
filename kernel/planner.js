@@ -319,7 +319,7 @@ export function solveFactory(highs, dataset, request) {
     }
   }
   if (best) {
-    attachStructureBills(best, dataset);
+    attachStructureBills(best, dataset, {allowed_parts: request.available_parts});
     best.startup = startupRequirements(best.lines);
     return {...best, status: 'optimal', optimal: true, branches: visited};
   }
