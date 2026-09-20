@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 
 const root = resolve('builds/web');
 const [worldPath, machineCapturePath, catalogPath, fixtureKind] = process.argv.slice(2);
-const structureFixture = fixtureKind === 'structure';
+const irradiationFixture = fixtureKind === 'irradiation';
+const structureFixture = fixtureKind === 'structure' || irradiationFixture;
 const extendedFixture = fixtureKind === 'extended' || structureFixture;
 const artifacts = resolve('.plans/artifacts/workspace');
 await mkdir(artifacts, {recursive: true});
@@ -40,16 +41,20 @@ try {
   let frame = page.frames().find(frame => frame !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
   await page.mouse.click(145, 729, {delay: 100});
-  const savedRecord = async key => frame.evaluate(key => new Promise((resolve, reject) => {
+  const savedRecord = async (key, compact = false) => frame.evaluate(({key, compact}) => new Promise((resolve, reject) => {
     const open = indexedDB.open('factory-planner', 1);
     open.onerror = () => reject(open.error);
     open.onsuccess = () => {
       const get = open.result.transaction('plans').objectStore('plans').get(key);
-      get.onsuccess = () => { resolve(get.result); open.result.close(); };
+      get.onsuccess = () => {
+        const result = get.result;
+        if (compact && result) delete result.dataset;
+        resolve(result); open.result.close();
+      };
       get.onerror = () => reject(get.error);
     };
-  }), key);
-  const savedPlan = () => savedRecord('autosave');
+  }), {key, compact});
+  const savedPlan = (compact = false) => savedRecord('autosave', compact);
   await page.waitForFunction(() => true);
   let plan;
   for (let attempt = 0; attempt < 100; attempt++) {
@@ -111,11 +116,12 @@ try {
   };
   const waitPlan = async predicate => {
     for (let attempt = 0; attempt < 200; attempt++) {
-      const current = await savedPlan();
-      if (predicate(current)) return current;
+      const current = await savedPlan(true);
+      if (predicate(current)) return savedPlan();
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    throw new Error('The expected plan update did not reach browser persistence.');
+    await page.screenshot({path: `${artifacts}/persistence-failure.png`});
+    throw new Error(`The expected plan update did not reach browser persistence: ${predicate}`);
   };
   const changed = structuredClone(plan);
   changed.request.goals[0].rate = 2;
@@ -188,9 +194,9 @@ try {
   if (catalogPath) {
     const dataset = JSON.parse(await readFile(catalogPath, 'utf8'));
     const catalogPlan = {format: 'factory-plan', version: 1, dataset_identity: dataset.identity, dataset,
-      request: {goals: [], available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler', ...(structureFixture ? ['modern_industrialization:electric_blast_furnace'] : [])],
+      request: {goals: [], available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler', ...(structureFixture ? ['modern_industrialization:electric_blast_furnace'] : []), ...(irradiationFixture ? ['yet_another_industrialization:nuclear_rod_irradiator'] : [])],
         replication: extendedFixture,
-        external: ['item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks', ...(structureFixture ? ['item:modern_industrialization:uncooked_steel_dust'] : [])].map(resource => ({resource}))}, positions: {}, groups: {}};
+        external: ['item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks', ...(structureFixture ? ['item:modern_industrialization:uncooked_steel_dust'] : []), ...(irradiationFixture ? ['item:modern_industrialization:uranium_fuel_rod', 'item:modern_industrialization:beryllium_block'] : [])].map(resource => ({resource}))}, positions: {}, groups: {}};
     await importFile({name: 'statech-plan.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(catalogPlan))});
     await waitPlan(value => value?.dataset_identity === dataset.identity);
     await page.mouse.click(1320, 40, {delay: 100});
@@ -200,15 +206,20 @@ try {
   }
   if (worldPath) {
     await importFile(worldPath);
-    plan = await waitPlan(value => value?.imported_world?.machines?.length === (structureFixture ? 7 : extendedFixture ? 6 : 4));
+    plan = await waitPlan(value => value?.imported_world?.machines?.length === (irradiationFixture ? 9 : structureFixture ? 7 : extendedFixture ? 6 : 4));
     assert.equal(plan.imported_world.providers.length, structureFixture ? 3 : 2);
     assert.deepEqual(plan.imported_world.errors, []);
     if (catalogPath) {
       assert.equal(plan.request.goals[0].kind, 'capacity');
       assert.equal(plan.request.goals[0].machines, 1);
-      assert.equal(plan.imported_world.reconstruction.unresolved.length, 3);
+      assert.equal(plan.imported_world.reconstruction.unresolved.length, irradiationFixture ? 4 : 3);
       if (extendedFixture) {
-        assert.equal(plan.request.goals.length, structureFixture ? 4 : 3);
+        assert.equal(plan.request.goals.length, irradiationFixture ? 5 : structureFixture ? 4 : 3);
+        if (irradiationFixture) {
+          const goal = plan.request.goals.find(value => value.recipe.startsWith('irradiate|'));
+          assert.equal(goal.machines, 1);
+          assert.match(goal.configuration, /hatches:8$/);
+        }
         assert.deepEqual(plan.request.obtained_resources, ['item:minecraft:iron_ingot']);
         assert.equal(plan.request.ingredients['minecraft:crafting_shaped|minecraft:stick#0'], 'item:minecraft:oak_planks');
         if (structureFixture) assert.equal(plan.imported_world.machines.find(machine => machine.origin.x === 64).structure.status, 'matching_saved_geometry');
