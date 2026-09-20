@@ -42,6 +42,7 @@ const server = createServer(async (incoming, response) => {
     const files = {
       '/kernel/worker.js': 'kernel/worker.js', '/kernel/planner.js': 'kernel/planner.js',
       '/kernel/flows.js': 'kernel/flows.js',
+      '/kernel/goals.js': 'kernel/goals.js',
       '/vendor/highs.mjs': 'node_modules/highs/build/highs.mjs', '/vendor/highs.wasm': 'node_modules/highs/build/highs.wasm',
     };
     if (!files[path]) { response.writeHead(404); response.end(); return; }

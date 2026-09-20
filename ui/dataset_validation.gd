@@ -25,8 +25,16 @@ static func check(value: Variant) -> String:
 			if !(recipe.get(direction) is Array):
 				return "Recipe %s needs an %s list." % [recipe.id, direction]
 			for flow: Variant in recipe[direction]:
-				if !(flow is Dictionary) || !(flow.get("resource") is String) || !resources.has(flow.resource) || !_positive(flow.get("amount")):
+				if !(flow is Dictionary) || !_positive(flow.get("amount")):
 					return "Recipe %s has an invalid resource quantity." % recipe.id
+				var choices: Variant = flow.get("choices", [flow.get("resource")])
+				if !(choices is Array) || choices.is_empty():
+					return "Recipe %s has an empty ingredient choice." % recipe.id
+				for resource: Variant in choices:
+					if !(resource is String) || !resources.has(resource):
+						return "Recipe %s references an unknown resource." % recipe.id
+				if direction == "outputs" && !(flow.get("resource") is String):
+					return "Recipe %s needs concrete output resources." % recipe.id
 		if recipe.outputs.is_empty() || !(recipe.get("configurations") is Array):
 			return "Recipe %s needs outputs and a configuration list." % recipe.id
 		for configuration: Variant in recipe.configurations:
@@ -46,8 +54,18 @@ static func check_plan(value: Variant) -> String:
 	if !(value.get("request") is Dictionary) || !(value.request.get("goals") is Array):
 		return "The plan has no valid goal list."
 	for goal: Variant in value.request.goals:
-		if !(goal is Dictionary) || !(goal.get("resource") is String) || !_positive(goal.get("rate")):
+		if !(goal is Dictionary) || !(goal.get("resource") is String):
 			return "The plan contains an invalid goal."
+		var kind: String = goal.get("kind", "rate")
+		if !kind in ["rate", "capacity", "quantity"]:
+			return "The plan contains an unknown goal type."
+		if kind == "capacity":
+			if !(goal.get("recipe") is String) || !(goal.get("configuration") is String) || !_positive(goal.get("machines")) || goal.machines != floorf(goal.machines):
+				return "A capacity goal needs a recipe, configuration, and whole-machine count."
+		elif !_positive(goal.get("rate")):
+			return "The goal rate must be positive."
+		if kind == "quantity" && !_positive(goal.get("quantity")):
+			return "The production quantity must be positive."
 		if !value.dataset.resources.any(func(resource: Dictionary) -> bool: return resource.id == goal.resource):
 			return "The plan requests an unknown resource: %s" % goal.resource
 	for field: String in ["positions", "groups"]:

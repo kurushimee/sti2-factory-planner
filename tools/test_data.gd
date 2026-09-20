@@ -12,6 +12,12 @@ func _init() -> void:
 	assert(!PlannerDatasetValidation.check(malformed).is_empty())
 	var plan := {"format": "factory-plan", "version": 1, "dataset": dataset, "dataset_identity": "example:1", "request": {"goals": [{"resource": "ore", "rate": 1}]}, "positions": {}, "groups": {}}
 	assert(PlannerDatasetValidation.check_plan(plan).is_empty())
+	plan.request.goals[0] = {"kind": "capacity", "resource": "ore", "recipe": "mine", "configuration": "miner", "machines": 2}
+	assert(PlannerDatasetValidation.check_plan(plan).is_empty())
+	plan.request.goals[0].machines = 1.5
+	assert(!PlannerDatasetValidation.check_plan(plan).is_empty())
+	plan.request.goals[0] = {"kind": "quantity", "resource": "ore", "rate": 2, "quantity": 1000000000000}
+	assert(PlannerDatasetValidation.check_plan(plan).is_empty())
 	plan.positions.test = [0, "wrong"]
 	assert(!PlannerDatasetValidation.check_plan(plan).is_empty())
 	plan.positions.clear()

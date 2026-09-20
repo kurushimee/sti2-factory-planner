@@ -121,6 +121,82 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonObject itemRules(MinecraftServer server) throws Exception {
+        var result = new JsonObject();
+        var items = new JsonArray();
+        var failures = new JsonArray();
+        var ops = server.registryAccess().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
+        var replicate = aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity.class
+                .getDeclaredMethod("canReplicate", net.minecraft.world.item.ItemStack.class);
+        replicate.setAccessible(true);
+        for (var item : BuiltInRegistries.ITEM) {
+            if (item == net.minecraft.world.item.Items.AIR) continue;
+            var record = new JsonObject();
+            record.addProperty("id", BuiltInRegistries.ITEM.getKey(item).toString());
+            try {
+                var stack = new net.minecraft.world.item.ItemStack(item);
+                record.addProperty("name", stack.getHoverName().getString());
+                record.addProperty("max_stack_size", stack.getMaxStackSize());
+                record.addProperty("burn_ticks", stack.getBurnTime(null));
+                record.addProperty("replicable", (Boolean) replicate.invoke(null, stack));
+                var remainder = stack.getCraftingRemainingItem();
+                if (!remainder.isEmpty()) record.add("crafting_remainder",
+                        net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, remainder).getOrThrow());
+                items.add(record);
+            } catch (Exception error) {
+                record.addProperty("error", error.toString());
+                failures.add(record);
+            }
+        }
+        result.add("items", items);
+        result.add("failures", failures);
+        return result;
+    }
+
+    private static JsonObject ingredientRules(MinecraftServer server) throws Exception {
+        var ops = server.registryAccess().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
+        var runtime = com.google.gson.JsonParser.parseString(Files.readString(Path.of("planner-extraction/runtime.json"))).getAsJsonObject();
+        var pending = new java.util.LinkedHashMap<String, com.google.gson.JsonElement>();
+        for (var entry : runtime.getAsJsonArray("recipes")) {
+            var raw = entry.getAsJsonObject().getAsJsonObject("recipe");
+            for (String key : new String[]{"item_inputs", "ingredients"}) {
+                if (key.equals("ingredients") && !raw.get("type").getAsString().matches("^(minecraft:crafting|kubejs:).*(shaped|shapeless)$")) continue;
+                if (raw.has(key) && raw.get(key).isJsonArray()) {
+                    for (var value : raw.getAsJsonArray(key)) pending.putIfAbsent(value.toString(), value);
+                }
+            }
+            if (raw.has("key") && raw.get("key").isJsonObject()) {
+                for (var value : raw.getAsJsonObject("key").asMap().values()) pending.putIfAbsent(value.toString(), value);
+            }
+        }
+        var resolved = new JsonArray();
+        var failures = new JsonArray();
+        for (var raw : pending.values()) {
+            // Ordinary item and tag ingredients are already resolved in the registry capture.
+            if (!raw.toString().contains("\"type\"") && !raw.toString().contains("\"components\"")) continue;
+            var record = new JsonObject();
+            record.add("ingredient", raw);
+            try {
+                var ingredient = net.minecraft.world.item.crafting.Ingredient.CODEC.parse(ops, raw).getOrThrow();
+                var stacks = new JsonArray();
+                for (var stack : ingredient.getItems()) {
+                    if (!ingredient.test(stack)) throw new IllegalStateException("The displayed ingredient stack does not satisfy its predicate.");
+                    stacks.add(net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, stack).getOrThrow());
+                }
+                record.add("matching_display_stacks", stacks);
+                record.addProperty("is_simple", ingredient.isSimple());
+                resolved.add(record);
+            } catch (Exception error) {
+                record.addProperty("error", error.toString());
+                failures.add(record);
+            }
+        }
+        var result = new JsonObject();
+        result.add("resolved", resolved);
+        result.add("failures", failures);
+        return result;
+    }
+
     private static int export(MinecraftServer server) throws Exception {
         var machines = new JsonArray();
         var failures = new JsonArray();
@@ -200,6 +276,13 @@ public final class PlannerProbe {
         result.add("machines", machines);
         result.add("failures", failures);
         result.add("arithmetic", arithmetic);
+        result.add("item_rules", itemRules(server));
+        result.add("ingredient_rules", ingredientRules(server));
+        var power = new JsonObject();
+        power.addProperty("fe_per_eu", aztech.modern_industrialization.config.MIServerConfig.INSTANCE.forgeEnergyPerEu.getAsInt());
+        power.addProperty("fe_per_ae", appeng.api.config.PowerUnit.AE.convertTo(appeng.api.config.PowerUnit.FE, 1));
+        power.addProperty("ae_usage_multiplier", appeng.api.config.PowerMultiplier.CONFIG.multiplier);
+        result.add("power_units", power);
         Files.createDirectories(Path.of("planner-extraction"));
         Files.writeString(Path.of("planner-extraction/machines.json"), new GsonBuilder().setPrettyPrinting().create().toJson(result));
         System.out.println("PLANNER_PROBE_COMPLETE machines=" + machines.size() + " failures=" + failures.size());

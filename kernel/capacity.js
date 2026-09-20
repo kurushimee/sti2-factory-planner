@@ -24,6 +24,7 @@ function ceilRatio(numerator, denominator) {
 }
 
 export function machineCapacity(recipe, machine, setup = {}) {
+  if (machine.mechanic === 'ae_molecular_assembler') return molecularAssemblerCapacity(machine, setup);
   const duration = integer(recipe.duration_ticks, 'Recipe duration', 1);
   const recipeEu = integer(recipe.eu_per_tick, 'Recipe EU/t', 1);
   const total = integer(duration * recipeEu, 'Recipe energy', 1);
@@ -78,4 +79,20 @@ export function machineCapacity(recipe, machine, setup = {}) {
     output_buffer_operations: maximumDeficit,
     assumptions: ['Ingredients arrive continuously.', 'The power connection can supply the peak draw.', 'Outputs can always be accepted.', 'No overdrive or lubricant is applied.'],
   };
+}
+
+export function molecularAssemblerCapacity(machine, setup = {}) {
+  const cards = integer(setup.upgrade_count ?? 0, 'Acceleration card count');
+  if (cards > 5) throw new Error('A molecular assembler has five acceleration card slots.');
+  if (cards && setup.upgrade?.id !== 'ae2:speed_card') throw new Error('A molecular assembler requires acceleration cards.');
+  const euPerAe = machine.eu_per_ae;
+  const multiplier = machine.usage_multiplier;
+  if (!(euPerAe > 0 && Number.isFinite(euPerAe) && multiplier > 0 && Number.isFinite(multiplier))) throw new Error('Molecular assembler power conversion is missing.');
+  const speed = [10, 13, 17, 20, 25, 50][cards];
+  const ticks = Math.ceil(100 / speed);
+  const power = speed * (speed / 10) * multiplier * euPerAe;
+  return {operations_per_second: 20 / ticks, ticks_per_batch: ticks, energy_per_batch: ticks * power,
+    eu_per_operation: ticks * power, average_full_load_eu_per_tick: power, peak_eu_per_tick: power,
+    efficiency_limit: 0, warmup_ticks: 0, completion_ticks: [ticks], output_buffer_operations: 1,
+    assumptions: ['Ingredients arrive continuously.', 'The assembler has a dedicated pattern.', 'The AE network supplies power and accepts outputs every tick.']};
 }

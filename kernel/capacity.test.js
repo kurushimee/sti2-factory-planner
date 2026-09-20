@@ -42,3 +42,16 @@ test('invalid limits and unsupported rules fail explicitly', () => {
   assert.throws(() => machineCapacity({duration_ticks: 20, eu_per_tick: 2}, {...macerator, mechanic: 'guessed'}), /Unsupported/);
   assert.throws(() => machineCapacity({duration_ticks: 1e16, eu_per_tick: 2}, macerator), /safe integer/);
 });
+test('molecular assemblers charge the full final tick and enforce five card slots', () => {
+  const machine = {mechanic: 'ae_molecular_assembler', eu_per_ae: 0.2, usage_multiplier: 1};
+  const base = machineCapacity({}, machine);
+  assert.equal(base.operations_per_second, 2);
+  assert.equal(base.eu_per_operation, 20);
+  const one = machineCapacity({}, machine, {upgrade_count: 1, upgrade: {id: 'ae2:speed_card'}});
+  assert.equal(one.ticks_per_batch, 8);
+  assert(Math.abs(one.eu_per_operation - 27.04) < 1e-10);
+  const five = machineCapacity({}, machine, {upgrade_count: 5, upgrade: {id: 'ae2:speed_card'}});
+  assert.equal(five.operations_per_second, 10);
+  assert.equal(five.eu_per_operation, 100);
+  assert.throws(() => machineCapacity({}, machine, {upgrade_count: 6}), /five/);
+});

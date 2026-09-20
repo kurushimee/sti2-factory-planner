@@ -3,6 +3,7 @@
 import argparse
 from collections import Counter
 import json
+import hashlib
 from pathlib import Path
 
 
@@ -10,16 +11,40 @@ class Unsupported(ValueError):
     pass
 
 
-def ingredient(value, kind, tags):
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def resource_identity(kind, registry_id, components, variants):
+    base = kind + ":" + registry_id
+    if not components:
+        return base
+    if variants is None:
+        raise Unsupported("Component resources need a variant registry.")
+    resource_id = base + "#" + hashlib.sha256(canonical(components).encode()).hexdigest()[:20]
+    record = {"id": resource_id, "registry_id": registry_id, "kind": kind,
+              "unit": "mB" if kind == "fluid" else "item", "components": components}
+    if resource_id in variants and variants[resource_id] != record:
+        raise ValueError("A component resource identity collided.")
+    variants[resource_id] = record
+    return resource_id
+
+
+def ingredient(value, kind, tags, resolutions=None, variants=None):
     """Resolve alternatives without choosing a material on the player's behalf."""
     if isinstance(value, list):
-        return sorted({resource for child in value for resource in ingredient(child, kind, tags)})
+        return sorted({resource for child in value for resource in ingredient(child, kind, tags, resolutions, variants)})
     if not isinstance(value, dict):
         raise Unsupported("The ingredient is not an object or an alternative list.")
-    if value.get("components") or value.get("type"):
-        raise Unsupported("This ingredient needs a component or custom predicate adapter.")
+    if value.get("type"):
+        key = canonical({key: child for key, child in value.items() if key not in ("amount", "probability")})
+        resolved = (resolutions or {}).get(key)
+        if not resolved:
+            raise Unsupported("This ingredient needs a captured custom predicate adapter.")
+        return sorted({resource_identity(kind, stack["id"], stack.get("components"), variants)
+                       for stack in resolved["matching_display_stacks"]})
     if kind in value:
-        return [kind + ":" + value[kind]]
+        return [resource_identity(kind, value[kind], value.get("components"), variants)]
     if "tag" in value:
         key = kind + ":" + value["tag"]
         if key not in tags or not tags[key]:
@@ -28,8 +53,10 @@ def ingredient(value, kind, tags):
     raise Unsupported("The ingredient has no supported identity.")
 
 
-def flow(value, kind, tags, output=False):
-    choices = ingredient(value, kind, tags)
+def flow(value, kind, tags, output=False, resolutions=None, variants=None):
+    choices = ingredient(value, kind, tags, resolutions, variants)
+    if not choices:
+        raise Unsupported("The captured ingredient has no matching stacks.")
     amount = value.get("amount", 1) if isinstance(value, dict) else 1
     probability = value.get("probability", 1) if isinstance(value, dict) else 1
     if not isinstance(amount, (int, float)) or amount <= 0:
@@ -38,11 +65,15 @@ def flow(value, kind, tags, output=False):
         raise ValueError("Recipe probabilities must be between zero and one.")
     if output and len(choices) != 1:
         raise Unsupported("An output needs one concrete resource.")
-    return {"choices": choices, "amount": amount, "probability": probability,
-            "role": "catalyst" if probability == 0 and not output else "material"}
+    result = {"choices": choices, "amount": amount, "probability": probability,
+              "role": "catalyst" if probability == 0 and not output else "material"}
+    if isinstance(value, dict) and value.get("type") == "neoforge:components":
+        result["predicate"] = value
+        result["matching_scope"] = "captured_display_variants"
+    return result
 
 
-def normalize_recipe(entry, tags):
+def normalize_recipe(entry, tags, resolutions=None, variants=None):
     raw = entry["recipe"]
     recipe_type = raw["type"]
     result = {"id": recipe_type + "|" + entry["id"], "source_id": entry["id"],
@@ -55,7 +86,7 @@ def normalize_recipe(entry, tags):
             result["duration_ticks"] = raw["duration"]
             for kind in ("item", "fluid"):
                 for direction in ("inputs", "outputs"):
-                    result[direction].extend(flow(value, kind, tags, direction == "outputs")
+                    result[direction].extend(flow(value, kind, tags, direction == "outputs", resolutions, variants)
                                              for value in raw.get(kind + "_" + direction, []))
         elif recipe_type in ("minecraft:crafting_shaped", "kubejs:shaped",
                              "minecraft:crafting_shapeless", "kubejs:shapeless"):
@@ -63,14 +94,14 @@ def normalize_recipe(entry, tags):
             if "pattern" in raw:
                 counts = Counter("".join(raw["pattern"]).replace(" ", ""))
                 for symbol, amount in counts.items():
-                    result["inputs"].append({"choices": ingredient(raw["key"][symbol], "item", tags),
-                                             "amount": amount, "probability": 1, "role": "material"})
+                    value = flow(raw["key"][symbol], "item", tags, resolutions=resolutions, variants=variants)
+                    value["amount"] = amount
+                    result["inputs"].append(value)
             else:
-                result["inputs"] = [flow(value, "item", tags) for value in raw["ingredients"]]
+                result["inputs"] = [flow(value, "item", tags, resolutions=resolutions, variants=variants) for value in raw["ingredients"]]
             output = raw["result"]
-            if output.get("components"):
-                raise Unsupported("The crafting result has components that need an identity adapter.")
-            result["outputs"] = [flow({"item": output["id"], "amount": output.get("count", 1)}, "item", tags, True)]
+            result["outputs"] = [flow({"item": output["id"], "amount": output.get("count", 1),
+                                       "components": output.get("components")}, "item", tags, True, resolutions, variants)]
             # Runtime remainder and automation rules are separate from ingredient matching.
             result["requirements"] = ["crafting_remainders", "automation_capacity"]
         else:
@@ -83,15 +114,24 @@ def normalize_recipe(entry, tags):
 
 
 def normalize(runtime, probes):
-    if runtime["failures"] or probes["failures"]:
+    if runtime["failures"] or probes["failures"] or probes.get("item_rules", {}).get("failures") or probes.get("ingredient_rules", {}).get("failures"):
         raise ValueError("Resolve capture failures before normalizing the dataset.")
-    recipes = [normalize_recipe(entry, runtime["tags"]) for entry in runtime["recipes"]]
+    variants = {}
+    resolutions = {canonical({key: value for key, value in entry["ingredient"].items() if key not in ("amount", "probability")}): entry
+                   for entry in probes.get("ingredient_rules", {}).get("resolved", []) if isinstance(entry["ingredient"], dict)}
+    recipes = [normalize_recipe(entry, runtime["tags"], resolutions, variants) for entry in runtime["recipes"]]
     ids = [recipe["id"] for recipe in recipes]
     if len(ids) != len(set(ids)):
         raise ValueError("Recipe identities are not unique.")
     resources = [{"id": value["kind"] + ":" + value["id"], "registry_id": value["id"],
                   "kind": value["kind"], "unit": "mB" if value["kind"] == "fluid" else "item"}
                  for value in runtime["resources"]]
+    item_rules = {entry["id"]: entry for entry in probes.get("item_rules", {}).get("items", [])}
+    for resource in resources:
+        if resource["kind"] == "item" and resource["registry_id"] in item_rules:
+            resource["item_rules"] = item_rules[resource["registry_id"]]
+            resource["name"] = resource["item_rules"]["name"]
+    resources.extend(variants.values())
     known = {value["id"] for value in resources}
     for recipe in recipes:
         for value in recipe["inputs"] + recipe["outputs"]:
@@ -105,6 +145,7 @@ def normalize(runtime, probes):
             "recipes": sorted(recipes, key=lambda value: value["id"]),
             "machines": sorted(probes["machines"], key=lambda value: value["id"]),
             "data_maps": runtime["data_maps"], "loaded_mods": probes["loaded_mods"],
+            "power_units": probes.get("power_units", {}),
             "coverage": [{"type": key[0], "status": key[1], "count": count}
                          for key, count in sorted(coverage.items())]}
 

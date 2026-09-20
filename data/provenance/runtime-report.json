@@ -652,6 +652,13 @@
       ]
     }
   },
+  "item_rules_count": 11573,
+  "resolved_custom_ingredients": 202,
+  "power_units": {
+    "fe_per_eu": 10,
+    "fe_per_ae": 2.0,
+    "ae_usage_multiplier": 1.0
+  },
   "loaded_mods": [
     {
       "id": "c2me_fixes_worldgen_threading_issues",

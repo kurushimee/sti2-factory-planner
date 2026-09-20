@@ -1,6 +1,6 @@
 import unittest
 
-from normalize import ingredient, normalize_recipe, Unsupported
+from normalize import canonical, flow, ingredient, normalize_recipe, resource_identity, Unsupported
 
 
 class NormalizationTests(unittest.TestCase):
@@ -46,6 +46,25 @@ class NormalizationTests(unittest.TestCase):
                               "result": {"id": "test:result"}})
         self.assertEqual(len(result["inputs"]), 1)
         self.assertEqual(result["inputs"][0]["amount"], 1)
+
+    def test_component_variants_share_identity_without_losing_the_predicate(self):
+        components = {"minecraft:potion_contents": {"potion": "minecraft:water"}}
+        predicate = {"type": "neoforge:components", "items": "minecraft:potion", "components": components}
+        resolutions = {canonical(predicate): {"matching_display_stacks": [{"id": "minecraft:potion", "components": components}]}}
+        variants = {}
+        result = flow({**predicate, "amount": 2}, "item", {}, resolutions=resolutions, variants=variants)
+        output = flow({"item": "minecraft:potion", "components": components}, "item", {}, True, variants=variants)
+        self.assertEqual(result["choices"], output["choices"])
+        self.assertNotEqual(result["choices"], ["item:minecraft:potion"])
+        self.assertEqual(result["matching_scope"], "captured_display_variants")
+        self.assertEqual(result["amount"], 2)
+        self.assertEqual(len(variants), 1)
+
+    def test_component_identity_is_stable_across_object_key_order(self):
+        variants = {}
+        first = resource_identity("item", "test:item", {"a": 1, "b": 2}, variants)
+        second = resource_identity("item", "test:item", {"b": 2, "a": 1}, variants)
+        self.assertEqual(first, second)
 
 
 if __name__ == "__main__":

@@ -64,6 +64,19 @@ def verify(runtime: dict, probes: dict) -> dict:
         for fuel in generator["fuels"]:
             if fuel["resource"] not in resource_keys or fuel["eu_per_unit"] <= 0:
                 raise ValueError("A generator has an invalid fuel mapping.")
+    item_rules = probes["item_rules"]
+    ingredient_rules = probes["ingredient_rules"]
+    if item_rules["failures"] or ingredient_rules["failures"]:
+        raise ValueError("The item or ingredient probe contains extraction failures.")
+    items = {entry["id"]: entry for entry in item_rules["items"]}
+    if len(items) != 11573 or items["minecraft:coal"]["burn_ticks"] != 1600:
+        raise ValueError("The loaded item rules changed.")
+    if items["minecraft:water_bucket"]["crafting_remainder"]["id"] != "minecraft:bucket":
+        raise ValueError("The water bucket remainder changed.")
+    if items["extended_industrialization:processing_array"]["replicable"]:
+        raise ValueError("The pack's processing-array replication blacklist changed.")
+    if probes["power_units"] != {"fe_per_eu": 10, "fe_per_ae": 2.0, "ae_usage_multiplier": 1.0}:
+        raise ValueError("The loaded power conversions changed.")
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -75,6 +88,9 @@ def verify(runtime: dict, probes: dict) -> dict:
         "machine_count": len(machines),
         "arithmetic": probes["arithmetic"],
         "generator_rules": generators,
+        "item_rules_count": len(items),
+        "resolved_custom_ingredients": len(ingredient_rules["resolved"]),
+        "power_units": probes["power_units"],
         "loaded_mods": probes["loaded_mods"],
         "extraction_failures": 0,
         "normalized_dataset_complete": False,

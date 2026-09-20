@@ -113,3 +113,44 @@ test('large finite rates still require the final whole machine', () => {
   assert.equal(line(result, 'make').machines, 100000000001);
   assert.equal(supply(result, 'ore'), 1000000000001);
 });
+
+test('ingredient alternatives are optimized across shared demand and can be pinned', () => {
+  const data = dataset(['iron', 'copper', 'machine', 'wire'], [
+    recipe('build', 'machine', [{choices: ['iron', 'copper'], amount: 2}], [flow('machine', 1)]),
+    recipe('wire', 'wire', [flow('copper', 1)], [flow('wire', 1)]),
+  ]);
+  const request = {goals: [{resource: 'machine', rate: 2}, {resource: 'wire', rate: 1}],
+    external: [{resource: 'iron', cost: 2}, {resource: 'copper', cost: 1, limit: 3}]};
+  const result = solveFactory(highs, data, request);
+  close(supply(result, 'iron'), 2);
+  close(supply(result, 'copper'), 3);
+  close(line(result, 'build').inputs.reduce((sum, flow) => sum + flow.rate, 0), 4);
+  const pinned = solveFactory(highs, data, {...request, ingredients: {'build#0': 'iron'}});
+  close(supply(pinned, 'iron'), 4);
+  close(supply(pinned, 'copper'), 1);
+  assert.throws(() => solveFactory(highs, data, {...request, ingredients: {'build#0': 'wood'}}), /pinned ingredient/);
+});
+
+test('resource and recipe names cannot inherit route or configuration pins', () => {
+  const data = dataset(['ore', 'toString'], [recipe('constructor', 'toString', [flow('ore', 1)], [flow('toString', 1)])]);
+  const result = solveFactory(highs, data, {goals: [{resource: 'toString', rate: 1}], external: [{resource: 'ore'}]});
+  assert.equal(result.status, 'optimal');
+});
+test('mixed generation and idle reserve include support power without burning reserve fuel', () => {
+  const data = dataset(['ore', 'fuel', 'part', 'energy:eu'], [
+    recipe('fuel', 'fuel', [flow('ore', 1)], [flow('fuel', 1)], 10, 20),
+    recipe('generator_a', 'energy:eu', [flow('fuel', 1)], [flow('energy:eu', 100)], 1),
+    recipe('generator_b', 'energy:eu', [flow('fuel', 1)], [flow('energy:eu', 100)], 1),
+    recipe('make', 'part', [], [flow('part', 1)], 10, 120),
+  ]);
+  const result = solveFactory(highs, data, {goals: [{resource: 'part', rate: 1}], external: [{resource: 'ore'}],
+    reserve_fraction: 0.5, limits: {'generator_a:standard': 1}, dispatch: {'generator_a:standard': {minimum: 1}}});
+  assert.equal(result.status, 'optimal');
+  close(line(result, 'generator_a').operations_per_second, 1);
+  close(line(result, 'generator_b').operations_per_second, 0.5);
+  close(supply(result, 'ore'), 1.5);
+  close(result.power.gross_generation_eu_per_tick, 7.5);
+  close(result.power.consumption_eu_per_tick, 7.5);
+  close(result.power.installed_generation_eu_per_tick, 15);
+  assert.equal(line(result, 'generator_b').machines, 2);
+});

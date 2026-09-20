@@ -1,12 +1,16 @@
 # Planning kernel
 
-Issue #5 owns this implementation. The current kernel is an isolated calculation component. It is not yet integrated into the Godot application or the complete StaTech dataset.
+Issue #5 owns this implementation. The Godot workspace uses the kernel on desktop and web. Integration with the complete StaTech dataset remains in progress.
 
 `kernel/planner.js` builds a mixed-integer model for operation rates, whole-machine allocations, explicit external supplies, and resource balances. Generation is represented as a process producing `energy:eu`; production and generation support processes consume that same resource. Fixed infrastructure demand is included in the energy balance. Positive allocation costs prevent unused machines from being added for free.
 
 The default objective weights are 1,000 per external resource unit per second, 1 per machine build-cost unit, and 0.000001 per operating EU per second. These are configurable optimization weights, not claims about comparable real-world resource value. Recipe input costs include the complete connected support graph. Build-cost values currently come from configuration records; deriving actual machine and upgrade material costs is pending.
 
-By default, only one recipe with a given primary output can be active. Byproduct supplies remain usable. When a relaxation mixes primary routes, the search branches over every available primary route and uses exact mixed-integer subproblems as lower bounds. It does not invent a large machine-count bound. The search reports an optimum only after exhausting or pruning all branches. Time limits return an explicit incomplete-search result and any available incumbent.
+By default, only one recipe with a given primary material output can be active. Byproduct supplies remain usable, and generation can combine several methods. When a relaxation mixes primary routes, the search branches over every available primary route and uses exact mixed-integer subproblems as lower bounds. It does not invent a large machine-count bound. The search reports an optimum only after exhausting or pruning all branches. Time limits return an explicit incomplete-search result and any available incumbent.
+
+Ingredient alternatives share the connected resource balance. The player can pin a slot through `ingredients["recipe_id#slot_index"]`. Results retain the actual selected ingredient rates. Goal types are `rate`, `capacity`, and `quantity`: capacity multiplies whole machines, operations per second, and the recipe's output amount; quantity reports production time at the specified rate after startup. Conflicting recipe or configuration selections produce an error.
+
+Generation settings include installed counts, count limits, operation-rate dispatch bounds, and a reserve fraction. Reserve sizes installed generating capacity against all modeled consumption, including fuel support. It does not burn extra fuel merely to hold idle capacity. Standby fuel and startup stock still require separate calculations. External power counts toward reserve only when the player supplies its firm capacity, in EU per second. Results separate generated power, installed capacity, consumption, fixed demand, and margins.
 
 The returned plan describes a steady-state balance. It does not yet establish bootstrap stock, a complete warm-up buffer plan, progression, recipe conditions, catalysts, or safe stochastic stock levels. A circulating container can balance at zero net consumption while still needing an initial fill; callers must not present the current result as a verified startup plan. These missing adapters and calculations remain required under #3 and #5.
 
@@ -18,7 +22,7 @@ This evaluator assumes continuous ingredients, space for outputs, and no overdri
 
 ## Runtime and numeric behavior
 
-The same HiGHS 1.15.3 WebAssembly runtime executes the model in Node and in a browser Worker. `kernel/desktop.js` accepts input and output file paths and publishes a complete JSON result through a temporary file and rename. The desktop package must bundle Node; no user installation should be required. `kernel/worker.js` uses local web assets and phase messages. Terminating its Worker cancels computation. Neither adapter is wired into Godot yet.
+The same HiGHS 1.15.3 WebAssembly runtime executes the model in Node and in a browser Worker. `kernel/desktop.js` accepts input and output file paths and publishes a complete JSON result through a temporary file and rename. The Windows development package bundles Node. `kernel/worker.js` uses local web assets and phase messages. Both adapters connect to Godot through `ui/computation.gd`; cancelling terminates the process or Worker.
 
 Inputs outside JavaScript's safe integer range are rejected where integer arithmetic is required. Resource balances and whole-machine capacities are checked after solving. Results report each resource balance's numerical tolerance. Large coefficients and near-degenerate models still need broader endgame validation; the trillion-unit regression case is a focused check, not that validation.
 
