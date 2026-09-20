@@ -54,6 +54,7 @@ func _run() -> void:
 	field.text_submitted.emit(field.text)
 	assert(workspace._groups[key].title == "Steel and stainless steel")
 	dialog.hide()
+	workspace.graph.zoom = 0.73
 	var positions: Dictionary = workspace._positions.duplicate(true)
 	var groups: Dictionary = workspace._groups.duplicate(true)
 	workspace._request.goals.append({"recipe": "assemble", "resource": "motor", "rate": 1})

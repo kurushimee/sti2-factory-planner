@@ -603,7 +603,7 @@ func _group_moved(key: String) -> void:
 	for node_name: String in _members:
 		if _members[node_name] == key && _nodes.has(node_name):
 			_nodes[node_name].position_offset += delta
-	_groups[key].rect = [frame.position_offset.x, frame.position_offset.y, frame.size.x, frame.size.y]
+	_groups[key].rect = [frame.position_offset.x, frame.position_offset.y, previous[2], previous[3]]
 
 
 func _update_membership() -> void:
@@ -629,9 +629,6 @@ func _save_positions() -> void:
 		return
 	for node: PlannerRecipeNode in _nodes.values():
 		_positions[node.get_meta("position_key")] = [node.position_offset.x, node.position_offset.y]
-	for key: String in _frames:
-		var frame: GraphFrame = _frames[key]
-		_groups[key].rect = [frame.position_offset.x, frame.position_offset.y, frame.size.x, frame.size.y]
 	_resizing_group = ""
 	_update_membership()
 	_autosave()
