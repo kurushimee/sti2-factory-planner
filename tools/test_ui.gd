@@ -6,9 +6,10 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	create_timer(8.0).timeout.connect(func() -> void: push_error("The UI check timed out."); quit(1))
+	create_timer(20.0).timeout.connect(func() -> void: push_error("The UI check timed out."); quit(1))
 	var workspace: PlannerWorkspace = load("res://ui/workspace.tscn").instantiate()
 	root.add_child(workspace)
+	OS.low_processor_usage_mode = false
 	await process_frame
 	await process_frame
 	assert(root.gui_get_focus_owner() == workspace.get_node("%Search"))
@@ -41,5 +42,58 @@ func _run() -> void:
 	for sample: Vector2 in samples:
 		peak = maxf(peak, maxf(absf(sample.x), absf(sample.y)))
 	assert(peak > 0.001 && peak < 0.1)
+	workspace._request = {"goals": [{"resource": "motor", "rate": 2.0, "recipe": "assemble"}]}
+	workspace._recalculate()
+	await workspace.computation.completed
+	await process_frame
+	workspace.graph.grab_focus()
+	var previous := workspace._inspected_key
+	var right := InputEventJoypadButton.new()
+	right.button_index = JOY_BUTTON_DPAD_RIGHT
+	right.pressed = true
+	Input.parse_input_event(right)
+	await process_frame
+	right.pressed = false
+	Input.parse_input_event(right)
+	assert(workspace._inspected_key != previous)
+	var selected := workspace._inspected_key
+	workspace._recalculate()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace._inspected_key == selected)
+	var confirm := InputEventJoypadButton.new()
+	confirm.button_index = JOY_BUTTON_A
+	confirm.pressed = true
+	Input.parse_input_event(confirm)
+	await process_frame
+	confirm.pressed = false
+	Input.parse_input_event(confirm)
+	await process_frame
+	assert(workspace.get_node("%GoalEditor").visible)
+	await workspace.computation.completed
+	var cancel := InputEventJoypadButton.new()
+	await process_frame
+	await process_frame
+	cancel.button_index = JOY_BUTTON_B
+	cancel.pressed = true
+	Input.parse_input_event(cancel)
+	await process_frame
+	cancel.pressed = false
+	Input.parse_input_event(cancel)
+	assert(!workspace.get_node("%GoalEditor").visible)
+	workspace.graph.grab_focus()
+	await process_frame
+	cancel.pressed = true
+	Input.parse_input_event(cancel)
+	await process_frame
+	cancel.pressed = false
+	Input.parse_input_event(cancel)
+	assert(root.gui_get_focus_owner() == workspace.search)
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.25).timeout
+		for node: PlannerRecipeNode in workspace._nodes.values():
+			assert(node.size.y < 240)
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/graph-navigation.png")
 	print("Keyboard and gamepad focus navigation passed. The UI audio bus mixed a quiet confirmation tone with peak ", peak, ".")
 	quit()

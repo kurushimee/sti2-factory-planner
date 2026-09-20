@@ -129,6 +129,13 @@ func _check_catalog(workspace: PlannerWorkspace, path: String) -> void:
 	await process_frame
 	assert(workspace._last_result.lines.size() == 1)
 	assert(workspace._last_result.targets[0].rate == 80)
+	var recipe_node := workspace._nodes.values()[0] as PlannerRecipeNode
+	assert(recipe_node.summary.text == "2 × Electric Macerator")
+	assert(recipe_node.loadout.text.contains("8 × Advanced Upgrade per machine"))
+	assert(workspace.inspector.text.contains("ticks per batch"))
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/real-node-inspector.png")
 	dialog.open_goal(recipe, workspace._dataset, workspace._request)
 	assert(dialog.get_node("%GoalUpgradeCount").value == 8)
 	assert(dialog.get_node("%GoalMachines").value == 2)
@@ -159,6 +166,11 @@ func _check_catalog(workspace: PlannerWorkspace, path: String) -> void:
 	assert(workspace._last_result.lines.size() == 1)
 	assert(workspace._last_result.lines[0].machine == "extended_industrialization:processing_array")
 	assert(workspace._last_result.lines[0].configuration_details.setup.contained_count == 16)
+	recipe_node = workspace._nodes.values()[0]
+	assert(recipe_node.loadout.text.contains("16 × Electric Macerator inside each array"))
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/array-node-inspector.png")
 	print("The array editor preserves sixteen contained macerators, batching, and the selected shape.")
 	workspace._request.available_machines.append("extended_industrialization:large_electric_furnace")
 	for candidate: Dictionary in workspace._dataset.recipes:
@@ -182,3 +194,17 @@ func _check_catalog(workspace: PlannerWorkspace, path: String) -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/furnace-goal-editor.png")
 	dialog.hide()
+	for candidate: Dictionary in workspace._dataset.recipes:
+		if candidate.get("source_id") == "statech:modern_industrialization/macerator/copper_dust_from_copper_cluster":
+			recipe = candidate
+	workspace._request = {"goals": [{"recipe": recipe.id, "resource": recipe.primary, "rate": 1.0}],
+		"available_machines": ["modern_industrialization:bronze_macerator"],
+		"external": [{"resource": "item:spectrum:copper_cluster"}, {"resource": "fluid:modern_industrialization:steam"}]}
+	workspace._recalculate()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace.inspector.text.contains("mB Steam per operation"))
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.25).timeout
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/steam-node-inspector.png")

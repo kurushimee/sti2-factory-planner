@@ -18,6 +18,7 @@ var _request: Dictionary[String, Variant] = {"goals": [], "replication": false}
 var _positions: Dictionary[String, Variant] = {}
 var _recipes: Dictionary[String, Dictionary] = {}
 var _resources: Dictionary[String, String] = {}
+var _inspected_key := ""
 var _nodes: Dictionary[String, PlannerRecipeNode] = {}
 var _undo: Array[Dictionary] = []
 var _redo: Array[Dictionary] = []
@@ -37,10 +38,6 @@ const RECIPE_PAGE_SIZE := 150
 
 
 func _ready() -> void:
-	for action: String in ["ui_accept", "ui_cancel"]:
-		var event := InputEventJoypadButton.new()
-		event.button_index = JOY_BUTTON_A if action == "ui_accept" else JOY_BUTTON_B
-		InputMap.action_add_event(action, event)
 	OS.low_processor_usage_mode = true
 	if "--capture" in OS.get_cmdline_user_args():
 		OS.low_processor_usage_mode = false
@@ -77,6 +74,7 @@ func _ready() -> void:
 	_setup_focus()
 	files.file_selected.connect(_file_selected)
 	graph.node_selected.connect(_select_node)
+	graph.gui_input.connect(_graph_input)
 	graph.end_node_move.connect(_save_positions)
 	graph.begin_node_move.connect(_remember)
 	graph.delete_nodes_request.connect(_delete_nodes)
@@ -93,7 +91,7 @@ func _ready() -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
-		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, graph, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
+		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -103,6 +101,51 @@ func _setup_focus() -> void:
 		event.button_index = JOY_BUTTON_RIGHT_SHOULDER if action == "ui_focus_next" else JOY_BUTTON_LEFT_SHOULDER
 		if !InputMap.action_has_event(action, event):
 			InputMap.action_add_event(action, event)
+	for action: String in ["ui_accept", "ui_cancel", "ui_close_dialog"]:
+		var event := InputEventJoypadButton.new()
+		event.button_index = JOY_BUTTON_A if action == "ui_accept" else JOY_BUTTON_B
+		if !InputMap.action_has_event(action, event):
+			InputMap.action_add_event(action, event)
+
+
+func _graph_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		search.grab_focus()
+		graph.accept_event()
+		return
+	if event.is_action_pressed("ui_accept"):
+		_edit_goal.call_deferred()
+		graph.accept_event()
+		return
+	var direction := Vector2.ZERO
+	for action: String in ["ui_left", "ui_right", "ui_up", "ui_down"]:
+		if event.is_action_pressed(action, true):
+			direction = {"ui_left": Vector2.LEFT, "ui_right": Vector2.RIGHT, "ui_up": Vector2.UP, "ui_down": Vector2.DOWN}[action]
+	if direction == Vector2.ZERO || _nodes.is_empty():
+		return
+	var current: PlannerRecipeNode = null
+	for node: PlannerRecipeNode in _nodes.values():
+		if node.get_meta("position_key") == _inspected_key:
+			current = node
+	var next: PlannerRecipeNode = null
+	var score := INF
+	if current:
+		for node: PlannerRecipeNode in _nodes.values():
+			var offset := node.position_offset + node.size / 2.0 - current.position_offset - current.size / 2.0
+			if offset.dot(direction) <= 0.0:
+				continue
+			var distance := offset.length() + absf(offset.cross(direction)) * 2.0
+			if distance < score:
+				score = distance
+				next = node
+	else:
+		next = _nodes.values()[0]
+	if next:
+		for node: PlannerRecipeNode in _nodes.values():
+			node.selected = node == next
+		_select_node(next)
+		graph.scroll_offset = (next.position_offset + next.size / 2.0) * graph.zoom - graph.size / 2.0
+	graph.accept_event()
 
 
 func _process(_delta: float) -> void:
@@ -151,7 +194,7 @@ func _load_dataset(value: Variant) -> bool:
 	_recipes.clear()
 	_resources.clear()
 	for resource: Dictionary in _dataset.resources:
-		_resources[resource.id] = resource.get("name", resource.id)
+		_resources[resource.id] = PlannerDisplay.readable_name(resource.id, resource.get("name", ""))
 	for recipe: Dictionary in _dataset.recipes:
 		_recipes[recipe.id] = recipe
 	%DatasetName.text = "%s  ·  %s" % [_dataset.get("name", "Custom dataset"), _dataset.get("description", "")]
@@ -356,11 +399,12 @@ func _render_plan(result: Dictionary) -> void:
 	%Summary.text = "%d machines  ·  %s EU/t" % [machine_count, String.num(power_total, 2)]
 	_rendering = false
 	_restore_groups()
+	_settle_node_sizes.call_deferred()
 	if !%ReducedMotion.button_pressed:
 		var tween := create_tween()
 		tween.tween_property(graph, "modulate:a", 1.0, 0.18).from(0.5)
 	if !_nodes.is_empty():
-		_select_node(_nodes.values()[0])
+		_select_node(by_key.get(_inspected_key, _nodes.values()[0]))
 	else:
 		_selected = ""
 		inspector.text = "Select a recipe and add a goal to start planning."
@@ -368,27 +412,30 @@ func _render_plan(result: Dictionary) -> void:
 		%EditGoal.disabled = true
 
 
+func _settle_node_sizes() -> void:
+	# Wrapped labels need their assigned width before GraphNode can discard its initial height estimate.
+	await get_tree().process_frame
+	for node: PlannerRecipeNode in _nodes.values():
+		node.reset_size()
+	_update_membership()
+
+
 func _select_node(node: Node) -> void:
 	if node is GraphFrame:
 		%EditGoal.disabled = true
 		_selected = String(node.name)
-		inspector.text = "[font_size=20]%s[/font_size]\n\nDrag the title to move this group and its members. Resize a border to change membership without moving recipes.\n\nA recipe belongs to the smallest group containing its center. Equal-sized overlaps use the group's stable ID.\n\n%d member nodes" % [node.title, _members.values().count(String(node.name))]
+		inspector.text = "[font_size=20]%s[/font_size]\n\nDrag the title to move this group and its members. Resize a border to change membership without moving recipes.\n\nA recipe belongs to the smallest group containing its center. Equal-sized overlaps use the group's stable ID.\n\n%d member nodes" % [PlannerDisplay.markup(node.title), _members.values().count(String(node.name))]
 		%RemoveGoal.text = "Remove group"
 		%RemoveGoal.disabled = false
 		return
 	if !(node is PlannerRecipeNode):
 		return
 	_selected = node.recipe_id
+	_inspected_key = node.get_meta("position_key")
+	node.selected = true
 	%EditGoal.disabled = false
 	var line: Dictionary = node.allocation
-	var text := "[font_size=20]%s[/font_size]\n\n%d × %s\n\n[b]Production[/b]\n" % [node.title, int(line.machines), line.machine]
-	for flow: Dictionary in line.outputs:
-		text += "%s: %s /s\n" % [_resources.get(flow.resource, flow.resource), String.num(flow.rate, 4)]
-	text += "\n[b]Ingredients[/b]\n"
-	for flow: Dictionary in line.inputs:
-		text += "%s: %s /s\n" % [_resources.get(flow.resource, flow.resource), String.num(flow.rate, 4)]
-	text += "\n[b]Capacity[/b]\n%s operations/s\n%s%% utilized\n\n[b]Power[/b]\n%s EU/t sustained\n\n[font_size=12]%s[/font_size]" % [String.num(line.capacity_per_second, 4), String.num(line.utilization * 100, 1), String.num(line.power_eu_per_tick, 3), line.recipe]
-	inspector.text = text
+	inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}))
 	%RemoveGoal.text = "Remove selected goal"
 	%RemoveGoal.disabled = !_request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == _selected)
 

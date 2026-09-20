@@ -251,6 +251,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
+focus_mode = 2
 text = "Select a node to inspect its inputs, capacity, and power."
 
 [node name="EditGoal" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column"]
