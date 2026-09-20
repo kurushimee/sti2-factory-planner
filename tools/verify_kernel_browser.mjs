@@ -50,6 +50,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/reconstruct.js': 'kernel/reconstruct.js',
       '/kernel/boiler.js': 'kernel/boiler.js',
       '/kernel/preview.js': 'kernel/preview.js',
+      '/kernel/validation.js': 'kernel/validation.js',
       '/vendor/highs.mjs': 'node_modules/highs/build/highs.mjs', '/vendor/highs.wasm': 'node_modules/highs/build/highs.wasm',
     };
     if (!files[path]) { response.writeHead(404); response.end(); return; }

@@ -2,6 +2,7 @@ import {allocateFlows} from './flows.js';
 import {resolveGoals} from './goals.js';
 import {startupRequirements} from './startup.js';
 import {prepareDataset} from './catalog.js';
+import {validateDataset} from './validation.js';
 
 const ENERGY = 'energy:eu';
 
@@ -261,6 +262,7 @@ function decode(model, solution) {
 }
 
 export function solveFactory(highs, dataset, request) {
+  validateDataset(dataset);
   dataset = prepareDataset(dataset, request);
   const resolved = resolveGoals(dataset, request);
   request = resolved.request;

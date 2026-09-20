@@ -35,4 +35,3 @@ Run `godot --headless --path . --script tools/test_goal_editor.gd` to check capa
 The recipe library displays 150 matches per page and searches the full dataset. Paging limits scene-list allocation for the real catalog; it does not discard recipes. The native real-catalog check covers page navigation and searching by source ID.
 
 Factory settings controls available machines, automatic upgrades, excluded recipes, obtained replication templates, external supply limits and costs, power reserve, infrastructure overhead, and objective weights. Changes apply together and support undo. Enter toggles the selected availability checkbox. Importing a different dataset clears the previous factory settings and remains undoable. Run the engine with --headless --path . --script tools/test_factory_settings.gd for the settings regression check; the browser interaction check also edits reserve and undoes it.
-

@@ -26,6 +26,7 @@ Use [project-plans](.agents/skills/project-plans/SKILL.md) for every request in 
 | Engine commands, MCP, or verification | [Godot tooling](docs/godot_tooling.md) |
 | Pack inputs, runtime extraction, or machine rules | [Extraction evidence](docs/extraction.md) |
 | Calculation kernel, objectives, or numerical checks | [Planning kernel](docs/planning-kernel.md) |
+| Portable datasets, plans, or validation | [Dataset format](docs/dataset-format.md) |
 | World ZIP, NBT, or AE2 import | [World import evidence](docs/world-import.md) |
 | Workspace, exports, or application checks | [Application development](docs/application.md) |
 | Visible UI, scenes, animation, materials, or effects | [visual-verify](.agents/skills/visual-verify/SKILL.md), alongside the relevant UI or shader skill |

@@ -10,7 +10,7 @@ test('steam power remains a fluid demand and upgrades have concrete build counts
   const configuration = compileConfiguration(recipe, machine);
   assert.equal(configuration.eu_per_operation, 0);
   assert.deepEqual(configuration.inputs, [{resource: 'fluid:steam', amount: 40}]);
-  const result = solveFactory(await loadHighs(), {format: 1, resources: [{id: 'plate'}, {id: 'fluid:steam'}], recipes: [{...recipe, configurations: [configuration]}]},
+  const result = solveFactory(await loadHighs(), {format: 1, resources: [{id: 'plate'}, {id: 'fluid:steam'}, {id: 'item:test:steam_press'}], recipes: [{...recipe, configurations: [configuration]}]},
     {goals: [{resource: 'plate', rate: 4}], external: [{resource: 'fluid:steam'}]});
   assert.equal(result.status, 'optimal');
   assert.equal(result.lines[0].machines, 2);

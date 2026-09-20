@@ -3,7 +3,7 @@ extends RefCounted
 
 
 static func check(value: Variant) -> String:
-	if !(value is Dictionary) || value.get("format") != 1 || !(value.get("resources") is Array) || !(value.get("recipes") is Array):
+	if !(value is Dictionary) || !_version(value.get("format")) || !(value.get("resources") is Array) || !(value.get("recipes") is Array):
 		return "This file is not a supported planning dataset."
 	var resources: Dictionary[String, bool] = {}
 	for resource: Variant in value.resources:
@@ -12,6 +12,18 @@ static func check(value: Variant) -> String:
 		if resources.has(resource.id):
 			return "Duplicate resource ID: %s" % resource.id
 		resources[resource.id] = true
+	for field: String in ["machines", "upgrades"]:
+		if !(value.get(field, []) is Array):
+			return "The dataset's %s field must be a list." % field
+		var ids: Dictionary[String, bool] = {}
+		for record: Variant in value.get(field, []):
+			if !(record is Dictionary) || !(record.get("id") is String) || record.id.is_empty():
+				return "Every %s entry needs a text ID." % field
+			if ids.has(record.id):
+				return "Duplicate %s ID: %s" % [field, record.id]
+			ids[record.id] = true
+	if !_string_list(value.get("default_machines", [])):
+		return "Default machines must be a list of text IDs."
 	var recipes: Dictionary[String, bool] = {}
 	for recipe: Variant in value.recipes:
 		if !(recipe is Dictionary) || !(recipe.get("id") is String) || recipe.id.is_empty():
@@ -19,6 +31,10 @@ static func check(value: Variant) -> String:
 		if recipes.has(recipe.id):
 			return "Duplicate recipe ID: %s" % recipe.id
 		recipes[recipe.id] = true
+		if recipe.has("unsupported") && !(recipe.unsupported is String):
+			return "Recipe %s needs a text explanation of unsupported behavior." % recipe.id
+		if recipe.has("process") && !(recipe.process is Dictionary):
+			return "Recipe %s has an invalid process." % recipe.id
 		if !(recipe.get("primary") is String) || !resources.has(recipe.primary):
 			return "Recipe %s has an unknown primary output." % recipe.id
 		for direction: String in ["inputs", "outputs"]:
@@ -44,7 +60,7 @@ static func check(value: Variant) -> String:
 
 
 static func check_plan(value: Variant) -> String:
-	if !(value is Dictionary) || value.get("format") != "factory-plan" || value.get("version") != 1:
+	if !(value is Dictionary) || str(value.get("format")) != "factory-plan" || !_version(value.get("version")):
 		return "This file is not a supported factory plan."
 	var error := check(value.get("dataset"))
 	if !error.is_empty():
@@ -53,9 +69,28 @@ static func check_plan(value: Variant) -> String:
 		return "The plan's dataset identity does not match its embedded data."
 	if !(value.get("request") is Dictionary) || !(value.request.get("goals") is Array):
 		return "The plan has no valid goal list."
+	for field: String in ["available_machines", "disabled_machines", "available_upgrades", "disabled_upgrades", "disabled_recipes", "obtained_resources", "available_dimensions", "available_biomes"]:
+		if !_string_list(value.request.get(field, [])):
+			return "The plan's %s field must be a list of text IDs." % field
+	for field: String in ["weights", "routes", "configurations", "machine_setups", "ingredients", "catalysts", "installed", "limits", "dispatch"]:
+		if !(value.request.get(field, {}) is Dictionary):
+			return "The plan's %s field must be an object." % field
+	if !(value.request.get("external", []) is Array):
+		return "External supplies must be a list."
+	for supply: Variant in value.request.get("external", []):
+		if !(supply is Dictionary) || !(supply.get("resource") is String):
+			return "Every external supply needs a resource ID."
+		for field: String in ["cost", "limit"]:
+			if supply.has(field) && !_nonnegative(supply[field]):
+				return "External supply %s must be nonnegative." % field
+	for field: String in ["reserve_fraction", "overhead_eu_per_tick"]:
+		if value.request.has(field) && !_nonnegative(value.request[field]):
+			return "The plan's %s field must be nonnegative." % field
 	for goal: Variant in value.request.goals:
 		if !(goal is Dictionary) || !(goal.get("resource") is String):
 			return "The plan contains an invalid goal."
+		if !(goal.get("kind", "rate") is String):
+			return "The goal type must be text."
 		var kind: String = goal.get("kind", "rate")
 		if !kind in ["rate", "capacity", "quantity"]:
 			return "The plan contains an unknown goal type."
@@ -84,6 +119,18 @@ static func check_plan(value: Variant) -> String:
 
 static func _positive(value: Variant) -> bool:
 	return (value is float || value is int) && is_finite(float(value)) && value > 0 && value <= 9007199254740991.0
+
+
+static func _nonnegative(value: Variant) -> bool:
+	return (value is float || value is int) && is_finite(float(value)) && value >= 0 && value <= 9007199254740991.0
+
+
+static func _version(value: Variant) -> bool:
+	return (value is float || value is int) && value == 1
+
+
+static func _string_list(value: Variant) -> bool:
+	return value is Array && value.all(func(entry: Variant) -> bool: return entry is String)
 
 
 static func _coordinates(value: Variant, count: int) -> bool:
