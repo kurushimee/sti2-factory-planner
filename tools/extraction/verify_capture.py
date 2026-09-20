@@ -75,6 +75,35 @@ def verify(runtime: dict, probes: dict) -> dict:
            for entry in ingredient_rules["resolved"]):
         raise ValueError("A custom ingredient lacks complete matching evidence for the captured variants.")
     items = {entry["id"]: entry for entry in item_rules["items"]}
+    integrations = probes["integration_data_maps"]
+    irradiation = integrations["yet_another_industrialization:irradiator_neutron_source"]
+    if irradiation["modern_industrialization:beryllium_block"] != {
+            "type": "consumption", "probability": 0.05, "probability_check_cooldown": 200, "irradiation": 1280, "eu": 1024}:
+        raise ValueError("The loaded beryllium irradiation source changed.")
+    if irradiation["yet_another_industrialization:demon_core"] != {
+            "type": "lifespan", "probability": 1.0, "probability_check_cooldown": 50, "irradiation": 16384, "eu": 8192}:
+        raise ValueError("The loaded demon-core irradiation source changed.")
+    solar_cells = {key: value["photovoltaic_cell"] for key, value in items.items() if "photovoltaic_cell" in value}
+    if len(solar_cells) != 3 or any(value["lifetime_ticks"] != 12000 or value["minimum_efficiency"] != 0 for value in solar_cells.values()):
+        raise ValueError("The loaded photovoltaic cell rules changed.")
+    nuclear_fuels = {key: value["nuclear_fuel"] for key, value in items.items() if "nuclear_fuel" in value}
+    if len(nuclear_fuels) != 15 or items["yet_another_industrialization:demon_core"]["max_damage"] != 320:
+        raise ValueError("The loaded irradiation input rules changed.")
+    irradiation_cycles = machines["yet_another_industrialization:nuclear_rod_irradiator"]["irradiation_probe"]
+    if len(irradiation_cycles) != len(nuclear_fuels) * len(irradiation) * 2:
+        raise ValueError("The irradiation probe did not cover every fuel, source, and hatch count.")
+    for sample in irradiation_cycles:
+        fuel = nuclear_fuels[sample["fuel"]]
+        source = irradiation[sample["source"]]
+        ticks = (fuel["disintegrations"] + source["irradiation"] - 1) // source["irradiation"]
+        if (sample["completion_tick"], sample["energy_consumed"], sample["output_amount"]) != (
+                ticks, (ticks - sample["source_items_consumed_sample"]) * source["eu"], fuel["product_amount"] * sample["hatches"]):
+            raise ValueError("The actual irradiation cycle differs from its captured rules.")
+        if source["type"] == "lifespan" and sample["source_damage_sample"] != ticks // source["probability_check_cooldown"]:
+            raise ValueError("The deterministic demon-core wear changed.")
+    lifetime_samples = [sample for sample in irradiation_cycles if "source_lifetime_ticks" in sample]
+    if len(lifetime_samples) != 1 or (lifetime_samples[0]["source_lifetime_ticks"], lifetime_samples[0]["energy_through_source_lifetime"]) != (16000, 131063808):
+        raise ValueError("The demon-core lifetime or empty-hatch running power changed.")
     if len(items) != 11573 or items["minecraft:coal"]["burn_ticks"] != 1600:
         raise ValueError("The loaded item rules changed.")
     if items["minecraft:water_bucket"]["crafting_remainder"]["id"] != "minecraft:bucket":
@@ -196,6 +225,10 @@ def verify(runtime: dict, probes: dict) -> dict:
         "ingredient_tested_variants": ingredient_rules["tested_variant_count"],
         "component_remainder_samples": len(ingredient_rules["variant_item_rules"]),
         "power_units": probes["power_units"],
+        "integration_data_maps": integrations,
+        "solar_cells": solar_cells,
+        "nuclear_fuels": nuclear_fuels,
+        "irradiation_cycles": irradiation_cycles,
         "array_rules": arrays,
         "blast_furnace_coils": coil_tiers,
         "boiler_warmup": boilers,

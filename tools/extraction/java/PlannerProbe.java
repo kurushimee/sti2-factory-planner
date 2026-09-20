@@ -272,6 +272,19 @@ public final class PlannerProbe {
                 record.addProperty("max_damage", stack.getMaxDamage());
                 record.addProperty("burn_ticks", stack.getBurnTime(null));
                 record.addProperty("replicable", (Boolean) replicate.invoke(null, stack));
+                var cell = stack.get(net.swedz.extended_industrialization.EIComponents.PHOTOVOLTAIC_CELL.get());
+                if (cell != null) record.add("photovoltaic_cell",
+                        net.swedz.extended_industrialization.component.PhotovoltaicCell.CODEC.encodeStart(ops, cell).getOrThrow());
+                if (item instanceof aztech.modern_industrialization.nuclear.NuclearFuel fuel) {
+                    var nuclear = new JsonObject();
+                    nuclear.addProperty("disintegrations", fuel.getRemainingDesintegrations(stack));
+                    nuclear.addProperty("product", BuiltInRegistries.ITEM.getKey(fuel.getNeutronProduct().getItem()).toString());
+                    nuclear.addProperty("product_amount", fuel.getNeutronProductAmount());
+                    nuclear.addProperty("size", fuel.size);
+                    nuclear.addProperty("direct_eu_per_disintegration", fuel.directEUbyDesintegration);
+                    nuclear.addProperty("total_eu_per_disintegration", fuel.totalEUbyDesintegration);
+                    record.add("nuclear_fuel", nuclear);
+                }
                 var remainder = stack.getCraftingRemainingItem();
                 if (!remainder.isEmpty()) record.add("crafting_remainder",
                         net.minecraft.world.item.ItemStack.CODEC.encodeStart(ops, remainder).getOrThrow());
@@ -283,6 +296,32 @@ public final class PlannerProbe {
         }
         result.add("items", items);
         result.add("failures", failures);
+        return result;
+    }
+
+    private static <R, T> void captureDataMap(JsonObject result, net.minecraft.core.Registry<R> registry,
+            net.neoforged.neoforge.registries.datamaps.DataMapType<R, T> type, MinecraftServer server) {
+        var entries = new JsonObject();
+        var ops = server.registryAccess().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
+        for (var entry : registry.getDataMap(type).entrySet()) {
+            entries.add(entry.getKey().location().toString(), type.codec().encodeStart(ops, entry.getValue()).getOrThrow());
+        }
+        result.add(type.id().toString(), entries);
+    }
+
+    private static JsonObject integrationDataMaps(MinecraftServer server) {
+        var result = new JsonObject();
+        captureDataMap(result, BuiltInRegistries.BLOCK, net.swedz.extended_industrialization.EIDataMaps.FARMER_SIMPLE_TALL_CROP_SIZE, server);
+        captureDataMap(result, BuiltInRegistries.FLUID, net.swedz.extended_industrialization.EIDataMaps.FERTILIZER_POTENCY, server);
+        captureDataMap(result, BuiltInRegistries.BLOCK, net.swedz.extended_industrialization.EIDataMaps.LARGE_ELECTRIC_FURNACE_TIER, server);
+        captureDataMap(result, BuiltInRegistries.BLOCK, net.swedz.extended_industrialization.EIDataMaps.TESLA_TOWER_TIER, server);
+        captureDataMap(result, BuiltInRegistries.ITEM, net.swedz.extended_industrialization.EIDataMaps.ENCHANTMENT_MODULE, server);
+        var yai = me.luligabi.yet_another_industrialization.common.misc.datamap.YAIDataMaps.INSTANCE;
+        captureDataMap(result, BuiltInRegistries.BLOCK, yai.getARBOREOUS_GREENHOUSE_TIER(), server);
+        captureDataMap(result, BuiltInRegistries.BLOCK, yai.getFLIGHT_PYLON_TIER(), server);
+        captureDataMap(result, BuiltInRegistries.BLOCK, yai.getLARGE_STORAGE_UNIT_TIER(), server);
+        captureDataMap(result, BuiltInRegistries.ITEM, yai.getIRRADIATOR_NEUTRON_SOURCE(), server);
+        captureDataMap(result, BuiltInRegistries.ITEM, yai.getNUMISMATIC_GENERATOR_CURRENCY(), server);
         return result;
     }
 
@@ -859,6 +898,90 @@ public final class PlannerProbe {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private static JsonArray irradiationCycles(MachineBlockEntity prototype, MinecraftServer server) throws Exception {
+        var result = new JsonArray();
+        var sourceField = prototype.getClass().getDeclaredField("neutronSource");
+        var hatchesField = prototype.getClass().getDeclaredField("nuclearHatches");
+        var absorb = prototype.getClass().getDeclaredMethod("absorb");
+        var consume = prototype.getClass().getDeclaredMethod("consumeEu", aztech.modern_industrialization.util.Simulation.class);
+        sourceField.setAccessible(true); hatchesField.setAccessible(true); absorb.setAccessible(true); consume.setAccessible(true);
+        var levelData = (net.minecraft.world.level.storage.ServerLevelData) server.overworld().getLevelData();
+        long previousTime = levelData.getGameTime();
+        var sourceMap = BuiltInRegistries.ITEM.getDataMap(
+                me.luligabi.yet_another_industrialization.common.misc.datamap.YAIDataMaps.INSTANCE.getIRRADIATOR_NEUTRON_SOURCE());
+        var hatchBlock = (EntityBlock) BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:nuclear_item_hatch"));
+        try {
+            for (var entry : sourceMap.entrySet()) {
+                for (var item : BuiltInRegistries.ITEM) {
+                    if (!(item instanceof aztech.modern_industrialization.nuclear.NuclearFuel fuel)) continue;
+                    for (int count : new int[]{1, 8}) {
+                        var machine = (MachineBlockEntity) ((EntityBlock) prototype.getBlockState().getBlock())
+                                .newBlockEntity(BlockPos.ZERO, prototype.getBlockState());
+                        machine.setLevel(server.overworld());
+                        sourceField.set(machine, entry.getValue());
+                        var inventory = (aztech.modern_industrialization.machines.components.MultiblockInventoryComponent)
+                                ((aztech.modern_industrialization.api.machine.holder.MultiblockInventoryComponentHolder) machine).getMultiblockInventoryComponent();
+                        var sourceSlot = aztech.modern_industrialization.inventory.ConfigurableItemStack.standardInputSlot();
+                        sourceSlot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(BuiltInRegistries.ITEM.get(entry.getKey())));
+                        sourceSlot.setAmount(1);
+                        inventory.getItemInputs().add(sourceSlot);
+                        var hatches = (java.util.List<aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch>) hatchesField.get(machine);
+                        for (int index = 0; index < count; index++) {
+                            var hatch = (aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch) hatchBlock.newBlockEntity(BlockPos.ZERO,
+                                    ((net.minecraft.world.level.block.Block) hatchBlock).defaultBlockState());
+                            var slot = hatch.getInventory().getItemStacks().getFirst();
+                            slot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(item));
+                            slot.setAmount(1);
+                            hatches.add(hatch);
+                        }
+                        var energy = new aztech.modern_industrialization.machines.components.EnergyComponent(machine, 1000000000L);
+                        ((java.util.List<aztech.modern_industrialization.machines.components.EnergyComponent>)
+                                ((aztech.modern_industrialization.api.machine.holder.EnergyListComponentHolder) machine).getEnergyComponents()).add(energy);
+                        energy.insertEu(energy.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                        int ticks = 0, sourcesUsed = 0;
+                        while (hatches.getFirst().getInventory().getItemStacks().getFirst().getAmount() > 0 && ticks < 100000) {
+                            levelData.setGameTime(++ticks);
+                            if (sourceSlot.getAmount() == 0) {
+                                sourcesUsed++;
+                                sourceSlot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(BuiltInRegistries.ITEM.get(entry.getKey())));
+                                sourceSlot.setAmount(1);
+                            }
+                            sourceField.set(machine, entry.getValue());
+                            if (!(Boolean) consume.invoke(machine, aztech.modern_industrialization.util.Simulation.SIMULATE)) throw new IllegalStateException("Irradiation reference ran out of power.");
+                            absorb.invoke(machine);
+                            consume.invoke(machine, aztech.modern_industrialization.util.Simulation.ACT);
+                        }
+                        if (ticks == 100000) throw new IllegalStateException("Irradiation reference did not finish.");
+                        var record = new JsonObject();
+                        record.addProperty("source", entry.getKey().location().toString());
+                        record.addProperty("fuel", BuiltInRegistries.ITEM.getKey(item).toString());
+                        record.addProperty("hatches", count);
+                        record.addProperty("completion_tick", ticks);
+                        record.addProperty("energy_consumed", energy.getCapacity() - energy.getEu());
+                        record.addProperty("output_amount", hatches.stream().mapToLong(hatch -> hatch.getInventory().getItemStacks().stream()
+                                .skip(1).mapToLong(slot -> slot.getAmount()).sum()).sum());
+                        record.addProperty("source_items_consumed_sample", sourcesUsed + (sourceSlot.getAmount() == 0 ? 1 : 0));
+                        record.addProperty("source_damage_sample", sourceSlot.toStack().getDamageValue());
+                        if (entry.getValue().getType().getSerializedName().equals("lifespan") && count == 1
+                                && BuiltInRegistries.ITEM.getKey(item).toString().equals("modern_industrialization:uranium_fuel_rod")) {
+                            while (sourceSlot.getAmount() > 0 && ticks < 100000) {
+                                levelData.setGameTime(++ticks);
+                                absorb.invoke(machine);
+                                consume.invoke(machine, aztech.modern_industrialization.util.Simulation.ACT);
+                            }
+                            if (sourceSlot.getAmount() > 0) throw new IllegalStateException("The irradiation source did not wear out.");
+                            record.addProperty("source_lifetime_ticks", ticks);
+                            record.addProperty("energy_through_source_lifetime", energy.getCapacity() - energy.getEu());
+                        }
+                        result.add(record);
+                    }
+                }
+            }
+        } finally { levelData.setGameTime(previousTime); }
+        return result;
+    }
+
     private static int export(MinecraftServer server) throws Exception {
         var machines = new JsonArray();
         var failures = new JsonArray();
@@ -876,6 +999,7 @@ public final class PlannerProbe {
                 var record = new JsonObject();
                 record.addProperty("id", id);
                 record.addProperty("class", entity.getClass().getName());
+                if (id.equals("yet_another_industrialization:nuclear_rod_irradiator")) record.add("irradiation_probe", irradiationCycles(machine, server));
                 if (id.equals("yet_another_industrialization:dragon_egg_energy_siphon")
                         || id.equals("yet_another_industrialization:pulse_detonation_generator")) {
                     record.add("recipe_generation_probe", recipeGeneration(machine, server));
@@ -1013,6 +1137,7 @@ public final class PlannerProbe {
         result.add("ingredient_rules", ingredientRules(server));
         result.add("crafting_rules", craftingRules(server));
         result.add("progression_chapters", progressionChapters());
+        result.add("integration_data_maps", integrationDataMaps(server));
         var power = new JsonObject();
         power.addProperty("fe_per_eu", aztech.modern_industrialization.config.MIServerConfig.INSTANCE.forgeEnergyPerEu.getAsInt());
         power.addProperty("fe_per_ae", appeng.api.config.PowerUnit.AE.convertTo(appeng.api.config.PowerUnit.FE, 1));

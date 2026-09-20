@@ -154,7 +154,7 @@ def normalize(runtime, probes):
             "recipes": sorted(recipes, key=lambda value: value["id"]),
             "machines": sorted(probes["machines"], key=lambda value: value["id"]),
             "machine_rules": machine_rules(probes["machines"], runtime["data_maps"]["modern_industrialization:machine_upgrades"]),
-            "data_maps": runtime["data_maps"], "loaded_mods": probes["loaded_mods"],
+            "data_maps": {**runtime["data_maps"], **probes.get("integration_data_maps", {})}, "loaded_mods": probes["loaded_mods"],
             "power_units": probes.get("power_units", {}),
             "shape_member_rules": probes.get("shape_member_rules", []),
             "crafting_rules": probes.get("crafting_rules", {}),
