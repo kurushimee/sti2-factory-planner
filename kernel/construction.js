@@ -47,7 +47,7 @@ export function addConstruction(model, resources, request, definitions = new Map
     }
   }
   const routes = [];
-  const seen = new Set();
+  const candidates = new Map();
   const tools = new Map();
   for (const line of model.lines) {
     const {recipe, configuration} = line;
@@ -57,9 +57,13 @@ export function addConstruction(model, resources, request, definitions = new Map
     const full = configuration.operating_points?.at(-1);
     if (full) inputs.push(...full.inputs.map(flow => ({...flow, amount: flow.amount / capacity})));
     const batch = configuration.setup?.batch ?? configuration.setup?.contained_count ?? 1;
-    const signature = JSON.stringify([recipe.id, inputs, energy, capacity, rounded ? batch : null]);
-    if (seen.has(signature)) continue;
-    seen.add(signature);
+    const signature = JSON.stringify([recipe.id, inputs, energy, rounded ? batch : null]);
+    const previous = candidates.get(signature);
+    // Construction assumes available reusable workstations. With identical material and energy
+    // coefficients, only the fastest workstation can improve its positive work-time objective.
+    if (!previous || capacity > previous.capacity) candidates.set(signature, {recipe, configuration, capacity, energy, inputs, batch});
+  }
+  for (const {recipe, configuration, capacity, energy, inputs, batch} of candidates.values()) {
     const index = routes.length;
     const variable = `cx${index}`;
     model.bounds.push(`${variable} >= 0`);

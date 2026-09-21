@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import loadHighs from 'highs';
-import {solveFactory} from './planner.js';
+import {compileFactory, solveFactory} from './planner.js';
 import {configureRecipe} from './catalog.js';
 
 const highs = await loadHighs();
@@ -12,6 +12,27 @@ const dataset = recipes => ({format: 1, resources: ['ore', 'product', 'cheap', '
 const request = {goals: [{resource: 'product', rate: 2}], external: [{resource: 'ore', cost: 0}],
   construction: {external: [{resource: 'ore'}, {resource: 'bench', cost: 0}]}};
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-7, `${actual} != ${expected}`);
+
+test('construction reuses the fastest equivalent workstation without removing sustained loadouts', () => {
+  const data = dataset([
+    recipe('production', [flow('ore')], [flow('product')], [config('machine', 2, [flow('cheap')])]),
+    recipe('build', [flow('ore')], [flow('cheap')], [config('slow', 1, [flow('bench')]), config('fast', 4, [flow('bench')])]),
+  ]);
+  const model = compileFactory(data, request);
+  assert.equal(model.lines.filter(line => line.recipe.id === 'build').length, 2);
+  assert.deepEqual(model.construction.routes.filter(route => route.recipe === 'build').map(route => route.configuration), ['fast']);
+  const result = solveFactory(highs, data, request);
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.construction.routes[0].configuration, 'fast');
+  close(result.construction.routes[0].work_seconds, 0.25);
+  const pinned = solveFactory(highs, data, {...request, configurations: {build: 'slow'}});
+  assert.equal(pinned.construction.routes[0].configuration, 'slow');
+  close(pinned.construction.routes[0].work_seconds, 1);
+  data.recipes[1].configurations[1].setup = {batch: 4};
+  const rounded = {...request, construction: {...request.construction, round_batches: true}};
+  assert.equal(compileFactory(data, rounded).construction.routes.filter(route => route.recipe === 'build').length, 2);
+  assert.equal(solveFactory(highs, data, rounded).construction.routes[0].configuration, 'slow');
+});
 
 test('complete construction routes change the chosen whole-machine allocation', () => {
   const data = dataset([
