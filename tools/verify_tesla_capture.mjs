@@ -24,4 +24,3 @@ await writeFile(reportPath, JSON.stringify({archive_sha256: createHash('sha256')
   limits: 'Continuous enabled operation is assumed. The winding limit becomes an editable capacity target. Saved energy is a quantity; receiver coverage and observed transmission are not established.'}, null, 2) + '\n');
 if (process.argv[5]) await writeFile(process.argv[5], JSON.stringify(world));
 console.log('The real saved tower reconstructs copper winding, seven LV input hatches, and 64 EU/t enabled drain.');
-
