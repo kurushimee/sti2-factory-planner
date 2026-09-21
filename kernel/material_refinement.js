@@ -3,6 +3,7 @@ import {constructionBill} from './construction.js';
 import {compileConstructionOrder, solveConstructionOrder} from './construction_order.js';
 import {infrastructurePower} from './infrastructure.js';
 import {structureContext} from './structure_bill.js';
+import {withRecipes, describePreferences, preferredRecipes} from './recipe_preferences.js';
 
 class RefinementDeadline extends Error {}
 
@@ -36,7 +37,7 @@ function priceOrder(highs, dataset, request, plan, deadline, checkBudget, progre
     goals: [...(request.goals ?? []).map((goal, index) => ({...goal, rate: plan.targets?.find(target => target.index === index)?.rate ?? goal.rate})),
       ...requirements.map(flow => ({resource: flow.resource, rate: 1}))]};
   const prepared = prepareDataset(dataset, orderRequest, checkBudget, {workstations: true});
-  const lines = [];
+  const recipes = [];
   const installed = new Map();
   for (const line of plan.lines) {
     if (!installed.has(line.recipe)) installed.set(line.recipe, new Map());
@@ -47,16 +48,41 @@ function priceOrder(highs, dataset, request, plan, deadline, checkBudget, progre
     const pinned = request.configurations?.[recipe.id];
     const configurations = new Map(recipe.configurations.map(configuration => [configuration.id, configuration]));
     for (const [id, configuration] of installed.get(recipe.id) ?? []) configurations.set(id, configuration);
+    const valid = [];
     for (const configuration of configurations.values()) {
       if (configuration.structure?.status === 'unsupported') continue;
       if (pinned && !(Array.isArray(pinned) ? pinned : [pinned]).includes(configuration.id)) continue;
-      lines.push({recipe, configuration});
+      valid.push(configuration);
     }
+    recipes.push({...recipe, configurations: valid});
   }
   checkBudget();
-  const model = compileConstructionOrder(lines, dataset.resources, orderRequest, requirements);
+  const configured = withRecipes(prepared, recipes), preferred = preferredRecipes(configured, orderRequest);
+  const solve = (source, until) => {
+    const lines = source.recipes.flatMap(recipe => recipe.configurations.map(configuration => ({recipe, configuration})));
+    const model = compileConstructionOrder(lines, dataset.resources, orderRequest, requirements);
+    checkBudget();
+    return solveConstructionOrder(highs, model, Math.max(0.001, (until - Date.now()) / 1000), plan, progress);
+  };
+  if (!preferred.applied.length) return solve(configured, deadline);
+  const first = solve(preferred.dataset, Date.now() + Math.max(0, deadline - Date.now()) * 0.9);
+  if (first.construction) {
+    first.construction.recipe_preferences = {applied: preferred.applied, fallback: false};
+    return first;
+  }
   checkBudget();
-  return solveConstructionOrder(highs, model, Math.max(0.001, (deadline - Date.now()) / 1000), plan, progress);
+  progress({phase: 'route_preference_fallback'});
+  const fallback = solve(configured, deadline);
+  if (fallback.construction) {
+    fallback.construction.recipe_preferences = {applied: [], fallback: true};
+    if (first.status !== 'infeasible') {
+      fallback.status = 'feasible';
+      fallback.optimal = false;
+      fallback.optimization.lower_bound = null;
+      fallback.optimization.relative_gap = null;
+    }
+  }
+  return fallback;
 }
 
 function pricedConfigurations(dataset, request, plan, prices, checkBudget) {
@@ -100,7 +126,7 @@ function pricedConfigurations(dataset, request, plan, prices, checkBudget) {
     delete selected.process;
     recipes.push(selected);
   }
-  return {dataset: {...dataset, recipes}, ingredients};
+  return {dataset: withRecipes(dataset, recipes), ingredients};
 }
 
 function attachCost(plan, order, estimated = false) {
@@ -126,7 +152,7 @@ export function refineMaterialPlan(highs, dataset, request, solveOrdinary, deadl
   let best = null;
   try {
     progress({phase: 'production_baseline'});
-    const ordinaryRequest = {...request, construction: undefined, time_limit_ms: Math.max(1, (deadline - Date.now()) / 2)};
+    const ordinaryRequest = {...request, construction: undefined, time_limit_ms: Math.max(1, (deadline - Date.now()) * 0.6)};
     const baseline = solveOrdinary(dataset, ordinaryRequest);
     if (!baseline.lines) return baseline;
     checkBudget();
@@ -141,9 +167,10 @@ export function refineMaterialPlan(highs, dataset, request, solveOrdinary, deadl
     const candidates = pricedConfigurations(dataset, request, baseline, order.marginal_costs, checkBudget);
     checkBudget();
     progress({phase: 'production_refinement'});
-    const candidate = solveOrdinary(candidates.dataset, {...ordinaryRequest, ingredients: candidates.ingredients,
+    let candidate = solveOrdinary(candidates.dataset, {...ordinaryRequest, ingredients: candidates.ingredients,
       time_limit_ms: Math.max(1, (deadline - Date.now()) / 2)}, true);
     if (!candidate.lines) return best;
+    if (baseline.recipe_preferences) candidate = describePreferences(candidate, baseline.recipe_preferences.applied, baseline.recipe_preferences.fallback);
     checkBudget();
     progress({phase: 'construction_verification'});
     const candidateOrder = priceOrder(highs, dataset, request, candidate, deadline, checkBudget, progress);

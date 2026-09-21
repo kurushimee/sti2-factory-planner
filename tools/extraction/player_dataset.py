@@ -11,6 +11,7 @@ from grouping import production_group
 from irradiation import irradiation_recipes
 from certus import certus_catalog
 from availability import annotate_availability
+from recipe_preferences import crafting_preferences
 
 
 def boiler_operating_points(samples):
@@ -332,6 +333,7 @@ def build_dataset(capture):
     return {"format": 1, "identity": capture["identity"], "name": "StaTech Industry 2.0.1",
             "complete": False, "description": "Captured StaTech recipes with explicit adapter coverage. Development catalog.",
             "resources": resources, "recipes": recipes, "machines": machines, "upgrades": upgrades,
+            "route_preferences": crafting_preferences(recipes),
             "shape_member_rules": capture.get("shape_member_rules", []),
             "progression": progression_presets(capture.get("progression_chapters", []), machines, upgrades, recipes),
             "default_machines": [machine["id"] for machine in machines

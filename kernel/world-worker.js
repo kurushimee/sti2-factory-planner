@@ -1,9 +1,12 @@
 import {inspectWorld} from './world.js';
 
 self.onmessage = event => {
-  const {id, bytes, dataset} = event.data;
+  const {id, bytes, file, dataset} = event.data;
   try {
-    const result = inspectWorld(new Uint8Array(bytes), dataset, progress => self.postMessage({id, ...progress}));
+    const reader = file ? new FileReaderSync() : null;
+    const source = file ? {size: file.size,
+      read: (offset, length) => new Uint8Array(reader.readAsArrayBuffer(file.slice(offset, offset + length)))} : new Uint8Array(bytes);
+    const result = inspectWorld(source, dataset, progress => self.postMessage({id, ...progress}));
     self.postMessage({id, result});
   } catch (error) {
     self.postMessage({id, error: String(error.message ?? error)});

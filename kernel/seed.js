@@ -1,7 +1,7 @@
 import {productionRouteOwnership} from './route_ownership.js';
 
 // Reuse the LP basis while finding a buildable candidate. Exclusions here do not prove optimality.
-export function findFactorySeed(highs, model, request, deadline, validate = () => true) {
+export function findFactorySeed(highs, model, request, deadline, validate = () => true, progress = () => {}) {
   if (model.construction) return null;
   const native = highs.createModel({format: 'lp', data: model.text.replace(/\nGenerals\n[^]*?\nEnd$/, '\nEnd')});
   const start = Date.now();
@@ -48,6 +48,7 @@ export function findFactorySeed(highs, model, request, deadline, validate = () =
       fixedMachines = false;
       if (!run()) continue;
       attempts++;
+      progress({phase: 'production_routes', attempt: attempts, excluded: disabled.size});
       if (attempts === 1) lowerBound = native.getObjectiveValue();
       const relaxed = native.getSolution().colValue;
       let ownership = productionRouteOwnership(summary(relaxed, disabled), request);

@@ -57,6 +57,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/construction_order.js': 'kernel/construction_order.js',
       '/kernel/material_refinement.js': 'kernel/material_refinement.js',
       '/kernel/numerics.js': 'kernel/numerics.js',
+      '/kernel/recipe_preferences.js': 'kernel/recipe_preferences.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/power.js': 'kernel/power.js',
       '/kernel/infrastructure.js': 'kernel/infrastructure.js',
@@ -258,6 +259,17 @@ try {
     assert.equal(built.result.construction.material_cost, 426);
     assert.deepEqual(built.result, solveFactory(await loadHighs(), worldDataset, request));
     console.log('Tesla infrastructure and its loaded limits match Node in the browser Worker.');
+  }
+  if (worldDataset.route_preferences?.length) {
+    const recipe = worldDataset.recipes.find(value => value.id.endsWith('casing/craft/steel_plated_bricks'));
+    const selection = {goals: [{resource: recipe.primary, rate: 1}],
+      available_machines: ['ae2:molecular_assembler', 'modern_industrialization:assembler'],
+      external: [...recipe.inputs.map(flow => ({resource: flow.resource})), {resource: 'energy:eu'}]};
+    const preferred = solveFactory(await loadHighs(), worldDataset, selection);
+    const actual = await solveInBrowser(worldDataset, selection);
+    assert.ok(preferred.lines.some(line => line.recipe === recipe.id && line.route_preference));
+    assert.deepEqual(actual.result, preferred);
+    console.log('The released equal-material crafting preference matches Node in the browser Worker.');
   }
   if (process.argv.includes('--endgame')) {
     const request = endgameRequest(worldDataset);

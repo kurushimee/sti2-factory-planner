@@ -25,6 +25,11 @@ func _run() -> void:
 	root.add_child(second_service)
 	second_service.submit(job.duplicate(true))
 	service.submit(job.duplicate(true))
+	service._last_progress = '{"phase":"previous"}'
+	var empty_progress := FileAccess.open(service._result_path + ".progress", FileAccess.WRITE)
+	empty_progress.close()
+	service._process(0.0)
+	assert(service.busy, "A temporarily empty progress read must not discard the active calculation.")
 	var captured: Dictionary = PlannerJson.parse(FileAccess.get_file_as_string(service._input_path))
 	assert(captured.request.goals[0].rate == job.request.goals[0].rate)
 	assert(service._input_path != second_service._input_path)

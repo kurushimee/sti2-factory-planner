@@ -20,18 +20,28 @@ const recipe = plan.request.goals[0].recipe;
 await writeFile(join(user, 'autosave.json'), JSON.stringify(plan));
 const capture = resolve('.plans/artifacts/workspace/standalone-bundled-plan.png');
 const log = join(appdata, 'application.log');
+const resultPath = join(appdata, 'calculation-result.json');
 const started = Date.now();
 await new Promise((resolveRun, reject) => {
-  const child = spawn(executable, ['--audio-driver', 'Dummy', '--log-file', log, '--', '--capture-existing', `--capture-path=${capture}`],
+  const child = spawn(executable, ['--audio-driver', 'Dummy', '--log-file', log, '--', '--capture-existing', `--capture-path=${capture}`, `--capture-result=${resultPath}`],
     {env: {...process.env, PATH: '', APPDATA: appdata}, windowsHide: true, stdio: 'pipe'});
   let output = '';
+  const observe = setInterval(async () => {
+    let result;
+    try {result = JSON.parse(await readFile(resultPath, 'utf8'));} catch {return;}
+    if (result.status && !['optimal', 'feasible'].includes(result.status)) {
+      clearInterval(observe); child.kill();
+      reject(new Error(`The exported calculation failed: ${JSON.stringify({status: result.status, phase: result.phase, reason: result.reason, construction_status: result.construction_status})}`));
+    }
+  }, 250);
   child.stdout.on('data', chunk => { output += chunk; });
   child.stderr.on('data', chunk => { output += chunk; });
-  const timer = setTimeout(() => { child.kill(); reject(new Error(`The exported application timed out. ${output}`)); },
+  const timer = setTimeout(() => { clearInterval(observe); child.kill(); reject(new Error(`The exported application timed out. ${output}`)); },
     Math.max(60000, (plan.request.time_limit_ms ?? 0) + 30000));
-  child.once('error', error => { clearTimeout(timer); reject(error); });
+  child.once('error', error => { clearInterval(observe); clearTimeout(timer); reject(error); });
   child.once('exit', code => {
     clearTimeout(timer);
+    clearInterval(observe);
     if (code !== 0 || /SCRIPT ERROR|ERROR:/.test(output)) reject(new Error(`The exported application failed (${code}). ${output}`));
     else resolveRun();
   });

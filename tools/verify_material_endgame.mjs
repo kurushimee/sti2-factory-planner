@@ -11,6 +11,7 @@ const request = {...endgameRequest(dataset), time_limit_ms: 180000,
 const start = performance.now();
 const result = solveFactory(await loadHighs(), dataset, request,
   event => console.log(JSON.stringify({elapsed_ms: performance.now() - start, ...event})));
+if (process.argv[3]) await writeFile(process.argv[3], JSON.stringify({request, result}));
 verifyEndgame(dataset, request, result);
 assert.equal(result.search.method, 'material_cost_refinement');
 assert.equal(result.optimization.lower_bound, null);
@@ -18,7 +19,6 @@ assert.ok(result.construction.requirements.length > 100);
 assert.ok(result.construction.routes.length > 100);
 assert.ok(result.construction.external.every(supply => supply.resource === 'energy:eu'));
 for (const balance of result.construction.balances) assert.ok(balance.surplus >= -balance.numerical_tolerance);
-if (process.argv[3]) await writeFile(process.argv[3], JSON.stringify({request, result}));
 console.log(JSON.stringify({elapsed_ms: performance.now() - start, status: result.status, lines: result.lines.length,
   construction_routes: result.construction.routes.length, objective: result.objective,
   construction_objective: result.construction.objective}));

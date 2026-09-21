@@ -1,3 +1,5 @@
+import {validatePreferences} from './recipe_preferences.js';
+
 function fail(path, message) { throw new Error(`${path}: ${message}.`); }
 function object(value, path) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, 'expected an object');
@@ -123,6 +125,7 @@ export function validateDataset(dataset) {
       for (const condition of recipe.conditions) { object(condition, `${at}.condition`); text(condition.type, `${at}.condition.type`); }
     }
   }
+  validatePreferences(dataset);
   records(dataset.progression ?? [], 'progression');
   for (const preset of dataset.progression ?? []) {
     text(preset.name, `progression ${preset.id}.name`);

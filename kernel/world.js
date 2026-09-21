@@ -5,6 +5,7 @@ import {reconstructFactory} from './reconstruct.js';
 import {blockStateAt, readProviders, readRequester, inferProviderAssignments} from './ae2.js';
 import {readMachineAssignment, inferIrradiatorAssignments} from './saved-machine.js';
 import {associateStructures} from './structure.js';
+import {archiveSource} from './archive_source.js';
 
 const MAX_ENTRY = 256 * 1024 * 1024;
 const MAX_CHUNK = 32 * 1024 * 1024;
@@ -46,12 +47,12 @@ function crc32(bytes) {
 }
 
 export function zipEntries(bytes) {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let end = bytes.length - 22;
-  for (; end >= Math.max(0, bytes.length - 65557); end--) {
-    if (view.getUint32(end, true) === 0x06054b50 && end + 22 + view.getUint16(end + 20, true) === bytes.length) break;
+  const source = archiveSource(bytes), view = source.view;
+  let end = source.size - 22;
+  for (; end >= Math.max(0, source.size - 65557); end--) {
+    if (view.getUint32(end, true) === 0x06054b50 && end + 22 + view.getUint16(end + 20, true) === source.size) break;
   }
-  if (end < Math.max(0, bytes.length - 65557)) throw new Error('The file is not a complete ZIP archive.');
+  if (end < Math.max(0, source.size - 65557)) throw new Error('The file is not a complete ZIP archive.');
   if (view.getUint16(end + 4, true) || view.getUint16(end + 6, true)) throw new Error('Split ZIP archives are not supported.');
   let count = view.getUint16(end + 10, true);
   let cursor = view.getUint32(end + 16, true);
@@ -78,6 +79,7 @@ export function zipEntries(bytes) {
     directoryEnd = record;
   }
   if (cursor + directorySize > directoryEnd || count > directorySize / 46) throw new Error('The ZIP directory size or entry count is malformed.');
+  if (directorySize > 64 * 1024 * 1024 || count > 250000) throw new Error('The archive directory exceeds the import limit of 64 MiB or 250,000 entries.');
   directoryEnd = cursor + directorySize;
   const entries = [];
   const names = new Set();
@@ -113,16 +115,16 @@ export function zipEntries(bytes) {
       }
       if (!found) throw new Error('A ZIP64 entry is missing its extended sizes or offset.');
     }
-    const name = decoder.decode(bytes.subarray(cursor + 46, cursor + 46 + nameLength)).replaceAll('\\', '/');
+    const name = decoder.decode(source.read(cursor + 46, nameLength)).replaceAll('\\', '/');
     if (names.has(name)) throw new Error(`Duplicate archive path: ${name}.`);
     names.add(name);
     entries.push({name, size, read() {
       if (flags & 1) throw new Error('Encrypted world archives are not supported.');
-      if (size > MAX_ENTRY) throw new Error(`The archive entry ${name} exceeds the import limit.`);
-      if (local + 30 > bytes.length || view.getUint32(local, true) !== 0x04034b50) throw new Error('A ZIP entry header is malformed.');
+      if (size > MAX_ENTRY || compressed > MAX_ENTRY) throw new Error(`The archive entry ${name} exceeds the import limit.`);
+      if (local + 30 > source.size || view.getUint32(local, true) !== 0x04034b50) throw new Error('A ZIP entry header is malformed.');
       const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
-      if (start + compressed > bytes.length) throw new Error('A ZIP entry is truncated.');
-      const payload = bytes.subarray(start, start + compressed);
+      if (start + compressed > source.size) throw new Error('A ZIP entry is truncated.');
+      const payload = source.read(start, compressed);
       let result;
       if (method === 8) result = boundedInflate(payload, size);
       else if (method === 0 && compressed === size) result = payload;
@@ -135,7 +137,7 @@ export function zipEntries(bytes) {
   return entries;
 }
 
-export function readRegion(bytes, origin, external = () => null, selectedIndices = null) {
+export function readRegion(bytes, origin, external = () => null, selectedIndices = null, consume = null) {
   // Minecraft leaves newly opened regions empty until a chunk is written.
   if (!bytes.length) return {chunks: [], errors: []};
   if (bytes.length < 8192 || bytes.length % 4096) throw new Error('A region file has an invalid sector length.');
@@ -166,7 +168,9 @@ export function readRegion(bytes, origin, external = () => null, selectedIndices
         default: throw new Error(`Unsupported region compression ${compression & 127}.`);
       }
       if (expanded.length > MAX_CHUNK) throw new Error('The expanded chunk exceeds the import limit.');
-      chunks.push({x, z, data: readNbt(expanded).value});
+      const chunk = {x, z, data: readNbt(expanded).value};
+      if (consume) consume(chunk);
+      else chunks.push(chunk);
     } catch (error) { errors.push({region: origin.path, chunk_index: index, message: error.message}); }
   }
   return {chunks, errors};
@@ -190,9 +194,7 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
     const dimension = prefix === '' ? 'minecraft:overworld' : prefix === 'DIM-1/' ? 'minecraft:the_nether' : prefix === 'DIM1/' ? 'minecraft:the_end' : prefix.replace(/^dimensions\//, '').replace(/\/$/, '').replace('/', ':');
     try {
       const parsed = readRegion(region.read(), {x: Number(match[1]), z: Number(match[2]), path: region.name},
-        (x, z) => byName.get(region.name.replace(/r\.[^/]+$/, `c.${x}.${z}.mcc`))?.read());
-      result.errors.push(...parsed.errors);
-      for (const chunk of parsed.chunks) {
+        (x, z) => byName.get(region.name.replace(/r\.[^/]+$/, `c.${x}.${z}.mcc`))?.read(), null, chunk => {
         for (const block of chunk.data.block_entities ?? chunk.data.Level?.TileEntities ?? []) {
           const origin = {dimension, x: block.x, y: block.y, z: block.z, region: region.name};
           try {
@@ -216,7 +218,8 @@ export function inspectWorld(bytes, dataset, progress = () => {}) {
             }
           } catch (error) { result.errors.push({origin, id: block.id, message: error.message}); }
         }
-      }
+      });
+      result.errors.push(...parsed.errors);
     } catch (error) { result.errors.push({region: region.name, message: error.message}); }
   }
   progress({phase: 'reading_regions', completed: regions.length, total: regions.length});

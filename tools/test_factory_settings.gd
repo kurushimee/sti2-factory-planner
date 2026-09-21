@@ -20,6 +20,8 @@ func _run() -> void:
 	await process_frame
 	var dialog := workspace.get_node("%FactorySettings") as PlannerFactorySettings
 	dialog.open_settings(workspace._dataset, workspace._request)
+	assert(dialog.get_node("%RoutePreferences").button_pressed)
+	dialog.get_node("%RoutePreferences").button_pressed = false
 	dialog.get_node("%SettingsCategory").select(4)
 	dialog._category_changed(4)
 	dialog.get_node("%SettingsSearch").text = "coal"
@@ -67,6 +69,7 @@ func _run() -> void:
 	assert(workspace._request.external[0].limit == 0.5)
 	assert(workspace._request.external[0].cost == 2)
 	assert(workspace._request.weights.energy == 0.000001)
+	assert(workspace._request.honor_route_preferences == false)
 	assert(workspace._last_result.power.reserve_fraction == 0.25)
 	assert(workspace._last_result.power.infrastructure_and_goal_eu_per_tick == 4)
 	workspace._undo_action()

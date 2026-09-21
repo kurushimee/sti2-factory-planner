@@ -20,7 +20,9 @@ export function verifyEndgame(dataset, request, result) {
   }
   assert.equal(result.targets[0].rate, 1 / 3600);
   assert.ok(result.lines.some(line => line.recipe === request.goals[0].recipe));
-  assert.ok(result.lines.some(line => line.recipe === 'certus_growth|clusters'));
+  const certus = result.lines.filter(line => recipes.get(line.recipe).type === 'planner:certus_growth');
+  assert.ok(certus.length > 0, 'Certus demand must retain a real growth farm.');
+  assert.ok(certus.every(line => line.operations_per_second > 0 && line.outputs.some(flow => flow.rate > 0)));
   assert.ok(result.external.every(value => value.resource === 'energy:eu'));
   const owned = result.primary_routes.filter(value => value.resource !== 'energy:eu').map(value => value.resource);
   assert.equal(new Set(owned).size, owned.length);

@@ -9,8 +9,8 @@ const request = endgameRequest(dataset, process.argv[4]);
 const highs = await loadHighs();
 const start = performance.now();
 const result = solveFactory(highs, dataset, request);
-verifyEndgame(dataset, request, result);
 if (process.argv[3]) await writeFile(process.argv[3], JSON.stringify({request, result}));
+verifyEndgame(dataset, request, result);
 console.log(JSON.stringify({status: result.status, elapsed_ms: performance.now() - start, lines: result.lines.length,
   machines: result.lines.reduce((sum, line) => sum + line.machines, 0), optimization: result.optimization,
   numerical_retries: result.search?.numerical_retries ?? 0}));

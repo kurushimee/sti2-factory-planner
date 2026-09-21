@@ -58,7 +58,7 @@ def audit(instance, dataset):
     return {"format": 1, "dataset_identity": dataset["identity"],
             "scope": "Declared mod metadata and archive license-file hashes. Declarations are recorded as supplied, not inferred permissions.",
             "distribution_contents": ["Resource identities and display names", "Recipe quantities and measured machine rules",
-                                      "Progression references", "Extraction provenance and unsupported-entry reports"],
+                                      "Progression references", "Equal-material recipe preferences", "Extraction provenance and unsupported-entry reports"],
             "excluded_contents": ["Minecraft and mod executables", "Textures and sounds", "Quest prose", "World saves", "Original recipe scripts"],
             "loaded_mods": [{**mod, "declarations": indexed.get(mod["id"], [])} for mod in dataset["loaded_mods"]],
             "recipe_contributors": [{"namespace": namespace, "recipes": count, "declarations": indexed.get(namespace, []),

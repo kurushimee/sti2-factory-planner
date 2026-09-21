@@ -12,7 +12,7 @@ Give the dataset a stable `identity`, such as `pack-name:version`, and a readabl
 
 All recipe amounts are per operation. Item amounts count items, StaTech fluid amounts use millibuckets, and electricity uses EU. Rates are per second. A game tick is 1/20 second. `eu_per_tick` and idle power use EU/t; `eu_per_operation` uses total EU. Never put a bucket count in a millibucket field. Expected probabilistic amounts may be fractional; mark the recipe with `expected_yields: true` and retain the original probabilities in its source evidence.
 
-Godot boundaries serialize floats with full precision. `PlannerJson.parse` converts decimal tokens to scientific notation before parsing because the stock parser can corrupt their significant digits or magnitude. Quoted text is unchanged. Regressions include an exact `1 / 3600` rate through requests and persistence, plus long decimals such as `600.0000000000001`. Stepped goal controls use their displayed decimal precision. Large finite quantities remain decimal strings when they exceed the numeric range.
+Godot boundaries serialize floats with full precision. `PlannerJson.parse` rounds decimal tokens to the nearest IEEE-754 double using exact decimal midpoints, with ties going to the even significand. Native conversion supplies only an initial estimate. This preserves subnormals and signed zero as well as ordinary rates; scientific notation alone does not fix the stock parser. Quoted text and JSON object keys stay unchanged. Regressions include an exact `1 / 3600` rate through requests and persistence, plus long decimals such as `600.0000000000001`. Stepped goal controls use their displayed decimal precision. Large finite quantities remain decimal strings when they exceed the numeric range.
 
 ## Recipes and flows
 
@@ -29,6 +29,10 @@ An ordinary flow is `{"resource":"ore","amount":2}`. An input may instead use `{
 When behavior is unsupported, retain the recipe with an `unsupported` explanation. The planner excludes it and reports the reason. Entries that cannot yet be converted to a recipe belong in `unsupported_entries`, with their source identity and reason. Neither form grants an external resource supply.
 
 ## Fixed configurations
+
+The optional root `route_preferences` list records equal-material recipe choices. Each entry has `preferred` and `alternative` recipe IDs and a human-readable `reason`. The kernel checks that their input and output amounts have exactly the same proportions, including batch quantities. Preferences cannot form cycles. Conditional recipes, alternative ingredients, catalysts, returned containers, consumable tools, and probabilistic yields do not qualify for this rule.
+
+An available preferred route takes precedence unless the player pins the alternative or constrains its installed configuration. Limited preferred configurations keep both routes available. If the preferred set cannot produce a verified plan within its search budget, the planner retries with the alternatives and reports that fallback. This rule compares immediate material vectors; it does not establish equivalence between different upstream chains.
 
 A configuration needs an `id`, a `machine` ID, and positive `operations_per_second`. Give configuration IDs globally distinct names because plan pins and installed limits refer to them. Optional fields are:
 
@@ -63,6 +67,7 @@ A plan uses `format: "factory-plan"` and `version: 1`. It embeds `dataset`, a ma
 | Request field | Meaning |
 | --- | --- |
 | `replication` | Whether replication-dependent routes are allowed. |
+| `honor_route_preferences` | Defaults to true. Apply the dataset's verified equal-material recipe preferences while preserving explicit selections. |
 | `available_machines`, `available_upgrades` | Allowed IDs. Machine omission uses dataset defaults; upgrade omission allows no automatic upgrades. |
 | `disabled_machines`, `disabled_upgrades`, `disabled_recipes` | Explicit exclusions. The settings editor folds machine and upgrade exclusions into its allowed lists. |
 | `obtained_resources` | Previously obtained templates or prerequisite items. |

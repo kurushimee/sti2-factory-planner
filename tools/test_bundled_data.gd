@@ -54,5 +54,11 @@ func _run() -> void:
 	await create_timer(0.2).timeout
 	assert(!about.visible)
 	assert(root.gui_get_focus_owner() == workspace.get_node("%About"))
+	var arguments := OS.get_cmdline_user_args()
+	if !arguments.is_empty():
+		var output := FileAccess.open(arguments[0], FileAccess.WRITE)
+		assert(output != null)
+		output.store_string(JSON.stringify(workspace._dataset, "", true, true))
+		output.close()
 	print("The bundled StaTech catalog opened without extraction tools in ", Time.get_ticks_msec() - started, " ms.")
 	quit()

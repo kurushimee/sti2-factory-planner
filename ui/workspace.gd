@@ -112,15 +112,22 @@ func _ready() -> void:
 	if OS.has_feature("web"):
 		example_requested = bool(JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('dataset') === 'example'"))
 	var dataset_path := "res://data/example.json" if example_requested else default_dataset_path
+	_capture_stage("Reading the bundled dataset")
 	var dataset_bytes := FileAccess.get_file_as_bytes(dataset_path)
 	if dataset_path.ends_with(".gz"):
 		dataset_bytes = dataset_bytes.decompress_dynamic(128 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
-	if dataset_bytes.is_empty() || !_load_dataset(PlannerJson.parse(dataset_bytes.get_string_from_utf8())):
+	_capture_stage("Parsing %d dataset bytes" % dataset_bytes.size())
+	var default_data: Variant = PlannerJson.parse(dataset_bytes.get_string_from_utf8())
+	_capture_stage("Loading the parsed dataset")
+	if dataset_bytes.is_empty() || !_load_dataset(default_data):
 		_failed("The bundled dataset could not be read. Import a valid dataset to recover.")
+	_capture_stage("The bundled dataset is ready")
 	if restore_saved_plan && OS.has_feature("web"):
 		JavaScriptBridge.eval("window.plannerBridge.restore()")
 	elif restore_saved_plan && FileAccess.file_exists("user://autosave.json"):
+		_capture_stage("Reading the saved plan")
 		var saved: Variant = PlannerJson.parse(FileAccess.get_file_as_string("user://autosave.json"))
+		_capture_stage("The saved plan parsed")
 		if saved is Dictionary && !saved.has("dataset"):
 			var reference: String = str(saved.get("dataset_ref", ""))
 			if reference.length() == 64 && reference.is_valid_hex_number(false):
@@ -134,10 +141,27 @@ func _ready() -> void:
 			if view is Dictionary && view.get("dataset_identity") == saved.get("dataset_identity") && PlannerDatasetValidation.check_view(view.get("view")).is_empty():
 				saved.view = view.view
 		_restore_plan(saved)
+		_capture_stage("The saved plan was submitted")
 	search.grab_focus.call_deferred()
 	if "--capture" in OS.get_cmdline_user_args():
 		_request.goals = [{"resource": "motor", "rate": 2.0, "recipe": "assemble"}]
 		_recalculate()
+	if !OS.has_feature("web"):
+		for argument: String in OS.get_cmdline_user_args():
+			if argument.begins_with("--world="):
+				_import_world(argument.trim_prefix("--world="))
+				break
+
+
+func _capture_stage(message: String) -> void:
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with("--capture-result="):
+			var path := argument.trim_prefix("--capture-result=") + ".stages"
+			var output := FileAccess.open(path, FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE)
+			if output:
+				output.seek_end()
+				output.store_line("%d: %s" % [Time.get_ticks_msec(), message])
+				output.close()
 
 
 func _setup_focus() -> void:
@@ -385,7 +409,17 @@ func _recalculate() -> void:
 	computation.submit({"dataset": _dataset, "request": request})
 
 
+func _capture_result(result: Dictionary) -> void:
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with("--capture-result="):
+			var output := FileAccess.open(argument.trim_prefix("--capture-result="), FileAccess.WRITE)
+			if output:
+				output.store_string(JSON.stringify(result, "", true, true))
+				output.close()
+
+
 func _calculated(result: Dictionary) -> void:
+	_capture_result(result)
 	%Cancel.disabled = true
 	if _job_kind == "preview_configuration":
 		%GoalEditor.show_preview(result)
@@ -896,6 +930,7 @@ func _cancel() -> void:
 
 
 func _failed(message: String) -> void:
+	_capture_result({"status": "error", "reason": message})
 	if _job_kind == "preview_configuration" && %GoalEditor.visible:
 		%GoalEditor.show_error(message)
 		return

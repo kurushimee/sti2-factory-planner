@@ -225,6 +225,13 @@ layout_mode = 2
 max_value = 1000000.0
 step = 1e-06
 
+[node name="RoutePreferences" type="CheckButton" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Prefer equal-material routes"
+tooltip_text = "Use the dataset's route preferences when material quantities match. Explicit recipe choices and constrained machines remain available."
+
 [node name="PriorityHelp" type="Label" parent="Content/Priorities"]
 layout_mode = 2
 custom_minimum_size = Vector2(340, 0)

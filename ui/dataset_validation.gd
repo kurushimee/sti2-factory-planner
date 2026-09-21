@@ -64,6 +64,13 @@ static func check(value: Variant) -> String:
 			if !(configuration is Dictionary) || !(configuration.get("id") is String) || !(configuration.get("machine") is String) || !_positive(configuration.get("operations_per_second")):
 				return "Recipe %s has an invalid machine configuration." % recipe.id
 			catalog_ids.machines[configuration.machine] = true
+	if !(value.get("route_preferences", []) is Array):
+		return "Route preferences must be a list."
+	for preference: Variant in value.get("route_preferences", []):
+		if !(preference is Dictionary) || !(preference.get("preferred") is String) || !(preference.get("alternative") is String) || !(preference.get("reason") is String):
+			return "Every route preference needs two recipe IDs and an explanation."
+		if !recipes.has(preference.preferred) || !recipes.has(preference.alternative) || preference.reason.is_empty():
+			return "A route preference references a missing recipe or explanation."
 	if !(value.get("progression", []) is Array):
 		return "Progression presets must be a list."
 	var preset_ids: Dictionary[String, bool] = {}

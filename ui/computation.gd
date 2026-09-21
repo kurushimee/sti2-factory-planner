@@ -32,7 +32,7 @@ func _process(_delta: float) -> void:
 		return
 	if !OS.has_feature("web") && FileAccess.file_exists(_result_path + ".progress"):
 		var text := FileAccess.get_file_as_string(_result_path + ".progress")
-		if text != _last_progress:
+		if !text.is_empty() && text != _last_progress:
 			_last_progress = text
 			_accept(PlannerJson.parse(text))
 	if OS.has_feature("web"):
@@ -106,6 +106,12 @@ func _accept(response: Variant) -> void:
 	if response.has("id") && int(response.id) != _job_id:
 		return
 	if response.has("phase"):
+		if response.phase == "reading_regions":
+			progress.emit("Reading world regions · %d of %d…" % [int(response.get("completed", 0)), int(response.get("total", 0))])
+			return
+		if response.phase == "production_routes":
+			progress.emit("Balancing production routes · attempt %d…" % int(response.get("attempt", 0)))
+			return
 		var messages := {
 			"production_baseline": "Sizing the initial production plan…",
 			"construction_baseline": "Calculating its construction materials…",
@@ -115,6 +121,7 @@ func _accept(response: Variant) -> void:
 			"construction_routes": "Balancing shared construction routes…",
 			"construction_precision": "Checking construction balance precision…",
 			"production_precision": "Checking small production rates and machine capacity…",
+			"route_preference_fallback": "Checking alternatives to the preferred routes…",
 		}
 		progress.emit(messages.get(response.phase, String(response.phase).replace("_", " ").capitalize()))
 		return

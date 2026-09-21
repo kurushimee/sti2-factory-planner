@@ -6,6 +6,7 @@
     "Resource identities and display names",
     "Recipe quantities and measured machine rules",
     "Progression references",
+    "Equal-material recipe preferences",
     "Extraction provenance and unsupported-entry reports"
   ],
   "excluded_contents": [
@@ -4287,7 +4288,7 @@
     },
     {
       "namespace": "ae2",
-      "recipes": 321,
+      "recipes": 323,
       "declarations": [
         {
           "archive": "appliedenergistics2-19.2.17.jar",

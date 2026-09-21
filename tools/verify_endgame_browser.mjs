@@ -9,7 +9,15 @@ import {endgameRequest} from './endgame_case.mjs';
 const root = resolve('builds/web'), artifacts = resolve('.plans/artifacts/certus');
 await mkdir(artifacts, {recursive: true});
 const dataset = await readDataset('data/statech-2.0.1.json.gz');
-const request = endgameRequest(dataset, process.argv[2]);
+const preferenceCase = process.argv.includes('--preferences');
+let request;
+if (preferenceCase) {
+  const preferred = dataset.recipes.find(recipe => recipe.id.endsWith('casing/craft/steel_plated_bricks'));
+  request = {goals: [{resource: preferred.primary, rate: 1}], honor_route_preferences: true,
+    available_machines: ['ae2:molecular_assembler', 'modern_industrialization:assembler'],
+    external: [...preferred.inputs.map(flow => ({resource: flow.resource})), {resource: 'energy:eu'}], time_limit_ms: 60000};
+} else request = endgameRequest(dataset, process.argv[2]);
+const minimumLines = preferenceCase ? 1 : 401;
 if (process.argv.includes('--material')) {
   request.time_limit_ms = 180000;
   request.construction = {external: [{resource: 'energy:eu', cost: 0}], work: 0.001};
@@ -39,12 +47,22 @@ try {
   await page.addInitScript(() => {
     const NativeWorker = window.Worker;
     window.Worker = class extends NativeWorker {
+      postMessage(job, ...options) {
+        if (job.dataset && job.request) window.calculationJob = job;
+        return super.postMessage(job, ...options);
+      }
       constructor(...args) {
         super(...args);
         this.addEventListener('message', event => {
+          if (event.data.phase) {
+            window.calculationPhases ??= [];
+            window.calculationPhases.push({time: performance.now(), phase: event.data.phase, attempt: event.data.attempt});
+          }
           const result = event.data.result;
           if (result) window.calculationCheck = {status: result.status, lines: result.lines?.length,
-            optimal: result.optimal, optimization: result.optimization, search: result.search};
+            optimal: result.optimal, optimization: result.optimization, search: result.search,
+            phase: result.phase, reason: result.reason,
+            preferred: result.lines?.filter(line => line.route_preference).map(line => line.recipe)};
           if (event.data.error) window.calculationFailure = event.data.error;
         });
       }
@@ -68,21 +86,30 @@ try {
   }
   const calculation = await frame.evaluate(() => window.calculationCheck);
   console.log(JSON.stringify({calculation, failure: await frame.evaluate(() => window.calculationFailure), errors}));
-  assert.ok(calculation?.lines > 400);
-  assert.equal(calculation.status, 'feasible');
-  assert.equal(calculation.optimal, false);
+  if (!calculation?.lines) {
+    console.log(JSON.stringify(await frame.evaluate(() => window.calculationPhases)));
+    await writeFile(`${artifacts}/failed-job.json`, await frame.evaluate(() => JSON.stringify(window.calculationJob)));
+  }
+  assert.ok(calculation?.lines >= minimumLines);
+  if (preferenceCase) {
+    assert.ok(['optimal', 'feasible'].includes(calculation.status));
+    assert.ok(calculation.preferred.some(id => id.endsWith('casing/craft/steel_plated_bricks')));
+  } else {
+    assert.equal(calculation.status, 'feasible');
+    assert.equal(calculation.optimal, false);
+  }
   assert.ok(calculation.optimization.relative_gap >= 0);
-  const ready = () => new Promise(resolve => {
+  const ready = minimum => new Promise(resolve => {
     const open = indexedDB.open('factory-planner', 1);
     open.onsuccess = () => {
       const get = open.result.transaction('plans').objectStore('plans').get('autosave');
-      get.onsuccess = () => { resolve(Object.keys(get.result?.positions ?? {}).length > 400); open.result.close(); };
+      get.onsuccess = () => { resolve(Object.keys(get.result?.positions ?? {}).length >= minimum); open.result.close(); };
     };
   });
-  await frame.waitForFunction(ready, null, {timeout: 60000});
+  await frame.waitForFunction(ready, minimumLines, {timeout: 60000});
   await page.mouse.click(950, 92, {delay: 100});
   await page.waitForTimeout(300);
-  await page.screenshot({path: `${artifacts}/endgame-browser-details.png`});
+  await page.screenshot({path: `${artifacts}/${preferenceCase ? 'preferences' : 'endgame'}-browser-details.png`});
   const pending = page.waitForEvent('download');
   await page.mouse.click(1225, 40, {delay: 100});
   const download = await pending;
@@ -95,11 +122,11 @@ try {
   await page.reload();
   frame = page.frames().find(value => value !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
-  await frame.waitForFunction(() => window.calculationCheck?.lines > 400, null, {timeout: 180000});
-  await frame.waitForFunction(ready, null, {timeout: 120000});
+  await frame.waitForFunction(minimum => window.calculationCheck?.lines >= minimum, minimumLines, {timeout: 180000});
+  await frame.waitForFunction(ready, minimumLines, {timeout: 120000});
   assert.equal(await frame.evaluate(() => crossOriginIsolated), false);
   assert.deepEqual(errors, []);
-  console.log(`The embedded export calculated, rendered, exported, and persisted ${calculation.lines} endgame allocations with an unproven-cost report.`);
+  console.log(`The embedded export calculated, rendered, exported, and persisted ${calculation.lines} allocations with the expected route and cost report.`);
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

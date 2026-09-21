@@ -17,8 +17,7 @@
       worker.onerror = event => messages.push({id: job.id, error: event.message});
       if (importing) {
         if (!selectedArchive) { messages.push({id: job.id, error: 'Choose a world ZIP before importing.'}); return; }
-        const bytes = selectedArchive.slice(0);
-        worker.postMessage({...job, bytes}, [bytes]);
+        worker.postMessage({...job, file: selectedArchive});
       } else worker.postMessage(job);
     },
     cancel() { worker?.terminate(); worker = null; messages.length = 0; },
@@ -32,7 +31,7 @@
         if (!file) return;
         try {
           if (file.name.toLowerCase().endsWith('.zip')) {
-            selectedArchive = await file.arrayBuffer();
+            selectedArchive = file;
             files.push({kind: 'world', name: file.name});
           } else files.push({kind: 'json', value: JSON.parse(await file.text())});
         } catch (error) { files.push({kind: 'error', message: error.message}); }

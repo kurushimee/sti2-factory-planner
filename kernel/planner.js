@@ -12,6 +12,7 @@ import {runSolver} from './solver.js';
 import {findFactorySeed} from './seed.js';
 import {refineMaterialPlan} from './material_refinement.js';
 import {balanceTolerance, diagnosticNumber, scaleConstraintRows} from './numerics.js';
+import {preferredRecipes, describePreferences} from './recipe_preferences.js';
 
 const ENERGY = 'energy:eu';
 
@@ -357,6 +358,25 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
     if (error !== exhausted) throw error;
     return {status: 'limit', phase: 'configuration', optimal: false, incumbent: null, branches: 0};
   }
+  const preferred = preferredRecipes(dataset, request);
+  if (preferred.applied.length) {
+    const firstDeadline = Date.now() + Math.max(0, deadline - Date.now()) * 0.9;
+    const first = solvePreparedFactory(highs, preferred.dataset, request, firstDeadline, onProgress);
+    if (first.lines) return describePreferences(first, preferred.applied);
+    onProgress({phase: 'route_preference_fallback'});
+    const fallback = solvePreparedFactory(highs, dataset, request, deadline, onProgress);
+    if (fallback.lines && first.status !== 'infeasible') {
+      fallback.status = 'feasible';
+      fallback.optimal = false;
+      fallback.optimization = {...fallback.optimization, lower_bound: null, relative_gap: null,
+        explanation: 'The fallback plan is verified, but the preferred equivalent-material routes were not established within the search.'};
+    }
+    return describePreferences(fallback, preferred.applied, true);
+  }
+  return solvePreparedFactory(highs, dataset, request, deadline, onProgress);
+}
+
+function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
   const resolved = resolveGoals(dataset, request);
   request = resolved.request;
   const branches = [{}];
@@ -387,7 +407,7 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
           if (error instanceof FactoryBalanceError) return false;
           throw error;
         }
-      });
+      }, onProgress);
       if (seed) {
         const decoded = decodeFactory(model, seed);
         const ownership = productionRouteOwnership(decoded, request);

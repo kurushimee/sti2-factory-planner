@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {withRecipes} from '../kernel/recipe_preferences.js';
 
 export function constructionCase(catalog) {
   const production = catalog.recipes.find(value => value.source_id === 'statech:modern_industrialization/macerator/copper_dust_from_copper_cluster');
@@ -15,7 +16,7 @@ export function constructionCase(catalog) {
       {resource: 'item:modern_industrialization:electric_macerator', cost: 100},
       {resource: 'energy:eu', cost: 0}, ...[...resources].map(resource => ({resource, cost: 1})),
     ]}};
-  return {dataset: {...catalog, recipes: [production, ...upgrades]}, request, production, basic: upgrades[0]};
+  return {dataset: withRecipes(catalog, [production, ...upgrades]), request, production, basic: upgrades[0]};
 }
 
 export function verifyConstructionCase(result, fixture) {
@@ -48,7 +49,7 @@ export function finiteHammerCase(catalog, plates = 35) {
     available_machines: machines.map(machine => machine.id), construction: {round_batches: true, external: [
       {resource: 'item:minecraft:iron_ingot'}, {resource: hammer.tool_usage.resource}, {resource: 'energy:eu', cost: 0},
     ]}};
-  return {dataset: {...catalog, identity: 'captured-hammer-construction-check', recipes: [goal, hammer], machines,
+  return {dataset: {...withRecipes(catalog, [goal, hammer]), identity: 'captured-hammer-construction-check', machines,
     default_machines: machines.map(machine => machine.id), progression: [], shape_member_rules: []}, request, hammer, plates};
 }
 

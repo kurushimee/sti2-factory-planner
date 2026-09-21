@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 
-ROOT_FIELDS = set("format identity name complete description resources recipes machines upgrades shape_member_rules progression default_machines unsupported_entries loaded_mods source".split())
+ROOT_FIELDS = set("format identity name complete description resources recipes machines upgrades shape_member_rules progression default_machines route_preferences unsupported_entries loaded_mods source".split())
 RESOURCE_FIELDS = set("id registry_id kind unit name max_stack_size components".split())
 RECIPE_FIELDS = set("id source_id type origin name primary inputs outputs configurations group conditions catalysts expected_yields process requires_obtained replication crafting_evidence assumptions tool_usage".split())
 
@@ -19,6 +19,9 @@ def encode_bundle(dataset):
         unexpected = record.keys() - allowed
         if unexpected:
             raise ValueError(f"Unreviewed distribution fields in {label}: {sorted(unexpected)}")
+    for preference in dataset.get("route_preferences", []):
+        if preference.keys() - {"preferred", "alternative", "reason"}:
+            raise ValueError("Unreviewed distribution fields in a route preference.")
     # Preserve all calculation and import facts. Compression must not change the catalog.
     encoded = (json.dumps(dataset, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n").encode("utf-8")
     packed = gzip.compress(encoded, compresslevel=9, mtime=0)

@@ -78,3 +78,15 @@ test('normal planning selects bounded material refinement for a large constructi
   assert.equal(result.lines[0].machines, 2);
   assert.ok(progress.includes('construction_verification'));
 });
+
+test('fixed construction orders honor an available equal-material route preference', () => {
+  const data = {...dataset, recipes: [
+    {...production, configurations: [configuration('slow', 1, [flow('cheap')])]},
+    recipe('craft_build', [flow('ore')], [flow('cheap')]),
+    recipe('assembly_build', [flow('ore')], [flow('cheap')], [configuration('fast_bench', 100, [flow('bench')])]),
+  ], route_preferences: [{preferred: 'craft_build', alternative: 'assembly_build', reason: 'The same construction materials.'}]};
+  const result = refine(data);
+  assert.ok(result.construction.routes.some(route => route.recipe === 'craft_build'));
+  assert.ok(!result.construction.routes.some(route => route.recipe === 'assembly_build'));
+  assert.ok(result.construction.recipe_preferences.applied.length);
+});

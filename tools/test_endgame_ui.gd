@@ -18,6 +18,16 @@ func _run() -> void:
 	OS.low_processor_usage_mode = false
 	await process_frame
 	workspace.computation.cancel()
+	workspace.computation._accept({"phase": "reading_regions", "completed": 3, "total": 12})
+	assert(workspace.status.text == "Reading world regions · 3 of 12…")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/world-import-progress.png")
+	workspace.computation._accept({"phase": "production_routes", "attempt": 3})
+	assert(workspace.status.text == "Balancing production routes · attempt 3…")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/certus/endgame-route-progress.png")
 	workspace.computation._accept({"phase": "construction_verification"})
 	assert(workspace.status.text == "Checking the new plan's full construction cost…")
 	if DisplayServer.get_name() != "headless":

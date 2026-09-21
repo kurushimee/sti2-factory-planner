@@ -76,6 +76,11 @@ static func optimization_report(result: Dictionary) -> String:
 		text += "This search compares loadouts within the initial production routes. Other routes or loadouts may cost less; no global cost bound is available.\n"
 	elif result.get("search", {}).get("method") == "precision_recovery":
 		text += "Small flows were rechecked with rescaled equations. Whole-machine capacity and resource balances pass, but this numerical retry does not establish the lowest cost.\n"
+	var preferences: Dictionary = result.get("recipe_preferences", {})
+	if preferences.get("fallback", false):
+		text += "The preferred equal-material routes did not yield a verified plan in this search. Available alternatives were retained.\n"
+	elif !preferences.get("applied", []).is_empty():
+		text += "Available equal-material route preferences are applied. Select a recipe node to see why its route was preferred.\n"
 	return text + "\n"
 
 
@@ -119,6 +124,8 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 	var capacity: Dictionary = configuration.get("capacity", {})
 	var title := readable_name(recipe.primary, recipe.get("name", ""))
 	var text := "[font_size=20]%s[/font_size]\n\n[b]%d × %s[/b]\n%s\n" % [markup(title), int(line.machines), markup(machine_name(line.machine, resources)), markup(loadout(configuration, resources))]
+	if line.has("route_preference"):
+		text += "\n[b]Route choice[/b]\n%s\n" % markup(line.route_preference.reason)
 	for section: String in ["Production", "Ingredients"]:
 		text += "\n[b]%s[/b]\n" % section
 		var flows: Array = line.outputs if section == "Production" else line.inputs

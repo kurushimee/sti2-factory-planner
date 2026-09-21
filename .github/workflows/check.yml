@@ -39,6 +39,7 @@ jobs:
           node tools/verify_real_catalog.mjs data/statech-2.0.1.json.gz
           node tools/verify_certus_catalog.mjs data/statech-2.0.1.json.gz
           node tools/verify_availability_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_recipe_preferences.mjs data/statech-2.0.1.json.gz
           node tools/verify_construction_catalog.mjs data/statech-2.0.1.json.gz
       - name: Install the test browser
         run: npx playwright install --with-deps chromium
@@ -60,14 +61,19 @@ jobs:
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/import.log
       - name: Check dataset and plan validation
         run: |
-          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_json.gd 2>&1 | tee /tmp/json-check.log
+          python tools/make_decimal_cases.py data/statech-2.0.1.json.gz /tmp/decimal-cases.json
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_json.gd -- /tmp/decimal-cases.json 2>&1 | tee /tmp/json-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/json-check.log
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_data.gd 2>&1 | tee /tmp/data-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/data-check.log
       - name: Check the default StaTech catalog in Godot
         run: |
-          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_bundled_data.gd 2>&1 | tee /tmp/bundled-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_bundled_data.gd -- /tmp/godot-dataset.json 2>&1 | tee /tmp/bundled-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/bundled-check.log
+          node tools/verify_dataset_roundtrip.mjs data/statech-2.0.1.json.gz /tmp/godot-dataset.json
+          node tools/verify_recipe_preferences.mjs data/statech-2.0.1.json.gz /tmp/preferences.json
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_recipe_preferences.gd -- /tmp/preferences.json 2>&1 | tee /tmp/preference-ui-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/preference-ui-check.log
       - name: Check keyboard focus and interface audio
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_ui.gd 2>&1 | tee /tmp/ui-check.log

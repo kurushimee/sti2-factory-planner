@@ -50,7 +50,7 @@ func _ready() -> void:
 	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %ConstructionEnabled, %ConstructionWeight.get_line_edit(), %ConstructionRounding, %SettingsEntries, %SettingsPrevious,
 		%SettingsNext, %InfrastructureCount.get_line_edit(), %InfrastructureHatch, %InfrastructureTransfer.get_line_edit(), %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
 		%Reserve.get_line_edit(), %Overhead.get_line_edit(), %ResourceWeight.get_line_edit(),
-		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), get_ok_button(), get_cancel_button()]
+		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), %RoutePreferences, get_ok_button(), get_cancel_button()]
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
 		controls[index].focus_previous = controls[index].get_path_to(controls[(index + controls.size() - 1) % controls.size()])
@@ -94,6 +94,7 @@ func open_settings(dataset: Dictionary, request: Dictionary) -> void:
 	%ResourceWeight.value = weights.get("external", 1000)
 	%MachineWeight.value = weights.get("machines", 1)
 	%EnergyWeight.value = weights.get("energy", 0.000001)
+	%RoutePreferences.set_pressed_no_signal(_request.get("honor_route_preferences", true))
 	%Reserve.value = _request.get("reserve_fraction", 0) * 100
 	%Overhead.value = _request.get("overhead_eu_per_tick", 0)
 	%SettingsError.text = ""
@@ -368,6 +369,7 @@ func _apply() -> void:
 	_request.reserve_fraction = PlannerDisplay.input_value(%Reserve) / 100
 	_request.overhead_eu_per_tick = PlannerDisplay.input_value(%Overhead)
 	_request.weights = {"external": PlannerDisplay.input_value(%ResourceWeight), "machines": PlannerDisplay.input_value(%MachineWeight), "energy": PlannerDisplay.input_value(%EnergyWeight)}
+	_request.honor_route_preferences = %RoutePreferences.button_pressed
 	if %ConstructionEnabled.button_pressed:
 		_construction.weight = PlannerDisplay.input_value(%ConstructionWeight)
 		_construction.round_batches = %ConstructionRounding.button_pressed
