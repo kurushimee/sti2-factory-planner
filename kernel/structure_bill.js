@@ -80,6 +80,9 @@ export function structureBill(shape, rules, hatches, demands, options = {}) {
   const report = {build_requirements: [...quantities].map(([resource, amount]) => ({resource, amount})), placements,
     assumptions: ['The controller is counted separately.', 'Hatch selection minimizes installed hatch count, then prefers lower capacities; it is not a material-cost optimum.',
       'External transport must keep the selected hatches supplied and drained.', 'Placement coordinates use the captured controller-relative orientation.']};
+  if (demands.some(demand => demand.energy)) report.assumptions.push(
+    'Each energy hatch is sized for one independently supplied or drained cable network at its loaded transfer limit. Hatches sharing one network share its total limit.',
+    'Multiple isolated input networks or direct machine transfers can change the required hatch count. Cable placement is not verified by this bill.');
   if (options.cache) {
     if (!options.cache.has(shape)) options.cache.set(shape, new Map());
     options.cache.get(shape).set(cacheKey, report);

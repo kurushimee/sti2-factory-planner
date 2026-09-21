@@ -115,6 +115,7 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 	if !stock_text.is_empty():
 		text += "\n[b]Startup stocks[/b]\n" + stock_text + "Factory totals for resources used by this line. Conservative cold-start reserves include other consumers.\n"
 	var assumptions: Array = configuration.get("assumptions", []).duplicate()
+	assumptions.append_array(structure.get("assumptions", []))
 	if recipe.get("expected_yields", false):
 		assumptions.append("Probabilistic outputs use expected yields. Actual deliveries vary.")
 	for condition: Dictionary in recipe.get("conditions", []):

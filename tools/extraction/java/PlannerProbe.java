@@ -1017,6 +1017,64 @@ public final class PlannerProbe {
     }
 
     @SuppressWarnings("unchecked")
+    private static JsonObject energyHatchTransfer(aztech.modern_industrialization.machines.blockentities.hatches.EnergyHatch hatch,
+            MinecraftServer server) throws Exception {
+        var result = new JsonObject();
+        result.addProperty("scope", "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.");
+        var energy = hatch.getEnergyComponent();
+        long original = energy.getEu();
+        var tier = hatch.getCableTier();
+        var inputField = aztech.modern_industrialization.machines.blockentities.hatches.EnergyHatch.class.getDeclaredField("input");
+        inputField.setAccessible(true);
+        boolean input = inputField.getBoolean(hatch);
+        var field = aztech.modern_industrialization.machines.blockentities.hatches.EnergyHatch.class.getDeclaredField(input ? "insertable" : "extractable");
+        field.setAccessible(true);
+        var adapter = (aztech.modern_industrialization.api.energy.MIEnergyStorage) field.get(hatch);
+        var other = new aztech.modern_industrialization.machines.components.EnergyComponent(hatch, tier.getMaxTransfer() * 100);
+        var peer = input ? other.buildExtractable(value -> value == tier) : other.buildInsertable(value -> value == tier);
+        var samples = new JsonArray();
+        try {
+            for (int count : new int[] {1, 2}) {
+                var nodes = new java.util.ArrayList<aztech.modern_industrialization.pipes.api.PipeNetwork.PosNode>();
+                for (int i = 0; i < count; i++) {
+                    final boolean connected = i == 0;
+                    var node = new aztech.modern_industrialization.pipes.electricity.ElectricityNetworkNode() {
+                        @Override public void appendAttributes(net.minecraft.server.level.ServerLevel world, BlockPos pos,
+                                aztech.modern_industrialization.api.energy.CableTier cableTier,
+                                java.util.List<aztech.modern_industrialization.api.energy.MIEnergyStorage> storages) {
+                            if (connected) { storages.add(adapter); storages.add(peer); }
+                        }
+                    };
+                    nodes.add(new aztech.modern_industrialization.pipes.api.PipeNetwork.PosNode(new BlockPos(i, 0, 0), node));
+                }
+                var network = new aztech.modern_industrialization.pipes.electricity.ElectricityNetwork(0, null, tier) {
+                    @Override public java.util.Collection<aztech.modern_industrialization.pipes.api.PipeNetwork.PosNode> iterateTickingNodes() { return nodes; }
+                };
+                long moved = 0;
+                for (int tick = 0; tick < 20; tick++) {
+                    energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                    other.consumeEu(other.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                    if (input) other.insertEu(other.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                    else energy.insertEu(energy.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                    network.tick(server.overworld());
+                    long transferred = input ? energy.getEu() : other.getEu();
+                    if (transferred != tier.getMaxTransfer()) throw new IllegalStateException("Cable network transfer differs from its loaded limit.");
+                    moved += transferred;
+                }
+                var sample = new JsonObject();
+                sample.addProperty("network_nodes", count);
+                sample.addProperty("ticks", 20);
+                sample.addProperty("transferred_eu", moved);
+                samples.add(sample);
+            }
+        } finally {
+            energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+            energy.insertEu(original, aztech.modern_industrialization.util.Simulation.ACT);
+        }
+        result.add("samples", samples);
+        return result;
+    }
+
     private static JsonObject teslaTower(MachineBlockEntity prototype, MinecraftServer server) throws Exception {
         var tower = (net.swedz.extended_industrialization.machines.blockentity.multiblock.teslatower.TeslaTowerBlockEntity) prototype;
         var inputsField = tower.getClass().getDeclaredField("energyInputs");
@@ -1218,8 +1276,11 @@ public final class PlannerProbe {
                         capacities.addProperty("energy_eu", energy.getEnergyComponent().getCapacity());
                     }
                     if (hatch instanceof aztech.modern_industrialization.api.energy.CableTierHolder cable) {
-                        capacities.addProperty("cable_eu_per_tick", cable.getCableTier().getEu());
+                        capacities.addProperty("nominal_eu", cable.getCableTier().getEu());
+                        capacities.addProperty("cable_eu_per_tick", cable.getCableTier().getMaxTransfer());
                     }
+                    if (id.startsWith("modern_industrialization:") && hatch instanceof aztech.modern_industrialization.machines.blockentities.hatches.EnergyHatch energyHatch)
+                        record.add("energy_hatch_transfer_probe", energyHatchTransfer(energyHatch, server));
                     record.add("hatch_capacity", capacities);
                 }
                 var shapeRecords = shapes(entity, server);

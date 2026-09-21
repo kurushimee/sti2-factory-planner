@@ -44,12 +44,16 @@ func _run() -> void:
 	var line: Dictionary = workspace._last_result.lines[0]
 	assert(line.configuration_details.structure.status == "sized")
 	assert("Build requirements per machine" in workspace.inspector.text)
+	assert("one independently supplied or drained cable network" in workspace.inspector.text)
 	assert(("Nuclear Item Hatch" if irradiation_mode else "Heatproof Machine Casing").to_lower() in workspace.inspector.text.to_lower())
 	if DisplayServer.get_name() != "headless":
 		await process_frame
 		workspace.inspector.get_v_scroll_bar().value = 280
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/irradiation-bill.png" if irradiation_mode else "res://.plans/artifacts/workspace/structure-bill.png")
+		workspace.inspector.get_v_scroll_bar().value = 900
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/hatch-network-assumptions.png")
 	if irradiation_mode:
 		assert("initial source discovery" in workspace.inspector.text)
 		var settings := workspace.get_node("%FactorySettings") as PlannerFactorySettings

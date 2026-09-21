@@ -202,11 +202,22 @@ def verify(runtime: dict, probes: dict) -> dict:
         "highly_advanced_item_output_hatch": {"item_slots": [64] * 15, "fluid_slots_mb": []},
         "bronze_fluid_input_hatch": {"item_slots": [], "fluid_slots_mb": [4000]},
         "highly_advanced_fluid_output_hatch": {"item_slots": [], "fluid_slots_mb": [1024000]},
-        "superconductor_energy_output_hatch": {"item_slots": [], "fluid_slots_mb": [], "energy_eu": 76800000000, "cable_eu_per_tick": 128000000},
+        "superconductor_energy_output_hatch": {"item_slots": [], "fluid_slots_mb": [], "energy_eu": 76800000000, "nominal_eu": 128000000, "cable_eu_per_tick": 1024000000},
     }
     for key, expected in expected_hatches.items():
         if hatch_capacities.get("modern_industrialization:" + key) != expected:
             raise ValueError("The loaded hatch capacity changed: " + key)
+    hatch_transfers = {}
+    for tier, nominal in [("lv", 32), ("mv", 128), ("hv", 1024), ("ev", 8192), ("superconductor", 128000000)]:
+        for direction in ["input", "output"]:
+            key = f"modern_industrialization:{tier}_energy_{direction}_hatch"
+            sample = machines[key]["energy_hatch_transfer_probe"]
+            capacity = hatch_capacities[key]
+            if capacity["nominal_eu"] != nominal or capacity["cable_eu_per_tick"] != nominal * 8:
+                raise ValueError("The cable tier voltage or transfer limit changed: " + key)
+            if sample["samples"] != [{"network_nodes": nodes, "ticks": 20, "transferred_eu": nominal * 8 * 20} for nodes in [1, 2]]:
+                raise ValueError("The loaded cable network transfer changed: " + key)
+            hatch_transfers[key] = sample
     boiler_shapes = {}
     for name, count in [("large_steam_boiler", 35), ("advanced_large_steam_boiler", 44),
                         ("high_pressure_large_steam_boiler", 35), ("high_pressure_advanced_large_steam_boiler", 44)]:
@@ -237,6 +248,7 @@ def verify(runtime: dict, probes: dict) -> dict:
         "tag_count": len(runtime["tags"]),
         "machine_count": len(machines),
         "hatch_capacities": hatch_capacities,
+        "energy_hatch_transfers": hatch_transfers,
         "boiler_shape_blocks": boiler_shapes,
         "multiblock_part_types": sum(machine.get("role") == "multiblock_part" for machine in machines.values()),
         "machines_with_shape_templates": sum(bool(machine.get("shapes")) for machine in machines.values()),

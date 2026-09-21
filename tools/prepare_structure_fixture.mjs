@@ -21,7 +21,7 @@ if (!irradiation) assert.deepEqual(Object.fromEntries(result.build_requirements.
   'item:modern_industrialization:cupronickel_coil': 16,
   'item:modern_industrialization:steel_item_input_hatch': 1,
   'item:modern_industrialization:bronze_item_output_hatch': 1,
-  'item:modern_industrialization:mv_energy_input_hatch': 1,
+  'item:modern_industrialization:lv_energy_input_hatch': 1,
 });
 await writeFile(outputPath, JSON.stringify({machine, recipe: recipe.id, origin: irradiation ? [192, 100, 0] : [128, 100, 0], ...result}, null, 2));
 console.log('Prepared the verified plan bill for placement in the controlled world.');

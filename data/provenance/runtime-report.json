@@ -428,61 +428,71 @@
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 19200,
-      "cable_eu_per_tick": 32
+      "cable_eu_per_tick": 256,
+      "nominal_eu": 32
     },
     "modern_industrialization:lv_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 19200,
-      "cable_eu_per_tick": 32
+      "cable_eu_per_tick": 256,
+      "nominal_eu": 32
     },
     "modern_industrialization:mv_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800,
-      "cable_eu_per_tick": 128
+      "cable_eu_per_tick": 1024,
+      "nominal_eu": 128
     },
     "modern_industrialization:mv_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800,
-      "cable_eu_per_tick": 128
+      "cable_eu_per_tick": 1024,
+      "nominal_eu": 128
     },
     "modern_industrialization:hv_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 614400,
-      "cable_eu_per_tick": 1024
+      "cable_eu_per_tick": 8192,
+      "nominal_eu": 1024
     },
     "modern_industrialization:hv_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 614400,
-      "cable_eu_per_tick": 1024
+      "cable_eu_per_tick": 8192,
+      "nominal_eu": 1024
     },
     "modern_industrialization:ev_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 4915200,
-      "cable_eu_per_tick": 8192
+      "cable_eu_per_tick": 65536,
+      "nominal_eu": 8192
     },
     "modern_industrialization:ev_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 4915200,
-      "cable_eu_per_tick": 8192
+      "cable_eu_per_tick": 65536,
+      "nominal_eu": 8192
     },
     "modern_industrialization:superconductor_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800000000,
-      "cable_eu_per_tick": 128000000
+      "cable_eu_per_tick": 1024000000,
+      "nominal_eu": 128000000
     },
     "modern_industrialization:superconductor_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800000000,
-      "cable_eu_per_tick": 128000000
+      "cable_eu_per_tick": 1024000000,
+      "nominal_eu": 128000000
     },
     "modern_industrialization:nuclear_item_hatch": {
       "item_slots": [
@@ -661,31 +671,36 @@
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 19200,
-      "cable_eu_per_tick": 32
+      "cable_eu_per_tick": 256,
+      "nominal_eu": 32
     },
     "extended_industrialization:mv_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800,
-      "cable_eu_per_tick": 128
+      "cable_eu_per_tick": 1024,
+      "nominal_eu": 128
     },
     "extended_industrialization:hv_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 614400,
-      "cable_eu_per_tick": 1024
+      "cable_eu_per_tick": 8192,
+      "nominal_eu": 1024
     },
     "extended_industrialization:ev_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 4915200,
-      "cable_eu_per_tick": 8192
+      "cable_eu_per_tick": 65536,
+      "nominal_eu": 8192
     },
     "extended_industrialization:superconductor_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800000000,
-      "cable_eu_per_tick": 128000000
+      "cable_eu_per_tick": 1024000000,
+      "nominal_eu": 128000000
     }
   },
   "boiler_shape_blocks": {
@@ -1963,9 +1978,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod",
       "hatches": 1,
       "completion_tick": 8000,
-      "energy_consumed": 8187904,
+      "energy_consumed": 8189952,
       "output_amount": 1,
-      "source_items_consumed_sample": 4,
+      "source_items_consumed_sample": 2,
       "source_damage_sample": 0
     },
     {
@@ -1973,9 +1988,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod",
       "hatches": 8,
       "completion_tick": 8000,
-      "energy_consumed": 8187904,
+      "energy_consumed": 8189952,
       "output_amount": 8,
-      "source_items_consumed_sample": 4,
+      "source_items_consumed_sample": 2,
       "source_damage_sample": 0
     },
     {
@@ -1983,9 +1998,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod_double",
       "hatches": 1,
       "completion_tick": 16000,
-      "energy_consumed": 16379904,
+      "energy_consumed": 16380928,
       "output_amount": 2,
-      "source_items_consumed_sample": 4,
+      "source_items_consumed_sample": 3,
       "source_damage_sample": 0
     },
     {
@@ -2003,9 +2018,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod_quad",
       "hatches": 1,
       "completion_tick": 32000,
-      "energy_consumed": 32754688,
+      "energy_consumed": 32760832,
       "output_amount": 4,
-      "source_items_consumed_sample": 13,
+      "source_items_consumed_sample": 7,
       "source_damage_sample": 0
     },
     {
@@ -2013,9 +2028,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod_quad",
       "hatches": 8,
       "completion_tick": 32000,
-      "energy_consumed": 32759808,
+      "energy_consumed": 32757760,
       "output_amount": 32,
-      "source_items_consumed_sample": 8,
+      "source_items_consumed_sample": 10,
       "source_damage_sample": 0
     },
     {
@@ -2023,74 +2038,134 @@
       "fuel": "modern_industrialization:le_uranium_fuel_rod",
       "hatches": 1,
       "completion_tick": 8000,
-      "energy_consumed": 8190976,
+      "energy_consumed": 8192000,
       "output_amount": 1,
+      "source_items_consumed_sample": 0,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:le_uranium_fuel_rod",
+      "hatches": 8,
+      "completion_tick": 8000,
+      "energy_consumed": 8190976,
+      "output_amount": 8,
       "source_items_consumed_sample": 1,
       "source_damage_sample": 0
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_uranium_fuel_rod",
-      "hatches": 8,
-      "completion_tick": 8000,
-      "energy_consumed": 8189952,
-      "output_amount": 8,
-      "source_items_consumed_sample": 2,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
       "fuel": "modern_industrialization:le_uranium_fuel_rod_double",
       "hatches": 1,
       "completion_tick": 16000,
-      "energy_consumed": 16378880,
+      "energy_consumed": 16380928,
       "output_amount": 2,
-      "source_items_consumed_sample": 5,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_uranium_fuel_rod_double",
-      "hatches": 8,
-      "completion_tick": 16000,
-      "energy_consumed": 16378880,
-      "output_amount": 16,
-      "source_items_consumed_sample": 5,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_uranium_fuel_rod_quad",
-      "hatches": 1,
-      "completion_tick": 32000,
-      "energy_consumed": 32761856,
-      "output_amount": 4,
-      "source_items_consumed_sample": 6,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_uranium_fuel_rod_quad",
-      "hatches": 8,
-      "completion_tick": 32000,
-      "energy_consumed": 32760832,
-      "output_amount": 32,
-      "source_items_consumed_sample": 7,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_uranium_fuel_rod",
-      "hatches": 1,
-      "completion_tick": 8000,
-      "energy_consumed": 8188928,
-      "output_amount": 1,
       "source_items_consumed_sample": 3,
       "source_damage_sample": 0
     },
     {
       "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:le_uranium_fuel_rod_double",
+      "hatches": 8,
+      "completion_tick": 16000,
+      "energy_consumed": 16381952,
+      "output_amount": 16,
+      "source_items_consumed_sample": 2,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:le_uranium_fuel_rod_quad",
+      "hatches": 1,
+      "completion_tick": 32000,
+      "energy_consumed": 32757760,
+      "output_amount": 4,
+      "source_items_consumed_sample": 10,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:le_uranium_fuel_rod_quad",
+      "hatches": 8,
+      "completion_tick": 32000,
+      "energy_consumed": 32753664,
+      "output_amount": 32,
+      "source_items_consumed_sample": 14,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
       "fuel": "modern_industrialization:he_uranium_fuel_rod",
+      "hatches": 1,
+      "completion_tick": 8000,
+      "energy_consumed": 8189952,
+      "output_amount": 1,
+      "source_items_consumed_sample": 2,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_uranium_fuel_rod",
+      "hatches": 8,
+      "completion_tick": 8000,
+      "energy_consumed": 8187904,
+      "output_amount": 8,
+      "source_items_consumed_sample": 4,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_uranium_fuel_rod_double",
+      "hatches": 1,
+      "completion_tick": 16000,
+      "energy_consumed": 16379904,
+      "output_amount": 2,
+      "source_items_consumed_sample": 4,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_uranium_fuel_rod_double",
+      "hatches": 8,
+      "completion_tick": 16000,
+      "energy_consumed": 16379904,
+      "output_amount": 16,
+      "source_items_consumed_sample": 4,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_uranium_fuel_rod_quad",
+      "hatches": 1,
+      "completion_tick": 32000,
+      "energy_consumed": 32756736,
+      "output_amount": 4,
+      "source_items_consumed_sample": 11,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_uranium_fuel_rod_quad",
+      "hatches": 8,
+      "completion_tick": 32000,
+      "energy_consumed": 32757760,
+      "output_amount": 32,
+      "source_items_consumed_sample": 10,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:le_mox_fuel_rod",
+      "hatches": 1,
+      "completion_tick": 8000,
+      "energy_consumed": 8190976,
+      "output_amount": 1,
+      "source_items_consumed_sample": 1,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:le_mox_fuel_rod",
       "hatches": 8,
       "completion_tick": 8000,
       "energy_consumed": 8190976,
@@ -2100,27 +2175,27 @@
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_uranium_fuel_rod_double",
+      "fuel": "modern_industrialization:le_mox_fuel_rod_double",
       "hatches": 1,
       "completion_tick": 16000,
-      "energy_consumed": 16381952,
+      "energy_consumed": 16379904,
       "output_amount": 2,
-      "source_items_consumed_sample": 2,
+      "source_items_consumed_sample": 4,
       "source_damage_sample": 0
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_uranium_fuel_rod_double",
+      "fuel": "modern_industrialization:le_mox_fuel_rod_double",
       "hatches": 8,
       "completion_tick": 16000,
-      "energy_consumed": 16375808,
+      "energy_consumed": 16379904,
       "output_amount": 16,
-      "source_items_consumed_sample": 8,
+      "source_items_consumed_sample": 4,
       "source_damage_sample": 0
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_uranium_fuel_rod_quad",
+      "fuel": "modern_industrialization:le_mox_fuel_rod_quad",
       "hatches": 1,
       "completion_tick": 32000,
       "energy_consumed": 32760832,
@@ -2130,7 +2205,7 @@
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_uranium_fuel_rod_quad",
+      "fuel": "modern_industrialization:le_mox_fuel_rod_quad",
       "hatches": 8,
       "completion_tick": 32000,
       "energy_consumed": 32762880,
@@ -2140,7 +2215,7 @@
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_mox_fuel_rod",
+      "fuel": "modern_industrialization:he_mox_fuel_rod",
       "hatches": 1,
       "completion_tick": 8000,
       "energy_consumed": 8189952,
@@ -2150,92 +2225,32 @@
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_mox_fuel_rod",
+      "fuel": "modern_industrialization:he_mox_fuel_rod",
       "hatches": 8,
       "completion_tick": 8000,
-      "energy_consumed": 8190976,
+      "energy_consumed": 8188928,
       "output_amount": 8,
-      "source_items_consumed_sample": 1,
+      "source_items_consumed_sample": 3,
       "source_damage_sample": 0
     },
     {
       "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_mox_fuel_rod_double",
+      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
       "hatches": 1,
+      "completion_tick": 16000,
+      "energy_consumed": 16384000,
+      "output_amount": 2,
+      "source_items_consumed_sample": 0,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
+      "hatches": 8,
       "completion_tick": 16000,
       "energy_consumed": 16381952,
-      "output_amount": 2,
+      "output_amount": 16,
       "source_items_consumed_sample": 2,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_mox_fuel_rod_double",
-      "hatches": 8,
-      "completion_tick": 16000,
-      "energy_consumed": 16380928,
-      "output_amount": 16,
-      "source_items_consumed_sample": 3,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_mox_fuel_rod_quad",
-      "hatches": 1,
-      "completion_tick": 32000,
-      "energy_consumed": 32758784,
-      "output_amount": 4,
-      "source_items_consumed_sample": 9,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:le_mox_fuel_rod_quad",
-      "hatches": 8,
-      "completion_tick": 32000,
-      "energy_consumed": 32759808,
-      "output_amount": 32,
-      "source_items_consumed_sample": 8,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_mox_fuel_rod",
-      "hatches": 1,
-      "completion_tick": 8000,
-      "energy_consumed": 8188928,
-      "output_amount": 1,
-      "source_items_consumed_sample": 3,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_mox_fuel_rod",
-      "hatches": 8,
-      "completion_tick": 8000,
-      "energy_consumed": 8188928,
-      "output_amount": 8,
-      "source_items_consumed_sample": 3,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
-      "hatches": 1,
-      "completion_tick": 16000,
-      "energy_consumed": 16379904,
-      "output_amount": 2,
-      "source_items_consumed_sample": 4,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
-      "hatches": 8,
-      "completion_tick": 16000,
-      "energy_consumed": 16380928,
-      "output_amount": 16,
-      "source_items_consumed_sample": 3,
       "source_damage_sample": 0
     },
     {
@@ -2243,9 +2258,9 @@
       "fuel": "modern_industrialization:he_mox_fuel_rod_quad",
       "hatches": 1,
       "completion_tick": 32000,
-      "energy_consumed": 32758784,
+      "energy_consumed": 32761856,
       "output_amount": 4,
-      "source_items_consumed_sample": 9,
+      "source_items_consumed_sample": 6,
       "source_damage_sample": 0
     },
     {
@@ -2253,9 +2268,9 @@
       "fuel": "modern_industrialization:he_mox_fuel_rod_quad",
       "hatches": 8,
       "completion_tick": 32000,
-      "energy_consumed": 32765952,
+      "energy_consumed": 32754688,
       "output_amount": 32,
-      "source_items_consumed_sample": 2,
+      "source_items_consumed_sample": 13,
       "source_damage_sample": 0
     },
     {
@@ -40538,5 +40553,157 @@
     }
   ],
   "extraction_failures": 0,
-  "normalized_dataset_complete": false
+  "normalized_dataset_complete": false,
+  "energy_hatch_transfers": {
+    "modern_industrialization:lv_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 5120
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 5120
+        }
+      ]
+    },
+    "modern_industrialization:lv_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 5120
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 5120
+        }
+      ]
+    },
+    "modern_industrialization:mv_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480
+        }
+      ]
+    },
+    "modern_industrialization:mv_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480
+        }
+      ]
+    },
+    "modern_industrialization:hv_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 163840
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 163840
+        }
+      ]
+    },
+    "modern_industrialization:hv_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 163840
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 163840
+        }
+      ]
+    },
+    "modern_industrialization:ev_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        }
+      ]
+    },
+    "modern_industrialization:ev_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        }
+      ]
+    },
+    "modern_industrialization:superconductor_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        }
+      ]
+    },
+    "modern_industrialization:superconductor_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        }
+      ]
+    }
+  }
 }
