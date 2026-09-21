@@ -138,7 +138,7 @@ func _filter_recipes(query: String, reveal_selected: bool = false) -> void:
 		for recipe: Dictionary in _dataset.get("recipes", []):
 			if machine.get("recipe_type") != null && recipe.get("type") != machine.recipe_type && recipe.get("process", {}).get("type") != machine.recipe_type:
 				continue
-			var title: String = recipe.get("name", recipe.id)
+			var title: String = PlannerDisplay.recipe_name(recipe)
 			if !search.is_empty() && !search in (title + " " + recipe.id).to_lower():
 				continue
 			if reveal_selected && (chosen == recipe.id || chosen == recipe.get("source_id")):
@@ -155,7 +155,7 @@ func _show_recipes() -> void:
 		chosen = str(_corrections.get(_key(machine), {}).get("recipe", machine.get("recipe_id", "")))
 	for offset: int in range(_recipe_page * PAGE_SIZE, mini((_recipe_page + 1) * PAGE_SIZE, _recipe_matches.size())):
 		var recipe: Dictionary = _recipe_matches[offset]
-		var index: int = %WorldRecipes.add_item("%s  ·  %s" % [recipe.get("name", recipe.id), recipe.get("source_id", recipe.id)])
+		var index: int = %WorldRecipes.add_item("%s  ·  %s" % [PlannerDisplay.recipe_name(recipe), recipe.get("source_id", recipe.id)])
 		%WorldRecipes.set_item_metadata(index, recipe.id)
 		%WorldRecipes.set_item_tooltip(index, recipe.get("unsupported", recipe.id))
 		if chosen == recipe.id || chosen == recipe.get("source_id"):

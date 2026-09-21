@@ -44,7 +44,7 @@ func open_goal(recipe: Dictionary, dataset: Dictionary, request: Dictionary) -> 
 	_recipe = recipe
 	_dataset = dataset
 	_request = request
-	%GoalTitle.text = recipe.get("name", recipe.id)
+	%GoalTitle.text = PlannerDisplay.recipe_name(recipe)
 	%ExistingGoal.clear()
 	%ExistingGoal.add_item("Add an independent goal")
 	%ExistingGoal.set_item_metadata(0, -1)

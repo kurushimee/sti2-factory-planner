@@ -93,10 +93,85 @@ public final class PlannerProbe {
         if (controller instanceof net.swedz.extended_industrialization.machines.blockentity.multiblock.teslatower.TeslaTowerBlockEntity tower) {
             result.add("idle_cycle", formedTeslaCycle(tower, matcher, server));
         }
+        if (bill.has("setup")) result.add("array_cycle", formedArrayCycle(controller, matcher, server, bill));
         Files.writeString(Path.of("planner-extraction", "structure-bill-check.json"), new GsonBuilder().setPrettyPrinting().create().toJson(result));
         controller.setChanged();
         System.out.println("Planner structural bill matched the loaded world structure.");
         return 1;
+    }
+
+    private static JsonObject formedArrayCycle(
+            aztech.modern_industrialization.machines.multiblocks.MultiblockMachineBlockEntity controller,
+            aztech.modern_industrialization.machines.multiblocks.ShapeMatcher matcher, MinecraftServer server, JsonObject bill) {
+        var machine = (net.swedz.tesseract.neoforge.compat.mi.machine.blockentity.multiblock.multiplied.AbstractElectricMultipliedCraftingMultiblockBlockEntity) controller;
+        var setup = bill.getAsJsonObject("setup");
+        var contained = new net.minecraft.world.item.ItemStack(BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(setup.get("contained_machine").getAsString())), setup.get("contained_count").getAsInt());
+        var upgradeTag = new net.minecraft.nbt.CompoundTag();
+        upgradeTag.put("upgradesItemStack", new net.minecraft.world.item.ItemStack(BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(setup.getAsJsonObject("upgrade").get("id").getAsString())), setup.get("upgrade_count").getAsInt()).saveOptional(server.registryAccess()));
+        for (var component : machine.components) {
+            if (component instanceof net.swedz.extended_industrialization.machines.component.craft.processingarray.ProcessingArrayMachineComponent value) value.setMachines(machine, contained);
+            if (component instanceof dev.wp.industrialization_overdrive.machines.components.craft.MultiProcessingArrayMachineComponent value) value.setMachines(machine, contained);
+            if (component instanceof aztech.modern_industrialization.machines.components.UpgradeComponent value) value.readNbt(upgradeTag, server.registryAccess(), false);
+        }
+        var energy = new java.util.ArrayList<aztech.modern_industrialization.machines.components.EnergyComponent>();
+        for (var hatch : matcher.getMatchedHatches()) hatch.appendEnergyInputs(energy);
+        matcher.unlinkHatches();
+        var levelData = (net.minecraft.world.level.storage.ServerLevelData) server.overworld().getLevelData();
+        long previousTime = levelData.getGameTime(), totalEnergy = 0, lastCompletion = -1, lastEnergy = 0;
+        var crafter = (MultipliedCrafterComponent) machine.getCrafterComponent();
+        var samples = new JsonArray();
+        try {
+            for (int tick = 1; tick <= 40000; tick++) {
+                levelData.setGameTime(tick);
+                var inventory = machine.getMultiblockInventoryComponent();
+                int itemIndex = 0, fluidIndex = 0;
+                for (var flow : bill.getAsJsonArray("inputs")) {
+                    String resource = flow.getAsJsonObject().get("resource").getAsString();
+                    if (resource.startsWith("item:") && inventory.getItemInputs().size() > itemIndex) {
+                        var slot = (aztech.modern_industrialization.inventory.ConfigurableItemStack) inventory.getItemInputs().get(itemIndex++);
+                        slot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(resource.substring(5)))));
+                        slot.setAmount(slot.getCapacity());
+                    } else if (resource.startsWith("fluid:") && inventory.getFluidInputs().size() > fluidIndex) {
+                        var slot = (aztech.modern_industrialization.inventory.ConfigurableFluidStack) inventory.getFluidInputs().get(fluidIndex++);
+                        slot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse(resource.substring(6)))));
+                        slot.setAmount(slot.getCapacity());
+                    }
+                }
+                for (var component : energy) component.insertEu(component.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                long before = energy.stream().mapToLong(component -> component.getEu()).sum();
+                machine.tick();
+                totalEnergy += before - energy.stream().mapToLong(component -> component.getEu()).sum();
+                long output = inventory.getItemOutputs().stream().mapToLong(value -> value.getAmount()).sum()
+                        + inventory.getFluidOutputs().stream().mapToLong(value -> value.getAmount()).sum();
+                if (output == 0) continue;
+                var state = new net.minecraft.nbt.CompoundTag();
+                crafter.writeNbt(state, server.registryAccess());
+                if (state.getInt("efficiencyTicks") >= state.getInt("maxEfficiencyTicks") && lastCompletion >= 0) {
+                    var sample = new JsonObject();
+                    sample.addProperty("ticks", tick - lastCompletion);
+                    sample.addProperty("energy", totalEnergy - lastEnergy);
+                    sample.addProperty("output_quantity", output);
+                    sample.addProperty("batch", crafter.getRecipeMultiplier());
+                    samples.add(sample);
+                }
+                lastCompletion = tick; lastEnergy = totalEnergy;
+                for (var slot : inventory.getItemOutputs()) ((aztech.modern_industrialization.inventory.ConfigurableItemStack) slot).setAmount(0);
+                for (var slot : inventory.getFluidOutputs()) ((aztech.modern_industrialization.inventory.ConfigurableFluidStack) slot).setAmount(0);
+                if (samples.size() >= 4) break;
+            }
+        } finally { levelData.setGameTime(previousTime); }
+        if (samples.size() < 4) throw new IllegalStateException("The formed array did not reach four steady batches.");
+        var expected = bill.getAsJsonObject("expected_capacity");
+        for (int index = 1; index < samples.size(); index++) {
+            var sample = samples.get(index).getAsJsonObject();
+            if (sample.get("ticks").getAsLong() != expected.get("ticks_per_batch").getAsLong()
+                    || sample.get("energy").getAsLong() != expected.get("energy_per_batch").getAsLong())
+                throw new IllegalStateException("The formed array disagrees with the planned steady batch.");
+        }
+        var result = new JsonObject();
+        result.add("steady_batches", samples);
+        result.addProperty("scope", "Real formed controller ticks with continuous direct hatch supply and cleared outputs; no cable-network throughput claim.");
+        return result;
     }
 
     private static JsonObject formedTeslaCycle(
@@ -672,19 +747,26 @@ public final class PlannerProbe {
             var rule = new JsonObject();
             String name = value.getClass().getName();
             rule.addProperty("source_class", name);
-            // These four MI factories only inspect block state. Other predicates can require live block entities.
-            boolean stateOnly = name.matches("aztech\\.modern_industrialization\\.machines\\.multiblocks\\.SimpleMember\\$[1-4]");
+            // These MI factories and Tesseract's typed Predicate<BlockState> ignore block entities.
+            boolean stateOnly = name.matches("aztech\\.modern_industrialization\\.machines\\.multiblocks\\.SimpleMember\\$[1-4]")
+                    || name.equals("net.swedz.tesseract.neoforge.compat.mi.machine.multiblock.member.PredicateSimpleMember");
             rule.addProperty("state_only_verified", stateOnly);
             if (stateOnly) {
                 var states = new JsonArray();
-                for (var block : BuiltInRegistries.BLOCK) for (var state : block.getStateDefinition().getPossibleStates()) {
-                    if (!value.matchesState(state, null)) continue;
-                    var record = new JsonObject();
-                    record.addProperty("Name", BuiltInRegistries.BLOCK.getKey(block).toString());
-                    var properties = new JsonObject();
-                    for (var property : state.getValues().entrySet()) properties.addProperty(property.getKey().getName(), stateValue(property.getKey(), property.getValue()));
-                    record.add("Properties", properties);
-                    states.add(record);
+                for (var block : BuiltInRegistries.BLOCK) {
+                    var possible = block.getStateDefinition().getPossibleStates();
+                    var matching = possible.stream().filter(state -> value.matchesState(state, null)).toList();
+                    if (matching.isEmpty()) continue;
+                    // Omit property restrictions only after every loaded state of this block passes.
+                    boolean allStates = matching.size() == possible.size();
+                    for (var state : allStates ? matching.subList(0, 1) : matching) {
+                        var record = new JsonObject();
+                        record.addProperty("Name", BuiltInRegistries.BLOCK.getKey(block).toString());
+                        var properties = new JsonObject();
+                        if (!allStates) for (var property : state.getValues().entrySet()) properties.addProperty(property.getKey().getName(), stateValue(property.getKey(), property.getValue()));
+                        record.add("Properties", properties);
+                        states.add(record);
+                    }
                 }
                 rule.add("matching_states", states);
             }

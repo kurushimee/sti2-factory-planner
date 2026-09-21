@@ -252,7 +252,7 @@ func _filter_recipes(query: String) -> void:
 	_recipe_page = 0
 	var normalized := query.to_lower()
 	for recipe: Dictionary in _dataset.get("recipes", []):
-		var title: String = recipe.get("name", recipe.id)
+		var title: String = PlannerDisplay.recipe_name(recipe)
 		if !normalized.is_empty() && !normalized in (title + " " + recipe.id).to_lower():
 			continue
 		_recipe_matches.append(recipe.id)
@@ -265,7 +265,7 @@ func _show_recipe_page() -> void:
 	var last := mini(first + RECIPE_PAGE_SIZE, _recipe_matches.size())
 	for match_index: int in range(first, last):
 		var recipe: Dictionary = _recipes[_recipe_matches[match_index]]
-		var title: String = recipe.get("name", recipe.id)
+		var title: String = PlannerDisplay.recipe_name(recipe)
 		var index := recipes_list.add_item(title)
 		recipes_list.set_item_metadata(index, recipe.id)
 		recipes_list.set_item_tooltip(index, recipe.get("unsupported", recipe.id))
@@ -405,6 +405,9 @@ func _calculated(result: Dictionary) -> void:
 				for setup: Dictionary in setups:
 					if !setup.machine in available:
 						available.append(setup.machine)
+					var contained: String = setup.get("setup", {}).get("contained_machine", "")
+					if !contained.is_empty() && !contained in available:
+						available.append(contained)
 			if !available.is_empty():
 				_request.available_machines = available
 		_autosave()

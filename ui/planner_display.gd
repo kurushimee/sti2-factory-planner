@@ -3,13 +3,18 @@ extends RefCounted
 
 
 static func readable_name(identity: String, supplied: String = "") -> String:
-	if !supplied.is_empty() && supplied != identity && !supplied.begins_with("item.") && !supplied.begins_with("fluid.") && !supplied.begins_with("block."):
+	var untyped := identity.trim_prefix("item:").trim_prefix("fluid:")
+	if !supplied.is_empty() && supplied != identity && supplied.replace(" ", "_") != untyped && !supplied.begins_with("item.") && !supplied.begins_with("fluid.") && !supplied.begins_with("block."):
 		return supplied
 	var base := identity.get_slice("#", 0)
 	var words := base.get_slice(":", base.get_slice_count(":") - 1).replace("_", " ").capitalize()
 	if identity.contains("#"):
 		words += " · " + identity.get_slice("#", 1).left(6)
 	return words.replace("Uu ", "UU ")
+
+
+static func recipe_name(recipe: Dictionary) -> String:
+	return readable_name(recipe.get("primary", recipe.id), recipe.get("name", ""))
 
 
 static func machine_name(identity: String, resources: Dictionary[String, String]) -> String:

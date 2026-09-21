@@ -1,12 +1,13 @@
 import {createServer} from 'node:http';
-import {readFile, mkdir} from 'node:fs/promises';
+import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
 const root = resolve('builds/web');
 const [worldPath, machineCapturePath, catalogPath, fixtureKind] = process.argv.slice(2);
-const teslaFixture = fixtureKind === 'tesla';
+const arrayFixture = fixtureKind === 'arrays';
+const teslaFixture = fixtureKind === 'tesla' || arrayFixture;
 const irradiationFixture = fixtureKind === 'irradiation' || teslaFixture;
 const structureFixture = fixtureKind === 'structure' || irradiationFixture;
 const extendedFixture = fixtureKind === 'extended' || structureFixture;
@@ -111,6 +112,11 @@ try {
   const orePosition = plan.positions['mine_ore|drill'];
   await page.mouse.click(...screenPoint(orePosition[0] + 120, orePosition[1] + 16, plan.view), {delay: 100});
   const importFile = async payload => {
+    if (payload.buffer?.length > 50 * 1024 * 1024) {
+      const path = `${artifacts}/large-import.json`;
+      await writeFile(path, payload.buffer);
+      payload = path;
+    }
     const chooser = page.waitForEvent('filechooser');
     await page.mouse.click(1126, 40, {delay: 100});
     await (await chooser).setFiles(payload);
@@ -197,7 +203,7 @@ try {
     const catalogPlan = {format: 'factory-plan', version: 1, dataset_identity: dataset.identity, dataset,
       request: {goals: [], available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler', ...(structureFixture ? ['modern_industrialization:electric_blast_furnace'] : []), ...(irradiationFixture ? ['yet_another_industrialization:nuclear_rod_irradiator'] : [])],
         replication: extendedFixture,
-        external: ['item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks', ...(structureFixture ? ['item:modern_industrialization:uncooked_steel_dust'] : []), ...(irradiationFixture ? ['item:modern_industrialization:uranium_fuel_rod', 'item:modern_industrialization:beryllium_block'] : [])].map(resource => ({resource}))}, positions: {}, groups: {}};
+        external: [...(arrayFixture ? ['fluid:modern_industrialization:crude_oil'] : []), 'item:spectrum:copper_cluster', 'energy:eu', 'fluid:modern_industrialization:uu_matter', 'item:minecraft:oak_planks', ...(structureFixture ? ['item:modern_industrialization:uncooked_steel_dust'] : []), ...(irradiationFixture ? ['item:modern_industrialization:uranium_fuel_rod', 'item:modern_industrialization:beryllium_block'] : [])].map(resource => ({resource}))}, positions: {}, groups: {}};
     await importFile({name: 'statech-plan.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(catalogPlan))});
     await waitPlan(value => value?.dataset_identity === dataset.identity);
     await page.mouse.click(1320, 40, {delay: 100});
@@ -207,7 +213,7 @@ try {
   }
   if (worldPath) {
     await importFile(worldPath);
-    plan = await waitPlan(value => value?.imported_world?.machines?.length === (teslaFixture ? 10 : irradiationFixture ? 9 : structureFixture ? 7 : extendedFixture ? 6 : 4));
+    plan = await waitPlan(value => value?.imported_world?.machines?.length === (arrayFixture ? 12 : teslaFixture ? 10 : irradiationFixture ? 9 : structureFixture ? 7 : extendedFixture ? 6 : 4));
     assert.equal(plan.imported_world.providers.length, structureFixture ? 3 : 2);
     assert.deepEqual(plan.imported_world.errors, []);
     if (teslaFixture) {
@@ -221,7 +227,16 @@ try {
       assert.equal(plan.request.goals[0].machines, 1);
       assert.equal(plan.imported_world.reconstruction.unresolved.length, irradiationFixture ? 4 : 3);
       if (extendedFixture) {
-        assert.equal(plan.request.goals.length, irradiationFixture ? 5 : structureFixture ? 4 : 3);
+        assert.equal(plan.request.goals.length, arrayFixture ? 7 : irradiationFixture ? 5 : structureFixture ? 4 : 3);
+        if (arrayFixture) {
+          plan = await waitPlan(value => value?.request.goals.every(goal => Object.hasOwn(value.positions, `${goal.recipe}|${goal.configuration}`)));
+          for (const x of [320, 384]) {
+            const assigned = plan.imported_world.reconstruction.assignments.find(value => value.origin.x === x);
+            assert.equal(assigned.setup.contained_count, 8);
+            assert.equal(assigned.setup.upgrade_count, 4);
+            assert(plan.request.goals.some(value => value.configuration === assigned.configuration.id));
+          }
+        }
         if (irradiationFixture) {
           const goal = plan.request.goals.find(value => value.recipe.startsWith('irradiate|'));
           assert.equal(goal.machines, 1);

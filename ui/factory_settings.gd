@@ -166,7 +166,7 @@ func _category_changed(category: int) -> void:
 				_entries.append({"id": upgrade.id, "name": _names.get("item:" + str(upgrade.id), upgrade.id)})
 		2:
 			for recipe: Dictionary in _dataset.recipes:
-				_entries.append({"id": recipe.id, "name": recipe.get("name", recipe.id),
+				_entries.append({"id": recipe.id, "name": PlannerDisplay.recipe_name(recipe),
 					"unsupported": recipe.has("unsupported"), "detail": recipe.get("unsupported", recipe.id)})
 		3, 4, 6:
 			for resource: Dictionary in _dataset.resources:
