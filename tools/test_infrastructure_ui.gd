@@ -39,6 +39,11 @@ func _run() -> void:
 	await process_frame
 	assert(dialog._request.infrastructure.size() == 1)
 	assert(dialog._request.infrastructure[0].count == 2)
+	var hatches := dialog.get_node("%InfrastructureHatch") as OptionButton
+	hatches.select(2)
+	hatches.item_selected.emit(2)
+	dialog.get_node("%InfrastructureTransfer").value = 1000
+	assert(dialog._request.infrastructure[0].energy_hatch == "modern_industrialization:mv_energy_input_hatch")
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/infrastructure-settings.png")
@@ -54,6 +59,7 @@ func _run() -> void:
 	assert(workspace._last_result.status == "optimal")
 	assert(workspace._last_result.power.infrastructure.total_eu_per_tick == 133)
 	assert(workspace._last_result.power.external_eu_per_tick == 133)
+	assert(workspace._last_result.power.infrastructure.entries[0].structure.build_requirements.any(func(part: Dictionary) -> bool: return part.resource == "item:modern_industrialization:mv_energy_input_hatch" && part.amount == 2))
 	workspace._show_power()
 	assert("Copper Tesla tower" in workspace.inspector.text)
 	assert("transfer limit per machine" in workspace.inspector.text)
@@ -68,5 +74,19 @@ func _run() -> void:
 	workspace._redo_action()
 	await workspace.computation.completed
 	assert(workspace._last_result.power.external_eu_per_tick == 133)
+	var supplies: Array[Dictionary] = []
+	for part: Dictionary in workspace._last_result.power.infrastructure.entries[0].structure.build_requirements:
+		supplies.append({"resource": part.resource, "cost": 1})
+	workspace._request.construction = {"round_batches": true, "external": supplies}
+	workspace._recalculate()
+	await workspace.computation.completed
+	assert(workspace._last_result.construction.material_cost == 426)
+	workspace._show_power()
+	assert("Factory construction estimate" in workspace.inspector.text)
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		workspace.inspector.get_v_scroll_bar().value = workspace.inspector.get_v_scroll_bar().max_value
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/infrastructure-construction.png")
 	print("Loaded Tesla infrastructure accepts keyboard selection, count changes, Undo/Redo, and measured power accounting.")
 	quit()

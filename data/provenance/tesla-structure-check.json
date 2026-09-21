@@ -1,0 +1,18 @@
+{
+  "machine": "extended_industrialization:tesla_tower",
+  "shape_match": true,
+  "placed_blocks_excluding_controller": {
+    "extended_industrialization:copper_tesla_winding": 44,
+    "extended_industrialization:polished_silver_machine_casing": 129,
+    "modern_industrialization:clean_stainless_steel_machine_casing": 16,
+    "modern_industrialization:lv_energy_input_hatch": 7,
+    "modern_industrialization:stainless_steel_machine_casing_pipe": 16
+  },
+  "idle_cycle": {
+    "ticks_after_linking": 20,
+    "energy_consumed": 1280,
+    "hatches": 7,
+    "nominal_tier_eu": 32,
+    "scope": "Placed structure and controller idle ticks with directly supplied hatch energy. No receiver transfer claim."
+  }
+}

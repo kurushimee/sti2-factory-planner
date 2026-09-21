@@ -162,10 +162,16 @@ try {
   }
   if (worldDataset.machines?.some(machine => machine.infrastructure?.length)) {
     const request = {goals: [], available_machines: [], external: [{resource: 'energy:eu'}],
-      infrastructure: [{machine: 'extended_industrialization:tesla_tower', variant: '4', count: 2}], overhead_eu_per_tick: 5};
+      infrastructure: [{machine: 'extended_industrialization:tesla_tower', variant: '4', count: 2,
+        energy_hatch: 'modern_industrialization:superconductor_energy_input_hatch', transmit_eu_per_tick: 6144000000}], overhead_eu_per_tick: 5};
     const result = await solveInBrowser(worldDataset, request);
     assert.equal(result.result.power.external_eu_per_tick, 32773);
+    assert.equal(result.result.power.infrastructure.entries[0].structure.status, 'sized');
     assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
+    request.construction = {round_batches: true, external: result.result.power.infrastructure.entries[0].structure.build_requirements.map(value => ({resource: value.resource, cost: 1}))};
+    const built = await solveInBrowser(worldDataset, request);
+    assert.equal(built.result.construction.material_cost, 426);
+    assert.deepEqual(built.result, solveFactory(await loadHighs(), worldDataset, request));
     console.log('Tesla infrastructure and its loaded limits match Node in the browser Worker.');
   }
   const imported = await frame.evaluate(async dataset => {

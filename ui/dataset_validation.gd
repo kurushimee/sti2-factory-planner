@@ -119,6 +119,10 @@ static func check_plan(value: Variant) -> String:
 			return "Each infrastructure entry needs a machine, variant, and whole count."
 		if float(entry.count) != floorf(float(entry.count)):
 			return "Infrastructure counts must be whole numbers."
+		if entry.has("energy_hatch") && !(entry.energy_hatch is String):
+			return "An infrastructure energy hatch must use a machine ID."
+		if entry.has("transmit_eu_per_tick") && !_nonnegative(entry.transmit_eu_per_tick):
+			return "Planned infrastructure transfer must be nonnegative."
 	for goal: Variant in value.request.goals:
 		if !(goal is Dictionary) || !(goal.get("resource") is String):
 			return "The plan contains an invalid goal."

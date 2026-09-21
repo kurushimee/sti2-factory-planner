@@ -219,7 +219,12 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   for (const [resource, terms] of rows) {
     constraints.push(`balance_${index++}: ${expression(terms)} >= ${demands.get(resource)}`);
   }
-  const construction = addConstruction({lines, objective, constraints, bounds, integers}, resources, request,
+  const fixed_builds = request.construction ? infrastructure.entries.map((entry, index) => {
+    const variable = `ib${index}`;
+    bounds.push(`${variable} = ${entry.count}`);
+    return {machine: variable, configuration: {structure: entry.structure, build_requirements: entry.structure.build_requirements}};
+  }) : [];
+  const construction = addConstruction({lines, fixed_builds, objective, constraints, bounds, integers}, resources, request,
     new Map(dataset.resources.map(resource => [resource.id, resource])));
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');

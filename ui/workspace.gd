@@ -519,7 +519,7 @@ func _select_node(node: Node) -> void:
 
 
 func _show_power() -> void:
-	inspector.text = PlannerDisplay.power_report(_last_result.get("power", {}))
+	inspector.text = PlannerDisplay.power_report(_last_result.get("power", {}), _resources, _last_result.get("construction", {}))
 	inspector.scroll_to_line(0)
 	%EditGoal.disabled = true
 	%RemoveGoal.disabled = true

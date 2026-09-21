@@ -44,9 +44,11 @@ func _ready() -> void:
 				if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
 					entry.count = int(value)
 	)
+	%InfrastructureHatch.item_selected.connect(func(_index: int) -> void: _infrastructure_changed())
+	%InfrastructureTransfer.value_changed.connect(func(_value: float) -> void: _infrastructure_changed())
 	confirmed.connect(_apply)
 	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %ConstructionEnabled, %ConstructionWeight.get_line_edit(), %ConstructionRounding, %SettingsEntries, %SettingsPrevious,
-		%SettingsNext, %InfrastructureCount.get_line_edit(), %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
+		%SettingsNext, %InfrastructureCount.get_line_edit(), %InfrastructureHatch, %InfrastructureTransfer.get_line_edit(), %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
 		%Reserve.get_line_edit(), %Overhead.get_line_edit(), %ResourceWeight.get_line_edit(),
 		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), get_ok_button(), get_cancel_button()]
 	for index: int in controls.size():
@@ -126,14 +128,14 @@ func _use_preset() -> void:
 
 func _category_changed(category: int) -> void:
 	_entries.clear()
-	%InfrastructureCount.visible = category == 7
+	%InfrastructureDetails.visible = category == 7
 	%InfrastructureCount.editable = false
 	_supply_reset()
 	%Supply.visible = category in [4, 6]
 	%ConstructionOptions.visible = category == 6
 	%ConstructionRounding.visible = category == 6
 	%Progression.visible = category != 6 && !_dataset.get("progression", []).is_empty()
-	%SettingsEntries.custom_minimum_size.y = 235 if category == 6 else 275
+	%SettingsEntries.custom_minimum_size.y = 155 if category == 7 else (235 if category == 6 else 275)
 	%SupplyUnlimited.text = "No construction quantity limit" if category == 6 else "No external supply rate limit"
 	%SupplyLimit.suffix = "quantity available" if category == 6 else "/s maximum"
 	var hints: Array[String] = ["Choose machines the planner may build. Unsupported machines remain visible but cannot be enabled.",
@@ -143,7 +145,7 @@ func _category_changed(category: int) -> void:
 		"External supplies are deliberate imports into the factory. Select a resource to set its rate limit and cost. Item rates use items/s; fluid rates use mB/s; power uses EU/s.",
 		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible.",
 		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. Construction workstations must already be available. Whole batches round crafts and tools; random yields remain estimates. Supplies here are quantities, not rates.",
-		"Set the number of continuously enabled towers. Their measured idle drain adds to manual overhead. Receiver placement and structure construction remain separate checks; transfer limits do not prove network coverage."]
+		"Enable towers, then choose their count, input/receiver tier, and planned transfer. Idle drain adds to other overhead. Structural bills assume independent cable networks; receiver coverage needs a separate check."]
 	%SettingsHint.text = hints[category]
 	match category:
 		0:
@@ -179,6 +181,7 @@ func _category_changed(category: int) -> void:
 			for machine: Dictionary in _dataset.get("machines", []):
 				for variant: Dictionary in machine.get("infrastructure", []):
 					_entries.append({"id": str(machine.id) + "|" + str(variant.id), "name": variant.get("name", variant.id),
+						"variant": variant,
 						"detail": "%s EU/t per enabled machine. Transfer and range do not prove receiver coverage." % PlannerDisplay.number(variant.passive_eu_per_tick)})
 	_filter(%SettingsSearch.text)
 
@@ -242,7 +245,12 @@ func _entry_changed() -> void:
 		var parts := id.split("|")
 		_request.infrastructure = _request.infrastructure.filter(func(entry: Dictionary) -> bool: return entry.machine != parts[0] || entry.variant != parts[1])
 		if item.is_checked(0):
-			_request.infrastructure.append({"machine": parts[0], "variant": parts[1], "count": 1})
+			var definition: Dictionary = _entries.filter(func(entry: Dictionary) -> bool: return entry.id == id)[0].variant
+			var selection: Dictionary = {"machine": parts[0], "variant": parts[1], "count": 1}
+			if definition.has("default_energy_hatch"):
+				selection.energy_hatch = definition.default_energy_hatch
+				selection.transmit_eu_per_tick = definition.max_transfer_eu_per_tick
+			_request.infrastructure.append(selection)
 		_entry_selected()
 		return
 	var enabled := item.is_checked(0)
@@ -264,12 +272,28 @@ func _entry_selected() -> void:
 	_supply_reset()
 	if %SettingsCategory.selected == 7:
 		%InfrastructureCount.editable = false
+		%InfrastructureHatch.disabled = true
+		%InfrastructureTransfer.editable = false
 		var selected: TreeItem = %SettingsEntries.get_selected()
 		if selected:
 			for entry: Dictionary in _request.infrastructure:
 				if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
 					%InfrastructureCount.set_value_no_signal(entry.count)
 					%InfrastructureCount.editable = true
+					_loading = true
+					%InfrastructureHatch.clear()
+					%InfrastructureHatch.add_item("Choose an input and receiver tier…")
+					%InfrastructureHatch.set_item_metadata(0, "")
+					for machine: Dictionary in _dataset.get("machines", []):
+						if machine.get("hatch_type") == "modern_industrialization:energy_input" && String(machine.id).begins_with("modern_industrialization:"):
+							var index: int = %InfrastructureHatch.item_count
+							%InfrastructureHatch.add_item(_names.get("item:" + str(machine.id), machine.id))
+							%InfrastructureHatch.set_item_metadata(index, machine.id)
+							if entry.get("energy_hatch", "") == machine.id: %InfrastructureHatch.select(index)
+					%InfrastructureHatch.disabled = false
+					%InfrastructureTransfer.set_value_no_signal(entry.get("transmit_eu_per_tick", 0))
+					%InfrastructureTransfer.editable = true
+					_loading = false
 		return
 	if !%SettingsCategory.selected in [4, 6]:
 		return
@@ -291,6 +315,20 @@ func _entry_selected() -> void:
 		%SupplyLimit.editable = entry.has(limit_key)
 		%SupplyCost.editable = true
 		_loading = false
+
+
+func _infrastructure_changed() -> void:
+	if _loading:
+		return
+	var selected: TreeItem = %SettingsEntries.get_selected()
+	if !selected:
+		return
+	for entry: Dictionary in _request.infrastructure:
+		if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
+			var hatch: String = %InfrastructureHatch.get_selected_metadata()
+			if hatch.is_empty(): entry.erase("energy_hatch")
+			else: entry.energy_hatch = hatch
+			entry.transmit_eu_per_tick = %InfrastructureTransfer.value
 
 
 func _supply_changed() -> void:

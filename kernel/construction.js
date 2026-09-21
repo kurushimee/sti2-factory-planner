@@ -38,7 +38,7 @@ export function addConstruction(model, resources, request, definitions = new Map
   const supplyWeight = number(settings.materials ?? 1000, 'Construction material priority');
   const rows = new Map([...resources].map(id => [id, new Map()]));
   const requirements = [];
-  for (const line of model.lines) {
+  for (const line of [...model.lines, ...(model.fixed_builds ?? [])]) {
     const {bill, error} = constructionBill(line.configuration, resources);
     if (error) throw new Error(error);
     for (const flow of bill) {

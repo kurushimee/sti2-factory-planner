@@ -90,10 +90,43 @@ public final class PlannerProbe {
         if (bill.get("machine").getAsString().equals("yet_another_industrialization:nuclear_rod_irradiator")) {
             result.add("startup_cycle", formedIrradiatorCycle(controller, matcher, server));
         }
+        if (controller instanceof net.swedz.extended_industrialization.machines.blockentity.multiblock.teslatower.TeslaTowerBlockEntity tower) {
+            result.add("idle_cycle", formedTeslaCycle(tower, matcher, server));
+        }
         Files.writeString(Path.of("planner-extraction", "structure-bill-check.json"), new GsonBuilder().setPrettyPrinting().create().toJson(result));
         controller.setChanged();
         System.out.println("Planner structural bill matched the loaded world structure.");
         return 1;
+    }
+
+    private static JsonObject formedTeslaCycle(
+            net.swedz.extended_industrialization.machines.blockentity.multiblock.teslatower.TeslaTowerBlockEntity tower,
+            aztech.modern_industrialization.machines.multiblocks.ShapeMatcher matcher, MinecraftServer server) {
+        var energy = new java.util.ArrayList<aztech.modern_industrialization.machines.components.EnergyComponent>();
+        for (var hatch : matcher.getMatchedHatches()) hatch.appendEnergyInputs(energy);
+        if (energy.size() != 7) throw new IllegalStateException("The copper Tesla fixture requires seven LV hatches.");
+        matcher.unlinkHatches();
+        var levelData = (net.minecraft.world.level.storage.ServerLevelData) server.overworld().getLevelData();
+        long previousTime = levelData.getGameTime(), consumed = 0;
+        try {
+            // Let the actual controller perform its own structure matching before measuring idle drain.
+            for (int tick = 1; tick <= 40; tick++) {
+                levelData.setGameTime(tick);
+                for (var component : energy) component.insertEu(component.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                long before = energy.stream().mapToLong(component -> component.getEu()).sum();
+                tower.tick();
+                if (tick > 20) consumed += before - energy.stream().mapToLong(component -> component.getEu()).sum();
+            }
+        } finally { levelData.setGameTime(previousTime); }
+        if (!tower.shapeValid.shapeValid || consumed != 1280 || tower.getCableTier() != aztech.modern_industrialization.api.energy.CableTier.LV)
+            throw new IllegalStateException("The formed Tesla controller differs from its captured idle behavior.");
+        var result = new JsonObject();
+        result.addProperty("ticks_after_linking", 20);
+        result.addProperty("energy_consumed", consumed);
+        result.addProperty("hatches", energy.size());
+        result.addProperty("nominal_tier_eu", tower.getCableTier().getEu());
+        result.addProperty("scope", "Placed structure and controller idle ticks with directly supplied hatch energy. No receiver transfer claim.");
+        return result;
     }
 
     private static JsonObject formedIrradiatorCycle(MachineBlockEntity machine,

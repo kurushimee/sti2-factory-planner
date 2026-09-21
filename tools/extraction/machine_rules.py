@@ -23,6 +23,8 @@ def machine_rules(capture, upgrades):
             record.update(status="infrastructure", mechanic="passive_infrastructure", infrastructure=[{
                 "id": str(tier["shape"]), "name": names[tier["shape"]] + " Tesla tower",
                 "shape": tier["shape"], "passive_eu_per_tick": tier["passive_eu_per_tick"],
+                "structure": {"shape": tier["shape"], "energy_input": True},
+                "default_energy_hatch": "modern_industrialization:" + ["lv", "mv", "hv", "ev", "superconductor"][tier["shape"]] + "_energy_input_hatch",
                 "max_transfer_eu_per_tick": tier["max_transfer_eu_per_tick"], "max_axis_distance": tier["max_axis_distance"],
                 "assumptions": ["The formed tower stays enabled and fully supplied, even when no receivers need power.",
                     "Transfer and range are per tower. Receiver placement, same-tier energy hatches, and network reachability need separate verification.",

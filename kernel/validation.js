@@ -39,6 +39,12 @@ export function validateDataset(dataset) {
       for (const field of ['max_transfer_eu_per_tick', 'max_axis_distance']) {
         if (variant[field] !== undefined) number(variant[field], `infrastructure ${variant.id}.${field}`);
       }
+      if (variant.structure !== undefined) {
+        object(variant.structure, `infrastructure ${variant.id}.structure`);
+        number(variant.structure.shape, `infrastructure ${variant.id}.structure.shape`, 0, true);
+        if (variant.structure.energy_input !== true) fail(`infrastructure ${variant.id}`, 'unsupported structure adapter');
+      }
+      if (variant.default_energy_hatch !== undefined) references([variant.default_energy_hatch], machines, `infrastructure ${variant.id}.default_energy_hatch`);
     }
   }
   const upgrades = records(dataset.upgrades ?? [], 'upgrades');

@@ -1,5 +1,6 @@
 import {compileConfiguration} from './configuration.js';
 import {structureContext, checkFixedStructure} from './structure_bill.js';
+import {infrastructurePower} from './infrastructure.js';
 
 function enabled(id, selected, disabled) {
   return (!selected || selected.includes(id)) && !disabled?.includes(id);
@@ -149,6 +150,9 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
   const selected = new Map();
   const needed = new Set((request.goals ?? []).map(goal => goal.resource));
   if (request.overhead_eu_per_tick || request.infrastructure?.some(value => value.count > 0)) needed.add('energy:eu');
+  if (request.construction) for (const entry of infrastructurePower(dataset, request).entries) {
+    for (const flow of entry.structure.build_requirements) needed.add(flow.resource);
+  }
   const queue = [...needed];
   for (const recipe of dataset.recipes) {
     checkBudget();

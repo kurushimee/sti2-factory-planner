@@ -57,16 +57,22 @@ try {
   await page.waitForTimeout(250);
   await page.screenshot({path: `${artifacts}/browser-infrastructure-category.png`});
   await page.mouse.click(250, 332, {delay: 100});
-  await page.mouse.click(400, 735, {delay: 100});
+  await page.mouse.click(400, 645, {delay: 100});
   await page.waitForTimeout(100);
   await page.keyboard.press('Control+a', {delay: 70});
   await page.keyboard.type('2', {delay: 70});
+  await page.keyboard.press('Tab', {delay: 70});
+  await page.mouse.click(400, 735, {delay: 100});
+  await page.waitForTimeout(100);
+  await page.keyboard.press('Control+a', {delay: 70});
+  await page.keyboard.type('1000', {delay: 70});
   await page.keyboard.press('Tab', {delay: 70});
   await page.screenshot({path: `${artifacts}/browser-infrastructure-settings.png`});
   await page.mouse.click(550, 780, {delay: 100});
   await frame.waitForFunction(() => window.testResult?.power?.infrastructure?.total_eu_per_tick === 133, null, {timeout: 30000});
   const power = await frame.evaluate(() => window.testResult.power);
   assert.equal(power.external_eu_per_tick, 133);
+  assert.equal(power.infrastructure.entries[0].structure.build_requirements.find(value => value.resource === 'item:modern_industrialization:lv_energy_input_hatch').amount, 5);
   await page.mouse.click(930, 92, {delay: 100});
   await page.mouse.move(1260, 680);
   await page.mouse.wheel(0, 480);
@@ -77,7 +83,8 @@ try {
   const savedPath = `${artifacts}/infrastructure-browser-plan.json`;
   await (await pending).saveAs(savedPath);
   const saved = JSON.parse(await readFile(savedPath, 'utf8'));
-  assert.deepEqual(saved.request.infrastructure, [{machine: 'extended_industrialization:tesla_tower', variant: '0', count: 2}]);
+  assert.deepEqual(saved.request.infrastructure, [{machine: 'extended_industrialization:tesla_tower', variant: '0', count: 2,
+    energy_hatch: 'modern_industrialization:lv_energy_input_hatch', transmit_eu_per_tick: 1000}]);
   await page.reload();
   frame = page.frames().find(value => value !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});

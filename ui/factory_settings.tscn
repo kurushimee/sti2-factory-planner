@@ -110,15 +110,32 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Next"
 
-[node name="InfrastructureCount" type="SpinBox" parent="Content/Availability"]
+[node name="InfrastructureDetails" type="VBoxContainer" parent="Content/Availability"]
 unique_name_in_owner = true
 layout_mode = 2
 visible = false
+
+[node name="InfrastructureCount" type="SpinBox" parent="Content/Availability/InfrastructureDetails"]
+unique_name_in_owner = true
+layout_mode = 2
 min_value = 1.0
 max_value = 1000000.0
 step = 1.0
 suffix = "enabled machines"
 tooltip_text = "Select an enabled infrastructure entry to change its count. Uncheck the entry to remove it."
+
+[node name="InfrastructureHatch" type="OptionButton" parent="Content/Availability/InfrastructureDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "All tower input hatches must have the same cable tier. Receivers must match that tier exactly."
+
+[node name="InfrastructureTransfer" type="SpinBox" parent="Content/Availability/InfrastructureDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000000000.0
+step = 0.001
+suffix = "EU/t planned transfer per tower"
+tooltip_text = "Sizes the input hatches for this transfer plus the tower drain. Transmitted power is already charged to consumers. This does not establish receiver coverage."
 
 [node name="Supply" type="VBoxContainer" parent="Content/Availability"]
 unique_name_in_owner = true
