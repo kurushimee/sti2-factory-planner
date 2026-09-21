@@ -18,6 +18,11 @@ func _run() -> void:
 	OS.low_processor_usage_mode = false
 	await process_frame
 	workspace.computation.cancel()
+	workspace.computation._accept({"phase": "construction_verification"})
+	assert(workspace.status.text == "Checking the new plan's full construction cost…")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/certus/endgame-progress.png")
 	workspace._request.assign(fixture.request)
 	var started := Time.get_ticks_msec()
 	workspace._calculated(fixture.result)
@@ -59,7 +64,10 @@ func _run() -> void:
 		root.get_texture().get_image().save_png("res://.plans/artifacts/certus/endgame-plan.png")
 	workspace._show_power()
 	assert("lowest cost has not been proven" in workspace.inspector.text)
-	assert("Proven cost bound" in workspace.inspector.text)
+	if fixture.result.optimization.get("lower_bound") != null:
+		assert("Proven cost bound" in workspace.inspector.text)
+	else:
+		assert("no global cost bound" in workspace.inspector.text)
 	assert("Net generation" in workspace.inspector.text)
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw

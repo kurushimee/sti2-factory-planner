@@ -24,8 +24,8 @@ export function verifyEndgame(dataset, request, result) {
   assert.ok(result.external.every(value => value.resource === 'energy:eu'));
   const owned = result.primary_routes.filter(value => value.resource !== 'energy:eu').map(value => value.resource);
   assert.equal(new Set(owned).size, owned.length);
-  assert.ok(result.optimization.lower_bound <= result.objective + 1e-7);
-  assert.ok(result.optimization.relative_gap >= 0);
+  if (result.optimization.lower_bound !== null) assert.ok(result.optimization.lower_bound <= result.objective + 1e-7);
+  if (result.optimization.relative_gap !== null) assert.ok(result.optimization.relative_gap >= 0);
   if (result.status === 'feasible') assert.equal(result.optimal, false);
   for (const balance of result.balances) assert.ok(balance.surplus >= -balance.numerical_tolerance);
   for (const residual of result.flow_roundoff) assert.ok(residual.rate <= residual.numerical_tolerance);

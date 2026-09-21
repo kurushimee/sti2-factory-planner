@@ -78,7 +78,7 @@ A plan uses `format: "factory-plan"` and `version: 1`. It embeds `dataset`, a ma
 | `weights` | Nonnegative `external`, `machines`, and `energy` objective weights. The machine weight must be positive. |
 | `construction` | Optional construction accounting. Its separate `external` supplies use `resource`, `cost`, and optional finite `quantity`; operating rate limits do not apply. Positive `weight` and `work` default to 1, `materials` to 1,000, and `energy` to 0.000001. `round_batches: true` requires whole batches, purchased items, and verified consumable tools; otherwise quantities are material equivalents. Both modes assume available construction workstations. |
 | `single_primary_route` | Defaults to true; each active recipe owns a useful net output, with one owner per resource. Deliberate recipe goals and mixed generation can retain separate setups. |
-| `time_limit_ms` | Calculation budget in milliseconds; defaults to 60,000. A verified limited result is feasible, not necessarily optimal. |
+| `time_limit_ms` | Calculation budget in milliseconds; defaults to 60,000, or 180,000 with construction accounting. A verified limited result is feasible, not necessarily optimal. |
 | `available_dimensions`, `available_biomes` | Optional environmental restrictions. |
 
 `positions` maps recipe/configuration node keys to `[x,y]`. `groups` maps group IDs to `{title, rect:[x,y,width,height]}`. Group membership follows node centers and boundary size, with a stable ID tie-break for overlaps. Resizing a group changes membership without moving nodes.

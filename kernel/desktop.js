@@ -1,4 +1,5 @@
 import {readFile, writeFile, rename} from 'node:fs/promises';
+import {writeFileSync, renameSync} from 'node:fs';
 import loadHighs from 'highs';
 import {solveFactory} from './planner.js';
 import {inspectWorld} from './world.js';
@@ -19,7 +20,10 @@ try {
       reconstruction: reconstructFactory(job.world, job.dataset, job.corrections)}};
   } else {
     const highs = await loadHighs();
-    result = {id: job.id, result: solveFactory(highs, job.dataset, job.request)};
+    result = {id: job.id, result: solveFactory(highs, job.dataset, job.request, progress => {
+      writeFileSync(`${output}.progress.pending`, JSON.stringify({id: job.id, ...progress}));
+      renameSync(`${output}.progress.pending`, `${output}.progress`);
+    })};
   }
 } catch (error) {
   result = {error: String(error.message ?? error)};

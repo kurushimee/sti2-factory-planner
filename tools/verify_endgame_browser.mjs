@@ -10,6 +10,10 @@ const root = resolve('builds/web'), artifacts = resolve('.plans/artifacts/certus
 await mkdir(artifacts, {recursive: true});
 const dataset = await readDataset('data/statech-2.0.1.json.gz');
 const request = endgameRequest(dataset, process.argv[2]);
+if (process.argv.includes('--material')) {
+  request.time_limit_ms = 180000;
+  request.construction = {external: [{resource: 'energy:eu', cost: 0}], work: 0.001};
+}
 const input = resolve(artifacts, 'endgame-import.json');
 await writeFile(input, JSON.stringify({format: 'factory-plan', version: 1, dataset_identity: dataset.identity,
   dataset, request, positions: {}, groups: {}}));
@@ -56,7 +60,7 @@ try {
   await page.mouse.click(1124, 40, {delay: 100});
   await (await chooserPromise).setFiles(input);
   try {
-    await frame.waitForFunction(() => window.calculationCheck || window.calculationFailure, null, {timeout: 180000});
+    await frame.waitForFunction(() => window.calculationCheck || window.calculationFailure, null, {timeout: request.time_limit_ms + 60000});
   } catch (error) {
     await page.screenshot({path: `${artifacts}/endgame-browser-failure.png`});
     console.log(JSON.stringify({errors, state: await frame.evaluate(() => ({result: window.calculationCheck, error: window.calculationFailure}))}));

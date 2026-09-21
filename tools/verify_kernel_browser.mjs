@@ -55,6 +55,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/structure_bill.js': 'kernel/structure_bill.js',
       '/kernel/construction.js': 'kernel/construction.js',
       '/kernel/construction_order.js': 'kernel/construction_order.js',
+      '/kernel/material_refinement.js': 'kernel/material_refinement.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/power.js': 'kernel/power.js',
       '/kernel/infrastructure.js': 'kernel/infrastructure.js',
@@ -255,6 +256,20 @@ try {
     delete actual.result.search?.elapsed_ms;
     assert.deepEqual(actual.result, expected);
     console.log(`The replicatorless creative-storage plan matches Node in the browser Worker: ${expected.lines.length} allocations, ${expected.status}.`);
+  }
+  if (process.argv.includes('--material')) {
+    const request = {...endgameRequest(worldDataset), time_limit_ms: 180000,
+      construction: {external: [{resource: 'energy:eu', cost: 0}], work: 0.001}};
+    const expected = solveFactory(await loadHighs(), worldDataset, request);
+    verifyEndgame(worldDataset, request, expected);
+    const actual = await solveInBrowser(worldDataset, request);
+    verifyEndgame(worldDataset, request, actual.result);
+    delete expected.search?.elapsed_ms;
+    delete actual.result.search?.elapsed_ms;
+    assert.equal(actual.result.search.method, 'material_cost_refinement');
+    assert.ok(actual.phases.includes('construction_verification'));
+    assert.deepEqual(actual.result, expected);
+    console.log(`The complete material-cost plan matches Node in the browser Worker: ${expected.lines.length} allocations.`);
   }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();

@@ -71,6 +71,9 @@ static func optimization_report(result: Dictionary) -> String:
 	text += "Costs use your resource, machine, upgrade, and energy priorities. They are not item counts.\n"
 	if result.get("search", {}).get("method") == "relaxed_route_repair":
 		text += "This large plan uses a continuous-flow estimate, resolves route conflicts, and rechecks whole-machine capacity and every resource balance. Its route search is a heuristic.\n"
+	elif result.get("search", {}).get("method") == "material_cost_refinement":
+		text += "Machine and upgrade choices were compared using complete construction recipes. A change was accepted only after checking its production and construction balances and total cost.\n"
+		text += "This search compares loadouts within the initial production routes. Other routes or loadouts may cost less; no global cost bound is available.\n"
 	return text + "\n"
 
 

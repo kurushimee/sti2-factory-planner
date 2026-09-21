@@ -10,6 +10,7 @@ var _process_id := -1
 var _job_id := 0
 var _result_path := ""
 var _input_path := ""
+var _last_progress := ""
 var _cleanup_jobs: Dictionary[int, Dictionary] = {}
 
 
@@ -18,7 +19,7 @@ func _ready() -> void:
 		return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://jobs"))
 	var pattern := RegEx.new()
-	pattern.compile("^(?:job|result)_(\\d+)_(\\d+)(?:_\\d+)?\\.json(?:\\.pending)?$")
+	pattern.compile("^(?:job|result)_(\\d+)_(\\d+)(?:_\\d+)?\\.json(?:\\.progress)?(?:\\.pending)?$")
 	for filename: String in DirAccess.get_files_at("user://jobs"):
 		var matched := pattern.search(filename)
 		if matched && !_owner_running(matched.get_string(1).to_int()):
@@ -29,6 +30,11 @@ func _process(_delta: float) -> void:
 	_cleanup_finished_jobs()
 	if !busy:
 		return
+	if !OS.has_feature("web") && FileAccess.file_exists(_result_path + ".progress"):
+		var text := FileAccess.get_file_as_string(_result_path + ".progress")
+		if text != _last_progress:
+			_last_progress = text
+			_accept(PlannerJson.parse(text))
 	if OS.has_feature("web"):
 		var response: Variant = JavaScriptBridge.eval("window.plannerBridge ? window.plannerBridge.poll() : ''")
 		if response is String && !response.is_empty():
@@ -48,6 +54,7 @@ func submit(job: Dictionary) -> void:
 	_job_id += 1
 	job.id = _job_id
 	busy = true
+	_last_progress = ""
 	progress.emit("Calculating the connected factory…")
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("window.plannerBridge.submit(%s)" % JSON.stringify(job, "", true, true))
@@ -99,7 +106,16 @@ func _accept(response: Variant) -> void:
 	if response.has("id") && int(response.id) != _job_id:
 		return
 	if response.has("phase"):
-		progress.emit(String(response.phase).replace("_", " ").capitalize())
+		var messages := {
+			"production_baseline": "Sizing the initial production plan…",
+			"construction_baseline": "Calculating its construction materials…",
+			"machine_choices": "Comparing machine and upgrade costs…",
+			"production_refinement": "Recalculating production with those choices…",
+			"construction_verification": "Checking the new plan's full construction cost…",
+			"construction_routes": "Balancing shared construction routes…",
+			"construction_precision": "Checking construction balance precision…",
+		}
+		progress.emit(messages.get(response.phase, String(response.phase).replace("_", " ").capitalize()))
 		return
 	busy = false
 	_queue_cleanup()
@@ -119,7 +135,7 @@ func _queue_cleanup(stopped := false) -> void:
 		return
 	var job: Dictionary = _cleanup_jobs.get(_process_id, {"paths": PackedStringArray(), "stopped": false})
 	var paths: PackedStringArray = job.paths
-	paths.append_array(PackedStringArray([_input_path, _result_path, _result_path + ".pending"]))
+	paths.append_array(PackedStringArray([_input_path, _result_path, _result_path + ".pending", _result_path + ".progress", _result_path + ".progress.pending"]))
 	job.paths = paths
 	job.stopped = job.stopped || stopped || _process_id < 1
 	_cleanup_jobs[_process_id] = job

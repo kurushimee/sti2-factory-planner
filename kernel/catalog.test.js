@@ -49,6 +49,32 @@ test('unverified conditions and unresolved catalyst choices remain explicit excl
   assert.deepEqual(chosen.configurations[0].startup_inputs, [{resource: 'b', amount: 1}]);
 });
 
+test('construction workstation candidates retain dependency and condition checks', () => {
+  const upgraded = {...dataset, machines: [{...machine, upgrades: ['basic', 'strong']}],
+    upgrades: [{id: 'basic', extra_max_eu: 16}, {id: 'strong', extra_max_eu: 256}]};
+  const request = {construction: {}, available_upgrades: ['basic', 'strong'], goals: [{resource: 'plate', rate: 1}]};
+  const all = configureRecipe(recipe, upgraded, request);
+  const workstations = configureRecipe(recipe, upgraded, request, false, () => {}, undefined, undefined, {workstations: true});
+  assert.ok(all.configurations.some(configuration => configuration.setup.upgrade?.id === 'basic'));
+  assert.ok(!workstations.configurations.some(configuration => configuration.setup.upgrade?.id === 'basic'));
+  assert.match(configureRecipe({...recipe, conditions: [{type: 'unknown'}]}, upgraded, request,
+    false, () => {}, undefined, undefined, {workstations: true}).unsupported, /condition adapter/);
+  const assembly = {id: 'make_press', primary: 'item:press', inputs: [], outputs: [{resource: 'item:press', amount: 1}],
+    configurations: [{id: 'bench', machine: 'bench', operations_per_second: 1, build_requirements: [{resource: 'item:bench', amount: 1}]}]};
+  const prepared = prepareDataset({...upgraded, recipes: [recipe, assembly]}, request, () => {}, {workstations: true});
+  assert.ok(prepared.recipes.some(value => value.id === 'make_press'));
+});
+
+test('an incomplete fast workstation cannot remove a slower verified alternative', () => {
+  const unknown = {...machine, id: 'unknown', shapes: [{index: 0, cells: [{position: [1, 0, 0], member_rule: 0,
+    preview_block: 'test:casing', preview_items: ['test:casing'], allowed_hatches: []}]}]};
+  const known = {...machine, id: 'known', max_eu: 8};
+  const result = configureRecipe(recipe, {...dataset, machines: [unknown, known]}, {construction: {}},
+    false, () => {}, undefined, undefined, {workstations: true});
+  assert.ok(result.configurations.some(configuration => configuration.machine === 'known'));
+  assert.equal(result.configurations.find(configuration => configuration.machine === 'unknown').structure.status, 'unsupported');
+});
+
 test('complete capacity targets compile their explicit array loadouts without enumerating others', () => {
   const array = {...machine, id: 'array', mechanic: 'mi_array', shape_capacities: [8, 16, 32, 64],
     eligible_machines: ['press'], contained_recipe_types: {press: 'press'}, energy_multiplier: 1};

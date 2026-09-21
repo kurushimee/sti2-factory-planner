@@ -54,7 +54,7 @@ export function addConstruction(model, resources, request, definitions = new Map
       requirements.push({...flow, variable: line.machine});
     }
   }
-  const routes = [];
+  const routes = [], ingredientChecks = [];
   const candidates = new Map();
   const tools = new Map();
   for (const line of model.lines) {
@@ -120,7 +120,10 @@ export function addConstruction(model, resources, request, definitions = new Map
           outputTerms.push({resource: returned.resource, variable: term, amount: amount * returned.amount});
         }
       }
-      if (choices.length !== 1) model.constraints.push(`construction_choice_${index}_${slot}: ${expression(alternatives)} = 0`);
+      if (choices.length !== 1) {
+        model.constraints.push(`construction_choice_${index}_${slot}: ${expression(alternatives)} = 0`);
+        ingredientChecks.push({recipe: recipe.id, slot, terms: alternatives});
+      }
     }
     for (const flow of recipe.outputs) {
       add(rows.get(flow.resource), variable, flow.amount);
@@ -154,11 +157,22 @@ export function addConstruction(model, resources, request, definitions = new Map
   }
   let index = 0;
   for (const row of rows.values()) if (row.size) model.constraints.push(`construction_balance_${index++}: ${expression(row)} >= 0`);
-  return {rows, requirements, routes, supplies, tools: [...tools.values()], rounded, weight, effort, energyWeight, supplyWeight};
+  return {rows, requirements, routes, supplies, ingredientChecks, tools: [...tools.values()], rounded, weight, effort, energyWeight, supplyWeight};
 }
 
 export function decodeConstruction(model, value) {
   if (!model) return undefined;
+  for (const {recipe, slot, terms} of model.ingredientChecks ?? []) {
+    let residual = 0, magnitude = 0;
+    for (const [variable, coefficient] of terms) {
+      const amount = coefficient * value(variable);
+      residual += amount;
+      magnitude += Math.abs(amount);
+    }
+    const tolerance = Math.max(Math.min(1e-7, magnitude * 1e-7), magnitude * Number.EPSILON * 16);
+    if (Math.abs(residual) > tolerance) throw new ConstructionBalanceError(`${recipe}, ingredient ${slot + 1}`,
+      -Math.abs(residual), tolerance, magnitude, terms, value);
+  }
   const quantities = terms => {
     const totals = new Map();
     for (const term of terms) totals.set(term.resource, (totals.get(term.resource) ?? 0) + term.amount * value(term.variable));

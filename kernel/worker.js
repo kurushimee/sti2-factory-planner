@@ -20,7 +20,7 @@ self.onmessage = async event => {
     runtime ??= loadHighs({locateFile: file => new URL(`../vendor/${file}`, import.meta.url).href});
     const highs = await runtime;
     self.postMessage({id, phase: 'solving'});
-    self.postMessage({id, result: solveFactory(highs, dataset, request)});
+    self.postMessage({id, result: solveFactory(highs, dataset, request, progress => self.postMessage({id, ...progress}))});
   } catch (error) {
     self.postMessage({id, error: String(error.message ?? error)});
   }

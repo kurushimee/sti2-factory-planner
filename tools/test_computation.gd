@@ -8,13 +8,15 @@ func _initialize() -> void:
 func _run() -> void:
 	create_timer(15).timeout.connect(func() -> void: push_error("Temporary calculation cleanup timed out."); quit(1))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://jobs"))
-	for filename: String in ["job_2147483647_1.json", "keep.json"]:
+	for filename: String in ["job_2147483647_1.json", "result_2147483647_1.json.progress", "result_2147483647_1.json.progress.pending", "keep.json"]:
 		var file := FileAccess.open("user://jobs/" + filename, FileAccess.WRITE)
 		file.store_string("{}")
 		file.close()
 	var service := PlannerComputation.new()
 	root.add_child(service)
 	assert(!FileAccess.file_exists("user://jobs/job_2147483647_1.json"))
+	assert(!FileAccess.file_exists("user://jobs/result_2147483647_1.json.progress"))
+	assert(!FileAccess.file_exists("user://jobs/result_2147483647_1.json.progress.pending"))
 	assert(FileAccess.file_exists("user://jobs/keep.json"))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://jobs/keep.json"))
 	var dataset: Dictionary = PlannerJson.parse(FileAccess.get_file_as_string("res://data/example.json"))

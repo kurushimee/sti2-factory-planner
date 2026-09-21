@@ -10,6 +10,7 @@ import {addConstruction, constructionBill, decodeConstruction} from './construct
 import {productionRouteOwnership} from './route_ownership.js';
 import {runSolver} from './solver.js';
 import {findFactorySeed} from './seed.js';
+import {refineMaterialPlan} from './material_refinement.js';
 
 const ENERGY = 'energy:eu';
 
@@ -323,15 +324,22 @@ export function decodeFactory(model, solution) {
     ...(construction ? {construction} : {}), ...flows};
 }
 
-export function solveFactory(highs, dataset, request) {
-  const duration = nonnegative(request.time_limit_ms ?? 60000, 'Calculation time limit');
+export function solveFactory(highs, dataset, request, onProgress = () => {}) {
+  const duration = nonnegative(request.time_limit_ms ?? (request.construction ? 180000 : 60000), 'Calculation time limit');
   const deadline = Date.now() + duration;
   validateDataset(dataset);
   infrastructurePower(dataset, request);
   const exhausted = new Error('The configuration search reached its time limit.');
+  const refine = new Error('Compare large construction orders separately.');
+  const source = dataset;
+  let configurations = 0;
   try {
-    dataset = prepareDataset(dataset, request, () => { if (Date.now() >= deadline) throw exhausted; });
+    dataset = prepareDataset(dataset, request, () => { if (Date.now() >= deadline) throw exhausted; },
+      {recordConfiguration: () => {if (request.construction && ++configurations > 5000) throw refine;}});
+    if (request.construction && dataset.recipes.reduce((sum, recipe) => sum + recipe.configurations.length, 0) > 2000) throw refine;
   } catch (error) {
+    if (error === refine) return refineMaterialPlan(highs, source, request,
+      (data, selection) => solveFactory(highs, data, selection, onProgress), deadline, onProgress);
     if (error !== exhausted) throw error;
     return {status: 'limit', phase: 'configuration', optimal: false, incumbent: null, branches: 0};
   }

@@ -64,7 +64,7 @@ export function solveConstructionOrder(highs, model, timeLimitSeconds = 60, prod
         onProgress({phase: 'construction_precision', attempt: visited.size, resource: error.balance.resource});
         if (Date.now() >= deadline) return numericalFailure(error);
         native.clearSolver();
-        native.options.set({simplex_scale_strategy: 0, primal_feasibility_tolerance: 1e-10,
+        native.options.set({presolve: 'off', simplex_scale_strategy: 0, primal_feasibility_tolerance: 1e-10,
           time_limit: native.getRunTime() + Math.max(0.001, (deadline - Date.now()) / 1000)});
         native.run();
         result = readSolverResult(highs, native, {row_duals: !model.integers.length});
