@@ -9,6 +9,7 @@ import {zipSync, gzipSync} from 'fflate';
 import {inspectWorld} from '../kernel/world.js';
 import {readDataset} from './read_dataset.mjs';
 import {constructionCase, verifyConstructionCase, finiteHammerCase, verifyFiniteHammerCase} from './construction_catalog_case.mjs';
+import {endgameRequest, verifyEndgame} from './endgame_case.mjs';
 
 const root = new URL('../', import.meta.url);
 const dataset = {format: 1, resources: ['ore', 'plate', 'fuel', 'steam'].map(id => ({id})), recipes: [{
@@ -48,6 +49,8 @@ const server = createServer(async (incoming, response) => {
     }
     const files = {
       '/kernel/worker.js': 'kernel/worker.js', '/kernel/planner.js': 'kernel/planner.js',
+      '/kernel/solver.js': 'kernel/solver.js', '/kernel/seed.js': 'kernel/seed.js',
+      '/kernel/route_ownership.js': 'kernel/route_ownership.js',
       '/kernel/structure_bill.js': 'kernel/structure_bill.js',
       '/kernel/construction.js': 'kernel/construction.js',
       '/kernel/flows.js': 'kernel/flows.js',
@@ -106,7 +109,7 @@ try {
     const worker = new Worker('/kernel/worker.js', {type: 'module'});
     const phases = [];
     const result = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Worker timed out.')), 15000);
+      const timer = setTimeout(() => reject(new Error('Worker timed out.')), (request.time_limit_ms ?? 15000) + 30000);
       worker.onerror = event => { clearTimeout(timer); reject(new Error(event.message)); };
       worker.onmessage = event => {
         if (event.data.phase) phases.push(event.data.phase);
@@ -203,6 +206,17 @@ try {
     assert.equal(built.result.construction.material_cost, 426);
     assert.deepEqual(built.result, solveFactory(await loadHighs(), worldDataset, request));
     console.log('Tesla infrastructure and its loaded limits match Node in the browser Worker.');
+  }
+  if (process.argv.includes('--endgame')) {
+    const request = endgameRequest(worldDataset);
+    const expected = solveFactory(await loadHighs(), worldDataset, request);
+    verifyEndgame(worldDataset, request, expected);
+    const actual = await solveInBrowser(worldDataset, request);
+    verifyEndgame(worldDataset, request, actual.result);
+    delete expected.search?.elapsed_ms;
+    delete actual.result.search?.elapsed_ms;
+    assert.deepEqual(actual.result, expected);
+    console.log(`The replicatorless creative-storage plan matches Node in the browser Worker: ${expected.lines.length} allocations, ${expected.status}.`);
   }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();

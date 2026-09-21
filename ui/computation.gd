@@ -32,11 +32,11 @@ func _process(_delta: float) -> void:
 	if OS.has_feature("web"):
 		var response: Variant = JavaScriptBridge.eval("window.plannerBridge ? window.plannerBridge.poll() : ''")
 		if response is String && !response.is_empty():
-			_accept(JSON.parse_string(response))
+			_accept(PlannerJson.parse(response))
 	elif FileAccess.file_exists(_result_path):
 		var text := FileAccess.get_file_as_string(_result_path)
 		DirAccess.remove_absolute(_result_path)
-		_accept(JSON.parse_string(text))
+		_accept(PlannerJson.parse(text))
 	elif _process_id > 0 && !OS.is_process_running(_process_id):
 		busy = false
 		_queue_cleanup(true)
@@ -50,7 +50,7 @@ func submit(job: Dictionary) -> void:
 	busy = true
 	progress.emit("Calculating the connected factory…")
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.plannerBridge.submit(%s)" % JSON.stringify(job))
+		JavaScriptBridge.eval("window.plannerBridge.submit(%s)" % JSON.stringify(job, "", true, true))
 		return
 	var job_key := "%d_%d_%d" % [OS.get_process_id(), get_instance_id(), _job_id]
 	_input_path = ProjectSettings.globalize_path("user://jobs/job_%s.json" % job_key)
@@ -61,7 +61,7 @@ func submit(job: Dictionary) -> void:
 		_queue_cleanup()
 		failed.emit("The calculation request could not be saved. Check the application's data folder and available disk space.")
 		return
-	file.store_string(JSON.stringify(job))
+	file.store_string(JSON.stringify(job, "", true, true))
 	file.close()
 	var runtime_root := ProjectSettings.globalize_path("res://") if OS.has_feature("editor") else OS.get_executable_path().get_base_dir()
 	var executable := runtime_root.path_join("runtime/node.exe")

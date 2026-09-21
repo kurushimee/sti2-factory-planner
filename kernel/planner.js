@@ -7,6 +7,9 @@ import {prepareDataset} from './catalog.js';
 import {validateDataset} from './validation.js';
 import {attachStructureBills} from './structure_bill.js';
 import {addConstruction, constructionBill, decodeConstruction} from './construction.js';
+import {productionRouteOwnership} from './route_ownership.js';
+import {runSolver} from './solver.js';
+import {findFactorySeed} from './seed.js';
 
 const ENERGY = 'energy:eu';
 
@@ -81,8 +84,6 @@ export function compileFactory(dataset, request, routeChoices = {}) {
       exclusions.push({recipe: recipe.id, reason});
       continue;
     }
-    const pin = own(request.routes, recipe.primary) ?? own(routeChoices, recipe.primary);
-    if (pin && pin !== recipe.id) continue;
     let hasConfiguration = false;
     for (const configuration of recipe.configurations) {
       if (request.disabled_machines?.includes(configuration.machine)) continue;
@@ -105,6 +106,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
       add(objective, operation, weights.energy * energy);
       add(objective, machine, weights.machines * buildCost);
       constraints.push(`capacity_${index}: ${operation} - ${capacity} ${machine} <= 0`);
+      if (own(routeChoices, recipe.id) === false) constraints.push(`excluded_route_${index}: ${operation} = 0`);
       bounds.push(`${operation} >= 0`, `${machine} >= 0`);
       integers.push(machine);
       const inputTerms = [];
@@ -178,8 +180,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
       hasConfiguration = true;
     }
     if (hasConfiguration) {
-      if (!routeCandidates.has(recipe.primary)) routeCandidates.set(recipe.primary, []);
-      routeCandidates.get(recipe.primary).push(recipe.id);
+      for (const resource of new Set(recipe.outputs.map(flow => flow.resource))) {
+        if (!routeCandidates.has(resource)) routeCandidates.set(resource, []);
+        routeCandidates.get(resource).push(recipe.id);
+      }
     }
   }
   for (const [resource, recipeId] of Object.entries(request.routes ?? {})) {
@@ -190,6 +194,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   }
   for (const [recipe, minimum] of Object.entries(request.recipe_minimum_rates ?? {})) {
     const terms = new Map(lines.filter(line => line.recipe.id === recipe).map(line => [line.operation, 1]));
+    if (!terms.size) {
+      const reason = exclusions.find(value => value.recipe === recipe)?.reason;
+      throw new Error(`Goal recipe is unavailable: ${recipe}.${reason ? ` ${reason}` : ''}`);
+    }
     constraints.push(`recipe_goal_${constraints.length}: ${expression(terms)} >= ${nonnegative(minimum, 'Recipe goal operation rate')}`);
   }
   const supplies = [];
@@ -226,12 +234,15 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   }) : [];
   const construction = addConstruction({lines, fixed_builds, objective, constraints, bounds, integers}, resources, request,
     new Map(dataset.resources.map(resource => [resource.id, resource])));
+  for (const route of construction?.routes ?? []) if (own(routeChoices, route.recipe) === false) {
+    constraints.push(`excluded_construction_${route.variable}: ${route.variable} = 0`);
+  }
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');
   return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers, infrastructure};
 }
 
-function decode(model, solution) {
+export function decodeFactory(model, solution) {
   const value = name => solution.Columns[name]?.Primal ?? 0;
   for (const variable of model.integers) {
     const amount = value(variable);
@@ -305,7 +316,7 @@ function decode(model, solution) {
 }
 
 export function solveFactory(highs, dataset, request) {
-  const duration = nonnegative(request.time_limit_ms ?? 20000, 'Calculation time limit');
+  const duration = nonnegative(request.time_limit_ms ?? 60000, 'Calculation time limit');
   const deadline = Date.now() + duration;
   validateDataset(dataset);
   infrastructurePower(dataset, request);
@@ -319,45 +330,67 @@ export function solveFactory(highs, dataset, request) {
   const resolved = resolveGoals(dataset, request);
   request = resolved.request;
   const branches = [{}];
-  let best = null;
+  const recipes = new Map(dataset.recipes.map(recipe => [recipe.id, recipe]));
+  let best = null, lowerBound = null, completeSearch = true;
   let visited = 0;
   let lastExclusions = [];
-  while (branches.length) {
-    if (Date.now() >= deadline) return {status: 'limit', optimal: false, incumbent: best, branches: visited};
-    const choices = branches.pop();
-    const model = compileFactory(dataset, request, choices);
-    if (Date.now() >= deadline) return {status: 'limit', phase: 'model', optimal: false, incumbent: best, branches: visited};
-    lastExclusions = model.exclusions;
-    const solution = highs.solve(model.text, {output_flag: false, time_limit: Math.max(0.01, (deadline - Date.now()) / 1000),
-      mip_rel_gap: 0, mip_feasibility_tolerance: 1e-9, primal_feasibility_tolerance: 1e-9});
-    visited++;
-    if (solution.Status === 'Infeasible') continue;
-    if (solution.Status !== 'Optimal') return {status: 'limit', solver_status: solution.Status, optimal: false, incumbent: best, branches: visited};
-    if (best && solution.ObjectiveValue >= best.objective - 1e-9) continue;
-    const decoded = decode(model, solution);
-    const active = new Map();
-    for (const line of decoded.lines.filter(line => line.operations_per_second > 1e-9)) {
-      if (!active.has(line.primary)) active.set(line.primary, new Set());
-      active.get(line.primary).add(line.recipe);
-    }
-    const primaryOutputs = new Map(model.lines.map(line => [line.recipe.id, line.recipe.primary]));
-    for (const route of decoded.construction?.routes ?? []) {
-      const primary = primaryOutputs.get(route.recipe);
-      if (!active.has(primary)) active.set(primary, new Set());
-      active.get(primary).add(route.recipe);
-    }
-    const conflict = request.single_primary_route === false ? null : [...active].find(([resource, recipes]) => resource !== ENERGY && recipes.size > 1);
-    if (conflict) {
-      // Branch over every available route, including routes absent from this relaxation's solution.
-      for (const recipe of model.routeCandidates.get(conflict[0])) branches.push({...choices, [conflict[0]]: recipe});
-    } else {
-      best = {...decoded, targets: resolved.targets, objective: solution.ObjectiveValue, exclusions: model.exclusions};
-    }
-  }
-  if (best) {
+  const finish = (status) => {
+    if (!best) return {status, optimal: false, exclusions: lastExclusions, branches: visited};
     attachStructureBills(best, dataset, {allowed_parts: request.available_parts});
     best.startup = startupRequirements(best.lines);
-    return {...best, status: 'optimal', optimal: true, branches: visited};
+    const proven = status === 'optimal' && completeSearch;
+    return {...best, status: proven ? 'optimal' : 'feasible', optimal: proven, branches: visited,
+      optimization: {lower_bound: lowerBound, objective: best.objective,
+        relative_gap: proven ? 0 : lowerBound === null ? null : Math.max(0, (best.objective - lowerBound) / Math.max(1e-12, Math.abs(best.objective))),
+        explanation: proven ? 'The complete search proved this objective.' : 'This plan meets its goals. The search has not proved the lowest cost.'}};
+  };
+  while (branches.length) {
+    if (Date.now() >= deadline) return finish('limit');
+    const choices = branches.pop();
+    const model = compileFactory(dataset, request, choices);
+    if (Date.now() >= deadline) return finish('limit');
+    lastExclusions = model.exclusions;
+    if (!visited && model.lines.length > 2000 && !request.construction) {
+      const seed = findFactorySeed(highs, model, request, deadline);
+      if (seed) {
+        const decoded = decodeFactory(model, seed);
+        const ownership = productionRouteOwnership(decoded, request);
+        if (!ownership.conflict.length) {
+          lowerBound = seed.lower_bound;
+          best = {...decoded, primary_routes: ownership.assignments, targets: resolved.targets, objective: seed.objective,
+            exclusions: model.exclusions, search: {method: 'relaxed_route_repair', attempts: seed.attempts,
+              elapsed_ms: seed.elapsed_ms, temporarily_excluded_recipes: seed.excluded_recipes}};
+          visited = seed.attempts;
+          return finish('limit');
+        }
+      }
+      if (Date.now() >= deadline) return finish('limit');
+    }
+    const solution = runSolver(highs, model.text, {time_limit: Math.max(0.001, (deadline - Date.now()) / 1000)});
+    visited++;
+    if (visited === 1) lowerBound = solution.optimal ? solution.objective : solution.lower_bound;
+    if (solution.status === 'infeasible') continue;
+    if (!solution.feasible) return finish('limit');
+    if (best && solution.objective >= best.objective - 1e-9 && solution.optimal) continue;
+    const decoded = decodeFactory(model, {Columns: Object.fromEntries(Object.entries(solution.columns).map(([name, Primal]) => [name, {Primal}]))});
+    const ownership = productionRouteOwnership(decoded, request);
+    if (ownership.conflict.length) {
+      // Omitting a conflicting route is a heuristic when future consumers could make another coproduct useful.
+      if (ownership.conflict.length < 2 || ownership.conflict.some(id => {
+        const recipe = recipes.get(id);
+        return recipe.outputs.length !== 1 || [...recipe.inputs, ...recipe.configurations.flatMap(value => value.inputs ?? [])]
+          .some(flow => (flow.choices ?? [flow.resource]).includes(recipe.outputs[0].resource) || flow.returns);
+      })) completeSearch = false;
+      for (const id of ownership.conflict) {
+        if (own(choices, id) === false) continue;
+        if (Object.values(request.routes ?? {}).includes(id) || request.goals.some(goal => goal.recipe === id)) continue;
+        branches.push({...choices, [id]: false});
+      }
+    } else if (!best || solution.objective < best.objective) {
+      best = {...decoded, primary_routes: ownership.assignments, targets: resolved.targets,
+        objective: solution.objective, exclusions: model.exclusions};
+    }
+    if (!solution.optimal) return finish('limit');
   }
-  return {status: 'infeasible', optimal: false, exclusions: lastExclusions, branches: visited};
+  return finish(best ? 'optimal' : completeSearch ? 'infeasible' : 'unresolved');
 }

@@ -17,12 +17,14 @@ func _run() -> void:
 	assert(!FileAccess.file_exists("user://jobs/job_2147483647_1.json"))
 	assert(FileAccess.file_exists("user://jobs/keep.json"))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://jobs/keep.json"))
-	var dataset: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/example.json"))
-	var job := {"dataset": dataset, "request": {"goals": [{"resource": "motor", "rate": 1}]}}
+	var dataset: Dictionary = PlannerJson.parse(FileAccess.get_file_as_string("res://data/example.json"))
+	var job := {"dataset": dataset, "request": {"goals": [{"resource": "motor", "rate": 1.0 / 3600.0}]}}
 	var second_service := PlannerComputation.new()
 	root.add_child(second_service)
 	second_service.submit(job.duplicate(true))
 	service.submit(job.duplicate(true))
+	var captured: Dictionary = PlannerJson.parse(FileAccess.get_file_as_string(service._input_path))
+	assert(captured.request.goals[0].rate == job.request.goals[0].rate)
 	assert(service._input_path != second_service._input_path)
 	assert(service._result_path != second_service._result_path)
 	var second_paths := PackedStringArray([second_service._input_path, second_service._result_path])

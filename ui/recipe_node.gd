@@ -23,7 +23,7 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 	summary.text = "%d × %s" % [int(line.machines), PlannerDisplay.machine_name(line.machine, resources)]
 	loadout.text = PlannerDisplay.loadout(line.get("configuration_details", {}), resources)
 	throughput.text = "%s operations/s" % PlannerDisplay.number(line.operations_per_second)
-	power.text = "%s EU/t  ·  %s%% utilized" % [String.num(line.power_eu_per_tick, 2), String.num(line.utilization * 100, 1)]
+	power.text = "%s EU/t  ·  %s%% utilized" % [PlannerDisplay.number(line.power_eu_per_tick), PlannerDisplay.number(line.utilization * 100)]
 	var inputs: Array = line.inputs.duplicate(true)
 	if line.power_eu_per_tick > 0:
 		inputs.append({"resource": "energy:eu", "rate": line.power_eu_per_tick * 20})

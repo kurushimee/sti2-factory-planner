@@ -12,11 +12,13 @@ Give the dataset a stable `identity`, such as `pack-name:version`, and a readabl
 
 All recipe amounts are per operation. Item amounts count items, StaTech fluid amounts use millibuckets, and electricity uses EU. Rates are per second. A game tick is 1/20 second. `eu_per_tick` and idle power use EU/t; `eu_per_operation` uses total EU. Never put a bucket count in a millibucket field. Expected probabilistic amounts may be fractional; mark the recipe with `expected_yields: true` and retain the original probabilities in its source evidence.
 
+Godot boundaries serialize floats with full precision. `PlannerJson.parse` converts small decimal tokens to scientific notation before parsing because the stock parser otherwise spends significant-digit precision on leading fractional zeros. Quoted text is unchanged. The regression includes an exact `1 / 3600` rate through calculation requests and plan persistence. Large finite quantities remain decimal strings when they exceed the numeric range.
+
 ## Recipes and flows
 
 Retained site requirements can use their own resource IDs. For example, `site:live_farm_animal` is a live animal placed above a waste collector. Its configuration lists one in `startup_inputs`, so the build reports the required count without inventing a recurring animal consumption rate. Such a record describes a prerequisite the player must acquire and place; it does not create an animal or prove the site is ready.
 
-Every recipe has a unique `id`, a `primary` resource, `inputs`, `outputs`, and a `configurations` list. The primary resource must appear among its outputs. `name`, `group`, `source_id`, `type`, and `origin` help players inspect and organize the recipe.
+Every recipe has a unique `id`, a `primary` resource, `inputs`, `outputs`, and a `configurations` list. The primary resource must appear among its outputs. It selects the default displayed product and initial goal, not exclusive ownership of every coproduct. `name`, `group`, `source_id`, `type`, and `origin` help players inspect and organize the recipe.
 
 An ordinary flow is `{"resource":"ore","amount":2}`. An input may instead use `{"choices":["oak","birch"],"amount":1}`. Output flows always name one resource. Alternatives share a resource balance and may be pinned by the player. A flow's optional `returns` object maps each chosen input ID to the materials returned per unit of that input. For example, a filled bucket input may return one empty bucket. Do not also add that same return as an unconditional output.
 
@@ -65,7 +67,7 @@ A plan uses `format: "factory-plan"` and `version: 1`. It embeds `dataset`, a ma
 | `disabled_machines`, `disabled_upgrades`, `disabled_recipes` | Explicit exclusions. The settings editor folds machine and upgrade exclusions into its allowed lists. |
 | `obtained_resources` | Previously obtained templates or prerequisite items. |
 | `external` | Explicit supplies: resource ID, optional rate `limit`, objective `cost`, and `firm_capacity` in EU/s for firm external power. |
-| `routes` | Primary resource ID to pinned recipe ID. |
+| `routes` | Resource ID to pinned primary recipe ID. Other recipes may supply that resource as a coproduct while running for another useful output. |
 | `configurations` | Recipe ID to a configuration ID or list of IDs. |
 | `machine_setups` | Recipe ID to concrete `{machine, setup, configuration}` records for compiling saved loadouts. |
 | `ingredients`, `catalysts` | `recipe_id#slot_index` to selected resource ID. Slots are zero-based. |
@@ -75,7 +77,8 @@ A plan uses `format: "factory-plan"` and `version: 1`. It embeds `dataset`, a ma
 | `overhead_eu_per_tick` | Fixed infrastructure consumption. |
 | `weights` | Nonnegative `external`, `machines`, and `energy` objective weights. The machine weight must be positive. |
 | `construction` | Optional construction accounting. Its separate `external` supplies use `resource`, `cost`, and optional finite `quantity`; operating rate limits do not apply. Positive `weight` and `work` default to 1, `materials` to 1,000, and `energy` to 0.000001. `round_batches: true` requires whole batches, purchased items, and verified consumable tools; otherwise quantities are material equivalents. Both modes assume available construction workstations. |
-| `single_primary_route` | Defaults to true; byproducts remain usable. |
+| `single_primary_route` | Defaults to true; each active recipe owns a useful net output, with one owner per resource. Deliberate recipe goals and mixed generation can retain separate setups. |
+| `time_limit_ms` | Calculation budget in milliseconds; defaults to 60,000. A verified limited result is feasible, not necessarily optimal. |
 | `available_dimensions`, `available_biomes` | Optional environmental restrictions. |
 
 `positions` maps recipe/configuration node keys to `[x,y]`. `groups` maps group IDs to `{title, rect:[x,y,width,height]}`. Group membership follows node centers and boundary size, with a stable ID tie-break for overlaps. Resizing a group changes membership without moving nodes.

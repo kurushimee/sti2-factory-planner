@@ -5,6 +5,7 @@ import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
 const root = resolve('builds/web'), artifacts = resolve('.plans/artifacts/workspace');
+const manifest = JSON.parse(await readFile('data/provenance/distribution-manifest.json', 'utf8'));
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
@@ -42,8 +43,8 @@ try {
   await download.saveAs(planPath);
   const plan = JSON.parse(await readFile(planPath, 'utf8'));
   assert.equal(plan.dataset_identity, 'statech-industry-2:2.0.1');
-  assert.equal(plan.dataset.recipes.length, 28981);
-  assert.equal(plan.dataset.resources.length, 12024);
+  assert.equal(plan.dataset.recipes.length, manifest.recipes);
+  assert.equal(plan.dataset.resources.length, manifest.resources);
   assert.equal(plan.dataset.complete, false);
   assert.equal(plan.request.goals.length, 0);
   await page.mouse.click(230, 818, {delay: 100});

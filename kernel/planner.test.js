@@ -16,6 +16,16 @@ function line(result, id) { return result.lines.find(entry => entry.recipe === i
 function supply(result, id) { return result.external.find(entry => entry.resource === id)?.rate ?? 0; }
 function close(actual, expected) { assert(Math.abs(actual - expected) < 1e-6, `${actual} != ${expected}`); }
 
+test('explicit unavailable goal recipes retain the reason for their exclusion', () => {
+  const data = dataset(['crystal', 'site'], [
+    {...recipe('grow', 'crystal', [], [flow('crystal', 1)]), requires_obtained: ['site']},
+  ]);
+  const request = {goals: [{recipe: 'grow', resource: 'crystal', rate: 1}]};
+  assert.throws(() => solveFactory(highs, data, request), /Goal recipe is unavailable: grow.*already obtained/);
+  assert.equal(solveFactory(highs, data, {...request, obtained_resources: ['site']}).status, 'optimal');
+  assert.throws(() => solveFactory(highs, data, {...request, obtained_resources: ['site'], disabled_recipes: ['grow']}), /recipe is disabled/);
+});
+
 test('hot operating points retain fixed fuel losses, whole machines and fuel containers', () => {
   const boiler = recipe('boiler', 'steam', [flow('water', 1 / 16)], [flow('steam', 1)], 100);
   const config = boiler.configurations[0];
@@ -128,7 +138,7 @@ test('replication is excluded and unavailable pins explain the conflict', () => 
   assert.throws(() => solveFactory(highs, data, {...request, routes: {part: 'replicate'}}), /Pinned route is unavailable/);
 });
 
-test('one primary route is enforced without suppressing byproduct supplies', () => {
+test('useful coproducts define route ownership independently of the first output', () => {
   const data = dataset(['raw', 'a', 'b', 'c'], [
     recipe('route_b', 'a', [flow('raw', 1)], [flow('a', 1), flow('b', 1)]),
     recipe('route_c', 'a', [flow('raw', 1)], [flow('a', 1), flow('c', 1)]),
@@ -140,9 +150,50 @@ test('one primary route is enforced without suppressing byproduct supplies', () 
   close(supply(mixed, 'raw'), 2);
   const single = solveFactory(highs, data, request);
   assert.equal(single.status, 'optimal');
-  close(supply(single, 'raw'), 6);
-  assert(single.branches > 1);
-  assert.equal(single.lines.filter(entry => entry.primary === 'a' && entry.operations_per_second > 0).length, 1);
+  close(supply(single, 'raw'), 2);
+  assert.equal(single.branches, 1);
+  assert.deepEqual(new Set(single.primary_routes.map(value => value.resource)), new Set(['b', 'c']));
+});
+
+test('competing single-output routes remain exclusive when each can supply only part of demand', () => {
+  const data = dataset(['ore', 'part'], [recipe('cheap', 'part', [flow('ore', 1)], [flow('part', 1)], 1),
+    recipe('expensive', 'part', [flow('ore', 2)], [flow('part', 1)], 10)]);
+  const request = {goals: [{resource: 'part', rate: 3}], limits: {'cheap:standard': 1}, external: [{resource: 'ore'}]};
+  const mixed = solveFactory(highs, data, {...request, single_primary_route: false});
+  close(supply(mixed, 'ore'), 5);
+  const single = solveFactory(highs, data, request);
+  assert.equal(single.status, 'optimal');
+  close(supply(single, 'ore'), 6);
+  assert.equal(single.lines.length, 1);
+});
+
+test('connected acid-producing steps coexist and explicit coproduct pins still permit useful routes', () => {
+  const data = dataset(['raw', 'acid', 'chloroform', 'plastic'], [
+    recipe('chloroform', 'acid', [flow('raw', 1)], [flow('acid', 2), flow('chloroform', 1)]),
+    recipe('plastic', 'acid', [flow('chloroform', 1)], [flow('acid', 5), flow('plastic', 1)]),
+    recipe('acid', 'acid', [flow('raw', 10)], [flow('acid', 1)]),
+  ]);
+  const result = solveFactory(highs, data, {goals: [{recipe: 'plastic', resource: 'plastic', rate: 1}],
+    routes: {acid: 'acid'}, external: [{resource: 'raw'}]});
+  assert.equal(result.status, 'optimal');
+  assert.deepEqual(new Set(result.lines.map(value => value.recipe)), new Set(['chloroform', 'plastic']));
+  close(supply(result, 'raw'), 1);
+});
+
+test('route repair does not claim optimality when a future consumer could use another coproduct', () => {
+  const consumer = recipe('use_coproduct', 'goal', [flow('coproduct', 1)], [flow('goal', 1)]);
+  consumer.configurations[0].build_cost = 1500;
+  const data = dataset(['ore', 'part', 'coproduct', 'goal'], [
+    recipe('cheap', 'part', [flow('ore', 1)], [flow('part', 1), flow('coproduct', 1)], 1),
+    recipe('expensive', 'part', [flow('ore', 2)], [flow('part', 1)], 10),
+    recipe('direct', 'goal', [flow('ore', 1)], [flow('goal', 1)]), consumer,
+  ]);
+  const result = solveFactory(highs, data, {goals: [{resource: 'part', rate: 3}, {resource: 'goal', rate: 1}],
+    limits: {'cheap:standard': 1}, external: [{resource: 'ore'}]});
+  assert.equal(result.status, 'feasible');
+  assert.equal(result.optimal, false);
+  assert.ok(result.optimization.lower_bound < result.objective);
+  assert.ok(result.optimization.relative_gap > 0);
 });
 
 test('installed limits cannot be hidden by fractional machines', () => {

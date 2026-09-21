@@ -167,8 +167,6 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
   for (let cursor = 0; cursor < queue.length; cursor++) {
     for (const recipe of producers.get(queue[cursor]) ?? []) {
       if (selected.has(recipe.id) || request.disabled_recipes?.includes(recipe.id) || (recipe.replication && !request.replication)) continue;
-      const pin = own(request.routes, recipe.primary);
-      if (pin && pin !== recipe.id) continue;
       checkBudget();
       const configured = configureRecipe(recipe, dataset, request, false, checkBudget, capacityCache, structures);
       selected.set(recipe.id, configured);

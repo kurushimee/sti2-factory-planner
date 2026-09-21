@@ -23,8 +23,7 @@ export function resolveGoals(dataset, request) {
       recipe = recipes.get(goal.recipe);
       if (!recipe) throw new Error(`Unknown goal recipe: ${goal.recipe}.`);
       if (!recipe.outputs.some(output => output.resource === goal.resource && output.amount > 0)) throw new Error(`The goal recipe does not produce ${goal.resource}.`);
-      if (Object.hasOwn(routes, recipe.primary) && routes[recipe.primary] !== recipe.id) throw new Error(`Conflicting recipe selections for ${recipe.primary}.`);
-      routes[recipe.primary] = recipe.id;
+      if (Object.hasOwn(routes, goal.resource) && routes[goal.resource] !== recipe.id) throw new Error(`Conflicting recipe selections for ${goal.resource}.`);
     }
     if (kind === 'capacity') {
       if (!recipe) throw new Error('A capacity goal needs a recipe.');

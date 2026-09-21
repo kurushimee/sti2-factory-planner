@@ -81,7 +81,7 @@ test('construction rejects missing bills and reports the affected configuration'
   assert.ok(result.exclusions.some(value => value.configuration === 'unknown' && value.reason.includes('no verified construction bill')));
 });
 
-test('the primary-route rule covers construction work as well as sustained production', () => {
+test('construction can use separate primary products from two coproduct routes', () => {
   const data = dataset([
     recipe('production', [], [flow('product')], [config('machine', 2, [flow('case'), flow('coil')])]),
     recipe('left', [flow('ore')], [flow('case', 2), flow('coil', 0.1)]),
@@ -89,8 +89,8 @@ test('the primary-route rule covers construction work as well as sustained produ
   ]);
   const single = solveFactory(highs, data, request);
   assert.equal(single.status, 'optimal');
-  assert.equal(single.construction.routes.length, 1);
-  close(single.construction.material_cost, 10);
+  assert.equal(single.construction.routes.length, 2);
+  close(single.construction.material_cost, 2 / 2.1);
   const mixed = solveFactory(highs, data, {...request, single_primary_route: false});
   assert.equal(mixed.construction.routes.length, 2);
   close(mixed.construction.material_cost, 2 / 2.1);

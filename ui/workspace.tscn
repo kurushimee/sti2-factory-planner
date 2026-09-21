@@ -213,7 +213,7 @@ text = "Settings"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Inspect factory power, fuel-chain consumption, and reserve capacity."
+tooltip_text = "Inspect the optimization result, factory power, fuel-chain consumption, and reserve capacity."
 alignment = 2
 text = "No goals yet"
 

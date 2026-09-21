@@ -1,0 +1,1040 @@
+{
+  "scope": "The Java probe checks membership for every loaded state of each matching block before and after projection. This comparison also checks every previously captured accepted pattern.",
+  "rules": [
+    {
+      "rule": 0,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "e957c0b0011928efa2903b4be184b9c2b937f787824fe3f56549e91824b62ff0"
+    },
+    {
+      "rule": 1,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "b1a525e477a485c29b33afacc72b02b3cf1a6aac678f53462d9d0e7ee6a5b75e"
+    },
+    {
+      "rule": 2,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "8f8908bd24dfbfb0b778e965d8f1c55e2bca7c35c9f45d78a4b8ba815e79969c"
+    },
+    {
+      "rule": 3,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "80c51750700df2e294e88f34f62714f70eecadfb6d12a8f3cf96ce36e002dab3"
+    },
+    {
+      "rule": 4,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "d7874171fc990c4322f92cd39dc3c83d4281ab51b075ad44774b04fc45e9bc55"
+    },
+    {
+      "rule": 5,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "e86eaca1e459ad339a55d8f04abebf0d90ef78c23f8819563c5b78309bcb6ff4"
+    },
+    {
+      "rule": 6,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "d2e7448dbb5087de6821d082305f5644fd3bc8bcf66e1377b2472d98dd5479ce"
+    },
+    {
+      "rule": 7,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "03cca13d65c1145195fa0a2bfa7fb2ff8c9f76f9bd117d0175a37a90e0890b42"
+    },
+    {
+      "rule": 8,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "cfee175d561aabc99eac9981484c9ec1e18fd1c6cd040d1867e7ae13915079be"
+    },
+    {
+      "rule": 9,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "db2e2364a98845d1d9d6ecc1b3e5ddabf45c4edd8b2b0e5d945371b0dbe914f8"
+    },
+    {
+      "rule": 10,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "07651c55e9aa5fcdfb5417f4b417b7fdd0e8cf5750cf5026628b21aaa89e9072"
+    },
+    {
+      "rule": 11,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "4d2c173094cf7f7f5c2d0d0ed38a691b0603f755d9644d4985dc6f41f864dc4e"
+    },
+    {
+      "rule": 12,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$4",
+      "old_patterns": 2,
+      "patterns": 1,
+      "matching_loaded_states": 2,
+      "checked_loaded_states": 6,
+      "sha256": "bbef3e5b9b6e544a99b07be3fbbd56723aa06aeab87ac5dc7a75682f65cecab4"
+    },
+    {
+      "rule": 13,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "18016c1114a00a90bbf5fa677a850604bc76a72800e2b167960558c50eeecd5f"
+    },
+    {
+      "rule": 14,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "cc3b0432e096f63df75b7226b80cfdc81294b0f4ca667b3cf8fd5e45dbde5d67"
+    },
+    {
+      "rule": 15,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "199a8f4ed98adcb960feef583f77a2d15d0f04f1bba35fbae75a2a05c9a0b87e"
+    },
+    {
+      "rule": 16,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "c0f58ce3b05d6a2eb79fc962b8613c16faeee2aeb0dd10f664ed9b1d8d9c0981"
+    },
+    {
+      "rule": 17,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "5fa891ae2b866178091fa5751a225a302106ce25ed869dc57d7202ca1d30ffdf"
+    },
+    {
+      "rule": 18,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "a89d91684e01c3b80b9c1143747ee120d3448bd8a16bf1114e69e25ac6326c70"
+    },
+    {
+      "rule": 19,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$2",
+      "old_patterns": 65,
+      "patterns": 65,
+      "matching_loaded_states": 97,
+      "checked_loaded_states": 97,
+      "sha256": "4cd6e4bdca2da5fc86884103d23c0660dc98617bb82e248f41a3f34850c5feca"
+    },
+    {
+      "rule": 20,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "b6fd9e7f4f9852e3e9f82ddc9c813a3afa638df059540a9c9112559b0fe9b4ab"
+    },
+    {
+      "rule": 21,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "5c907d3238724cb8d8e01afa2aa21239a9e70e24afa4e0fffbf5fe7f75b7ee81"
+    },
+    {
+      "rule": 22,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "8077eed1433e6a156efe6626fe487618415b790ebb2b72d76f0f0c09a1e07f67"
+    },
+    {
+      "rule": 23,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "94305fd1100c5034035b8db9c55177f1121bd085799b109e52c941d32ae3d783"
+    },
+    {
+      "rule": 24,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 2,
+      "checked_loaded_states": 2,
+      "sha256": "f3c51087755ead9754d9ca2feac74421a22440791edf844ed093c89aa0c27023"
+    },
+    {
+      "rule": 25,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "581fc4eee54f31b28aeb6d7296e18035ac8a1969bcf32ea308b6d076c6eb787d"
+    },
+    {
+      "rule": 26,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 3,
+      "checked_loaded_states": 3,
+      "sha256": "8da2cc0069934116853374038ec46090ebe3ae5e16acac43ae9d4a08ce772f59"
+    },
+    {
+      "rule": 27,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "f7ec5c1e48abe5f04fa24fc8d871005da20b1edd5e5aa92d97e6c9da86b43238"
+    },
+    {
+      "rule": 28,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "3fbde95c8d70f25191bb88a712521a016ba0697092ea42169de043eea0c63ee3"
+    },
+    {
+      "rule": 29,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "3b4bb3c7bf0859b1b405e3272ccc6053e284fc8f7600ac968e4dffc5fd3ee235"
+    },
+    {
+      "rule": 30,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "a99669f0f635a8ea6fe48339f6d7f6fc6d5e556bd1b4901d42cdbcd313280820"
+    },
+    {
+      "rule": 31,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 8,
+      "checked_loaded_states": 8,
+      "sha256": "43f8294c3d856eafd7320bd2ee053c6a305cb2da5723ad21e47a33d41a2f4694"
+    },
+    {
+      "rule": 32,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "7011b1369a76fa9d7337b73abe15e054c3cee153e47cd057411193abdedb2d03"
+    },
+    {
+      "rule": 33,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 3,
+      "checked_loaded_states": 3,
+      "sha256": "2f8df2c83dcaac37d7cfe0ffd056d1acefd70d73cfd3302a4359f6951b10ad7d"
+    },
+    {
+      "rule": 34,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 3,
+      "checked_loaded_states": 3,
+      "sha256": "5db8bc7f80c9e4ce91ea05139354531e544815420f6e972b066e3e5ec3f8b1e0"
+    },
+    {
+      "rule": 35,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "735291a08b01c11fc9593a6c0c66e554017bb92fbf400df20356e627d180d2ac"
+    },
+    {
+      "rule": 36,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "974d4db825005fc73505eebc49cb590d54d53f63ec8ebcf90e5444aaedb6b01d"
+    },
+    {
+      "rule": 37,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "e316f16111273023e2bd2274a184f2c5abf059c2491090f3c24cf6e93cc93937"
+    },
+    {
+      "rule": 38,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "bb16bfae9bbdc1d58656e80e9bd5cdb945799f5cee076d0cee4c0766d51defcf"
+    },
+    {
+      "rule": 39,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "f70063a39a0f68816c307e9846238a53e47db1149101d5008848953050f8aa75"
+    },
+    {
+      "rule": 40,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 2,
+      "checked_loaded_states": 2,
+      "sha256": "4366446f52e071ae06307bb86d7a5093825c159962fb899148a35c767a382bb1"
+    },
+    {
+      "rule": 41,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "be580114696eeae7968fe0f3bf4fdb33a47910dc3b6feaf8a6f25a4d0f96a70a"
+    },
+    {
+      "rule": 42,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 28,
+      "checked_loaded_states": 28,
+      "sha256": "1082be6271c3e601deff3f273508afae0edeeb63a43c6965da466905b95c2a13"
+    },
+    {
+      "rule": 43,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "28c069b35914ef5319b95f7c243633ce41dc5d425b80adbde689f1664a4e820f"
+    },
+    {
+      "rule": 44,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 3,
+      "checked_loaded_states": 3,
+      "sha256": "b2fd722f750f52bb5eb4a6720528120ee98ffbfd7b1ba7fa017f0fa65eea951a"
+    },
+    {
+      "rule": 45,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "d834eabb92c4499efa6964a18f39e5f56bb1ddc4a7d9d03487b6b4512915aa65"
+    },
+    {
+      "rule": 46,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 3,
+      "checked_loaded_states": 3,
+      "sha256": "f25c38a0e84891dbd80ff9f0e5005787b4e7ea08e8cfa60a3ed73a8c4df550cc"
+    },
+    {
+      "rule": 47,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "72ad6a2b61f1f68b0199bada9752f5e550b195c0ede73241b60caff3279ace20"
+    },
+    {
+      "rule": 48,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 6,
+      "checked_loaded_states": 6,
+      "sha256": "b322bed25b1fa90888cde4d91f2ebd07ab774586497556eccfd0a60dd962ddcc"
+    },
+    {
+      "rule": 49,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "c525ecc65cd8d88657575f47e2effc8b68f03c316b285da54ea4e700fd794f2e"
+    },
+    {
+      "rule": 50,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "1f16bf9e29d388724d911759d10221cb26225e7e599b32995536a16a515b3afe"
+    },
+    {
+      "rule": 51,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "cb9d6c2939c7b4268729ec8da03a4bee188dd382ba9d9db8b7fa2839cef8d59f"
+    },
+    {
+      "rule": 52,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 80,
+      "checked_loaded_states": 80,
+      "sha256": "cab83f1518b7f384c96bbe33b6aef9024682bf22ff5bbe66c1d70885e68f8856"
+    },
+    {
+      "rule": 53,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "d37ea3cd0f872d3a4cbe28dde949017acb944090af1910e5dba1f12d6ad6f223"
+    },
+    {
+      "rule": 54,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 12,
+      "checked_loaded_states": 12,
+      "sha256": "d2c0dd89dbdaaccd4dd378c8054c4e445fbbfbb848b2494c94c1435d106e2177"
+    },
+    {
+      "rule": 55,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 324,
+      "checked_loaded_states": 324,
+      "sha256": "dce98b85fb215a324d9d4170813c179d727c8d3cb884a8c5e590c25c00796575"
+    },
+    {
+      "rule": 56,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 32,
+      "checked_loaded_states": 32,
+      "sha256": "9d583fd0644ff45bacb8d6210347a336059fc542fd9c6db806382629036b417b"
+    },
+    {
+      "rule": 57,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 24,
+      "checked_loaded_states": 24,
+      "sha256": "2bd5581063b9d778cdbaaf685eebb87db297a5a99dc699f695bd7ae884cc84c2"
+    },
+    {
+      "rule": 58,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 32,
+      "checked_loaded_states": 32,
+      "sha256": "72f5c3a8870fd2b8079809a029defa6c0ec9db4d85308e11063d0776f6837c73"
+    },
+    {
+      "rule": 59,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "52c9f7f1ca896fa2c80b15377c9736c29cc9dd2c9aae280acf7d0e1a24ef1dc2"
+    },
+    {
+      "rule": 60,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "3c5ed3f1e5774743de7687d331c2f2637afd030460eed7c7b969c7b0f08cba57"
+    },
+    {
+      "rule": 61,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "abc5ba2b282bad24f000565e863106b57d746de7aa9b22c49a4c0da065c82394"
+    },
+    {
+      "rule": 62,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "73caa69fbb71a2f6c4799fa9017e80f3e7a507b00ae8dc1a2ce6f6879903eea9"
+    },
+    {
+      "rule": 63,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "4f24ff8ca14811029ca4a3e82c1fcaaa91caee845317b4331d851a8bb5c8964f"
+    },
+    {
+      "rule": 64,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 12,
+      "checked_loaded_states": 12,
+      "sha256": "393446adc8e5787dfe20b6dc72b10f06cf1dbbea2ce2ef21dfad4af8cf25d0d8"
+    },
+    {
+      "rule": 65,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "553da7df4a3f21729ead8c70b1edec26570a7ae9d01b637a4d2ddc22a6e89937"
+    },
+    {
+      "rule": 66,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "bf81a2551e1a62a76ab9fa60c448c94a9f57fc155f12428051e872ed9af43553"
+    },
+    {
+      "rule": 70,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "2f091325809d9f629c8c83f37ff118c9a9fb729593db1c7768e3486d8fec95d6"
+    },
+    {
+      "rule": 71,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "e9de63b40ccc5c02950600e3fdf4c50715ba50eb4b4b307393fc5b5f5c698e9a"
+    },
+    {
+      "rule": 72,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "ad210692d9dc084e12ab0cfe0a3aa54438dc452340fa5f6f59426e1f2965820d"
+    },
+    {
+      "rule": 73,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "d88457b22cb0acc488c382b3aec7fa865655c2393d0b0b25bcf5e0b5af8aca52"
+    },
+    {
+      "rule": 74,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "d95b714b56e053af1ce40e8ebd604a7ca1388019441d2f311f25de4f42060fb0"
+    },
+    {
+      "rule": 75,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "4d132993326df16e2e095bfe9b4f727bda0ea21514cc42ca9cd0750d0094a256"
+    },
+    {
+      "rule": 76,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "e283fce55d3baa4f3a82ba1d86ef23b702397bff391d1c640f0309c68df93213"
+    },
+    {
+      "rule": 77,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "8a6003e33a6282178570933fb80f579b6ea4ca1cfce17cef5e2299a86fe87586"
+    },
+    {
+      "rule": 78,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "3f893b30424c75fd5644b60da290fb2054502292af15fee55eefef38f220253e"
+    },
+    {
+      "rule": 79,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "5774f5070bb0757f61d91310f73b3f0052c01bb576fd6de184e46602957f92e6"
+    },
+    {
+      "rule": 80,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "13da4ed1d5f6912b19bc3edb737672a07bf78642bed1c2c68d99ee3a81032e68"
+    },
+    {
+      "rule": 81,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "28d1f8a0257c959e1597f4b8ddb2fd315cf0f63277db143cdc3109b100797626"
+    },
+    {
+      "rule": 82,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "54894a65630407608bb9909da457ff5f9f9ff874ec0341977d4572605aa718d5"
+    },
+    {
+      "rule": 83,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "f8845c867cd55495c08a89160b917b0a0b8bdad549d8424c12cf802a20e1d8d2"
+    },
+    {
+      "rule": 84,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "388264d93b89966643ece870c918046c4adb73acdc61fd519eb63d75f02662a7"
+    },
+    {
+      "rule": 85,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "fc1d74c9e15951dbddea0ea96b97ae81333226782a8ef9c7231e3e849512d819"
+    },
+    {
+      "rule": 86,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "68810d002eb76ec39459475725c044ffc73098b21e7faaf5e7cf30b7ab5928e8"
+    },
+    {
+      "rule": 87,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "27631beda084d531aae5e8fa3c42a43f6bcb3b39afb0e22f8a22f17bdbf6d17b"
+    },
+    {
+      "rule": 88,
+      "source_class": "net.swedz.tesseract.neoforge.compat.mi.machine.multiblock.member.PredicateSimpleMember",
+      "old_patterns": 120824,
+      "patterns": 2685,
+      "matching_loaded_states": 120960,
+      "checked_loaded_states": 241853,
+      "sha256": "44e50ebc992e63ecf006cc8f7e29d14562c4598663d0798d8b86123702316f28"
+    },
+    {
+      "rule": 89,
+      "source_class": "net.swedz.tesseract.neoforge.compat.mi.machine.multiblock.member.PredicateSimpleMember",
+      "old_patterns": 65,
+      "patterns": 65,
+      "matching_loaded_states": 97,
+      "checked_loaded_states": 97,
+      "sha256": "4cd6e4bdca2da5fc86884103d23c0660dc98617bb82e248f41a3f34850c5feca"
+    },
+    {
+      "rule": 90,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "9d18180f0db207affd013c5c053750444ded7324d265690ce4d67848768eff46"
+    },
+    {
+      "rule": 91,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "1251bdacf9e0732f56144ef75a898d035c9117e98fbdc820edff5060957d8feb"
+    },
+    {
+      "rule": 92,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "da39844050a2cce1fc1d5889772667a3f034e650ff3528c784683e5ba30502ed"
+    },
+    {
+      "rule": 93,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "1492ae5070eddd9118f3469cb6e1a79d72e85934e3f93c1b359c5127f8d75119"
+    },
+    {
+      "rule": 94,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "d343eba5d0013080204f34379f5097e6c73ed7e6b9820ff723bec5c02809582c"
+    },
+    {
+      "rule": 95,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "aa362a356cc834c1c4ec9f0c3d2d254de3fc91b7b506628f59d64f295dc6b062"
+    },
+    {
+      "rule": 96,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "2984905c95b878ee984b1a61fd7dd80adc32dc664e2fa2a53f58f639ce0cbdaf"
+    },
+    {
+      "rule": 97,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$2",
+      "old_patterns": 37,
+      "patterns": 37,
+      "matching_loaded_states": 52,
+      "checked_loaded_states": 52,
+      "sha256": "33e8a35e8e6616652613290fdb17630cc0b3a05939e93f6e297617cc547c9a56"
+    },
+    {
+      "rule": 98,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "b83b4bbbc79d65b38e1971be2ff7690d527e7192ff33c7a18382a88c3fff19a0"
+    },
+    {
+      "rule": 99,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "4b15348ebc826e7b12d8729c887e5518edbd1d1edbff6dcfe7eef152c2da3447"
+    },
+    {
+      "rule": 100,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "f6bf8ab6b120a32c74e9a74ecc3ba1d3c4f459ad393d01a6a299cd8e9916f9fb"
+    },
+    {
+      "rule": 101,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "2a5edd2683a515b4da53920706e2a63893207d357d3ab49f4860b3daa067ebaa"
+    },
+    {
+      "rule": 102,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "02f02ae2f69f15cac30ca4c295d9ca347b1d1dce6aca44e87279d5a94c9b01e9"
+    },
+    {
+      "rule": 103,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 8,
+      "checked_loaded_states": 8,
+      "sha256": "47c28dc2acc49e7f7c2a5c58cea22c095d1ebaae6c8b792e0e49a751edae4497"
+    },
+    {
+      "rule": 104,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "561b4f89e6be1e9d4bbd88ff7bd075e413c52e504b3958ed0a62bbd309b23c25"
+    },
+    {
+      "rule": 105,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "b988ef0fd2f8f3877a7ac5273120e3f2a1df937825d7777f4b69c1d64b01438b"
+    },
+    {
+      "rule": 106,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "f8632e92e05abff041f8770172593c7fe0861849c87b085af45af6c56c120f90"
+    },
+    {
+      "rule": 107,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "bdbccfda1df6a3de40e8eac5ae1f873c49aa3ddc81b6567ea285567f60fd7a81"
+    },
+    {
+      "rule": 108,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "b213ab7e77ec8cff840bb436bd5072fee6d5b99d62371eeb38ee02f81a3168d8"
+    },
+    {
+      "rule": 109,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "9741b26bf3e177c0c1ed98a608354a43e0279006f5ba0ec550bdc1b07662a201"
+    },
+    {
+      "rule": 110,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "6ff94aab31405044aff86c3557426b41f982615c641e656296d1e0f29325fce8"
+    },
+    {
+      "rule": 111,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "52f6511232404a40d73ea05e83ecb74f1fd02b72cf03266f4cf5cc810f4ae7c8"
+    },
+    {
+      "rule": 112,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 6,
+      "checked_loaded_states": 6,
+      "sha256": "97f7b6d4b69a62365ac08e2a38572214466e2e76c6fa72ab10c1cf51d80a61d8"
+    },
+    {
+      "rule": 113,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 4,
+      "checked_loaded_states": 4,
+      "sha256": "36d85759a32bb541f11ed22859688270645a4b73e785a52684be8e30eb93062f"
+    },
+    {
+      "rule": 114,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "8a0857090ff9daa011f85ce6c73faf0a990820c608ef0b327edbae169d4c1e03"
+    },
+    {
+      "rule": 115,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 1,
+      "checked_loaded_states": 1,
+      "sha256": "57b7fbaf8bece026c3f267ecdaf06405260343b4b1df63cefb6f40b7c6f5dda9"
+    },
+    {
+      "rule": 116,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 2,
+      "checked_loaded_states": 2,
+      "sha256": "f3cd38876897f8ba36ae02a86df134749bb30a9023f5d8965df79f6e3e968c11"
+    },
+    {
+      "rule": 117,
+      "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$1",
+      "old_patterns": 1,
+      "patterns": 1,
+      "matching_loaded_states": 10,
+      "checked_loaded_states": 10,
+      "sha256": "dff6ba6f6f9d021d9972122e2107093a03a418453be59c40ac81dd1e947763d7"
+    }
+  ]
+}

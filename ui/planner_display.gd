@@ -23,7 +23,8 @@ static func machine_name(identity: String, resources: Dictionary[String, String]
 
 static func number(value: float) -> String:
 	if value != 0.0 && absf(value) < 0.001:
-		return String.num_scientific(value)
+		var exponent := floori(log(absf(value)) / log(10.0))
+		return String.num(value / pow(10.0, exponent), 3) + "e" + str(exponent)
 	for unit: Array in [[1.0e15, "P"], [1.0e12, "T"], [1.0e9, "G"], [1.0e6, "M"], [1.0e3, "k"]]:
 		if absf(value) >= unit[0]:
 			return String.num(value / unit[0], 3) + " " + unit[1]
@@ -49,6 +50,23 @@ static func loadout(configuration: Dictionary, resources: Dictionary[String, Str
 
 static func markup(value: String) -> String:
 	return value.replace("[", "[lb]")
+
+
+static func optimization_report(result: Dictionary) -> String:
+	var details: Dictionary = result.get("optimization", {})
+	if details.is_empty():
+		return ""
+	var text := "[font_size=20]Calculation result[/font_size]\n\n"
+	text += "Lowest cost proven for the configured priorities.\n" if result.get("optimal", false) else "Feasible plan. The lowest cost has not been proven.\n"
+	text += "Weighted cost: %s\n" % number(details.get("objective", 0.0))
+	if details.get("lower_bound") != null:
+		text += "Proven cost bound: %s\n" % number(details.lower_bound)
+	if !result.get("optimal", false) && details.get("relative_gap") != null:
+		text += "Further search could reduce this cost by at most %s%%.\n" % String.num(details.relative_gap * 100.0, 1)
+	text += "Costs use your resource, machine, upgrade, and energy priorities. They are not item counts.\n"
+	if result.get("search", {}).get("method") == "relaxed_route_repair":
+		text += "This large plan uses a continuous-flow estimate, resolves route conflicts, and rechecks whole-machine capacity and every resource balance. Its route search is a heuristic.\n"
+	return text + "\n"
 
 
 static func power_report(power: Dictionary, resources: Dictionary = {}, construction: Dictionary = {}) -> String:
@@ -98,7 +116,7 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 			text += "None\n"
 		for flow: Dictionary in flows:
 			text += "%s · %s\n" % [markup(resources.get(flow.resource, readable_name(flow.resource))), flow_rate(flow.resource, flow.rate)]
-	text += "\n[b]Capacity and power[/b]\n%s operations/s installed\n%s%% utilization\n%s EU/t sustained\n" % [number(line.capacity_per_second), String.num(line.utilization * 100, 1), number(line.power_eu_per_tick)]
+	text += "\n[b]Capacity and power[/b]\n%s operations/s installed\n%s%% utilization\n%s EU/t sustained\n" % [number(line.capacity_per_second), number(line.utilization * 100), number(line.power_eu_per_tick)]
 	if capacity.has("ticks_per_batch"):
 		var energy_resource: String = configuration.get("capacity_input", {}).get("machine", {}).get("energy_resource", "energy:eu")
 		var energy_unit: String = "EU" if energy_resource == "energy:eu" else "mB " + resources.get(energy_resource, readable_name(energy_resource))

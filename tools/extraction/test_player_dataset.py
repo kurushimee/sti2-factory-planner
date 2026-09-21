@@ -1,9 +1,19 @@
 import unittest
 
-from player_dataset import crafting_adapter, utility_recipes, tool_recipe_variants, boiler_operating_points
+from player_dataset import crafting_adapter, utility_recipes, tool_recipe_variants, boiler_operating_points, default_output
 
 
 class PlayerDatasetTests(unittest.TestCase):
+    def test_chemical_recipe_names_select_the_named_product_after_an_acid_coproduct(self):
+        for product in ("chloroform", "tetrafluoroethylene"):
+            outputs = [{"resource": "fluid:modern_industrialization:hydrochloric_acid"},
+                       {"resource": "fluid:modern_industrialization:" + product}]
+            self.assertEqual(default_output("statech:modern_industrialization/chemical_reactor/" + product, outputs), outputs[1]["resource"])
+        self.assertEqual(default_output("pack:water", [{"resource": "energy:eu"}, {"resource": "fluid:pack:water"}]), "energy:eu")
+        self.assertEqual(default_output("pack:water", [{"resource": "fluid:first:water"}, {"resource": "fluid:second:water"}]), "fluid:first:water")
+        self.assertEqual(default_output("pack:crushed_dust", [{"resource": "item:pack:iron"}, {"resource": "item:pack:crushed_dust"}],
+                                        [{"resource": "item:pack:crushed_dust"}]), "item:pack:iron")
+
     def test_fluid_boilers_use_loaded_fuel_units_and_keep_heavy_water_separate(self):
         capture = {"machine_rules": [{"id": "test:boiler", "mechanic": "mi_boiler", "eu_per_burn_tick": 20,
                     "item_fuel_multiplier": 2, "steam_to_water": 16, "max_eu_per_tick": 8}],

@@ -9,7 +9,8 @@ test('capacity goals count recipe outputs rather than treating operations as ite
   const original = {goals: [{kind: 'capacity', recipe: 'cut', configuration: 'saw', resource: 'plate', machines: 4}]};
   const {request} = resolveGoals(dataset, original);
   assert.equal(request.goals[0].rate, 24);
-  assert.equal(request.routes.plate, 'cut');
+  assert.equal(request.recipe_minimum_rates.cut, 8);
+  assert.equal(request.routes.plate, undefined);
   assert.equal(request.configurations.cut, 'saw');
   assert.equal(original.goals[0].rate, undefined);
 });
@@ -28,7 +29,7 @@ test('conflicting goal routes and unavailable capacity setups fail explicitly', 
 test('goal selections preserve prototype-like resource and recipe names', () => {
   const data = {recipes: [{id: '__proto__', primary: '__proto__', outputs: [{resource: '__proto__', amount: 1}], configurations: [{id: 'setup', operations_per_second: 1}]}]};
   const result = resolveGoals(data, {goals: [{kind: 'capacity', recipe: '__proto__', resource: '__proto__', configuration: 'setup', machines: 1}]});
-  assert.equal(result.request.routes.__proto__, '__proto__');
+  assert.equal(result.request.recipe_minimum_rates.__proto__, 1);
   assert.equal(result.request.configurations.__proto__, 'setup');
 });
 test('independent goals for coproducts share the same recipe operations', () => {

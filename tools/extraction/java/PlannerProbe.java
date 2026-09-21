@@ -949,6 +949,60 @@ public final class PlannerProbe {
         return property.getName(value);
     }
 
+    private static JsonObject projectedState(net.minecraft.world.level.block.state.BlockState state,
+            java.util.List<net.minecraft.world.level.block.state.properties.Property<?>> properties) {
+        var result = new JsonObject();
+        for (var property : properties) result.addProperty(property.getName(), stateValue(property, state.getValues().get(property)));
+        return result;
+    }
+
+    private static JsonArray compactStates(net.minecraft.world.level.block.Block block,
+            java.util.List<net.minecraft.world.level.block.state.BlockState> matching) {
+        var possible = block.getStateDefinition().getPossibleStates();
+        if (matching.size() == possible.size()) {
+            var record = new JsonObject();
+            record.addProperty("Name", BuiltInRegistries.BLOCK.getKey(block).toString());
+            record.add("Properties", new JsonObject());
+            var all = new JsonArray();
+            all.add(record);
+            return all;
+        }
+        var accepted = new java.util.HashSet<>(matching);
+        var properties = new java.util.ArrayList<net.minecraft.world.level.block.state.properties.Property<?>>(block.getStateDefinition().getProperties());
+        // A property can disappear only if every loaded state in each remaining partition agrees.
+        for (var candidate : new java.util.ArrayList<>(properties)) {
+            var reduced = new java.util.ArrayList<>(properties);
+            reduced.remove(candidate);
+            var partitions = new java.util.HashMap<String, Boolean>();
+            boolean independent = true;
+            for (var state : possible) {
+                String key = projectedState(state, reduced).toString();
+                boolean matches = accepted.contains(state);
+                Boolean previous = partitions.putIfAbsent(key, matches);
+                if (previous != null && previous.booleanValue() != matches) { independent = false; break; }
+            }
+            if (independent) properties = reduced;
+        }
+        var projections = new java.util.LinkedHashMap<String, JsonObject>();
+        for (var state : matching) {
+            var projected = projectedState(state, properties);
+            projections.putIfAbsent(projected.toString(), projected);
+        }
+        for (var state : possible) {
+            if (projections.containsKey(projectedState(state, properties).toString()) != accepted.contains(state)) {
+                throw new IllegalStateException("State projection changed a loaded predicate: " + state);
+            }
+        }
+        var result = new JsonArray();
+        for (var projected : projections.values()) {
+            var record = new JsonObject();
+            record.addProperty("Name", BuiltInRegistries.BLOCK.getKey(block).toString());
+            record.add("Properties", projected);
+            result.add(record);
+        }
+        return result;
+    }
+
     private static int memberRule(aztech.modern_industrialization.machines.multiblocks.SimpleMember member) {
         return memberRules.computeIfAbsent(member, value -> {
             var rule = new JsonObject();
@@ -960,22 +1014,19 @@ public final class PlannerProbe {
             rule.addProperty("state_only_verified", stateOnly);
             if (stateOnly) {
                 var states = new JsonArray();
+                long matchingCount = 0, checkedCount = 0;
                 for (var block : BuiltInRegistries.BLOCK) {
                     var possible = block.getStateDefinition().getPossibleStates();
                     var matching = possible.stream().filter(state -> value.matchesState(state, null)).toList();
                     if (matching.isEmpty()) continue;
-                    // Omit property restrictions only after every loaded state of this block passes.
-                    boolean allStates = matching.size() == possible.size();
-                    for (var state : allStates ? matching.subList(0, 1) : matching) {
-                        var record = new JsonObject();
-                        record.addProperty("Name", BuiltInRegistries.BLOCK.getKey(block).toString());
-                        var properties = new JsonObject();
-                        if (!allStates) for (var property : state.getValues().entrySet()) properties.addProperty(property.getKey().getName(), stateValue(property.getKey(), property.getValue()));
-                        record.add("Properties", properties);
-                        states.add(record);
-                    }
+                    matchingCount += matching.size();
+                    checkedCount += possible.size();
+                    states.addAll(compactStates(block, matching));
                 }
                 rule.add("matching_states", states);
+                rule.addProperty("matching_state_count", matchingCount);
+                rule.addProperty("projection_checked_state_count", checkedCount);
+                rule.addProperty("projection_verified", true);
             }
             return memberRuleIds.computeIfAbsent(rule.toString(), key -> {
                 int index = shapeMemberRules.size(); shapeMemberRules.add(rule); return index;

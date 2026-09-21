@@ -112,14 +112,14 @@ func _ready() -> void:
 	var dataset_bytes := FileAccess.get_file_as_bytes(dataset_path)
 	if dataset_path.ends_with(".gz"):
 		dataset_bytes = dataset_bytes.decompress_dynamic(128 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
-	if dataset_bytes.is_empty() || !_load_dataset(JSON.parse_string(dataset_bytes.get_string_from_utf8())):
+	if dataset_bytes.is_empty() || !_load_dataset(PlannerJson.parse(dataset_bytes.get_string_from_utf8())):
 		_failed("The bundled dataset could not be read. Import a valid dataset to recover.")
 	if restore_saved_plan && OS.has_feature("web"):
 		JavaScriptBridge.eval("window.plannerBridge.restore()")
 	elif restore_saved_plan && FileAccess.file_exists("user://autosave.json"):
-		var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://autosave.json"))
+		var saved: Variant = PlannerJson.parse(FileAccess.get_file_as_string("user://autosave.json"))
 		if saved is Dictionary && FileAccess.file_exists("user://workspace-view.json"):
-			var view: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://workspace-view.json"))
+			var view: Variant = PlannerJson.parse(FileAccess.get_file_as_string("user://workspace-view.json"))
 			if view is Dictionary && view.get("dataset_identity") == saved.get("dataset_identity") && PlannerDatasetValidation.check_view(view.get("view")).is_empty():
 				saved.view = view.view
 		_restore_plan(saved)
@@ -199,7 +199,7 @@ func _process(_delta: float) -> void:
 	var response: Variant = JavaScriptBridge.eval("window.plannerBridge.pollFile()")
 	if !(response is String) || response.is_empty():
 		return
-	var event: Dictionary = JSON.parse_string(response)
+	var event: Dictionary = PlannerJson.parse(response)
 	match event.kind:
 		"json":
 			_import_json(event.value)
@@ -417,12 +417,13 @@ func _calculated(result: Dictionary) -> void:
 		if !goals.is_empty() || apply_empty || replace_infrastructure:
 			_recalculate()
 		return
-	if result.get("status") != "optimal":
+	if result.get("status") not in ["optimal", "feasible"]:
 		_failed("The goals could not be solved (%s). Check available routes and supplies. The previous graph is preserved." % result.get("status", "unknown"))
 		return
 	_last_result.assign(result)
 	_render_plan(result)
-	status.text = "Plan updated. Shared demand and generation support are included."
+	status.text = "Plan updated. Shared demand and generation support are included." if result.get("optimal", false) else "Feasible plan · lowest cost not yet proven."
+	status.tooltip_text = "Open Plan details to inspect the search result, cost bound, and power balance."
 	_autosave()
 	if "--capture" in OS.get_cmdline_user_args() || "--capture-existing" in OS.get_cmdline_user_args():
 		await get_tree().create_timer(0.5).timeout
@@ -468,7 +469,7 @@ func _render_plan(result: Dictionary) -> void:
 		var source: PlannerRecipeNode = by_key[connection.source]
 		var destination: PlannerRecipeNode = by_key[connection.destination]
 		graph.connect_node(source.name, source.output_ports[connection.resource], destination.name, destination.input_ports[connection.resource])
-	%Summary.text = "%d %s  ·  Power details" % [machine_count, "machine" if machine_count == 1 else "machines"]
+	%Summary.text = "%d %s  ·  Plan details" % [machine_count, "machine" if machine_count == 1 else "machines"]
 	_rendering = false
 	_restore_groups()
 	_settle_node_sizes.call_deferred()
@@ -491,7 +492,7 @@ func _settle_node_sizes() -> void:
 		node.reset_size()
 	if _initial_layout && !_nodes.is_empty():
 		_initial_layout = false
-		_apply_layout()
+		_apply_layout(false)
 	elif !_unplaced.is_empty():
 		_place_new_nodes()
 	if !_pending_view.is_empty():
@@ -520,12 +521,15 @@ func _select_node(node: Node) -> void:
 	%EditGoal.disabled = false
 	var line: Dictionary = node.allocation
 	inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
+	for route: Dictionary in _last_result.get("primary_routes", []):
+		if route.recipe == line.recipe:
+			inspector.text += "\nPrimary supply: %s. Other useful outputs are credited across the factory.\n" % PlannerDisplay.markup(_resources.get(route.resource, route.resource))
 	%RemoveGoal.text = "Remove selected goal"
 	%RemoveGoal.disabled = !_request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == _selected)
 
 
 func _show_power() -> void:
-	inspector.text = PlannerDisplay.power_report(_last_result.get("power", {}), _resources, _last_result.get("construction", {}))
+	inspector.text = PlannerDisplay.optimization_report(_last_result) + PlannerDisplay.power_report(_last_result.get("power", {}), _resources, _last_result.get("construction", {}))
 	inspector.scroll_to_line(0)
 	%EditGoal.disabled = true
 	%RemoveGoal.disabled = true
@@ -537,7 +541,7 @@ func _arrange() -> void:
 	_apply_layout()
 
 
-func _apply_layout() -> void:
+func _apply_layout(announce: bool = true) -> void:
 	var entries: Array[PlannerGraphLayout.Entry] = []
 	for node: PlannerRecipeNode in _nodes.values():
 		var recipe: Dictionary = _recipes[node.recipe_id]
@@ -562,7 +566,8 @@ func _apply_layout() -> void:
 		graph.scroll_offset = bounds.position * graph.zoom - Vector2(30, 55)
 	_unplaced.clear()
 	_save_positions()
-	status.text = "Recipes arranged into production groups. Drag nodes and groups to adjust the layout."
+	if announce:
+		status.text = "Recipes arranged into production groups. Drag nodes and groups to adjust the layout."
 
 
 func _place_new_nodes() -> void:
@@ -729,10 +734,10 @@ func _restore_plan(value: Variant) -> void:
 
 func _autosave() -> void:
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.plannerBridge.save(%s)" % JSON.stringify(_snapshot()))
+		JavaScriptBridge.eval("window.plannerBridge.save(%s)" % JSON.stringify(_snapshot(), "", true, true))
 		return
 	var file := FileAccess.open("user://autosave.json", FileAccess.WRITE)
-	file.store_string(JSON.stringify(_snapshot()))
+	file.store_string(JSON.stringify(_snapshot(), "", true, true))
 	file.close()
 	_save_view()
 
@@ -746,10 +751,10 @@ func _save_view() -> void:
 		return
 	var record := {"dataset_identity": _dataset.get("identity", "custom"), "view": _view_snapshot()}
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.plannerBridge.saveView(%s)" % JSON.stringify(record))
+		JavaScriptBridge.eval("window.plannerBridge.saveView(%s)" % JSON.stringify(record, "", true, true))
 	else:
 		var file := FileAccess.open("user://workspace-view.json", FileAccess.WRITE)
-		file.store_string(JSON.stringify(record))
+		file.store_string(JSON.stringify(record, "", true, true))
 		file.close()
 
 
@@ -764,7 +769,7 @@ func _choose_import() -> void:
 
 func _choose_export() -> void:
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.plannerBridge.download(%s)" % JSON.stringify(_snapshot()))
+		JavaScriptBridge.eval("window.plannerBridge.download(%s)" % JSON.stringify(_snapshot(), "", true, true))
 		return
 	_file_action = "export"
 	files.file_mode = FileDialog.FILE_MODE_SAVE_FILE
@@ -775,12 +780,12 @@ func _choose_export() -> void:
 func _file_selected(path: String) -> void:
 	if _file_action == "export":
 		var file := FileAccess.open(path, FileAccess.WRITE)
-		file.store_string(JSON.stringify(_snapshot(), "  "))
+		file.store_string(JSON.stringify(_snapshot(), "  ", true, true))
 		status.text = "Plan exported."
 	elif path.get_extension().to_lower() == "zip":
 		_import_world(path)
 	else:
-		_import_json(JSON.parse_string(FileAccess.get_file_as_string(path)))
+		_import_json(PlannerJson.parse(FileAccess.get_file_as_string(path)))
 
 
 func _import_world(path: String) -> void:

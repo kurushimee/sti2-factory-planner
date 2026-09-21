@@ -219,6 +219,16 @@ def crafting_adapter(entry, record, capture, resources, variants):
     return None
 
 
+def default_output(source_id, outputs, inputs=()):
+    """Choose a display default without assigning exclusive ownership of coproducts."""
+    if any(flow["resource"] == "energy:eu" for flow in outputs):
+        return "energy:eu"
+    leaf = source_id.rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+    consumed = {resource for flow in inputs for resource in flow.get("choices", [flow.get("resource")])}
+    matches = {flow["resource"] for flow in outputs if flow["resource"].rsplit(":", 1)[-1] == leaf and flow["resource"] not in consumed}
+    return next(iter(matches)) if len(matches) == 1 else outputs[0]["resource"]
+
+
 def build_dataset(capture):
     resource_index = {entry["id"]: entry for entry in capture["resources"]}
     variants = {}
@@ -256,7 +266,7 @@ def build_dataset(capture):
         if not outputs:
             unsupported.append({**record, "reason": "The recipe has no positive material output."})
             continue
-        primary = outputs[0]["resource"]
+        primary = default_output(entry["source_id"], outputs, inputs)
         record.update(name=names[primary], primary=primary, inputs=inputs, outputs=outputs,
                       configurations=[], catalysts=catalysts, conditions=entry.get("conditions", []),
                       expected_yields=any(flow["probability"] not in (0, 1) for flow in entry["inputs"] + entry["outputs"]))
