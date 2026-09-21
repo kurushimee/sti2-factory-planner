@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {zipSync, gzipSync} from 'fflate';
 import {inspectWorld} from '../kernel/world.js';
+import {readDataset} from './read_dataset.mjs';
 
 const root = new URL('../', import.meta.url);
 const dataset = {format: 1, resources: ['ore', 'plate', 'fuel', 'steam'].map(id => ({id})), recipes: [{
@@ -22,8 +23,8 @@ const request = {goals: [{resource: 'plate', rate: 14}], external: [{resource: '
 const expected = solveFactory(await loadHighs(), dataset, request);
 const bundle = await build({entryPoints: ['kernel/world-worker.js'], bundle: true, write: false, format: 'esm', platform: 'browser'});
 const [worldPath, machinesPath] = process.argv.slice(2);
-const worldBytes = worldPath ? new Uint8Array(await readFile(worldPath)) : zipSync({'test/level.dat': gzipSync(Uint8Array.from([10, 0, 0, 0]))});
-const worldDataset = machinesPath ? JSON.parse(await readFile(machinesPath, 'utf8')) : {machines: []};
+const worldBytes = worldPath && worldPath !== '-' ? new Uint8Array(await readFile(worldPath)) : zipSync({'test/level.dat': gzipSync(Uint8Array.from([10, 0, 0, 0]))});
+const worldDataset = machinesPath ? await readDataset(machinesPath) : {machines: []};
 const expectedWorld = inspectWorld(worldBytes, worldDataset);
 const server = createServer(async (incoming, response) => {
   try {

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://ui/workspace.gd" id="1"]
 [ext_resource type="Theme" path="res://ui/theme.tres" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://ui/feedback.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://ui/goal_editor.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://ui/factory_settings.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://ui/about.tscn" id="11"]
 
 [node name="Workspace" type="Control"]
 layout_mode = 3
@@ -277,6 +278,12 @@ size_flags_horizontal = 3
 text = "Ready"
 text_overrun_behavior = 3
 
+[node name="About" type="Button" parent="Margin/Layout/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "About · Unofficial Minecraft companion"
+tooltip_text = "Not approved by or associated with Mojang or Microsoft. Read attribution and licenses."
+
 [node name="Sounds" type="CheckButton" parent="Margin/Layout/StatusRow"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -311,6 +318,9 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="FactorySettings" parent="." instance=ExtResource("10")]
+unique_name_in_owner = true
+
+[node name="AboutDialog" parent="." instance=ExtResource("11")]
 unique_name_in_owner = true
 
 [node name="ViewSaveDelay" type="Timer" parent="."]

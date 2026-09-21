@@ -1,12 +1,14 @@
 # STI2 Factory Planner
 
-This project is under development. The desktop and browser workspace runs a fictional example dataset; the complete StaTech dataset and planning features are still in progress. Development exports are not a finished release. [Issue #2](https://github.com/kurushimee/sti2-factory-planner/issues/2) tracks the complete delivery.
+This project is under development. The desktop and browser workspace loads the bundled StaTech Industry 2.0.1 catalog. It currently contains 28,981 planning routes and 12,024 resources, including generated utility routes. Required process adapters and planning features are still in progress, so the catalog remains marked incomplete and development exports are not a finished release. [Issue #2](https://github.com/kurushimee/sti2-factory-planner/issues/2) tracks the complete delivery.
 
 The reference pack is StaTech Industry 2.0.1 for Minecraft 1.21.1 and NeoForge 21.1.250. Runtime extraction tools capture effective recipes, tags, upgrade and fuel values, and machine evidence from an isolated copy of the released server. The recorded capture includes 26,481 recipe/type pairs and 211 machine probes. This evidence is not yet a complete normalized planner dataset.
 
 The calculation kernel uses the same HiGHS WebAssembly build in Node and a browser Worker. The Godot workspace supports goals, resource connections, inspection, movable and resizable groups, undo/redo, and portable plans. The world reader recovers tested MI configuration and both AE2 provider forms, but complete production-line reconstruction is unfinished.
 
 See [delivery requirements](docs/delivery.md), [extraction instructions](docs/extraction.md), [kernel behavior and limits](docs/planning-kernel.md), and [Godot tooling](docs/godot_tooling.md). Keep downloaded game files, saves, and extraction instances outside this repository.
+
+The catalog is a compressed JSON file read internally by both builds. Players do not need extraction tools. See [data attribution](data/ATTRIBUTION.md) and [distribution checks](docs/distribution.md) for its contents and source records. This is an unofficial Minecraft companion application, not approved by or associated with Mojang or Microsoft.
 
 Run the current checks from the repository root:
 

@@ -1,8 +1,10 @@
 # Application development
 
-The current workspace is a development application using `data/example.json`, a fictional dataset. It is not the requested StaTech release. Issues #3 and #5 through #8 track the remaining dataset, planning, editing, reconstruction, and verification work.
+The workspace opens the bundled `data/statech-2.0.1.json.gz` catalog. It remains a development application with incomplete process coverage. Issues #3, #5 through #8, and #11 track the remaining data, planning, editing, reconstruction, distribution, and release work. The fictional `data/example.json` remains a small format and regression example.
 
 Open the project with stock Godot 4.7.2 and run `ui/workspace.tscn`. Development desktop calculations use Node 24 and the installed npm dependencies. Released Windows packages include their own Node executable. Browser calculations run in single-threaded Workers; the Godot export also has thread support disabled.
+
+The footer About button opens dataset coverage, source attribution, mod declarations, engine notices, and bundled license texts. The dialog supports keyboard and gamepad focus, text selection, and Escape to close. A native development run can select the fictional example with `-- --example`; the browser equivalent is `?dataset=example`. Saved plans still restore their own dataset.
 
 The interface uses charcoal surfaces, copper focus accents, teal material flows, and Inter typography. The font is distributed under the included SIL Open Font License in `ui/fonts/OFL.txt`; its source is Google Fonts' `ofl/inter` directory. `tools/build_theme.py` generates the shared theme. The original SVG mark represents connected production nodes. Motion is limited to a short graph update fade, with a reduced-motion control.
 
@@ -26,6 +28,8 @@ Before publishing, the complete dataset, third-party notices, runtime packaging,
 
 Run `npm test`, the extraction Python tests, and `godot --headless --path . --script tools/test_data.gd` after importing with the documented engine. `node tools/verify_kernel_browser.mjs` compares the shared solver and archive reader across Node and Chromium.
 
+`python tools/verify_distribution.py` checks the bundled catalog and provenance hashes. `node tools/verify_real_catalog.mjs data/statech-2.0.1.json.gz` checks captured arithmetic without private extraction files. `tools/test_bundled_data.gd` checks the native default catalog and About dialog; a rendered run writes captures at 1440 and 1280 pixels wide. After exporting, `node tools/verify_bundled_browser.mjs` checks the default catalog in an embedded browser, and `node tools/verify_desktop.mjs` checks the Windows build with an empty PATH and isolated APPDATA. The desktop check uses `--capture-existing` to capture its restored test plan; ordinary `--capture` still selects the fictional example.
+
 After exporting the browser application, run `node tools/verify_app_browser.mjs`. It operates the real canvas controls inside a cross-origin iframe and checks goal creation, group movement, boundary resizing without node movement, portable plan import, undo/redo, malformed-file recovery, download, preferences, and persistence across reload. Optional arguments `<world.zip> <machines.json> <player-catalog.json>` exercise the actual world ZIP through the application's file picker and reconstruction with the real catalog. The fixture remains private.
 
 Rendered captures are saved under `.plans/artifacts/workspace/`. The native `-- --capture --capture-path=<absolute-png-path>` development option calculates the example motor goal and captures the rendered viewport. A Windows export was checked with an empty PATH and isolated APPDATA to establish that it used its bundled runtime. These checks do not establish full StaTech correctness or completed world reconstruction.
@@ -48,4 +52,4 @@ Initial plans arrange recipes into production groups. Within each group, materia
 
 The imported-factory dialog searches the full machine and recipe lists while displaying 150 entries per page. Changing pages preserves staged corrections; Cancel discards them. Run `tools/test_world_review.gd`, `tools/test_graph_layout.gd`, and `tools/test_groups.gd` with the headless engine for large-list, cyclic-layout, and group-editing regressions.
 
-The selected-node inspector lists build requirements per installed machine. Supported multiblock bills include casings, coils, and sized hatches; incomplete structure adapters include a reason. The native real-catalog check is `tools/test_structure_bill.gd -- --catalog=<catalog.json>`. Hatch material costs and progression limits remain separate unfinished work.
+The selected-node inspector lists build requirements per installed machine. Supported multiblock bills include casings, coils, and sized hatches; incomplete structure adapters include a reason. The native real-catalog check is `tools/test_structure_bill.gd -- --catalog=<catalog.json>`. Factory settings and progression presets restrict available hatches. Material-cost optimization remains unfinished.

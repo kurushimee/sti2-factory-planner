@@ -14,6 +14,9 @@ signal layout_settled
 
 @export var recipe_scene: PackedScene
 @export var group_scene: PackedScene
+@export_file var default_dataset_path := "res://data/statech-2.0.1.json.gz"
+
+var restore_saved_plan := true
 
 var _dataset: Dictionary[String, Variant] = {}
 var _request: Dictionary[String, Variant] = {"goals": [], "replication": false}
@@ -46,7 +49,7 @@ const RECIPE_PAGE_SIZE := 150
 
 func _ready() -> void:
 	OS.low_processor_usage_mode = true
-	if "--capture" in OS.get_cmdline_user_args():
+	if "--capture" in OS.get_cmdline_user_args() || "--capture-existing" in OS.get_cmdline_user_args():
 		OS.low_processor_usage_mode = false
 	computation.completed.connect(_calculated)
 	computation.failed.connect(_failed)
@@ -89,6 +92,10 @@ func _ready() -> void:
 	%Sounds.toggled.connect(func(enabled: bool) -> void: %Feedback.enabled = enabled; _autosave())
 	%ReducedMotion.toggled.connect(func(_enabled: bool) -> void: _autosave())
 	%Feedback.bind_controls(self)
+	%About.pressed.connect(func() -> void: %AboutDialog.open_about(_dataset, %ReducedMotion.button_pressed))
+	%AboutDialog.visibility_changed.connect(func() -> void:
+		if !%AboutDialog.visible: %About.grab_focus()
+	)
 	%ViewSaveDelay.timeout.connect(_save_view)
 	_setup_focus()
 	files.file_selected.connect(_file_selected)
@@ -97,10 +104,18 @@ func _ready() -> void:
 	graph.end_node_move.connect(_save_positions)
 	graph.begin_node_move.connect(_remember)
 	graph.delete_nodes_request.connect(_delete_nodes)
-	_load_dataset(JSON.parse_string(FileAccess.get_file_as_string("res://data/example.json")))
+	var example_requested := OS.get_cmdline_user_args().has("--example") || OS.get_cmdline_user_args().has("--capture")
 	if OS.has_feature("web"):
+		example_requested = bool(JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('dataset') === 'example'"))
+	var dataset_path := "res://data/example.json" if example_requested else default_dataset_path
+	var dataset_bytes := FileAccess.get_file_as_bytes(dataset_path)
+	if dataset_path.ends_with(".gz"):
+		dataset_bytes = dataset_bytes.decompress_dynamic(128 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
+	if dataset_bytes.is_empty() || !_load_dataset(JSON.parse_string(dataset_bytes.get_string_from_utf8())):
+		_failed("The bundled dataset could not be read. Import a valid dataset to recover.")
+	if restore_saved_plan && OS.has_feature("web"):
 		JavaScriptBridge.eval("window.plannerBridge.restore()")
-	elif FileAccess.file_exists("user://autosave.json"):
+	elif restore_saved_plan && FileAccess.file_exists("user://autosave.json"):
 		var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://autosave.json"))
 		if saved is Dictionary && FileAccess.file_exists("user://workspace-view.json"):
 			var view: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://workspace-view.json"))
@@ -115,7 +130,7 @@ func _ready() -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
-		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %Sounds, %Cancel]
+		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -402,7 +417,7 @@ func _calculated(result: Dictionary) -> void:
 	_render_plan(result)
 	status.text = "Plan updated. Shared demand and generation support are included."
 	_autosave()
-	if "--capture" in OS.get_cmdline_user_args():
+	if "--capture" in OS.get_cmdline_user_args() || "--capture-existing" in OS.get_cmdline_user_args():
 		await get_tree().create_timer(0.5).timeout
 		await RenderingServer.frame_post_draw
 		var capture_path := "res://.plans/artifacts/workspace/first.png"
@@ -448,7 +463,7 @@ func _render_plan(result: Dictionary) -> void:
 		var source: PlannerRecipeNode = by_key[connection.source]
 		var destination: PlannerRecipeNode = by_key[connection.destination]
 		graph.connect_node(source.name, source.output_ports[connection.resource], destination.name, destination.input_ports[connection.resource])
-	%Summary.text = "%d machines  ·  %s EU/t" % [machine_count, String.num(power_total, 2)]
+	%Summary.text = "%d %s  ·  %s EU/t" % [machine_count, "machine" if machine_count == 1 else "machines", String.num(power_total, 2)]
 	_rendering = false
 	_restore_groups()
 	_settle_node_sizes.call_deferred()

@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "dataset_identity": "statech-industry-2:2.0.1",
+  "complete": false,
+  "file": "statech-2.0.1.json.gz",
+  "compression": "gzip",
+  "bytes": 1719758,
+  "json_bytes": 48530984,
+  "sha256": "36d1d42c3893ea98896290ab63a360137a0ca9020f93e263b0dbad3620c2c060",
+  "json_sha256": "ce1a8bcd3af4457300e5c21ab6d811307ba633f2097ef7d64bb0c549dc440972",
+  "source_catalog_sha256": "6406810b565c5c7afba5a6d03642a403da2b6adad3198afd540fa7f1d09a7825",
+  "audit_sha256": "a0749a8bb9ce8d2260ecfb5fc72def3c765aea87a277598160f6b3c0b4d065af",
+  "extraction_inputs_sha256": "98482939ad82ab582994effd6bee6a952a5d782b0240265fd9db43e792bc4e5a",
+  "resources": 12024,
+  "recipes": 28981,
+  "unsupported_entries": 9333,
+  "contents": [
+    "Resource identities and display names",
+    "Recipe quantities and measured machine rules",
+    "Progression references",
+    "Extraction provenance and unsupported-entry reports"
+  ],
+  "exclusions": [
+    "Minecraft and mod executables",
+    "Textures and sounds",
+    "Quest prose",
+    "World saves",
+    "Original recipe scripts"
+  ]
+}

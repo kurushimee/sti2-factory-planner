@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import loadHighs from 'highs';
 import {solveFactory} from '../kernel/planner.js';
 import {inspectWorld} from '../kernel/world.js';
+import {readDataset} from './read_dataset.mjs';
 
 const path = process.argv[2];
 if (!path) throw new Error('Provide the compiled StaTech catalog path.');
-const dataset = JSON.parse(await readFile(path, 'utf8'));
+const dataset = await readDataset(path);
 const recipe = dataset.recipes.find(value => value.source_id === 'statech:modern_industrialization/macerator/copper_dust_from_copper_cluster');
 assert.deepEqual(recipe.process, {duration_ticks: 200, eu_per_tick: 2, type: 'modern_industrialization:macerator'});
 assert.equal(recipe.outputs[0].amount, 6);

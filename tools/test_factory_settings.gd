@@ -8,6 +8,7 @@ func _initialize() -> void:
 func _run() -> void:
 	create_timer(20).timeout.connect(func() -> void: push_error("Factory settings timed out."); quit(1))
 	var workspace: PlannerWorkspace = load("res://ui/workspace.tscn").instantiate()
+	workspace.default_dataset_path = "res://data/example.json"
 	root.add_child(workspace)
 	await process_frame
 	workspace.computation.cancel()

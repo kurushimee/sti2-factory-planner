@@ -32,10 +32,15 @@ jobs:
           touch node_modules/.gdignore
       - name: Check calculation regressions
         run: npm test
+      - name: Check the bundled StaTech dataset
+        run: |
+          python tools/verify_distribution.py
+          node tools/validate_dataset.mjs data/statech-2.0.1.json.gz
+          node tools/verify_real_catalog.mjs data/statech-2.0.1.json.gz
       - name: Install the test browser
         run: npx playwright install --with-deps chromium
       - name: Check the embedded browser calculation
-        run: node tools/verify_kernel_browser.mjs
+        run: node tools/verify_kernel_browser.mjs - data/statech-2.0.1.json.gz
       - name: Check whitespace
         run: git diff --check HEAD^ HEAD
       - name: Install Godot 4.7.2
@@ -52,6 +57,10 @@ jobs:
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_data.gd 2>&1 | tee /tmp/data-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/data-check.log
+      - name: Check the default StaTech catalog in Godot
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_bundled_data.gd 2>&1 | tee /tmp/bundled-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/bundled-check.log
       - name: Check keyboard focus and interface audio
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_ui.gd 2>&1 | tee /tmp/ui-check.log

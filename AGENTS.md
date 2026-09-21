@@ -1,6 +1,6 @@
 # STI2 Factory Planner
 
-This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The development workspace defaults to a fictional example dataset. The shared JavaScript solver also accepts the private captured StaTech catalog, and world import reconstructs supported capacity goals with editable assignments. The complete bundled dataset, mechanics, importer coverage, and release are still in progress; do not present development exports as the finished product.
+This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The workspace loads the compressed StaTech Industry 2.0.1 planning catalog from `data/statech-2.0.1.json.gz`. Its completeness flag remains false while process adapters and delivery requirements are unfinished. The fictional example remains available for regression checks and custom-dataset examples. World import reconstructs supported capacity goals with editable assignments. Do not present development exports as the finished product.
 
 ## Automatic project plans
 
@@ -40,5 +40,7 @@ Use the configured Godot MCP when its inspection, runtime, or engine-documentati
 After adding or renaming a `class_name`, refresh the editor cache with a headless import. Run checks that cover the changed behavior and broaden them when failures or wider scope justify it. Do not claim a test framework exists before it is installed. Render and inspect every visual edit, fix visible defects, and distinguish static checks, isolated rendering, and confirmation in the actual application in the final report.
 
 Core checks are `npm test`, `python -m unittest discover -s tools/extraction -p 'test_*.py'`, and the documented engine with `--headless --path . --script tools/test_data.gd` or `tools/test_ui.gd`. Exported browser checks and private capture commands are in the linked guides. Keep dataset objects immutable when saving undo snapshots; loading a dataset must replace the dictionary rather than mutate snapshots that share it.
+
+Run `node tools/validate_dataset.mjs data/statech-2.0.1.json.gz` and the engine with `--headless --path . --script tools/test_bundled_data.gd` when changing the bundled catalog. Generate it with the documented extraction and distribution tools; do not hand-edit compressed data. Preserve its manifest, input hashes, attribution, and explicit unsupported entries.
 
 Persist logical graph positions and group bounds. Do not replace saved group dimensions with rendered sizes during autosave; zoom can introduce rounding drift. Group and layout regression commands are in the application guide. Keep shape reconstruction in `kernel/structure.js` separate from build-bill sizing in `kernel/structure_bill.js`.

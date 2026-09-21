@@ -15,7 +15,7 @@ const server = createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (pathname === '/embed') {
     response.setHeader('Content-Type', 'text/html');
-    response.end(`<!doctype html><style>body{margin:0}iframe{border:0;width:100vw;height:100vh}</style><iframe allow="autoplay; fullscreen" src="http://localhost:${server.address().port}/index.html"></iframe>`);
+    response.end(`<!doctype html><style>body{margin:0}iframe{border:0;width:100vw;height:100vh}</style><iframe allow="autoplay; fullscreen" src="http://localhost:${server.address().port}/index.html?dataset=example"></iframe>`);
     return;
   }
   const path = resolve(root, '.' + pathname);
