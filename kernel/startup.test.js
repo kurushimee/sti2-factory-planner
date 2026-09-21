@@ -67,3 +67,14 @@ test('missing warm-up behavior is visible instead of becoming a zero stock claim
     operations_per_second: 1, inputs: [], outputs: [], configuration_details: {}}]);
   assert.equal(result.incomplete.length, 1);
 });
+
+test('retained inputs survive unknown timing and specialized startup profiles', () => {
+  for (const profile of [undefined, {kind: 'irradiator', cycle_ticks: 100, discovery_delay_ticks: 20,
+    fuel_resource: 'fuel', batch: 1, source_resource: 'source', source_per_second: 0.1}]) {
+    const result = startupRequirements([{recipe: 'source', configuration: 'fixed', machines: 3,
+      operations_per_second: 1, inputs: [], outputs: [], configuration_details: {
+        startup_inputs: [{resource: 'retained', amount: 2}], startup_profile: profile}}]);
+    assert.equal(result.resources.find(flow => flow.resource === 'retained').reusable_stock, 6);
+    assert.equal(result.incomplete.length, profile ? 0 : 1);
+  }
+});

@@ -153,6 +153,16 @@ try {
     console.log('The eight-hatch irradiation calculation matches Node in the browser Worker.');
   }
   const waste = worldDataset.recipes?.find(recipe => recipe.id === 'waste_collection|extended_industrialization:electric_waste_collector');
+  for (const recipe of worldDataset.recipes?.filter(value => value.type === 'planner:certus_growth') ?? []) {
+    const request = {goals: [{recipe: recipe.id, resource: recipe.primary, rate: recipe.outputs[0].amount / 6}],
+      available_machines: ['planner:certus_farm'], external: [{resource: 'energy:eu'}],
+      replication: false, obtained_resources: recipe.requires_obtained};
+    const result = await solveInBrowser(worldDataset, request);
+    assert.equal(result.result.lines[0].machines, 2);
+    assert.equal(result.result.startup.resources.find(value => value.resource === 'site:flawless_budding_quartz').reusable_stock, 2);
+    assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
+  }
+  if (worldDataset.recipes?.some(value => value.type === 'planner:certus_growth')) console.log('Both certus farms and retained startup stocks match Node in the browser Worker.');
   if (waste) {
     const request = {goals: [{recipe: waste.id, resource: waste.primary, rate: 2000 / 15}],
       available_machines: ['extended_industrialization:electric_waste_collector'], external: [{resource: 'energy:eu'}]};

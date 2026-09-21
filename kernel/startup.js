@@ -16,6 +16,7 @@ export function startupRequirements(lines) {
     const key = `${line.recipe}|${line.configuration}`;
     const configuration = line.configuration_details;
     for (const flow of configuration.build_requirements ?? []) builds.set(flow.resource, (builds.get(flow.resource) ?? 0) + flow.amount * line.machines);
+    for (const catalyst of configuration.startup_inputs ?? []) add(catalyst.resource, 'reusable_stock', catalyst.amount * line.machines, key);
     if (configuration.startup_profile?.kind === 'irradiator' && line.operations_per_second > 0) {
       const profile = configuration.startup_profile;
       const seconds = (profile.cycle_ticks + profile.discovery_delay_ticks) / 20;
@@ -64,7 +65,6 @@ export function startupRequirements(lines) {
       add(input.resource, 'first_operation_stock', load, key);
       add(input.resource, 'remaining_warmup_input_stock', load * Math.max(0, capacity.completion_ticks.length - 1), key);
     }
-    for (const catalyst of configuration.startup_inputs ?? []) add(catalyst.resource, 'reusable_stock', catalyst.amount * line.machines, key);
   }
   return {resources: [...resources.values()].map(value => ({...value,
     quantity: value.warmup_output_stock + value.first_operation_stock + value.remaining_warmup_input_stock + value.reusable_stock})),

@@ -9,6 +9,7 @@ from normalize import resource_identity
 from progression import progression_presets
 from grouping import production_group
 from irradiation import irradiation_recipes
+from certus import certus_catalog
 
 
 def boiler_operating_points(samples):
@@ -310,6 +311,10 @@ def build_dataset(capture):
     resources.extend(value for key, value in variants.items() if key not in resource_index)
     recipes.extend(utility_recipes(capture))
     recipes.extend(irradiation_recipes(capture))
+    certus_resources, certus_machines, certus_recipes = certus_catalog(capture)
+    resources.extend(certus_resources)
+    machines.extend(certus_machines)
+    recipes.extend(certus_recipes)
     for recipe in recipes:
         recipe["group"] = production_group(recipe)
     return {"format": 1, "identity": capture["identity"], "name": "StaTech Industry 2.0.1",

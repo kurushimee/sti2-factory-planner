@@ -156,6 +156,7 @@ def normalize(runtime, probes):
             "machine_rules": machine_rules(probes["machines"], runtime["data_maps"]["modern_industrialization:machine_upgrades"]),
             "data_maps": {**runtime["data_maps"], **probes.get("integration_data_maps", {})}, "loaded_mods": probes["loaded_mods"],
             "power_units": probes.get("power_units", {}),
+            "certus_growth": probes.get("certus_growth", {}), "certus_farms": probes.get("certus_farms", []),
             "shape_member_rules": probes.get("shape_member_rules", []),
             "crafting_rules": probes.get("crafting_rules", {}),
             "progression_chapters": probes.get("progression_chapters", []),

@@ -56,6 +56,10 @@ def progression_presets(chapters, machines, upgrades, recipes=()):
             if not additions:
                 break
             craftable.update(additions)
+        for machine in machines:
+            required_items = set(machine.get("availability_items", []))
+            if required_items and required_items <= seen:
+                seen.add(machine["id"])
         result.append({"id": "statech:stage_" + str(number), "name": name,
                        "description": "Quest-listed machines and upgrades through " + name + ", including crafting conversions. Hatch defaults follow casing and cable tiers and can be changed individually.",
                        "available_machines": sorted(machine_ids & seen), "available_upgrades": sorted(upgrade_ids & seen),

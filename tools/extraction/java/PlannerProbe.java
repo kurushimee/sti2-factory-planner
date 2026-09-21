@@ -421,6 +421,213 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonObject certusFarm(MinecraftServer server, boolean silkTouch) throws Exception {
+        var level = server.overworld();
+        var origin = new BlockPos(64, 160, 0);
+        for (int x = -3; x <= 3; x++) for (int y = -3; y <= 3; y++) for (int z = -3; z <= 3; z++)
+            level.setBlockAndUpdate(origin.offset(x, y, z), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        level.setBlockAndUpdate(origin, appeng.core.definitions.AEBlocks.FLAWLESS_BUDDING_QUARTZ.block().defaultBlockState());
+        var positions = new java.util.LinkedHashSet<BlockPos>();
+        for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++)
+            if (Math.abs(x) == 2 || Math.abs(z) == 2) positions.add(origin.offset(x, 0, z));
+        for (int sign : new int[]{-1, 1}) {
+            positions.add(origin.offset(2, sign, 0));
+            positions.add(origin.offset(2, 2 * sign, 0));
+            positions.add(origin.offset(1, 2 * sign, 0));
+            positions.add(origin.offset(0, 2 * sign, 0));
+        }
+        var cables = new java.util.ArrayList<appeng.blockentity.networking.CableBusBlockEntity>();
+        var planes = new java.util.ArrayList<appeng.parts.automation.AnnihilationPlanePart>();
+        appeng.parts.storagebus.StorageBusPart storage = null;
+        for (var pos : positions) {
+            level.setBlockAndUpdate(pos, appeng.core.definitions.AEBlocks.CABLE_BUS.block().defaultBlockState());
+            var cable = (appeng.blockentity.networking.CableBusBlockEntity) level.getBlockEntity(pos);
+            cable.addPart(appeng.core.definitions.AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT), null, null);
+            for (var side : net.minecraft.core.Direction.values()) {
+                if (side != net.minecraft.core.Direction.SOUTH && pos.equals(origin.relative(side, 2))) {
+                    var plane = cable.addPart(appeng.core.definitions.AEParts.ANNIHILATION_PLANE.get(), side.getOpposite(), null);
+                    if (silkTouch) {
+                        var enchantments = new net.minecraft.world.item.enchantment.ItemEnchantments.Mutable(net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+                        enchantments.set(server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                                .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH), 1);
+                        plane.importSettings(appeng.util.SettingsFrom.DISMANTLE_ITEM, net.minecraft.core.component.DataComponentMap.builder()
+                                .set(net.minecraft.core.component.DataComponents.ENCHANTMENTS, enchantments.toImmutable()).build(), null);
+                    }
+                    planes.add(plane);
+                }
+            }
+            if (pos.equals(origin.south(2))) {
+                storage = cable.addPart(appeng.core.definitions.AEParts.STORAGE_BUS.get(), net.minecraft.core.Direction.SOUTH, null);
+                storage.getConfig().setStack(0, new appeng.api.stacks.GenericStack(appeng.api.stacks.AEItemKey.of(silkTouch
+                        ? appeng.core.definitions.AEBlocks.QUARTZ_CLUSTER.asItem() : appeng.core.definitions.AEItems.CERTUS_QUARTZ_CRYSTAL.asItem()), 1));
+            }
+            cables.add(cable);
+        }
+        level.setBlockAndUpdate(origin.south(3), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        var chest = (net.minecraft.world.level.block.entity.ChestBlockEntity) level.getBlockEntity(origin.south(3));
+        if (!appeng.util.Platform.areBlockEntitiesTicking(level, origin.south(3)))
+            throw new IllegalStateException("Force-load the certus fixture chunks before running the probe.");
+        level.setBlockAndUpdate(origin.south(), appeng.core.definitions.AEBlocks.GROWTH_ACCELERATOR.block().defaultBlockState());
+        var accelerator = (appeng.blockentity.misc.GrowthAcceleratorBlockEntity) level.getBlockEntity(origin.south());
+        var cellPos = origin.offset(1, 1, 2);
+        level.setBlockAndUpdate(cellPos, appeng.core.definitions.AEBlocks.ENERGY_CELL.block().defaultBlockState());
+        var cell = (appeng.blockentity.networking.EnergyCellBlockEntity) level.getBlockEntity(cellPos);
+        level.setBlockAndUpdate(cellPos.above(), appeng.core.definitions.AEBlocks.ENERGY_ACCEPTOR.block().defaultBlockState());
+        var acceptor = (appeng.blockentity.networking.EnergyAcceptorBlockEntity) level.getBlockEntity(cellPos.above());
+        for (var cable : cables) cable.onReady();
+        accelerator.onReady();
+        cell.onReady();
+        acceptor.onReady();
+        var grid = (appeng.me.Grid) cell.getMainNode().getGrid();
+        if (grid != accelerator.getMainNode().getGrid() || planes.stream().anyMatch(plane -> plane.getMainNode().getGrid() != grid))
+            throw new IllegalStateException("The placed certus farm is not one connected network.");
+        int ticks = 600000;
+        long output = 0;
+        double energy = 0;
+        for (int t = -200; t < ticks; t++) {
+            acceptor.injectExternalPower(appeng.api.config.PowerUnit.FE, 403200, appeng.api.config.Actionable.MODULATE);
+            double before = cell.getAECurrentPower() + accelerator.getInternalCurrentPower();
+            grid.onServerStartTick();
+            grid.onLevelStartTick(level);
+            grid.onLevelEndTick(level);
+            grid.onServerEndTick();
+            if (t >= 0) energy += before - cell.getAECurrentPower() - accelerator.getInternalCurrentPower();
+            for (int slot = 0; slot < chest.getContainerSize(); slot++) {
+                if (t >= 0) output += chest.getItem(slot).getCount();
+                chest.setItem(slot, net.minecraft.world.item.ItemStack.EMPTY);
+            }
+        }
+        var report = new JsonObject();
+        report.addProperty("ticks", ticks);
+        report.addProperty("output_items", output);
+        report.addProperty("silk_touch", silkTouch);
+        report.addProperty("energy_ae", energy);
+        report.addProperty("network_idle_ae_per_tick", grid.getEnergyService().getIdlePowerUsage());
+        report.addProperty("accelerator_remaining_local_ae", accelerator.getInternalCurrentPower());
+        report.addProperty("cables", cables.size());
+        report.addProperty("planes", planes.size());
+        report.addProperty("nodes", grid.size());
+        report.addProperty("accelerator_powered", accelerator.isPowered());
+        report.addProperty("growth_tag", level.getBlockState(origin).is(appeng.api.ids.AETags.GROWTH_ACCELERATABLE));
+        var states = new JsonArray();
+        for (var side : net.minecraft.core.Direction.values()) {
+            var state = new JsonObject();
+            state.addProperty("side", side.toString());
+            state.addProperty("block", BuiltInRegistries.BLOCK.getKey(level.getBlockState(origin.relative(side)).getBlock()).toString());
+            states.add(state);
+        }
+        report.add("final_neighbors", states);
+        report.addProperty("active_planes", planes.stream().filter(plane -> plane.getMainNode().isActive()).count());
+        report.addProperty("scope", "Placed cable network, five filtered planes, chest storage bus, one accelerator, energy cell, and FE-fed energy acceptor. Real grid services run for 600000 ticks; natural random ticks and player distance are excluded. Output chest is emptied each tick.");
+        return report;
+    }
+
+    private static JsonObject certusGrowth(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var origin = new BlockPos(512, 100, 0);
+        var target = origin.below();
+        var previous = level.getBlockState(origin);
+        var previousTarget = level.getBlockState(target);
+        var result = new JsonObject();
+        result.addProperty("accelerator_interval_ticks", appeng.core.AEConfig.instance().getGrowthAcceleratorSpeed());
+        result.addProperty("growth_chance_denominator", appeng.decorative.solid.BuddingCertusQuartzBlock.GROWTH_CHANCE);
+        result.addProperty("decay_chance_denominator", appeng.decorative.solid.BuddingCertusQuartzBlock.DECAY_CHANCE);
+        var accelerator = (appeng.blockentity.misc.GrowthAcceleratorBlockEntity) appeng.core.definitions.AEBlocks.GROWTH_ACCELERATOR.block()
+                .newBlockEntity(origin, appeng.core.definitions.AEBlocks.GROWTH_ACCELERATOR.block().defaultBlockState());
+        accelerator.setLevel(level);
+        accelerator.injectExternalPower(appeng.api.config.PowerUnit.AE, 1600, appeng.api.config.Actionable.MODULATE);
+        double before = accelerator.getInternalCurrentPower();
+        var tick = accelerator.getClass().getDeclaredMethod("onTick", int.class);
+        tick.setAccessible(true);
+        tick.invoke(accelerator, appeng.core.AEConfig.instance().getGrowthAcceleratorSpeed());
+        result.addProperty("accelerator_local_ae_per_call", before - accelerator.getInternalCurrentPower());
+        result.addProperty("accelerator_network_idle_ae_per_tick", ((appeng.me.ManagedGridNode) accelerator.getMainNode()).getIdlePowerUsage());
+        var insertion = new JsonArray();
+        for (int amount : new int[]{1, 4}) {
+            double[] consumed = {0};
+            var storage = new appeng.api.storage.MEStorage() {
+                @Override public long insert(appeng.api.stacks.AEKey key, long count, appeng.api.config.Actionable action,
+                        appeng.api.networking.security.IActionSource source) { return count; }
+                @Override public net.minecraft.network.chat.Component getDescription() { return net.minecraft.network.chat.Component.literal("Probe storage"); }
+            };
+            long inserted = appeng.api.storage.StorageHelper.poweredInsert((energy, action, multiplier) -> {
+                if (action == appeng.api.config.Actionable.MODULATE) consumed[0] += energy * multiplier.multiplier;
+                return energy;
+            }, storage, appeng.api.stacks.AEItemKey.of(appeng.core.definitions.AEItems.CERTUS_QUARTZ_CRYSTAL.asItem()), amount,
+                    appeng.api.networking.security.IActionSource.empty());
+            var entry = new JsonObject();
+            entry.addProperty("items", inserted);
+            entry.addProperty("energy_ae", consumed[0]);
+            insertion.add(entry);
+        }
+        result.add("storage_insertion", insertion);
+        var transitions = new JsonArray();
+        var harvesting = new JsonArray();
+        String[] parents = {"flawless_budding_quartz", "flawed_budding_quartz", "chipped_budding_quartz", "damaged_budding_quartz"};
+        String[] stages = {"minecraft:air", "ae2:small_quartz_bud", "ae2:medium_quartz_bud", "ae2:large_quartz_bud", "ae2:quartz_cluster"};
+        var registries = server.registryAccess();
+        var silk = new net.minecraft.world.item.enchantment.ItemEnchantments.Mutable(net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+        silk.set(registries.lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH), 1);
+        try {
+            for (String parent : parents) for (int stage = 0; stage < 4; stage++) {
+                var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("ae2:" + parent));
+                level.setBlockAndUpdate(origin, block.defaultBlockState());
+                var child = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(stages[stage])).defaultBlockState();
+                if (stage > 0) child = child.setValue(net.minecraft.world.level.block.AmethystClusterBlock.FACING, net.minecraft.core.Direction.DOWN);
+                level.setBlockAndUpdate(target, child);
+                var random = (net.minecraft.util.RandomSource) java.lang.reflect.Proxy.newProxyInstance(PlannerProbe.class.getClassLoader(),
+                        new Class<?>[]{net.minecraft.util.RandomSource.class}, (proxy, method, args) -> {
+                            if (method.getName().equals("nextInt") && args != null && args.length == 1) return 0;
+                            return method.invoke(net.minecraft.util.RandomSource.create(1), args);
+                        });
+                ((appeng.decorative.solid.BuddingCertusQuartzBlock) block).randomTick(block.defaultBlockState(), level, origin, random);
+                var entry = new JsonObject();
+                entry.addProperty("parent", "ae2:" + parent);
+                entry.addProperty("stage", stage);
+                entry.addProperty("grown", BuiltInRegistries.BLOCK.getKey(level.getBlockState(target).getBlock()).toString());
+                entry.addProperty("decayed_parent", BuiltInRegistries.BLOCK.getKey(level.getBlockState(origin).getBlock()).toString());
+                transitions.add(entry);
+            }
+            for (boolean enchanted : new boolean[]{false, true}) for (int stage = 1; stage <= 4; stage++) {
+                level.setBlockAndUpdate(origin, appeng.core.definitions.AEBlocks.FLAWLESS_BUDDING_QUARTZ.block().defaultBlockState());
+                var child = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(stages[stage])).defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.AmethystClusterBlock.FACING, net.minecraft.core.Direction.DOWN);
+                level.setBlockAndUpdate(target, child);
+                var strategy = new appeng.parts.automation.ItemPickupStrategy(level, target, net.minecraft.core.Direction.DOWN, null,
+                        enchanted ? silk.toImmutable() : net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY, null);
+                var accepted = new JsonArray();
+                double[] power = {0};
+                var outcome = strategy.tryPickup((amount, action, multiplier) -> {
+                    if (action == appeng.api.config.Actionable.MODULATE) power[0] += amount * multiplier.multiplier;
+                    return amount;
+                }, (what, amount, action) -> {
+                    if (!(what instanceof appeng.api.stacks.AEItemKey item)) return 0;
+                    String id = BuiltInRegistries.ITEM.getKey(item.getItem()).toString();
+                    if (!id.equals(enchanted ? "ae2:quartz_cluster" : "ae2:certus_quartz_crystal")) return 0;
+                    if (action == appeng.api.config.Actionable.MODULATE) {
+                        var entry = new JsonObject(); entry.addProperty("item", id); entry.addProperty("amount", amount); accepted.add(entry);
+                    }
+                    return amount;
+                });
+                var entry = new JsonObject();
+                entry.addProperty("silk_touch", enchanted);
+                entry.addProperty("stage", stage);
+                entry.addProperty("outcome", outcome.toString());
+                entry.addProperty("energy_ae", power[0]);
+                entry.addProperty("block_removed", level.getBlockState(target).isAir());
+                entry.add("accepted", accepted);
+                harvesting.add(entry);
+            }
+        } finally {
+            level.setBlockAndUpdate(origin, previous);
+            level.setBlockAndUpdate(target, previousTarget);
+        }
+        result.add("forced_success_and_decay_transitions", transitions);
+        result.add("filtered_plane_harvesting", harvesting);
+        result.addProperty("scope", "Loaded growth branches with controlled random choices and actual plane pickup strategies. This does not measure a complete farm's stochastic throughput or network power.");
+        return result;
+    }
+
     private static JsonObject itemRules(MinecraftServer server) throws Exception {
         var result = new JsonObject();
         var items = new JsonArray();
@@ -1511,6 +1718,13 @@ public final class PlannerProbe {
         result.add("crafting_rules", craftingRules(server));
         result.add("progression_chapters", progressionChapters());
         result.add("integration_data_maps", integrationDataMaps(server));
+        result.add("certus_growth", certusGrowth(server));
+        if (Boolean.getBoolean("planner.certusFarm")) {
+            var certusFarms = new JsonArray();
+            certusFarms.add(certusFarm(server, false));
+            certusFarms.add(certusFarm(server, true));
+            result.add("certus_farms", certusFarms);
+        }
         var power = new JsonObject();
         power.addProperty("fe_per_eu", aztech.modern_industrialization.config.MIServerConfig.INSTANCE.forgeEnergyPerEu.getAsInt());
         power.addProperty("fe_per_ae", appeng.api.config.PowerUnit.AE.convertTo(appeng.api.config.PowerUnit.FE, 1));
