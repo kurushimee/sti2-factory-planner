@@ -38,7 +38,7 @@ export function addConstruction(model, resources, request, definitions = new Map
   const supplyWeight = number(settings.materials ?? 1000, 'Construction material priority');
   const rows = new Map([...resources].map(id => [id, new Map()]));
   const requirements = [];
-  for (const line of [...model.lines, ...(model.fixed_builds ?? [])]) {
+  for (const line of [...(model.construction_only ? [] : model.lines), ...(model.fixed_builds ?? [])]) {
     const {bill, error} = constructionBill(line.configuration, resources);
     if (error) throw new Error(error);
     for (const flow of bill) {
@@ -57,13 +57,16 @@ export function addConstruction(model, resources, request, definitions = new Map
     const full = configuration.operating_points?.at(-1);
     if (full) inputs.push(...full.inputs.map(flow => ({...flow, amount: flow.amount / capacity})));
     const batch = configuration.setup?.batch ?? configuration.setup?.contained_count ?? 1;
-    const signature = JSON.stringify([recipe.id, inputs, energy, rounded ? batch : null]);
-    const previous = candidates.get(signature);
-    // Construction assumes available reusable workstations. With identical material and energy
-    // coefficients, only the fastest workstation can improve its positive work-time objective.
-    if (!previous || capacity > previous.capacity) candidates.set(signature, {recipe, configuration, capacity, energy, inputs, batch});
+    const signature = JSON.stringify([recipe.id, inputs, rounded ? batch : null]);
+    const previous = candidates.get(signature) ?? [];
+    const unitCost = effort / capacity + energyWeight * energy;
+    // Available construction workstations need no new build allocation. For identical material
+    // flows, a route with no greater work cost or energy use can replace the more expensive one.
+    if (previous.some(value => value.unitCost <= unitCost && value.energy <= energy)) continue;
+    candidates.set(signature, [...previous.filter(value => !(unitCost <= value.unitCost && energy <= value.energy)),
+      {recipe, configuration, capacity, energy, inputs, batch, unitCost}]);
   }
-  for (const {recipe, configuration, capacity, energy, inputs, batch} of candidates.values()) {
+  for (const {recipe, configuration, capacity, energy, inputs, batch, unitCost} of [...candidates.values()].flat()) {
     const index = routes.length;
     const variable = `cx${index}`;
     model.bounds.push(`${variable} >= 0`);
@@ -74,7 +77,6 @@ export function addConstruction(model, resources, request, definitions = new Map
       model.integers.push(batches);
       model.constraints.push(`construction_batches_${index}: ${variable} - ${batch} ${batches} = 0`);
     }
-    const unitCost = effort / capacity + energyWeight * energy;
     add(model.objective, variable, weight * unitCost);
     const inputTerms = [], outputTerms = [];
     for (const [slot, flow] of inputs.entries()) {

@@ -1,5 +1,5 @@
 // HiGHS can retain a valid integer solution even when its search reaches a limit.
-export function runSolver(highs, text, options = {}, seed) {
+export function runSolver(highs, text, options = {}, seed, details = {}) {
   const model = highs.createModel({format: 'lp', data: text});
   try {
     model.options.set({output_flag: false, mip_rel_gap: 0, mip_feasibility_tolerance: 1e-9,
@@ -32,6 +32,13 @@ export function runSolver(highs, text, options = {}, seed) {
       if (Number.isFinite(bound)) result.lower_bound = bound;
       if (Number.isFinite(gap)) result.relative_gap = gap;
       if (result.optimal) { result.lower_bound = result.objective; result.relative_gap = 0; }
+      if (details.row_duals && result.optimal && model.info.get('dual_solution_status') === highs.constants.solutionStatus.feasible) {
+        result.row_duals = Object.create(null);
+        for (let index = 0; index < solution.rowDual.length; index++) {
+          if (!Number.isFinite(solution.rowDual[index])) throw new Error('The solver returned a non-finite marginal cost.');
+          result.row_duals[model.getRowName(index)] = solution.rowDual[index];
+        }
+      }
     }
     return result;
   } finally {

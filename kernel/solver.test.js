@@ -45,3 +45,12 @@ test('native model memory is released when configuration fails', () => {
   assert.throws(() => runSolver(fake, problem), /bad option/);
   assert.equal(disposed, true);
 });
+
+test('marginal costs are returned only for solved continuous models when requested', () => {
+  const continuous = problem.replace('Generals\nx y\n', '');
+  const result = runSolver(highs, continuous, {}, undefined, {row_duals: true});
+  assert.equal(result.row_duals.r, 1 / 3);
+  assert.equal(runSolver(highs, continuous).row_duals, undefined);
+  assert.equal(runSolver(highs, problem, {}, undefined, {row_duals: true}).row_duals, undefined);
+  assert.equal(runSolver(highs, continuous, {time_limit: 0, presolve: 'off'}, undefined, {row_duals: true}).row_duals, undefined);
+});

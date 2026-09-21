@@ -10,6 +10,7 @@ import {inspectWorld} from '../kernel/world.js';
 import {readDataset} from './read_dataset.mjs';
 import {constructionCase, verifyConstructionCase, finiteHammerCase, verifyFiniteHammerCase} from './construction_catalog_case.mjs';
 import {endgameRequest, verifyEndgame} from './endgame_case.mjs';
+import {compileConstructionOrder, solveConstructionOrder} from '../kernel/construction_order.js';
 
 const root = new URL('../', import.meta.url);
 const dataset = {format: 1, resources: ['ore', 'plate', 'fuel', 'steam'].map(id => ({id})), recipes: [{
@@ -53,6 +54,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/route_ownership.js': 'kernel/route_ownership.js',
       '/kernel/structure_bill.js': 'kernel/structure_bill.js',
       '/kernel/construction.js': 'kernel/construction.js',
+      '/kernel/construction_order.js': 'kernel/construction_order.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/power.js': 'kernel/power.js',
       '/kernel/infrastructure.js': 'kernel/infrastructure.js',
@@ -126,6 +128,33 @@ try {
   assert.deepEqual(actual.phases, ['loading_solver', 'solving']);
   assert.equal(actual.isolated, false);
   assert.deepEqual(errors, []);
+  const orderInput = {lines: dataset.recipes.flatMap(recipe => recipe.configurations.map(configuration => ({recipe, configuration}))),
+    resources: dataset.resources, request: {construction: {external: [{resource: 'ore'}, {resource: 'fuel'}]}},
+    requirements: [{resource: 'plate', amount: 14}]};
+  const expectedOrder = solveConstructionOrder(await loadHighs(), compileConstructionOrder(orderInput.lines, orderInput.resources, orderInput.request, orderInput.requirements));
+  const actualOrder = await frame.evaluate(async input => {
+    const moduleUrl = new URL('/kernel/construction_order.js', location.href).href;
+    const solverUrl = new URL('/vendor/highs.mjs', location.href).href;
+    const wasmUrl = new URL('/vendor/highs.wasm', location.href).href;
+    const source = `import loadHighs from ${JSON.stringify(solverUrl)};
+      import {compileConstructionOrder,solveConstructionOrder} from ${JSON.stringify(moduleUrl)};
+      self.onmessage = async ({data}) => {
+        const highs = await loadHighs({locateFile: () => ${JSON.stringify(wasmUrl)}});
+        postMessage(solveConstructionOrder(highs, compileConstructionOrder(data.lines,data.resources,data.request,data.requirements)));
+      };`;
+    const url = URL.createObjectURL(new Blob([source], {type: 'text/javascript'}));
+    const worker = new Worker(url, {type: 'module'});
+    try {
+      return await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Construction order check timed out.')), 15000);
+        worker.onmessage = event => {clearTimeout(timer); resolve(event.data);};
+        worker.onerror = event => {clearTimeout(timer); reject(new Error(event.message));};
+        worker.postMessage(input);
+      });
+    } finally {worker.terminate(); URL.revokeObjectURL(url);}
+  }, orderInput);
+  assert.deepEqual(actualOrder, expectedOrder);
+  console.log('Fixed construction quantities and their marginal costs match Node in the browser Worker.');
   if (worldDataset.identity === 'statech-industry-2:2.0.1') {
     const fixture = constructionCase(worldDataset);
     const result = await solveInBrowser(fixture.dataset, fixture.request);
