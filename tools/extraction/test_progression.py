@@ -4,6 +4,11 @@ from progression import progression_presets
 
 
 class ProgressionTests(unittest.TestCase):
+    def test_removed_machines_are_excluded_even_when_a_quest_mentions_them(self):
+        chapters = [{"file": "2__steam_age.snbt", "id": "steam", "item_tasks": [{"item": "test:removed"}]}]
+        machines = [{"id": "test:removed", "status": "supported", "availability": {"automatic": False}}]
+        self.assertTrue(all(not preset["available_machines"] for preset in progression_presets(chapters, machines, [])))
+
     def test_hatch_presets_follow_quest_evidence_separately_from_machines(self):
         chapters = [{"file": "2__steam_age.snbt", "id": "steam", "item_tasks": [{"item": "test:bronze_hatch"}]}]
         machines = [{"id": identity, "status": "structural", "hatch_capacity": {"item_slots": [64]}}

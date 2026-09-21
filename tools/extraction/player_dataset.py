@@ -10,6 +10,7 @@ from progression import progression_presets
 from grouping import production_group
 from irradiation import irradiation_recipes
 from certus import certus_catalog
+from availability import annotate_availability
 
 
 def boiler_operating_points(samples):
@@ -325,6 +326,7 @@ def build_dataset(capture):
     resources.extend(certus_resources)
     machines.extend(certus_machines)
     recipes.extend(certus_recipes)
+    machines = annotate_availability(machines, recipes)
     for recipe in recipes:
         recipe["group"] = production_group(recipe)
     return {"format": 1, "identity": capture["identity"], "name": "StaTech Industry 2.0.1",
@@ -333,7 +335,8 @@ def build_dataset(capture):
             "shape_member_rules": capture.get("shape_member_rules", []),
             "progression": progression_presets(capture.get("progression_chapters", []), machines, upgrades, recipes),
             "default_machines": [machine["id"] for machine in machines
-                                 if machine["status"] == "supported" and machine.get("mechanic") != "mi_array"],
+                                 if machine["status"] == "supported" and machine.get("mechanic") != "mi_array"
+                                 and machine.get("availability", {}).get("automatic", True)],
             "unsupported_entries": unsupported, "loaded_mods": capture["loaded_mods"],
             "source": {"pack_version": "2.0.1", "capture_format": capture["format"], "capture_version": capture["version"]}}
 

@@ -52,3 +52,5 @@ Keep recipe display defaults separate from primary-route ownership. A feasible h
 Use `PlannerJson.parse` at Godot data boundaries and full-precision `JSON.stringify` for calculation requests and saved plans. The stock parser can corrupt the precision or magnitude of long decimal tokens; `tools/test_json.gd` and `tools/test_computation.gd` cover the workaround. Read stepped goal controls through `PlannerDisplay.input_value` to preserve their displayed decimal value.
 
 Autosave keeps immutable datasets separately by content hash; portable exports still embed them. Keep the prior plan recoverable if a dataset write fails. Verify storage changes with `tools/test_ui.gd`, `node tools/verify_storage_browser.mjs`, and the exported application checks.
+
+Registered machines are not necessarily obtainable in the released pack. Preserve the recorded automatic exclusions when generating defaults and progression presets, while allowing explicit owned-machine overrides. Check them with `node tools/verify_availability_catalog.mjs` and `tools/test_availability_ui.gd`; the archive comparison is documented in the extraction guide.

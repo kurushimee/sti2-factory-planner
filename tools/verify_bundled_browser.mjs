@@ -36,6 +36,19 @@ try {
   await page.waitForTimeout(300);
   await page.screenshot({path: `${artifacts}/browser-bundled-about.png`});
   await page.keyboard.press('Escape');
+  await page.mouse.click(532, 92, {delay: 100});
+  await page.mouse.click(380, 210, {delay: 100});
+  await page.keyboard.type('steel bending', {delay: 40});
+  await page.mouse.click(500, 330, {delay: 100});
+  await page.screenshot({path: `${artifacts}/browser-removed-machine.png`});
+  await page.mouse.click(550, 779, {delay: 100});
+  await frame.waitForFunction(() => new Promise(resolve => {
+    const open = indexedDB.open('factory-planner', 1);
+    open.onsuccess = () => {
+      const get = open.result.transaction('plans').objectStore('plans').get('autosave');
+      get.onsuccess = () => { resolve(get.result?.request.available_machines?.includes('extended_industrialization:steel_bending_machine')); open.result.close(); };
+    };
+  }), null, {timeout: 60000});
   const pending = page.waitForEvent('download');
   await page.mouse.click(1225, 40, {delay: 100});
   const download = await pending;
@@ -47,6 +60,10 @@ try {
   assert.equal(plan.dataset.resources.length, manifest.resources);
   assert.equal(plan.dataset.complete, false);
   assert.equal(plan.request.goals.length, 0);
+  assert.equal(plan.dataset.machines.filter(machine => machine.availability?.automatic === false).length, 4);
+  assert.ok(!plan.dataset.default_machines.includes('extended_industrialization:steel_bending_machine'));
+  assert.ok(plan.dataset.progression.every(preset => !preset.available_machines.includes('extended_industrialization:steel_bending_machine')));
+  assert.ok(plan.request.available_machines.includes('extended_industrialization:steel_bending_machine'));
   await page.mouse.click(230, 818, {delay: 100});
   await frame.waitForFunction(() => new Promise(resolve => {
     const open = indexedDB.open('factory-planner', 1);

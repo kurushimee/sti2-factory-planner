@@ -154,8 +154,11 @@ func _category_changed(category: int) -> void:
 				if machine.get("status") in ["structural", "infrastructure"]:
 					continue
 				seen[machine.id] = true
-				_entries.append({"id": machine.id, "name": _names.get("item:" + str(machine.id), machine.id),
-					"unsupported": machine.get("status") != "supported", "detail": machine.get("reason", machine.id)})
+				var name_text: String = _names.get("item:" + str(machine.id), machine.id)
+				if !machine.get("availability", {}).get("automatic", true):
+					name_text += " · not normally obtainable"
+				_entries.append({"id": machine.id, "name": name_text,
+					"unsupported": machine.get("status") != "supported", "detail": machine.get("availability", {}).get("reason", machine.get("reason", machine.id))})
 			for recipe: Dictionary in _dataset.recipes:
 				for configuration: Dictionary in recipe.configurations:
 					if !seen.has(configuration.machine):
@@ -343,7 +346,7 @@ func _infrastructure_changed() -> void:
 			var hatch: String = %InfrastructureHatch.get_selected_metadata()
 			if hatch.is_empty(): entry.erase("energy_hatch")
 			else: entry.energy_hatch = hatch
-			entry.transmit_eu_per_tick = %InfrastructureTransfer.value
+			entry.transmit_eu_per_tick = PlannerDisplay.input_value(%InfrastructureTransfer)
 
 
 func _supply_changed() -> void:
@@ -354,19 +357,19 @@ func _supply_changed() -> void:
 	var supplies: Array = _construction.external if %SettingsCategory.selected == 6 else _request.external
 	for entry: Dictionary in supplies:
 		if entry.resource == _supply:
-			entry.cost = %SupplyCost.value
+			entry.cost = PlannerDisplay.input_value(%SupplyCost)
 			if %SupplyUnlimited.button_pressed:
 				entry.erase(limit_key)
 			else:
-				entry[limit_key] = %SupplyLimit.value
+				entry[limit_key] = PlannerDisplay.input_value(%SupplyLimit)
 
 
 func _apply() -> void:
-	_request.reserve_fraction = %Reserve.value / 100
-	_request.overhead_eu_per_tick = %Overhead.value
-	_request.weights = {"external": %ResourceWeight.value, "machines": %MachineWeight.value, "energy": %EnergyWeight.value}
+	_request.reserve_fraction = PlannerDisplay.input_value(%Reserve) / 100
+	_request.overhead_eu_per_tick = PlannerDisplay.input_value(%Overhead)
+	_request.weights = {"external": PlannerDisplay.input_value(%ResourceWeight), "machines": PlannerDisplay.input_value(%MachineWeight), "energy": PlannerDisplay.input_value(%EnergyWeight)}
 	if %ConstructionEnabled.button_pressed:
-		_construction.weight = %ConstructionWeight.value
+		_construction.weight = PlannerDisplay.input_value(%ConstructionWeight)
 		_construction.round_batches = %ConstructionRounding.button_pressed
 		_request.construction = _construction.duplicate(true)
 	else:

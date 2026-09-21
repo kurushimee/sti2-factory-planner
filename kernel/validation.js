@@ -32,6 +32,10 @@ export function validateDataset(dataset) {
   records(dataset.recipes, 'recipes');
   const machines = records(dataset.machines ?? [], 'machines');
   for (const machine of dataset.machines ?? []) {
+    if (machine.availability !== undefined) {
+      object(machine.availability, `machine ${machine.id}.availability`);
+      if (typeof machine.availability.automatic !== 'boolean' || typeof machine.availability.reason !== 'string') fail(`machine ${machine.id}.availability`, 'needs an automatic flag and a reason');
+    }
     if (machine.infrastructure === undefined) continue;
     records(machine.infrastructure, `machine ${machine.id}.infrastructure`);
     for (const variant of machine.infrastructure) {

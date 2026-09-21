@@ -66,6 +66,7 @@ func _run() -> void:
 	await process_frame
 	assert(workspace._request.external[0].limit == 0.5)
 	assert(workspace._request.external[0].cost == 2)
+	assert(workspace._request.weights.energy == 0.000001)
 	assert(workspace._last_result.power.reserve_fraction == 0.25)
 	assert(workspace._last_result.power.infrastructure_and_goal_eu_per_tick == 4)
 	workspace._undo_action()

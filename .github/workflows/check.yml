@@ -38,6 +38,7 @@ jobs:
           node tools/validate_dataset.mjs data/statech-2.0.1.json.gz
           node tools/verify_real_catalog.mjs data/statech-2.0.1.json.gz
           node tools/verify_certus_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_availability_catalog.mjs data/statech-2.0.1.json.gz
           node tools/verify_construction_catalog.mjs data/statech-2.0.1.json.gz
       - name: Install the test browser
         run: npx playwright install --with-deps chromium
@@ -81,6 +82,8 @@ jobs:
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/computation-check.log
       - name: Check factory settings and undo
         run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_availability_ui.gd 2>&1 | tee /tmp/availability-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/availability-check.log
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_factory_settings.gd 2>&1 | tee /tmp/settings-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/settings-check.log
       - name: Check large world correction lists

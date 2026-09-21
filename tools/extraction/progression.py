@@ -10,7 +10,8 @@ HATCH_STAGES = {"bronze": 2, "steel": 2, "advanced": 3, "turbo": 4, "highly_adva
 
 
 def progression_presets(chapters, machines, upgrades, recipes=()):
-    machine_ids = {machine["id"] for machine in machines if machine["status"] == "supported"}
+    machine_ids = {machine["id"] for machine in machines if machine["status"] == "supported"
+                   and machine.get("availability", {}).get("automatic", True)}
     upgrade_ids = {upgrade["id"] for upgrade in upgrades}
     part_ids = {machine["id"] for machine in machines if machine.get("hatch_capacity")}
     seen = set()
@@ -69,8 +70,8 @@ def progression_presets(chapters, machines, upgrades, recipes=()):
                        "source": {"chapter": chapter["id"], "file": chapter["file"], "derived_conversions": derived,
                                   "derived_parts": part_sources, "hatch_tier_defaults": HATCH_STAGES}})
     if chapters:
-        result.append({"id": "statech:all", "name": "All supported machines",
-                       "description": "Enable every supported machine and upgrade, including entries outside the main quest chapters. Replication still needs obtained templates.",
+        result.append({"id": "statech:all", "name": "All available machines",
+                       "description": "Enable supported machines and upgrades outside the main quest chapters, excluding removed and development-only machines. Replication still needs obtained templates.",
                        "available_machines": sorted(machine_ids), "available_upgrades": sorted(upgrade_ids),
                        "available_parts": sorted(part_ids)})
     return result

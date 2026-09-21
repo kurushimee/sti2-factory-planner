@@ -25,6 +25,9 @@ static func check(value: Variant) -> String:
 			if ids.has(record.id):
 				return "Duplicate %s ID: %s" % [field, record.id]
 			ids[record.id] = true
+			if field == "machines" && record.has("availability"):
+				if !(record.availability is Dictionary) || !(record.availability.get("automatic") is bool) || !(record.availability.get("reason") is String):
+					return "Machine %s needs a valid availability flag and reason." % record.id
 		catalog_ids[field] = ids
 	if !_string_list(value.get("default_machines", [])):
 		return "Default machines must be a list of text IDs."

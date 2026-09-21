@@ -9,6 +9,8 @@ test('dataset validation rejects malformed references before dependency pruning'
   for (const [change, message] of [
     [data => data.resources.push(data.resources[0]), /duplicate ID/],
     [data => data.resources[0].max_stack_size = 0, /max_stack_size/],
+    [data => data.machines = [{id: 'test:machine', availability: []}], /availability/],
+    [data => data.machines = [{id: 'test:machine', availability: {automatic: 'no', reason: 'Removed'}}], /availability/],
     [data => data.recipes[0].outputs[0].resource = 'missing', /unknown ID/],
     [data => data.recipes[0].primary = 'coal', /primary must/],
     [data => data.recipes[0].configurations[0].eu_per_operation = -1, /eu_per_operation/],
