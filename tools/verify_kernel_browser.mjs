@@ -82,6 +82,26 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/embed`);
   const frame = page.frames().find(item => item !== page.mainFrame());
   await frame.waitForLoadState();
+  const largeFlow = await frame.evaluate(async () => {
+    const moduleUrl = new URL('/kernel/flows.js', location.href).href;
+    const source = `import {allocateFlows} from ${JSON.stringify(moduleUrl)};
+      const lines = Array.from({length: 10000}, (_, index) => ({recipe: 'small' + index, configuration: 'fixed',
+        inputs: [{resource: 'energy:eu', rate: 0.1}], outputs: []}));
+      lines.push({recipe: 'last', configuration: 'fixed', inputs: [{resource: 'energy:eu', rate: 1e9 - 1000}], outputs: []});
+      const result = allocateFlows(lines, [{resource: 'energy:eu', rate: 1e9}], new Map());
+      postMessage({connections: result.connections.length, last: result.connections.at(-1).rate,
+        retained: result.retained, roundoff: result.flow_roundoff});`;
+    const url = URL.createObjectURL(new Blob([source], {type: 'text/javascript'}));
+    const worker = new Worker(url, {type: 'module'});
+    try {
+      return await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Large flow check timed out.')), 15000);
+        worker.onmessage = event => { clearTimeout(timer); resolve(event.data); };
+        worker.onerror = event => { clearTimeout(timer); reject(new Error(event.message)); };
+      });
+    } finally { worker.terminate(); URL.revokeObjectURL(url); }
+  });
+  assert.deepEqual(largeFlow, {connections: 10001, last: 1e9 - 1000, retained: [], roundoff: []});
   const solveInBrowser = (dataset, request) => frame.evaluate(async ({dataset, request}) => {
     const worker = new Worker('/kernel/worker.js', {type: 'module'});
     const phases = [];
