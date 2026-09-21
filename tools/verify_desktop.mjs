@@ -27,7 +27,8 @@ await new Promise((resolveRun, reject) => {
   let output = '';
   child.stdout.on('data', chunk => { output += chunk; });
   child.stderr.on('data', chunk => { output += chunk; });
-  const timer = setTimeout(() => { child.kill(); reject(new Error(`The exported application timed out. ${output}`)); }, 60000);
+  const timer = setTimeout(() => { child.kill(); reject(new Error(`The exported application timed out. ${output}`)); },
+    Math.max(60000, (plan.request.time_limit_ms ?? 0) + 30000));
   child.once('error', error => { clearTimeout(timer); reject(error); });
   child.once('exit', code => {
     clearTimeout(timer);

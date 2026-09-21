@@ -12,6 +12,14 @@ function expression(row) {
   return terms.length ? terms.map(([variable, amount]) => `${amount < 0 ? '-' : '+'} ${Math.abs(amount)} ${variable}`).join(' ') : '0 zero';
 }
 
+export class ConstructionBalanceError extends Error {
+  constructor(resource, surplus, tolerance, magnitude, terms, value) {
+    super(`The construction balance failed for ${resource}: deficit ${-surplus}, tolerance ${tolerance}, total flow ${magnitude}.`);
+    this.balance = {resource, surplus, tolerance, magnitude, terms: [...terms]
+      .map(([variable, coefficient]) => ({variable, coefficient, value: value(variable)})).filter(term => term.value !== 0)};
+  }
+}
+
 export function constructionBill(configuration, resources) {
   if (configuration.structure?.status === 'unsupported') return {error: configuration.structure.reason};
   const bill = configuration.build_requirements;
@@ -161,7 +169,7 @@ export function decodeConstruction(model, value) {
     let surplus = 0, magnitude = 0;
     for (const [variable, amount] of terms) { surplus += amount * value(variable); magnitude += Math.abs(amount * value(variable)); }
     const tolerance = Math.max(1e-7, magnitude * Number.EPSILON * 16);
-    if (surplus < -tolerance) throw new Error(`The construction balance failed for ${resource}.`);
+    if (surplus < -tolerance) throw new ConstructionBalanceError(resource, surplus, tolerance, magnitude, terms, value);
     if (magnitude) balances.push({resource, surplus, numerical_tolerance: tolerance});
   }
   const routes = model.routes.filter(route => value(route.variable) > 1e-9).map(route => ({

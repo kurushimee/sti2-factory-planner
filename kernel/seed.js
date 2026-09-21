@@ -1,11 +1,11 @@
 import {productionRouteOwnership} from './route_ownership.js';
 
 // Reuse the LP basis while finding a buildable candidate. Exclusions here do not prove optimality.
-export function findFactorySeed(highs, model, request, deadline) {
+export function findFactorySeed(highs, model, request, deadline, validate = () => true) {
   if (model.construction) return null;
   const native = highs.createModel({format: 'lp', data: model.text.replace(/\nGenerals\n[^]*?\nEnd$/, '\nEnd')});
   const start = Date.now();
-  let lowerBound = null, attempts = 0;
+  let lowerBound = null, attempts = 0, numericalRetries = 0;
   try {
     native.options.set({output_flag: false, primal_feasibility_tolerance: 1e-9});
     const names = new Set(model.lines.flatMap(line => [line.operation, line.machine,
@@ -62,12 +62,28 @@ export function findFactorySeed(highs, model, request, deadline) {
             native.changeColBounds(indices.get(line.machine), count, count);
           }
           if (!run()) continue;
-          const values = native.getSolution().colValue;
+          let values = native.getSolution().colValue;
           ownership = productionRouteOwnership(summary(values, disabled), request);
           if (ownership.conflict.length) break;
-          const columns = Object.create(null);
-          for (let index = 0; index < values.length; index++) columns[native.getColName(index)] = {Primal: values[index]};
-          return {Columns: columns, objective: native.getObjectiveValue(), lower_bound: lowerBound,
+          const collect = () => {
+            const Columns = Object.create(null);
+            for (let index = 0; index < values.length; index++) Columns[native.getColName(index)] = {Primal: values[index]};
+            return {Columns};
+          };
+          let candidate = collect();
+          if (!validate(candidate)) {
+            numericalRetries++;
+            native.clearSolver();
+            native.options.set({simplex_scale_strategy: 0, primal_feasibility_tolerance: 1e-10});
+            if (!run()) continue;
+            values = native.getSolution().colValue;
+            ownership = productionRouteOwnership(summary(values, disabled), request);
+            if (ownership.conflict.length) break;
+            candidate = collect();
+            if (!validate(candidate)) continue;
+          }
+          return {...candidate, objective: native.getObjectiveValue(), lower_bound: lowerBound,
+            ...(numericalRetries ? {numerical_retries: numericalRetries} : {}),
             excluded_recipes: [...disabled], attempts, elapsed_ms: Date.now() - start};
         }
       }

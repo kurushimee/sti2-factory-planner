@@ -242,6 +242,14 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers, infrastructure};
 }
 
+export class FactoryBalanceError extends Error {
+  constructor(resource, demand, net, tolerance, magnitude, terms, value) {
+    super(`The numerical solution failed the resource balance check for ${resource}: deficit ${demand - net}, tolerance ${tolerance}.`);
+    this.balance = {resource, demand, net, tolerance, magnitude, terms: [...terms]
+      .map(([variable, coefficient]) => ({variable, coefficient, value: value(variable)})).filter(term => term.value !== 0)};
+  }
+}
+
 export function decodeFactory(model, solution) {
   const value = name => solution.Columns[name]?.Primal ?? 0;
   for (const variable of model.integers) {
@@ -289,7 +297,7 @@ export function decodeFactory(model, solution) {
     const demand = model.demands.get(resource);
     const tolerance = Math.max(1e-7, magnitude * Number.EPSILON * 16);
     if (net < demand - tolerance) {
-      throw new Error(`The numerical solution failed the resource balance check for ${resource}.`);
+      throw new FactoryBalanceError(resource, demand, net, tolerance, magnitude, terms, value);
     }
     balances.push({resource, demand, net, surplus: net - demand, numerical_tolerance: tolerance});
   }
@@ -351,7 +359,13 @@ export function solveFactory(highs, dataset, request) {
     if (Date.now() >= deadline) return finish('limit');
     lastExclusions = model.exclusions;
     if (!visited && model.lines.length > 2000 && !request.construction) {
-      const seed = findFactorySeed(highs, model, request, deadline);
+      const seed = findFactorySeed(highs, model, request, deadline, candidate => {
+        try { decodeFactory(model, candidate); return true; }
+        catch (error) {
+          if (error instanceof FactoryBalanceError) return false;
+          throw error;
+        }
+      });
       if (seed) {
         const decoded = decodeFactory(model, seed);
         const ownership = productionRouteOwnership(decoded, request);
@@ -359,6 +373,7 @@ export function solveFactory(highs, dataset, request) {
           lowerBound = seed.lower_bound;
           best = {...decoded, primary_routes: ownership.assignments, targets: resolved.targets, objective: seed.objective,
             exclusions: model.exclusions, search: {method: 'relaxed_route_repair', attempts: seed.attempts,
+              ...(seed.numerical_retries ? {numerical_retries: seed.numerical_retries} : {}),
               elapsed_ms: seed.elapsed_ms, temporarily_excluded_recipes: seed.excluded_recipes}};
           visited = seed.attempts;
           return finish('limit');

@@ -82,3 +82,52 @@ test('continuous construction marginal costs include complete material routes', 
   const rounded = solve([line('case', [flow('ore', 3)], [flow('case')])], [flow('case', 2)], {round_batches: true});
   assert.equal(rounded.marginal_costs, undefined);
 });
+
+test('a construction order resolves competing primary routes without claiming a global optimum', () => {
+  const routes = [line('cheap', [flow('full')], [flow('case')]), line('other', [flow('ore')], [flow('case')])];
+  const model = compileConstructionOrder(routes, resources, {construction: {external: [{resource: 'full', cost: 0, quantity: 1}, {resource: 'ore'}]}}, [flow('case', 2)]);
+  const result = solveConstructionOrder(highs, model);
+  assert.equal(result.status, 'feasible');
+  assert.equal(result.optimal, false);
+  assert.deepEqual(result.construction.routes.map(route => route.recipe), ['other']);
+  assert.deepEqual(result.primary_routes, [{recipe: 'other', resource: 'case'}]);
+  assert.equal(result.optimization.lower_bound, 1002);
+  assert.equal(result.optimization.objective, 2002);
+  assert.equal(result.search.attempts, 3);
+});
+
+test('construction cannot override a sustained primary route or a deliberate route pin', () => {
+  const routes = [line('cheap', [flow('full')], [flow('case')]), line('other', [flow('ore')], [flow('case')])];
+  const request = {construction: {external: [{resource: 'full', cost: 0, quantity: 1}, {resource: 'ore'}]}};
+  const model = compileConstructionOrder(routes, resources, request, [flow('case', 2)]);
+  const production = {lines: [{recipe: 'cheap', operations_per_second: 1, inputs: [], outputs: [{resource: 'case', rate: 1}]}]};
+  assert.equal(solveConstructionOrder(highs, model, 5, production).construction, null);
+  model.request = {...request, routes: {case: 'cheap'}};
+  assert.equal(solveConstructionOrder(highs, model).construction, null);
+});
+
+test('returned construction products can give an existing recipe another useful purpose', () => {
+  const existing = line('existing', [{choices: ['full', 'ore'], amount: 1, returns: {full: [flow('empty')]}}], [flow('case')]);
+  const other = line('other', [flow('ore')], [flow('case')]);
+  other.configuration.operations_per_second = 10;
+  const request = {construction: {external: [{resource: 'full', cost: 0, quantity: 1}, {resource: 'ore', cost: 0}]}};
+  const model = compileConstructionOrder([existing, other], resources, request, [flow('case', 2), flow('empty')]);
+  const production = {lines: [{recipe: 'existing', operations_per_second: 1,
+    inputs: [{resource: 'ore', rate: 1}], outputs: [{resource: 'case', rate: 1}]}]};
+  const result = solveConstructionOrder(highs, model, 5, production);
+  assert.equal(result.status, 'optimal');
+  assert.deepEqual(new Set(result.construction.routes.map(route => route.recipe)), new Set(['existing', 'other']));
+  assert.ok(result.primary_routes.some(route => route.recipe === 'existing' && route.resource === 'empty'));
+});
+
+test('explicitly allowed mixed primary routes remain available to construction', () => {
+  const routes = [line('cheap', [flow('full')], [flow('case')]), line('other', [flow('ore')], [flow('case')])];
+  const request = {single_primary_route: false,
+    construction: {external: [{resource: 'full', cost: 0, quantity: 1}, {resource: 'ore'}]}};
+  const model = compileConstructionOrder(routes, resources, request, [flow('case', 2)]);
+  const production = {lines: [{recipe: 'cheap', operations_per_second: 1, inputs: [], outputs: [{resource: 'case', rate: 1}]}]};
+  const result = solveConstructionOrder(highs, model, 5, production);
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.construction.routes.length, 2);
+  assert.equal(result.optimization.objective, 1002);
+});

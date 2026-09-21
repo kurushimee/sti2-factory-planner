@@ -9,7 +9,7 @@ import {endgameRequest} from './endgame_case.mjs';
 const root = resolve('builds/web'), artifacts = resolve('.plans/artifacts/certus');
 await mkdir(artifacts, {recursive: true});
 const dataset = await readDataset('data/statech-2.0.1.json.gz');
-const request = endgameRequest(dataset);
+const request = endgameRequest(dataset, process.argv[2]);
 const input = resolve(artifacts, 'endgame-import.json');
 await writeFile(input, JSON.stringify({format: 'factory-plan', version: 1, dataset_identity: dataset.identity,
   dataset, request, positions: {}, groups: {}}));
@@ -40,7 +40,7 @@ try {
         this.addEventListener('message', event => {
           const result = event.data.result;
           if (result) window.calculationCheck = {status: result.status, lines: result.lines?.length,
-            optimal: result.optimal, optimization: result.optimization};
+            optimal: result.optimal, optimization: result.optimization, search: result.search};
           if (event.data.error) window.calculationFailure = event.data.error;
         });
       }

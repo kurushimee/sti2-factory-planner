@@ -132,7 +132,7 @@ try {
     resources: dataset.resources, request: {construction: {external: [{resource: 'ore'}, {resource: 'fuel'}]}},
     requirements: [{resource: 'plate', amount: 14}]};
   const expectedOrder = solveConstructionOrder(await loadHighs(), compileConstructionOrder(orderInput.lines, orderInput.resources, orderInput.request, orderInput.requirements));
-  const actualOrder = await frame.evaluate(async input => {
+  const orderInBrowser = input => frame.evaluate(async input => {
     const moduleUrl = new URL('/kernel/construction_order.js', location.href).href;
     const solverUrl = new URL('/vendor/highs.mjs', location.href).href;
     const wasmUrl = new URL('/vendor/highs.wasm', location.href).href;
@@ -152,9 +152,18 @@ try {
         worker.postMessage(input);
       });
     } finally {worker.terminate(); URL.revokeObjectURL(url);}
-  }, orderInput);
+  }, input);
+  const actualOrder = await orderInBrowser(orderInput);
   assert.deepEqual(actualOrder, expectedOrder);
   console.log('Fixed construction quantities and their marginal costs match Node in the browser Worker.');
+  const competingOrder = {resources: dataset.resources, requirements: [{resource: 'plate', amount: 2}],
+    lines: ['fuel', 'ore'].map(resource => ({recipe: {id: resource, inputs: [{resource, amount: 1}], outputs: [{resource: 'plate', amount: 1}]},
+      configuration: {id: resource, operations_per_second: 1}})),
+    request: {construction: {external: [{resource: 'fuel', cost: 0, quantity: 1}, {resource: 'ore'}]}}};
+  const expectedCompeting = solveConstructionOrder(await loadHighs(), compileConstructionOrder(competingOrder.lines, competingOrder.resources, competingOrder.request, competingOrder.requirements));
+  assert.equal(expectedCompeting.status, 'feasible');
+  assert.deepEqual(await orderInBrowser(competingOrder), expectedCompeting);
+  console.log('Construction route repair and its cost bound match Node in the browser Worker.');
   if (worldDataset.identity === 'statech-industry-2:2.0.1') {
     const fixture = constructionCase(worldDataset);
     const result = await solveInBrowser(fixture.dataset, fixture.request);

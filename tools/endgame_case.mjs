@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
-export function endgameRequest(dataset) {
-  const recipe = dataset.recipes.find(value => value.source_id === 'statech:modern_industrialization/assembler/creative_storage_unit');
+export function endgameRequest(dataset, goal = 'creative_storage_unit') {
+  const recipe = dataset.recipes.find(value => value.source_id === `statech:modern_industrialization/assembler/${goal}`);
   assert.ok(recipe, 'The released creative storage recipe must be present.');
   return {goals: [{recipe: recipe.id, resource: recipe.primary, rate: 1 / 3600}], replication: false,
     available_upgrades: dataset.upgrades.map(value => value.id), external: [{resource: 'energy:eu'}],

@@ -14,34 +14,38 @@ export function runSolver(highs, text, options = {}, seed, details = {}) {
       if (indices.length) model.setSolution({indices, values});
     }
     model.run();
-    const status = model.getModelStatus();
-    const states = highs.constants.modelStatus;
-    const feasible = model.info.get('primal_solution_status') === highs.constants.solutionStatus.feasible;
-    const result = {status: Object.keys(states).find(name => states[name] === status) ?? 'unknown',
-      feasible, optimal: status === states.optimal, columns: null, objective: null,
-      lower_bound: null, relative_gap: null};
-    if (feasible) {
-      const solution = model.getSolution();
-      if (![...solution.colValue, ...solution.rowValue].every(Number.isFinite)) throw new Error('The solver returned non-finite values.');
-      result.columns = Object.create(null);
-      for (let index = 0; index < solution.colValue.length; index++) result.columns[model.getColName(index)] = solution.colValue[index];
-      result.objective = model.getObjectiveValue();
-      if (!Number.isFinite(result.objective)) throw new Error('The solver returned a non-finite objective.');
-      const bound = model.info.get('mip_dual_bound');
-      const gap = model.info.get('mip_gap');
-      if (Number.isFinite(bound)) result.lower_bound = bound;
-      if (Number.isFinite(gap)) result.relative_gap = gap;
-      if (result.optimal) { result.lower_bound = result.objective; result.relative_gap = 0; }
-      if (details.row_duals && result.optimal && model.info.get('dual_solution_status') === highs.constants.solutionStatus.feasible) {
-        result.row_duals = Object.create(null);
-        for (let index = 0; index < solution.rowDual.length; index++) {
-          if (!Number.isFinite(solution.rowDual[index])) throw new Error('The solver returned a non-finite marginal cost.');
-          result.row_duals[model.getRowName(index)] = solution.rowDual[index];
-        }
-      }
-    }
-    return result;
+    return readSolverResult(highs, model, details);
   } finally {
     model.dispose();
   }
+}
+
+export function readSolverResult(highs, model, details = {}) {
+  const status = model.getModelStatus();
+  const states = highs.constants.modelStatus;
+  const feasible = model.info.get('primal_solution_status') === highs.constants.solutionStatus.feasible;
+  const result = {status: Object.keys(states).find(name => states[name] === status) ?? 'unknown',
+    feasible, optimal: status === states.optimal, columns: null, objective: null,
+    lower_bound: null, relative_gap: null};
+  if (feasible) {
+    const solution = model.getSolution();
+    if (![...solution.colValue, ...solution.rowValue].every(Number.isFinite)) throw new Error('The solver returned non-finite values.');
+    result.columns = Object.create(null);
+    for (let index = 0; index < solution.colValue.length; index++) result.columns[model.getColName(index)] = solution.colValue[index];
+    result.objective = model.getObjectiveValue();
+    if (!Number.isFinite(result.objective)) throw new Error('The solver returned a non-finite objective.');
+    const bound = model.info.get('mip_dual_bound');
+    const gap = model.info.get('mip_gap');
+    if (Number.isFinite(bound)) result.lower_bound = bound;
+    if (Number.isFinite(gap)) result.relative_gap = gap;
+    if (result.optimal) { result.lower_bound = result.objective; result.relative_gap = 0; }
+    if (details.row_duals && result.optimal && model.info.get('dual_solution_status') === highs.constants.solutionStatus.feasible) {
+      result.row_duals = Object.create(null);
+      for (let index = 0; index < solution.rowDual.length; index++) {
+        if (!Number.isFinite(solution.rowDual[index])) throw new Error('The solver returned a non-finite marginal cost.');
+        result.row_duals[model.getRowName(index)] = solution.rowDual[index];
+      }
+    }
+  }
+  return result;
 }

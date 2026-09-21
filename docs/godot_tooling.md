@@ -16,7 +16,9 @@ This imports assets and refreshes registered script classes. Inspect errors as w
 
 ## Repository checks
 
-Run `python tools/check.py`, `python -m unittest discover -s tools/extraction -p 'test_*.py'`, and `git diff --check` from the project root. GitHub Actions repeats repository hygiene, extraction evidence checks, and a Godot 4.7.2 headless import. These checks do not yet test application behavior. The workstation has matching Windows and single-threaded web templates under `%APPDATA%/Godot/export_templates/4.7.2.stable`. See [browser constraints](web-platform.md) before adding platform-dependent behavior.
+Run `python tools/check.py`, `python -m unittest discover -s tools/extraction -p 'test_*.py'`, `npm test`, and `git diff --check` from the project root. GitHub Actions also runs catalog checks, Node/browser Worker parity, browser persistence, Godot 4.7.2 headless import, and application interaction scripts. Rendered desktop checks and exported browser checks supplement CI locally. The workstation has matching Windows and single-threaded web templates under `%APPDATA%/Godot/export_templates/4.7.2.stable`. See [browser constraints](web-platform.md) before adding platform-dependent behavior.
+
+`node tools/verify_endgame.mjs data/statech-2.0.1.json.gz <result.json> creative_barrel` checks the barrel case that exposed a scaled solver residual. Omit the final argument to check the storage unit. `node tools/verify_endgame_browser.mjs creative_barrel` checks calculation, portable export, and persistence in the built browser application; omit its argument for the storage unit.
 
 ## MCP connection
 
