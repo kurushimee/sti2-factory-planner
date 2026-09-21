@@ -9,6 +9,7 @@ func _run() -> void:
 	create_timer(50).timeout.connect(func() -> void: push_error("Goal editing timed out."); quit(1))
 	var workspace: PlannerWorkspace = load("res://ui/workspace.tscn").instantiate()
 	workspace.default_dataset_path = "res://data/example.json"
+	workspace.restore_saved_plan = false
 	root.add_child(workspace)
 	workspace.computation.failed.connect(func(message: String) -> void: push_error(message); quit(1))
 	await process_frame

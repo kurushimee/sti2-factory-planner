@@ -9,6 +9,7 @@ func _run() -> void:
 	create_timer(20).timeout.connect(func() -> void: push_error("Group editing timed out."); quit(1))
 	var workspace: PlannerWorkspace = load("res://ui/workspace.tscn").instantiate()
 	workspace.default_dataset_path = "res://data/example.json"
+	workspace.restore_saved_plan = false
 	root.add_child(workspace)
 	OS.low_processor_usage_mode = false
 	await process_frame

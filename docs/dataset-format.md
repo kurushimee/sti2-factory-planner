@@ -74,7 +74,7 @@ A plan uses `format: "factory-plan"` and `version: 1`. It embeds `dataset`, a ma
 | `reserve_fraction` | Installed generation headroom; 0.25 means 25%. It does not burn standby fuel. |
 | `overhead_eu_per_tick` | Fixed infrastructure consumption. |
 | `weights` | Nonnegative `external`, `machines`, and `energy` objective weights. The machine weight must be positive. |
-| `construction` | Optional material-equivalent construction accounting. Its separate `external` supplies use `resource`, `cost`, and optional finite `quantity`; operating rate limits do not apply. Positive `weight` and `work` default to 1, `materials` to 1,000, and `energy` to 0.000001. This estimate assumes available construction workstations and reports unrounded material quantities. |
+| `construction` | Optional construction accounting. Its separate `external` supplies use `resource`, `cost`, and optional finite `quantity`; operating rate limits do not apply. Positive `weight` and `work` default to 1, `materials` to 1,000, and `energy` to 0.000001. `round_batches: true` requires whole batches, purchased items, and verified consumable tools; otherwise quantities are material equivalents. Both modes assume available construction workstations. |
 | `single_primary_route` | Defaults to true; byproducts remain usable. |
 | `available_dimensions`, `available_biomes` | Optional environmental restrictions. |
 

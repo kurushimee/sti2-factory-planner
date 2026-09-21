@@ -8,7 +8,7 @@ import {build} from 'esbuild';
 import {zipSync, gzipSync} from 'fflate';
 import {inspectWorld} from '../kernel/world.js';
 import {readDataset} from './read_dataset.mjs';
-import {constructionCase, verifyConstructionCase} from './construction_catalog_case.mjs';
+import {constructionCase, verifyConstructionCase, finiteHammerCase, verifyFiniteHammerCase} from './construction_catalog_case.mjs';
 
 const root = new URL('../', import.meta.url);
 const dataset = {format: 1, resources: ['ore', 'plate', 'fuel', 'steam'].map(id => ({id})), recipes: [{
@@ -107,6 +107,11 @@ try {
     verifyConstructionCase(result.result, fixture);
     assert.deepEqual(result.result, solveFactory(await loadHighs(), fixture.dataset, fixture.request));
     console.log('Captured upgrade construction costs match Node in the browser Worker.');
+    const finite = finiteHammerCase(worldDataset);
+    const finiteResult = await solveInBrowser(finite.dataset, finite.request);
+    verifyFiniteHammerCase(finiteResult.result, finite);
+    assert.deepEqual(finiteResult.result, solveFactory(await loadHighs(), finite.dataset, finite.request));
+    console.log('Finite construction uses two real iron hammers for 35 plates in both runtimes.');
   }
   const boilerId = 'boiling|modern_industrialization:high_pressure_large_steam_boiler|fluid|400|heavy_water';
   if (worldDataset.recipes?.some(recipe => recipe.id === boilerId)) {

@@ -38,7 +38,7 @@ func _ready() -> void:
 		%SettingsError.text = "Machine priority must be positive." if value <= 0 else ""
 	)
 	confirmed.connect(_apply)
-	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %ConstructionEnabled, %ConstructionWeight.get_line_edit(), %SettingsEntries, %SettingsPrevious,
+	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %ConstructionEnabled, %ConstructionWeight.get_line_edit(), %ConstructionRounding, %SettingsEntries, %SettingsPrevious,
 		%SettingsNext, %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
 		%Reserve.get_line_edit(), %Overhead.get_line_edit(), %ResourceWeight.get_line_edit(),
 		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), get_ok_button(), get_cancel_button()]
@@ -55,6 +55,7 @@ func open_settings(dataset: Dictionary, request: Dictionary) -> void:
 		_construction.external = []
 	%ConstructionEnabled.set_pressed_no_signal(_request.has("construction"))
 	%ConstructionWeight.value = _construction.get("weight", 1)
+	%ConstructionRounding.set_pressed_no_signal(_construction.get("round_batches", false))
 	_names.clear()
 	for resource: Dictionary in dataset.resources:
 		_names[resource.id] = resource.get("name", resource.id)
@@ -121,6 +122,7 @@ func _category_changed(category: int) -> void:
 	_supply_reset()
 	%Supply.visible = category in [4, 6]
 	%ConstructionOptions.visible = category == 6
+	%ConstructionRounding.visible = category == 6
 	%Progression.visible = category != 6 && !_dataset.get("progression", []).is_empty()
 	%SettingsEntries.custom_minimum_size.y = 235 if category == 6 else 275
 	%SupplyUnlimited.text = "No construction quantity limit" if category == 6 else "No external supply rate limit"
@@ -131,7 +133,7 @@ func _category_changed(category: int) -> void:
 		"Mark resources already obtained as replication templates. Each replicator also needs one retained template item.",
 		"External supplies are deliberate imports into the factory. Select a resource to set its rate limit and cost. Item rates use items/s; fluid rates use mB/s; power uses EU/s.",
 		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible.",
-		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. This estimate assumes construction workstations are already available; craft quantities are unrounded. Supplies here are quantities, not ongoing rates."]
+		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. Construction workstations must already be available. Whole batches round crafts and tools; random yields remain estimates. Supplies here are quantities, not rates."]
 	%SettingsHint.text = hints[category]
 	match category:
 		0:
@@ -280,6 +282,7 @@ func _apply() -> void:
 	_request.weights = {"external": %ResourceWeight.value, "machines": %MachineWeight.value, "energy": %EnergyWeight.value}
 	if %ConstructionEnabled.button_pressed:
 		_construction.weight = %ConstructionWeight.value
+		_construction.round_batches = %ConstructionRounding.button_pressed
 		_request.construction = _construction.duplicate(true)
 	else:
 		_request.erase("construction")

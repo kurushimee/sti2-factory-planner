@@ -33,3 +33,31 @@ export function verifyConstructionCase(result, fixture) {
   }
   assert.equal(result.construction.material_cost, 109);
 }
+
+export function finiteHammerCase(catalog, plates = 35) {
+  const hammer = catalog.recipes.find(recipe => recipe.primary === 'item:modern_industrialization:iron_plate' &&
+    recipe.tool_usage?.resource === 'item:modern_industrialization:iron_hammer');
+  assert.equal(hammer.tool_usage.crafts_per_tool, 34);
+  assert.equal(hammer.inputs.filter(flow => flow.resource === 'item:minecraft:iron_ingot').reduce((sum, flow) => sum + flow.amount, 0), 4);
+  const goal = {id: 'fixture:plate_structure', primary: 'item:minecraft:stick', inputs: [], outputs: [{resource: 'item:minecraft:stick', amount: 1}],
+    configurations: [{id: 'fixture:plate_structure', machine: 'fixture:structure', operations_per_second: 1,
+      build_requirements: [{resource: hammer.primary, amount: plates}]}]};
+  const machines = [catalog.machines.find(machine => machine.id === 'ae2:molecular_assembler'),
+    {id: 'fixture:structure', status: 'supported', mechanic: 'fixed_capacity'}];
+  const request = {goals: [{recipe: goal.id, resource: goal.primary, rate: 1}],
+    available_machines: machines.map(machine => machine.id), construction: {round_batches: true, external: [
+      {resource: 'item:minecraft:iron_ingot'}, {resource: hammer.tool_usage.resource}, {resource: 'energy:eu', cost: 0},
+    ]}};
+  return {dataset: {...catalog, identity: 'captured-hammer-construction-check', recipes: [goal, hammer], machines,
+    default_machines: machines.map(machine => machine.id), progression: [], shape_member_rules: []}, request, hammer, plates};
+}
+
+export function verifyFiniteHammerCase(result, fixture) {
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.construction.method, 'whole_batches');
+  assert.equal(result.construction.routes[0].operations, fixture.plates);
+  assert.equal(result.construction.tools[0].count, Math.ceil(fixture.plates / 34));
+  assert.equal(result.construction.tools[0].remaining_crafts, Math.ceil(fixture.plates / 34) * 34 - fixture.plates);
+  assert.equal(result.construction.external.find(flow => flow.resource === 'item:minecraft:iron_ingot').amount, fixture.plates * 4);
+  assert.equal(result.construction.external.find(flow => flow.resource === fixture.hammer.tool_usage.resource).amount, Math.ceil(fixture.plates / 34));
+}

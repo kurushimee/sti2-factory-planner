@@ -98,12 +98,17 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 			text += markup(assumption) + "\n"
 	if !construction.is_empty():
 		text += "\n[b]Factory construction estimate[/b]\n%s material cost units\n%s machine-seconds of construction work\n%s EU for construction\n" % [number(construction.material_cost), number(construction.work_seconds), number(construction.energy_eu)]
-		text += "Unrounded material equivalents for the whole factory. These quantities are separate from operating flow rates.\n\n[b]Purchased construction supplies[/b]\n"
+		text += "Whole recipe batches and purchased items for the factory. Random yields remain expected values.\n" if construction.method == "whole_batches" else "Unrounded material equivalents for the whole factory.\n"
+		text += "These quantities are separate from operating flow rates.\n\n[b]Purchased construction supplies[/b]\n"
 		for supply: Dictionary in construction.external:
 			text += "%s × %s · %s cost each\n" % [number(supply.amount), markup(resources.get(supply.resource, readable_name(supply.resource))), number(supply.unit_cost)]
 		text += "\n[b]Construction recipe work[/b]\n"
 		for route: Dictionary in construction.routes:
 			text += "%s operations · %s\n" % [number(route.operations), markup(route.get("name", route.recipe))]
+		if !construction.get("tools", []).is_empty():
+			text += "\n[b]Consumable construction tools[/b]\n"
+			for tool: Dictionary in construction.tools:
+				text += "%s × %s · %s crafts remain after this job\n" % [number(tool.count), markup(resources.get(tool.resource, readable_name(tool.resource))), number(tool.remaining_crafts)]
 		for assumption: String in construction.assumptions:
 			text += "\n" + markup(assumption) + "\n"
 	text += "\n[b]Recipe source[/b]\n[font_size=12]%s\n%s[/font_size]" % [markup(recipe.get("source_id", recipe.id)), markup(recipe.get("origin", "Custom dataset"))]

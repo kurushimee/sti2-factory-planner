@@ -56,8 +56,9 @@ try {
   await page.waitForTimeout(200);
   await page.mouse.click(380, 166);
   await page.keyboard.type('ore');
-  await page.mouse.click(250, 330, {delay: 100});
+  await page.mouse.click(250, 378, {delay: 100});
   await page.mouse.click(460, 210, {delay: 100});
+  await page.mouse.click(460, 255, {delay: 100});
   const fill = async (x, y, value) => {
     await page.mouse.click(x, y, {delay: 100});
     await page.waitForTimeout(100);
@@ -71,7 +72,7 @@ try {
   await fill(670, 735, '2');
   await page.screenshot({path: `${artifacts}/browser-construction-settings.png`});
   await page.mouse.click(550, 780, {delay: 100});
-  await frame.waitForFunction(() => window.testResult?.construction?.material_cost === 12, null, {timeout: 15000});
+  await frame.waitForFunction(() => window.testResult?.construction?.material_cost === 12 && window.testResult.construction.method === 'whole_batches', null, {timeout: 15000});
   assert.equal(await frame.evaluate(() => window.testResult.external[0].rate), 1);
   await page.mouse.move(1270, 620);
   await page.mouse.wheel(0, 440);
@@ -89,6 +90,7 @@ try {
   const saved = JSON.parse(await readFile(savedPath, 'utf8'));
   assert.deepEqual(saved.request.construction.external, [{resource: 'ore', quantity: 6, cost: 2}]);
   assert.equal(saved.request.construction.weight, 2.5);
+  assert.equal(saved.request.construction.round_batches, true);
   assert.deepEqual(saved.request.external, [{resource: 'ore'}]);
   await page.reload();
   frame = page.frames().find(value => value !== page.mainFrame());

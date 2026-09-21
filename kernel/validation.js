@@ -89,6 +89,15 @@ export function validateDataset(dataset) {
     if (recipe.unsupported !== undefined) text(recipe.unsupported, `${at}.unsupported`);
     if (recipe.requires_obtained !== undefined) references(recipe.requires_obtained, resources, `${at}.requires_obtained`);
     if (recipe.catalysts !== undefined) flows(recipe.catalysts, `${at}.catalysts`, true);
+    if (recipe.tool_usage !== undefined) {
+      object(recipe.tool_usage, `${at}.tool_usage`);
+      references([recipe.tool_usage.resource], resources, `${at}.tool_usage.resource`);
+      number(recipe.tool_usage.crafts_per_tool, `${at}.tool_usage.crafts_per_tool`, 1, true);
+      const inputs = recipe.inputs.filter(flow => flow.resource === recipe.tool_usage.resource);
+      if (inputs.length !== 1 || Math.abs(inputs[0].amount - 1 / recipe.tool_usage.crafts_per_tool) > 1e-12) {
+        fail(at, 'tool consumption must match one verified lifetime input');
+      }
+    }
     if (recipe.conditions !== undefined) {
       array(recipe.conditions, `${at}.conditions`);
       for (const condition of recipe.conditions) { object(condition, `${at}.condition`); text(condition.type, `${at}.condition.type`); }

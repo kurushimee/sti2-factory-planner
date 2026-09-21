@@ -70,6 +70,13 @@ value = 1.0
 suffix = "priority"
 tooltip_text = "Weight of one-time construction costs alongside sustained factory costs."
 
+[node name="ConstructionRounding" type="CheckButton" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+text = "Use whole recipe batches and tools"
+tooltip_text = "Round recipe batches, purchased items, and verified consumable tools. Probabilistic yields still use expected values. Startup catalysts and loop fills remain separate."
+
 [node name="SettingsHint" type="Label" parent="Content/Availability"]
 unique_name_in_owner = true
 layout_mode = 2

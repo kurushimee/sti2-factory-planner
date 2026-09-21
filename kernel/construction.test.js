@@ -122,3 +122,62 @@ test('material costing preserves upgrade types with different ingredient require
   assert.ok(prepared.configurations.some(value => value.setup.upgrade?.id === 'basic'));
   assert.ok(prepared.configurations.some(value => value.setup.upgrade?.id === 'quantum'));
 });
+
+test('finite construction rounds recipe batches and purchased item quantities', () => {
+  const data = dataset([
+    recipe('production', [], [flow('product')], [config('machine', 2, [flow('case', 3)])]),
+    recipe('make_case', [flow('ore')], [flow('case', 4)], [{...config('builder', 2, [flow('bench')]), setup: {batch: 2}}]),
+  ]);
+  data.resources.find(value => value.id === 'ore').unit = 'item';
+  const result = solveFactory(highs, data, {...request, construction: {...request.construction, round_batches: true}});
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.construction.method, 'whole_batches');
+  assert.equal(result.construction.routes[0].operations, 2);
+  assert.equal(result.construction.routes[0].batches, 1);
+  assert.equal(result.construction.routes[0].batch_size, 2);
+  assert.equal(result.construction.external[0].amount, 2);
+  assert.equal(result.construction.balances.find(value => value.resource === 'case').surplus, 5);
+});
+
+test('finite consumable tools use exact whole lifetimes and report remaining uses', () => {
+  for (const [operations, tools, remaining] of [[1, 1, 33], [34, 1, 0], [35, 2, 33], [1000000000001, 29411764706, 3]]) {
+    const data = dataset([
+      recipe('production', [], [flow('product')], [config('machine', 2, [flow('case', operations)])]),
+      {...recipe('hammer', [flow('ore'), flow('item:hammer', 1 / 34)], [flow('case')]),
+        tool_usage: {resource: 'item:hammer', crafts_per_tool: 34}},
+    ]);
+    data.resources.push({id: 'item:hammer'});
+    const result = solveFactory(highs, data, {...request, construction: {round_batches: true,
+      materials: 1, external: [{resource: 'ore'}, {resource: 'item:hammer'}]}});
+    assert.equal(result.status, 'optimal');
+    assert.equal(result.construction.tools[0].count, tools);
+    assert.equal(result.construction.tools[0].remaining_crafts, remaining);
+    assert.equal(result.construction.external.find(value => value.resource === 'item:hammer').amount, tools);
+  }
+});
+
+test('finite alternative items cannot combine fractions of separate physical stacks', () => {
+  const data = dataset([
+    recipe('production', [], [flow('product')], [config('machine', 2, [flow('case')])]),
+    recipe('make_case', [{choices: ['ore', 'coil'], amount: 1}], [flow('case')]),
+  ]);
+  for (const resource of data.resources) resource.unit = 'item';
+  const settings = {external: [{resource: 'ore', quantity: 0.5}, {resource: 'coil', quantity: 0.5}]};
+  assert.equal(solveFactory(highs, data, {...request, construction: settings}).status, 'optimal');
+  assert.equal(solveFactory(highs, data, {...request, construction: {...settings, round_batches: true}}).status, 'infeasible');
+});
+
+test('sequential construction reuses a tool across recipes with the same verified lifetime', () => {
+  const data = dataset([
+    recipe('production', [], [flow('product')], [config('machine', 2, [flow('case', 17), flow('coil', 17)])]),
+    ...['case', 'coil'].map(resource => ({...recipe(`hammer_${resource}`, [flow('ore'), flow('item:hammer', 1 / 34)], [flow(resource)]),
+      tool_usage: {resource: 'item:hammer', crafts_per_tool: 34}})),
+  ]);
+  data.resources.push({id: 'item:hammer'});
+  const result = solveFactory(highs, data, {...request, construction: {round_batches: true, external: [{resource: 'ore'}, {resource: 'item:hammer'}]}});
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.construction.tools.length, 1);
+  assert.equal(result.construction.tools[0].count, 1);
+  assert.equal(result.construction.tools[0].remaining_crafts, 0);
+  assert.deepEqual(result.construction.tools[0].recipes.sort(), ['hammer_case', 'hammer_coil']);
+});

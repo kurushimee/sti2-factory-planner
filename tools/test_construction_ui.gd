@@ -45,6 +45,7 @@ func _run() -> void:
 	dialog.push_input(key)
 	await process_frame
 	assert(dialog.get_node("%ConstructionEnabled").button_pressed)
+	dialog.get_node("%ConstructionRounding").button_pressed = true
 	dialog.get_node("%ConstructionWeight").value = 2.5
 	dialog.get_node("%SupplyUnlimited").button_pressed = false
 	dialog.get_node("%SupplyLimit").value = 6
@@ -68,10 +69,11 @@ func _run() -> void:
 	assert(!workspace._request.construction.external[0].has("limit"))
 	assert(workspace._request.construction.weight == 2.5)
 	assert(workspace._last_result.construction.material_cost == 12)
+	assert(workspace._last_result.construction.method == "whole_batches")
 	assert(workspace._last_result.construction.requirements[0].amount == 2)
 	assert(workspace._last_result.external[0].rate == 1)
 	assert("Factory construction estimate" in workspace.inspector.text)
-	assert("Unrounded material equivalents" in workspace.inspector.text)
+	assert("Whole recipe batches" in workspace.inspector.text)
 	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("user://autosave.json"))
 	assert(saved.request.construction.external[0].quantity == 6)
 	if DisplayServer.get_name() != "headless":
@@ -88,4 +90,21 @@ func _run() -> void:
 	await workspace.computation.completed
 	assert(workspace._last_result.construction.material_cost == 12)
 	print("Construction settings passed keyboard editing, separate quantities, calculation, persistence, Undo, and Redo.")
+	for argument: String in OS.get_cmdline_user_args():
+		if !argument.begins_with("--finite-fixture="):
+			continue
+		var fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(argument.trim_prefix("--finite-fixture=")))
+		assert(workspace._load_dataset(fixture.dataset))
+		workspace._request.assign(fixture.request)
+		workspace._recalculate()
+		await workspace.computation.completed
+		await process_frame
+		assert(workspace._last_result.construction.tools[0].count == 2)
+		assert(workspace._last_result.construction.tools[0].remaining_crafts == 33)
+		assert("Consumable construction tools" in workspace.inspector.text)
+		if DisplayServer.get_name() != "headless":
+			workspace.inspector.scroll_to_line(30)
+			await RenderingServer.frame_post_draw
+			root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/finite-hammer-construction.png")
+		print("The captured 35-plate construction case reports two iron hammers and 33 remaining crafts.")
 	quit()

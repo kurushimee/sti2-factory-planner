@@ -216,14 +216,21 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   for (const [resource, terms] of rows) {
     constraints.push(`balance_${index++}: ${expression(terms)} >= ${demands.get(resource)}`);
   }
-  const construction = addConstruction({lines, objective, constraints, bounds}, resources, request);
+  const construction = addConstruction({lines, objective, constraints, bounds, integers}, resources, request,
+    new Map(dataset.resources.map(resource => [resource.id, resource])));
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');
-  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction};
+  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers};
 }
 
 function decode(model, solution) {
   const value = name => solution.Columns[name]?.Primal ?? 0;
+  for (const variable of model.integers) {
+    const amount = value(variable);
+    if (!Number.isSafeInteger(Math.round(amount)) || Math.abs(amount - Math.round(amount)) > 1e-6) {
+      throw new Error(`The solver returned a non-integral build or batch quantity: ${variable}.`);
+    }
+  }
   for (const line of model.lines) {
     const count = value(line.machine);
     if (!Number.isSafeInteger(Math.round(count)) || Math.abs(count - Math.round(count)) > 1e-6) {
