@@ -13,10 +13,11 @@ var _matches: Array[Dictionary] = []
 var _page := 0
 var _supply := ""
 var _loading := false
+var _construction: Dictionary = {}
 
 
 func _ready() -> void:
-	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches"]:
+	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches", "Construction costs"]:
 		%SettingsCategory.add_item(title_text)
 	%SettingsCategory.item_selected.connect(_category_changed)
 	%ProgressionPreset.item_selected.connect(func(index: int) -> void:
@@ -37,7 +38,7 @@ func _ready() -> void:
 		%SettingsError.text = "Machine priority must be positive." if value <= 0 else ""
 	)
 	confirmed.connect(_apply)
-	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %SettingsEntries, %SettingsPrevious,
+	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %ConstructionEnabled, %ConstructionWeight.get_line_edit(), %SettingsEntries, %SettingsPrevious,
 		%SettingsNext, %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
 		%Reserve.get_line_edit(), %Overhead.get_line_edit(), %ResourceWeight.get_line_edit(),
 		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), get_ok_button(), get_cancel_button()]
@@ -49,6 +50,11 @@ func _ready() -> void:
 func open_settings(dataset: Dictionary, request: Dictionary) -> void:
 	_dataset.assign(dataset)
 	_request.assign(request.duplicate(true))
+	_construction = _request.get("construction", {}).duplicate(true)
+	if !_construction.has("external"):
+		_construction.external = []
+	%ConstructionEnabled.set_pressed_no_signal(_request.has("construction"))
+	%ConstructionWeight.value = _construction.get("weight", 1)
 	_names.clear()
 	for resource: Dictionary in dataset.resources:
 		_names[resource.id] = resource.get("name", resource.id)
@@ -113,13 +119,19 @@ func _use_preset() -> void:
 func _category_changed(category: int) -> void:
 	_entries.clear()
 	_supply_reset()
-	%Supply.visible = category == 4
+	%Supply.visible = category in [4, 6]
+	%ConstructionOptions.visible = category == 6
+	%Progression.visible = category != 6 && !_dataset.get("progression", []).is_empty()
+	%SettingsEntries.custom_minimum_size.y = 235 if category == 6 else 275
+	%SupplyUnlimited.text = "No construction quantity limit" if category == 6 else "No external supply rate limit"
+	%SupplyLimit.suffix = "quantity available" if category == 6 else "/s maximum"
 	var hints: Array[String] = ["Choose machines the planner may build. Unsupported machines remain visible but cannot be enabled.",
 		"Enable upgrade types for automatic loadout choices. Explicit saved or pinned loadouts retain their selected upgrades.",
 		"Disable a recipe to exclude that production route. Its resources must come from another enabled route or an explicit supply.",
 		"Mark resources already obtained as replication templates. Each replicator also needs one retained template item.",
 		"External supplies are deliberate imports into the factory. Select a resource to set its rate limit and cost. Item rates use items/s; fluid rates use mB/s; power uses EU/s.",
-		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible."]
+		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible.",
+		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. This estimate assumes construction workstations are already available; craft quantities are unrounded. Supplies here are quantities, not ongoing rates."]
 	%SettingsHint.text = hints[category]
 	match category:
 		0:
@@ -142,7 +154,7 @@ func _category_changed(category: int) -> void:
 			for recipe: Dictionary in _dataset.recipes:
 				_entries.append({"id": recipe.id, "name": recipe.get("name", recipe.id),
 					"unsupported": recipe.has("unsupported"), "detail": recipe.get("unsupported", recipe.id)})
-		3, 4:
+		3, 4, 6:
 			for resource: Dictionary in _dataset.resources:
 				_entries.append({"id": resource.id, "name": resource.get("name", resource.id)})
 		5:
@@ -199,6 +211,7 @@ func _enabled(id: String) -> bool:
 		3: return id in _request.obtained_resources
 		4: return _request.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
 		5: return id in _request.available_parts
+		6: return _construction.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
 	return false
 
 
@@ -208,10 +221,11 @@ func _entry_changed() -> void:
 		return
 	var id: String = item.get_metadata(0)
 	var enabled := item.is_checked(0)
-	if %SettingsCategory.selected == 4:
-		_request.external = _request.external.filter(func(entry: Dictionary) -> bool: return entry.resource != id)
+	if %SettingsCategory.selected in [4, 6]:
+		var record: Dictionary = _construction if %SettingsCategory.selected == 6 else _request
+		record.external = record.external.filter(func(entry: Dictionary) -> bool: return entry.resource != id)
 		if enabled:
-			_request.external.append({"resource": id, "cost": 1})
+			record.external.append({"resource": id, "cost": 1})
 		_entry_selected()
 		return
 	var field: String = ["available_machines", "available_upgrades", "disabled_recipes", "obtained_resources", "external", "available_parts"][%SettingsCategory.selected]
@@ -223,22 +237,24 @@ func _entry_changed() -> void:
 
 func _entry_selected() -> void:
 	_supply_reset()
-	if %SettingsCategory.selected != 4:
+	if !%SettingsCategory.selected in [4, 6]:
 		return
 	var item: TreeItem = %SettingsEntries.get_selected()
 	if !item:
 		return
 	var id: String = item.get_metadata(0)
-	for entry: Dictionary in _request.external:
+	var limit_key := "quantity" if %SettingsCategory.selected == 6 else "limit"
+	var supplies: Array = _construction.external if %SettingsCategory.selected == 6 else _request.external
+	for entry: Dictionary in supplies:
 		if entry.resource != id:
 			continue
 		_loading = true
 		_supply = id
 		%SupplyUnlimited.disabled = false
-		%SupplyUnlimited.set_pressed_no_signal(!entry.has("limit"))
-		%SupplyLimit.value = entry.get("limit", 0)
+		%SupplyUnlimited.set_pressed_no_signal(!entry.has(limit_key))
+		%SupplyLimit.value = entry.get(limit_key, 0)
 		%SupplyCost.value = entry.get("cost", 1)
-		%SupplyLimit.editable = entry.has("limit")
+		%SupplyLimit.editable = entry.has(limit_key)
 		%SupplyCost.editable = true
 		_loading = false
 
@@ -247,17 +263,24 @@ func _supply_changed() -> void:
 	if _loading || _supply.is_empty():
 		return
 	%SupplyLimit.editable = !%SupplyUnlimited.button_pressed
-	for entry: Dictionary in _request.external:
+	var limit_key := "quantity" if %SettingsCategory.selected == 6 else "limit"
+	var supplies: Array = _construction.external if %SettingsCategory.selected == 6 else _request.external
+	for entry: Dictionary in supplies:
 		if entry.resource == _supply:
 			entry.cost = %SupplyCost.value
 			if %SupplyUnlimited.button_pressed:
-				entry.erase("limit")
+				entry.erase(limit_key)
 			else:
-				entry.limit = %SupplyLimit.value
+				entry[limit_key] = %SupplyLimit.value
 
 
 func _apply() -> void:
 	_request.reserve_fraction = %Reserve.value / 100
 	_request.overhead_eu_per_tick = %Overhead.value
 	_request.weights = {"external": %ResourceWeight.value, "machines": %MachineWeight.value, "energy": %EnergyWeight.value}
+	if %ConstructionEnabled.button_pressed:
+		_construction.weight = %ConstructionWeight.value
+		_request.construction = _construction.duplicate(true)
+	else:
+		_request.erase("construction")
 	settings_changed.emit(_request.duplicate(true))

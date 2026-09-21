@@ -12,11 +12,11 @@ const appdata = await mkdtemp(join(scratch, 'desktop-check-'));
 const user = join(appdata, 'Godot', 'app_userdata', 'STI2 Factory Planner');
 await mkdir(user, {recursive: true});
 const dataset = JSON.parse(gunzipSync(await readFile('data/statech-2.0.1.json.gz')));
-const recipe = 'waste_collection|extended_industrialization:electric_waste_collector';
-const plan = {format: 'factory-plan', version: 1, dataset_identity: dataset.identity, dataset,
-  request: {goals: [{recipe, resource: 'fluid:extended_industrialization:manure', rate: 2000 / 15}],
+const plan = process.argv[4] ? JSON.parse(await readFile(process.argv[4], 'utf8')) : {format: 'factory-plan', version: 1, dataset_identity: dataset.identity, dataset,
+  request: {goals: [{recipe: 'waste_collection|extended_industrialization:electric_waste_collector', resource: 'fluid:extended_industrialization:manure', rate: 2000 / 15}],
     available_machines: ['extended_industrialization:electric_waste_collector'], external: [{resource: 'energy:eu'}]},
   positions: {}, groups: {}};
+const recipe = plan.request.goals[0].recipe;
 await writeFile(join(user, 'autosave.json'), JSON.stringify(plan));
 const capture = resolve('.plans/artifacts/workspace/standalone-bundled-plan.png');
 const log = join(appdata, 'application.log');
@@ -36,11 +36,12 @@ await new Promise((resolveRun, reject) => {
   });
 });
 const saved = JSON.parse(await readFile(join(user, 'autosave.json'), 'utf8'));
-assert.equal(saved.dataset_identity, dataset.identity);
+assert.equal(saved.dataset_identity, plan.dataset_identity);
 assert.equal(saved.request.goals[0].recipe, recipe);
+assert.deepEqual(saved.request.construction, plan.request.construction);
 assert.ok(Object.keys(saved.positions).some(key => key.includes(recipe)));
 assert.ok((await stat(capture)).mtimeMs >= started);
 assert.ok((await stat(capture)).size > 10000);
 const output = await readFile(log, 'utf8');
 assert.doesNotMatch(output, /SCRIPT ERROR|ERROR:/);
-console.log(`The Windows export calculated and saved the StaTech plan with empty PATH and isolated APPDATA: ${appdata}`);
+console.log(`The Windows export calculated and saved ${plan.dataset_identity} with empty PATH and isolated APPDATA: ${appdata}`);

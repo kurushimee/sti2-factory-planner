@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "identity": "construction-example:1",
+  "name": "Construction example",
+  "description": "A fictional workshop for comparing build quantities with operating rates.",
+  "resources": [
+    {"id": "ore", "name": "Iron ore", "unit": "item"},
+    {"id": "frame", "name": "Machine frame", "unit": "item"},
+    {"id": "bench", "name": "Workbench", "unit": "item"},
+    {"id": "product", "name": "Finished part", "unit": "item"}
+  ],
+  "recipes": [
+    {
+      "id": "production", "name": "Make finished parts", "primary": "product",
+      "inputs": [{"resource": "ore", "amount": 1}], "outputs": [{"resource": "product", "amount": 1}],
+      "configurations": [{"id": "production-machine", "machine": "Parts machine", "operations_per_second": 1,
+        "build_requirements": [{"resource": "frame", "amount": 2}]}]
+    },
+    {
+      "id": "frame", "name": "Build machine frames", "primary": "frame",
+      "inputs": [{"resource": "ore", "amount": 3}], "outputs": [{"resource": "frame", "amount": 1}],
+      "configurations": [{"id": "frame-workbench", "machine": "Workbench", "operations_per_second": 2,
+        "build_requirements": [{"resource": "bench", "amount": 1}]}]
+    }
+  ]
+}

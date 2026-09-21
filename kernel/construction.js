@@ -88,7 +88,7 @@ export function addConstruction(model, resources, request) {
       outputTerms.push({...flow, variable});
     }
     if (energy) add(rows.get('energy:eu'), variable, -energy);
-    routes.push({recipe: recipe.id, configuration: configuration.id, variable, capacity, energy, unitCost, inputTerms, outputTerms});
+    routes.push({recipe: recipe.id, name: recipe.name ?? recipe.id, configuration: configuration.id, variable, capacity, energy, unitCost, inputTerms, outputTerms});
   }
   const supplies = [];
   for (const supply of settings.external ?? []) {
@@ -123,7 +123,7 @@ export function decodeConstruction(model, value) {
     if (magnitude) balances.push({resource, surplus, numerical_tolerance: tolerance});
   }
   const routes = model.routes.filter(route => value(route.variable) > 1e-9).map(route => ({
-    recipe: route.recipe, configuration: route.configuration, operations: value(route.variable),
+    recipe: route.recipe, name: route.name, configuration: route.configuration, operations: value(route.variable),
     work_seconds: value(route.variable) / route.capacity, energy_eu: value(route.variable) * route.energy,
     inputs: quantities(route.inputTerms), outputs: quantities(route.outputTerms),
   }));

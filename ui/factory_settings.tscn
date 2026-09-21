@@ -46,6 +46,30 @@ unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Search by name or ID…"
 
+[node name="ConstructionOptions" type="HBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_constants/separation = 12
+
+[node name="ConstructionEnabled" type="CheckButton" parent="Content/Availability/ConstructionOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Estimate construction costs"
+tooltip_text = "Compare installed machine materials through their recipes. This assumes enabled workstations are already available for construction. Quantities are unrounded estimates."
+
+[node name="ConstructionWeight" type="SpinBox" parent="Content/Availability/ConstructionOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(175, 0)
+min_value = 0.001
+max_value = 1000000.0
+step = 0.001
+value = 1.0
+suffix = "priority"
+tooltip_text = "Weight of one-time construction costs alongside sustained factory costs."
+
 [node name="SettingsHint" type="Label" parent="Content/Availability"]
 unique_name_in_owner = true
 layout_mode = 2
