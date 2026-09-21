@@ -19,6 +19,7 @@ signal layout_settled
 var restore_saved_plan := true
 
 var _dataset: Dictionary[String, Variant] = {}
+var _dataset_storage_key := ""
 var _request: Dictionary[String, Variant] = {"goals": [], "replication": false}
 var _positions: Dictionary[String, Variant] = {}
 var _recipes: Dictionary[String, Dictionary] = {}
@@ -73,6 +74,8 @@ func _ready() -> void:
 		group_controls[index].focus_previous = group_controls[index].get_path_to(group_controls[(index + group_controls.size() - 1) % group_controls.size()])
 	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request))
 	%Summary.pressed.connect(_show_power)
+	%ConnectionMode.item_selected.connect(func(_index: int) -> void: _refresh_connections(); _save_view())
+	%FocusRecipe.pressed.connect(_focus_recipe)
 	%FactorySettings.settings_changed.connect(func(request: Dictionary) -> void:
 		_remember()
 		_request.assign(request)
@@ -118,6 +121,14 @@ func _ready() -> void:
 		JavaScriptBridge.eval("window.plannerBridge.restore()")
 	elif restore_saved_plan && FileAccess.file_exists("user://autosave.json"):
 		var saved: Variant = PlannerJson.parse(FileAccess.get_file_as_string("user://autosave.json"))
+		if saved is Dictionary && !saved.has("dataset"):
+			var reference: String = str(saved.get("dataset_ref", ""))
+			if reference.length() == 64 && reference.is_valid_hex_number(false):
+				var cached_path := "user://datasets/" + reference + ".json"
+				if FileAccess.file_exists(cached_path):
+					var cached := FileAccess.get_file_as_string(cached_path)
+					if cached.sha256_text() == reference:
+						saved.dataset = PlannerJson.parse(cached)
 		if saved is Dictionary && FileAccess.file_exists("user://workspace-view.json"):
 			var view: Variant = PlannerJson.parse(FileAccess.get_file_as_string("user://workspace-view.json"))
 			if view is Dictionary && view.get("dataset_identity") == saved.get("dataset_identity") && PlannerDatasetValidation.check_view(view.get("view")).is_empty():
@@ -131,7 +142,7 @@ func _ready() -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
-		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, %Summary, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
+		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, %Summary, %ConnectionMode, %FocusRecipe, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -236,6 +247,7 @@ func _load_dataset(value: Variant) -> bool:
 	var next_dataset: Dictionary[String, Variant] = {}
 	next_dataset.assign(value)
 	_dataset = next_dataset
+	_dataset_storage_key = ""
 	_recipes.clear()
 	_resources.clear()
 	for resource: Dictionary in _dataset.resources:
@@ -286,10 +298,10 @@ func _add_goal() -> void:
 	var existing := false
 	for goal: Dictionary in _request.goals:
 		if goal.get("recipe") == id && goal.get("kind", "rate") == "rate":
-			goal.rate += rate.value
+			goal.rate += PlannerDisplay.input_value(rate)
 			existing = true
 	if !existing:
-		_request.goals.append({"resource": recipe.primary, "rate": rate.value, "recipe": id})
+		_request.goals.append({"resource": recipe.primary, "rate": PlannerDisplay.input_value(rate), "recipe": id})
 	_recalculate()
 
 
@@ -438,6 +450,8 @@ func _calculated(result: Dictionary) -> void:
 
 func _render_plan(result: Dictionary) -> void:
 	_initial_layout = _positions.is_empty() && _groups.is_empty()
+	if _initial_layout && _pending_view.is_empty():
+		%ConnectionMode.select(2 if result.lines.size() > 80 else 0)
 	_unplaced.clear()
 	_rendering = true
 	graph.clear_connections()
@@ -463,12 +477,6 @@ func _render_plan(result: Dictionary) -> void:
 	var by_key: Dictionary[String, PlannerRecipeNode] = {}
 	for node: PlannerRecipeNode in _nodes.values():
 		by_key[node.get_meta("position_key")] = node
-	for connection: Dictionary in result.get("connections", []):
-		if !by_key.has(connection.source) || !by_key.has(connection.destination):
-			continue
-		var source: PlannerRecipeNode = by_key[connection.source]
-		var destination: PlannerRecipeNode = by_key[connection.destination]
-		graph.connect_node(source.name, source.output_ports[connection.resource], destination.name, destination.input_ports[connection.resource])
 	%Summary.text = "%d %s  ·  Plan details" % [machine_count, "machine" if machine_count == 1 else "machines"]
 	_rendering = false
 	_restore_groups()
@@ -477,7 +485,13 @@ func _render_plan(result: Dictionary) -> void:
 		var tween := create_tween()
 		tween.tween_property(graph, "modulate:a", 1.0, 0.18).from(0.5)
 	if !_nodes.is_empty():
-		_select_node(by_key.get(_inspected_key, _nodes.values()[0]))
+		var preferred: PlannerRecipeNode = by_key.get(_inspected_key)
+		if !preferred:
+			for node: PlannerRecipeNode in _nodes.values():
+				if _request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == node.recipe_id):
+					preferred = node
+					break
+		_select_node(preferred if preferred else _nodes.values()[0])
 	else:
 		_selected = ""
 		inspector.text = "Select a recipe and add a goal to start planning."
@@ -493,6 +507,8 @@ func _settle_node_sizes() -> void:
 	if _initial_layout && !_nodes.is_empty():
 		_initial_layout = false
 		_apply_layout(false)
+		if _nodes.size() > 80:
+			_focus_recipe()
 	elif !_unplaced.is_empty():
 		_place_new_nodes()
 	if !_pending_view.is_empty():
@@ -517,6 +533,7 @@ func _select_node(node: Node) -> void:
 	%EditGoal.text = "Edit production goal"
 	_selected = node.recipe_id
 	_inspected_key = node.get_meta("position_key")
+	_refresh_connections()
 	node.selected = true
 	%EditGoal.disabled = false
 	var line: Dictionary = node.allocation
@@ -526,6 +543,32 @@ func _select_node(node: Node) -> void:
 			inspector.text += "\nPrimary supply: %s. Other useful outputs are credited across the factory.\n" % PlannerDisplay.markup(_resources.get(route.resource, route.resource))
 	%RemoveGoal.text = "Remove selected goal"
 	%RemoveGoal.disabled = !_request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == _selected)
+
+
+func _refresh_connections() -> void:
+	graph.clear_connections()
+	var by_key: Dictionary[String, PlannerRecipeNode] = {}
+	for node: PlannerRecipeNode in _nodes.values():
+		by_key[node.get_meta("position_key")] = node
+	for connection: Dictionary in _last_result.get("connections", []):
+		if !by_key.has(connection.source) || !by_key.has(connection.destination):
+			continue
+		if %ConnectionMode.selected == 1 && connection.resource == "energy:eu":
+			continue
+		if %ConnectionMode.selected == 2 && connection.source != _inspected_key && connection.destination != _inspected_key:
+			continue
+		var source: PlannerRecipeNode = by_key[connection.source]
+		var destination: PlannerRecipeNode = by_key[connection.destination]
+		graph.connect_node(source.name, source.output_ports[connection.resource], destination.name, destination.input_ports[connection.resource])
+
+
+func _focus_recipe() -> void:
+	for node: PlannerRecipeNode in _nodes.values():
+		if node.get_meta("position_key") == _inspected_key:
+			graph.zoom = maxf(graph.zoom, 0.85)
+			graph.scroll_offset = (node.position_offset + node.size / 2.0) * graph.zoom - graph.size / 2.0
+			_save_view()
+			return
 
 
 func _show_power() -> void:
@@ -718,8 +761,9 @@ func _restore_plan(value: Variant) -> void:
 		return
 	_request.assign(value.request)
 	%ViewSaveDelay.stop()
-	_pending_view = value.get("view", {"zoom": 1.0, "scroll": [0, 0], "inspected": ""}).duplicate(true)
+	_pending_view = value.get("view", {}).duplicate(true)
 	_inspected_key = _pending_view.get("inspected", "")
+	%ConnectionMode.select(clampi(int(_pending_view.get("connections", 0)), 0, 2))
 	_positions.assign(value.get("positions", {}))
 	_groups.assign(value.get("groups", {}))
 	_world_import.assign(value.get("imported_world", {}))
@@ -733,17 +777,39 @@ func _restore_plan(value: Variant) -> void:
 
 
 func _autosave() -> void:
+	var snapshot := _snapshot()
+	snapshot.erase("dataset")
+	var dataset_text := ""
+	if _dataset_storage_key.is_empty():
+		dataset_text = JSON.stringify(_dataset, "", true, true)
+		_dataset_storage_key = dataset_text.sha256_text()
+	snapshot.dataset_ref = _dataset_storage_key
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.plannerBridge.save(%s)" % JSON.stringify(_snapshot(), "", true, true))
+		JavaScriptBridge.eval("window.plannerBridge.save(%s, %s)" % [JSON.stringify(snapshot, "", true, true), dataset_text if !dataset_text.is_empty() else "null"])
 		return
-	var file := FileAccess.open("user://autosave.json", FileAccess.WRITE)
-	file.store_string(JSON.stringify(_snapshot(), "", true, true))
+	if !dataset_text.is_empty():
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://datasets"))
+		var cached_path := "user://datasets/" + _dataset_storage_key + ".json"
+		var cached := FileAccess.open(cached_path, FileAccess.WRITE)
+		if !cached:
+			_dataset_storage_key = ""
+			_failed("The dataset could not be saved. Export your plan to keep a portable copy.")
+			return
+		cached.store_string(dataset_text)
+		cached.close()
+	var file := FileAccess.open("user://autosave.pending", FileAccess.WRITE)
+	if !file:
+		_failed("The workspace could not be saved. Export your plan to keep a portable copy.")
+		return
+	file.store_string(JSON.stringify(snapshot, "", true, true))
 	file.close()
+	if DirAccess.rename_absolute(ProjectSettings.globalize_path("user://autosave.pending"), ProjectSettings.globalize_path("user://autosave.json")) != OK:
+		_failed("The workspace save could not be replaced. Export your plan to keep a portable copy.")
 	_save_view()
 
 
 func _view_snapshot() -> Dictionary:
-	return {"zoom": graph.zoom, "scroll": [graph.scroll_offset.x, graph.scroll_offset.y], "inspected": _inspected_key}
+	return {"zoom": graph.zoom, "scroll": [graph.scroll_offset.x, graph.scroll_offset.y], "inspected": _inspected_key, "connections": %ConnectionMode.selected}
 
 
 func _save_view() -> void:

@@ -50,6 +50,12 @@ try {
       const get = open.result.transaction('plans').objectStore('plans').get(key);
       get.onsuccess = () => {
         const result = get.result;
+        if (!compact && result?.dataset_ref && !result.dataset) {
+          const cached = open.result.transaction('plans').objectStore('plans').get(`dataset:${result.dataset_ref}`);
+          cached.onsuccess = () => { result.dataset = cached.result; delete result.dataset_ref; resolve(result); open.result.close(); };
+          cached.onerror = () => reject(cached.error);
+          return;
+        }
         if (compact && result) delete result.dataset;
         resolve(result); open.result.close();
       };

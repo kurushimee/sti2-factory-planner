@@ -2,6 +2,11 @@ class_name PlannerDisplay
 extends RefCounted
 
 
+static func input_value(control: SpinBox) -> float:
+	# Range steps can introduce binary noise beyond the decimals shown to the player.
+	return float(PlannerJson.parse(String.num(control.value, step_decimals(control.step))))
+
+
 static func readable_name(identity: String, supplied: String = "") -> String:
 	var untyped := identity.trim_prefix("item:").trim_prefix("fluid:")
 	if !supplied.is_empty() && supplied != identity && supplied.replace(" ", "_") != untyped && !supplied.begins_with("item.") && !supplied.begins_with("fluid.") && !supplied.begins_with("block."):

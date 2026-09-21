@@ -181,7 +181,7 @@ func _request_preview() -> void:
 	_selection = {"recipe": _recipe.id, "revision": _revision}
 	if %GoalKind.selected == 2:
 		_selection.quantity = %GoalQuantity.text.strip_edges()
-		_selection.rate = %GoalRate.value
+		_selection.rate = PlannerDisplay.input_value(%GoalRate)
 	if _recipe.has("process"):
 		var upgrade: Dictionary = %GoalUpgrade.get_item_metadata(%GoalUpgrade.selected)
 		var setup: Dictionary = {"upgrade_count": int(%GoalUpgradeCount.value) if !upgrade.is_empty() else 0,
@@ -230,7 +230,7 @@ func _apply() -> void:
 		goal.configuration = _preview.configuration.id
 		goal.machines = int(%GoalMachines.value)
 	else:
-		goal.rate = %GoalRate.value
+		goal.rate = PlannerDisplay.input_value(%GoalRate)
 		if kind == "quantity":
 			goal.quantity = %GoalQuantity.text.strip_edges()
 	_selection.configuration = _preview.configuration.id

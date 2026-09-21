@@ -49,4 +49,6 @@ Keep construction quantities separate from sustained flow rates. Construction co
 
 Keep recipe display defaults separate from primary-route ownership. A feasible heuristic result must retain its unproven status and cost bound. Never infer feasibility from solver buffers alone. Check endgame calculations with `node tools/verify_endgame.mjs data/statech-2.0.1.json.gz <result.json>`, render that result with `tools/test_endgame_ui.gd -- <result.json>`, and use `--endgame` with the browser Worker parity check. Large construction optimization and graph responsiveness remain open work; do not treat these checks as full delivery.
 
-Use `PlannerJson.parse` at Godot data boundaries and full-precision `JSON.stringify` for calculation requests and saved plans. The stock parser truncates significant digits in small decimal tokens; `tools/test_json.gd` and `tools/test_computation.gd` cover the workaround.
+Use `PlannerJson.parse` at Godot data boundaries and full-precision `JSON.stringify` for calculation requests and saved plans. The stock parser can corrupt the precision or magnitude of long decimal tokens; `tools/test_json.gd` and `tools/test_computation.gd` cover the workaround. Read stepped goal controls through `PlannerDisplay.input_value` to preserve their displayed decimal value.
+
+Autosave keeps immutable datasets separately by content hash; portable exports still embed them. Keep the prior plan recoverable if a dataset write fails. Verify storage changes with `tools/test_ui.gd`, `node tools/verify_storage_browser.mjs`, and the exported application checks.

@@ -45,14 +45,19 @@
       link.href = url; link.download = 'factory-plan.json'; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     },
-    async save(plan) {
+    async save(plan, dataset) {
       try {
         const db = await database;
         const transaction = db.transaction('plans', 'readwrite');
+        if (dataset) transaction.objectStore('plans').put(dataset, `dataset:${plan.dataset_ref}`);
+        else if (plan.dataset_ref) {
+          const cached = transaction.objectStore('plans').get(`dataset:${plan.dataset_ref}`);
+          cached.onsuccess = () => { if (!cached.result) transaction.abort(); };
+        }
         transaction.objectStore('plans').put(plan, 'autosave');
         if (plan.view) transaction.objectStore('plans').put({dataset_identity: plan.dataset_identity, view: plan.view}, 'workspace-view');
         else transaction.objectStore('plans').delete('workspace-view');
-        transaction.onerror = () => files.push({kind: 'error', message: 'Browser storage failed. Export your plan to keep a portable copy.'});
+        transaction.onabort = () => files.push({kind: 'error', message: 'Browser storage could not retain this plan and its dataset. Export a portable copy.'});
       } catch (error) { files.push({kind: 'error', message: `Browser storage is unavailable: ${error.message}`}); }
     },
     async saveView(record) {
@@ -72,7 +77,13 @@
         transaction.oncomplete = () => {
           if (!request.result) return;
           if (view.result?.dataset_identity === request.result.dataset_identity) request.result.view = view.result.view;
-          files.push({kind: 'json', value: request.result});
+          if (request.result.dataset) { files.push({kind: 'json', value: request.result}); return; }
+          const cached = db.transaction('plans').objectStore('plans').get(`dataset:${request.result.dataset_ref}`);
+          cached.onsuccess = () => {
+            if (!cached.result) { files.push({kind: 'error', message: 'The saved dataset is missing. Import a portable plan to recover.'}); return; }
+            files.push({kind: 'json', value: {...request.result, dataset: cached.result}});
+          };
+          cached.onerror = () => files.push({kind: 'error', message: 'Browser storage could not read the saved dataset.'});
         };
         transaction.onerror = () => files.push({kind: 'error', message: 'Browser storage could not restore the saved plan.'});
       } catch (error) { files.push({kind: 'error', message: `Browser storage is unavailable: ${error.message}`}); }

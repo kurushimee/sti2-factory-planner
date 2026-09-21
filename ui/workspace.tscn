@@ -231,10 +231,34 @@ connection_lines_thickness = 2.0
 snapping_distance = 20
 panning_scheme = 1
 
-[node name="Hint" type="Label" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn"]
+[node name="Navigation" type="HBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn"]
 layout_mode = 2
+
+[node name="ConnectionMode" type="OptionButton" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Choose which connections to draw. All production and power remain in the plan."
+item_count = 3
+selected = 0
+popup/item_0/text = "All flows"
+popup/item_0/id = 0
+popup/item_1/text = "Materials"
+popup/item_1/id = 1
+popup/item_2/text = "Selected recipe"
+popup/item_2/id = 2
+
+[node name="FocusRecipe" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Focus recipe"
+tooltip_text = "Center the inspected recipe at a readable zoom."
+
+[node name="Hint" type="Label" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
+layout_mode = 2
+size_flags_horizontal = 3
+text_overrun_behavior = 3
 theme_type_variation = &"MutedLabel"
-text = "Middle-drag to pan  ·  Ctrl + wheel to zoom  ·  Select a recipe to inspect"
+text = "Middle-drag to pan · Ctrl + wheel to zoom"
 
 [node name="InspectorPanel" type="PanelContainer" parent="Margin/Layout/Body/WorkspaceSplit"]
 layout_mode = 2

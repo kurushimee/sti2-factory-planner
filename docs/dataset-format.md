@@ -12,7 +12,7 @@ Give the dataset a stable `identity`, such as `pack-name:version`, and a readabl
 
 All recipe amounts are per operation. Item amounts count items, StaTech fluid amounts use millibuckets, and electricity uses EU. Rates are per second. A game tick is 1/20 second. `eu_per_tick` and idle power use EU/t; `eu_per_operation` uses total EU. Never put a bucket count in a millibucket field. Expected probabilistic amounts may be fractional; mark the recipe with `expected_yields: true` and retain the original probabilities in its source evidence.
 
-Godot boundaries serialize floats with full precision. `PlannerJson.parse` converts small decimal tokens to scientific notation before parsing because the stock parser otherwise spends significant-digit precision on leading fractional zeros. Quoted text is unchanged. The regression includes an exact `1 / 3600` rate through calculation requests and plan persistence. Large finite quantities remain decimal strings when they exceed the numeric range.
+Godot boundaries serialize floats with full precision. `PlannerJson.parse` converts decimal tokens to scientific notation before parsing because the stock parser can corrupt their significant digits or magnitude. Quoted text is unchanged. Regressions include an exact `1 / 3600` rate through requests and persistence, plus long decimals such as `600.0000000000001`. Stepped goal controls use their displayed decimal precision. Large finite quantities remain decimal strings when they exceed the numeric range.
 
 ## Recipes and flows
 

@@ -43,6 +43,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Check the embedded browser calculation
         run: node tools/verify_kernel_browser.mjs - data/statech-2.0.1.json.gz --endgame
+      - name: Check browser dataset persistence and recovery
+        run: node tools/verify_storage_browser.mjs
       - name: Check whitespace
         run: git diff --check HEAD^ HEAD
       - name: Install Godot 4.7.2
