@@ -8,6 +8,7 @@ import {build} from 'esbuild';
 import {zipSync, gzipSync} from 'fflate';
 import {inspectWorld} from '../kernel/world.js';
 import {readDataset} from './read_dataset.mjs';
+import {constructionCase, verifyConstructionCase} from './construction_catalog_case.mjs';
 
 const root = new URL('../', import.meta.url);
 const dataset = {format: 1, resources: ['ore', 'plate', 'fuel', 'steam'].map(id => ({id})), recipes: [{
@@ -48,6 +49,7 @@ const server = createServer(async (incoming, response) => {
     const files = {
       '/kernel/worker.js': 'kernel/worker.js', '/kernel/planner.js': 'kernel/planner.js',
       '/kernel/structure_bill.js': 'kernel/structure_bill.js',
+      '/kernel/construction.js': 'kernel/construction.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/goals.js': 'kernel/goals.js',
       '/kernel/startup.js': 'kernel/startup.js',
@@ -99,6 +101,13 @@ try {
   assert.deepEqual(actual.phases, ['loading_solver', 'solving']);
   assert.equal(actual.isolated, false);
   assert.deepEqual(errors, []);
+  if (worldDataset.identity === 'statech-industry-2:2.0.1') {
+    const fixture = constructionCase(worldDataset);
+    const result = await solveInBrowser(fixture.dataset, fixture.request);
+    verifyConstructionCase(result.result, fixture);
+    assert.deepEqual(result.result, solveFactory(await loadHighs(), fixture.dataset, fixture.request));
+    console.log('Captured upgrade construction costs match Node in the browser Worker.');
+  }
   const boilerId = 'boiling|modern_industrialization:high_pressure_large_steam_boiler|fluid|400|heavy_water';
   if (worldDataset.recipes?.some(recipe => recipe.id === boilerId)) {
     const resource = 'fluid:modern_industrialization:high_pressure_heavy_water_steam';

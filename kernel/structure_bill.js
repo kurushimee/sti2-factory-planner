@@ -182,7 +182,11 @@ export function checkFixedStructure(recipe, configuration, dataset, request, con
   const choices = inputs.map((flow, slot) => ({slot, resource: request.ingredients?.[`${recipe.id}#${slot}`] ??
     (flow.resource || (flow.choices?.length === 1 ? flow.choices[0] : null))}));
   // Unresolved alternatives require storage checks after their material allocation is known.
-  if (choices.some(choice => !choice.resource)) return;
+  if (choices.some(choice => !choice.resource)) {
+    if (request.construction) configuration.structure = {status: 'unsupported',
+      reason: 'Choose the alternative ingredients before comparing this multiblock construction bill.'};
+    return;
+  }
   attachStructureBills({lines: [{recipe: recipe.id, machine: configuration.machine,
     configuration_details: configuration, ingredient_choices: choices}]}, dataset,
   {allowed_parts: request.available_parts}, context);

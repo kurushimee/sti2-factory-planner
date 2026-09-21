@@ -4,6 +4,7 @@ import {startupRequirements} from './startup.js';
 import {prepareDataset} from './catalog.js';
 import {validateDataset} from './validation.js';
 import {attachStructureBills} from './structure_bill.js';
+import {addConstruction, constructionBill, decodeConstruction} from './construction.js';
 
 const ENERGY = 'energy:eu';
 
@@ -82,6 +83,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
     let hasConfiguration = false;
     for (const configuration of recipe.configurations) {
       if (request.disabled_machines?.includes(configuration.machine)) continue;
+      if (request.construction) {
+        const {error} = constructionBill(configuration, resources);
+        if (error) { exclusions.push({recipe: recipe.id, configuration: configuration.id, reason: error}); continue; }
+      }
       const configurations = own(request.configurations, recipe.id);
       if (configurations && !(Array.isArray(configurations) ? configurations : [configurations]).includes(configuration.id)) continue;
       const capacity = nonnegative(configuration.operations_per_second, 'Machine capacity');
@@ -211,9 +216,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   for (const [resource, terms] of rows) {
     constraints.push(`balance_${index++}: ${expression(terms)} >= ${demands.get(resource)}`);
   }
+  const construction = addConstruction({lines, objective, constraints, bounds}, resources, request);
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');
-  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve};
+  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction};
 }
 
 function decode(model, solution) {
@@ -275,7 +281,9 @@ function decode(model, solution) {
     external_eu_per_tick: externalPower, operating_margin_eu_per_tick: gross + externalPower - consumption - demand,
     installed_margin_eu_per_tick: generationCapacity + firmExternal - consumption - demand, reserve_fraction: model.reserve,
     reserve_basis: 'Installed generation capacity. Standby fuel and bootstrap stocks are separate requirements.'};
-  return {lines, balances, power, startup: startupRequirements(lines), steady_state_only: true, external, ...allocateFlows(lines, external, model.demands)};
+  const construction = decodeConstruction(model.construction, value);
+  return {lines, balances, power, startup: startupRequirements(lines), steady_state_only: true, external,
+    ...(construction ? {construction} : {}), ...allocateFlows(lines, external, model.demands)};
 }
 
 export function solveFactory(highs, dataset, request) {
@@ -312,6 +320,12 @@ export function solveFactory(highs, dataset, request) {
     for (const line of decoded.lines.filter(line => line.operations_per_second > 1e-9)) {
       if (!active.has(line.primary)) active.set(line.primary, new Set());
       active.get(line.primary).add(line.recipe);
+    }
+    const primaryOutputs = new Map(model.lines.map(line => [line.recipe.id, line.recipe.primary]));
+    for (const route of decoded.construction?.routes ?? []) {
+      const primary = primaryOutputs.get(route.recipe);
+      if (!active.has(primary)) active.set(primary, new Set());
+      active.get(primary).add(route.recipe);
     }
     const conflict = request.single_primary_route === false ? null : [...active].find(([resource, recipes]) => resource !== ENERGY && recipes.size > 1);
     if (conflict) {

@@ -9,7 +9,7 @@ function own(record, key) { return record && Object.hasOwn(record, key) ? record
 
 function *concatenate(first, second) { yield* first; yield* second; }
 
-function *setups(machine, upgrades, preserveCounts, process) {
+function *setups(machine, upgrades, preserveCounts, process, materialCosts) {
   const loadouts = [{upgrade_count: 0}];
   const maximumBatch = Math.max(machine.batch_limit ?? 1, ...(machine.shape_capacities ?? []), ...(machine.batch_tiers ?? []).map(tier => tier.batch_limit));
   const multiplier = Math.max(machine.energy_multiplier ?? 1, ...(machine.batch_tiers ?? []).map(tier => tier.energy_multiplier));
@@ -17,7 +17,7 @@ function *setups(machine, upgrades, preserveCounts, process) {
   const saturationBound = Math.max(totalEnergy, Math.trunc(Math.fround(Math.fround(totalEnergy * maximumBatch) * Math.fround(multiplier))));
   const compatible = upgrades.filter(upgrade => machine.upgrades?.includes(upgrade.id));
   for (const upgrade of compatible) {
-    if (!preserveCounts && machine.mechanic !== 'ae_molecular_assembler' && compatible.some(other => other !== upgrade &&
+    if (!materialCosts && !preserveCounts && machine.mechanic !== 'ae_molecular_assembler' && compatible.some(other => other !== upgrade &&
       other.extra_max_eu >= upgrade.extra_max_eu && (other.build_cost ?? 1) <= (upgrade.build_cost ?? 1) &&
       (other.extra_max_eu > upgrade.extra_max_eu || (other.build_cost ?? 1) < (upgrade.build_cost ?? 1)))) continue;
     for (let count = 1; count <= machine.upgrade_limit; count++) {
@@ -88,7 +88,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
     if (machine.recipe_type !== recipe.process.type && !Object.values(machine.contained_recipe_types ?? {}).includes(recipe.process.type)) continue;
     const matched = machine.mechanic === 'mi_array' ? {...machine, eligible_machines: machine.eligible_machines.filter(id => machine.contained_recipe_types[id] === recipe.process.type && enabled(id, request.available_machines ?? dataset.default_machines, request.disabled_machines))} : machine;
     const explicit = (own(request.machine_setups, recipe.id) ?? []).filter(value => value.machine === machine.id).map(value => value.setup);
-    for (const setup of concatenate(explicit, explicitOnly || fixedOnly ? [] : setups(matched, upgrades, preserveCounts, recipe.process))) {
+    for (const setup of concatenate(explicit, explicitOnly || fixedOnly ? [] : setups(matched, upgrades, preserveCounts, recipe.process, request.construction))) {
       checkBudget();
       try {
         const configuration = compileConfiguration({...recipe, ...recipe.process}, matched, {...setup, compute_warmup: false}, capacityCache);
@@ -121,7 +121,8 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
   const comparable = new Map();
   for (const configuration of configurations.values()) {
     if (constrainedIds.has(configuration.id)) continue;
-    const key = JSON.stringify([configuration.eu_per_operation, configuration.inputs, configuration.operating_points, configuration.conditions, configuration.startup_inputs]);
+    const bill = request.construction ? [...configuration.build_requirements ?? []].sort((a, b) => a.resource.localeCompare(b.resource)) : null;
+    const key = JSON.stringify([configuration.eu_per_operation, configuration.inputs, configuration.operating_points, configuration.conditions, configuration.startup_inputs, bill]);
     if (!comparable.has(key)) comparable.set(key, []);
     comparable.get(key).push(configuration);
   }
@@ -140,7 +141,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
 }
 
 export function prepareDataset(dataset, request, checkBudget = () => {}) {
-  if (!dataset.recipes.some(recipe => recipe.process) && !request.available_machines && !dataset.default_machines &&
+  if (!request.construction && !dataset.recipes.some(recipe => recipe.process) && !request.available_machines && !dataset.default_machines &&
     !dataset.machines?.some(machine => machine.shapes?.length)) return dataset;
   const producers = new Map();
   const capacityCache = new Map();
@@ -170,6 +171,7 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
       if (configured.unsupported) continue;
       for (const flow of configured.inputs) for (const resource of flow.choices ?? [flow.resource]) addResource(resource);
       for (const configuration of configured.configurations) {
+        if (request.construction) for (const flow of configuration.build_requirements ?? []) addResource(flow.resource);
         if (configuration.eu_per_operation || configuration.idle_eu_per_tick) addResource('energy:eu');
         for (const flow of [...(configuration.inputs ?? []), ...(configuration.operating_points ?? []).flatMap(point => point.inputs)]) {
           for (const resource of flow.choices ?? [flow.resource]) addResource(resource);

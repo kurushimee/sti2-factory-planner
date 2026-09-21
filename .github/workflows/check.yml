@@ -37,6 +37,7 @@ jobs:
           python tools/verify_distribution.py
           node tools/validate_dataset.mjs data/statech-2.0.1.json.gz
           node tools/verify_real_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_construction_catalog.mjs data/statech-2.0.1.json.gz
       - name: Install the test browser
         run: npx playwright install --with-deps chromium
       - name: Check the embedded browser calculation
