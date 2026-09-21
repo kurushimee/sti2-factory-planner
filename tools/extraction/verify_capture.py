@@ -214,6 +214,19 @@ def verify(runtime: dict, probes: dict) -> dict:
         if len(shape) != 1 or len(shape[0]["cells"]) != count:
             raise ValueError("The loaded boiler structure changed: " + name)
         boiler_shapes[name] = dict(Counter(cell["preview_block"] for cell in shape[0]["cells"]))
+    tesla = machines["extended_industrialization:tesla_tower"]["tesla_tower_probe"]
+    expected_tesla = [(64, 1536, 32), (256, 6144, 64), (1024, 49152, 128),
+                      (4096, 393216, 256), (16384, 6144000000, 512)]
+    if len(tesla["tiers"]) != len(expected_tesla):
+        raise ValueError("The loaded Tesla tower tier count changed.")
+    for index, (tier, expected) in enumerate(zip(tesla["tiers"], expected_tesla)):
+        drain, transfer, distance = expected
+        if (tier["shape"] != index or tier["passive_eu_per_tick"] != drain
+                or tier["max_transfer_eu_per_tick"] != transfer or tier["max_axis_distance"] != distance
+                or tier["idle_energy_for_20_ticks"] != drain * 20
+                or tier["undersupplied_energy_consumed"] != drain - 1 or tier["undersupplied_active"]
+                or tier["invalid_shape_energy_consumed"] != 0 or tier["invalid_shape_active"]):
+            raise ValueError(f"The loaded Tesla tower behavior changed for shape {index}.")
     return {
         "pack": runtime["pack"],
         "runtime_sha256": digest(canonical_runtime(runtime)),
@@ -246,6 +259,7 @@ def verify(runtime: dict, probes: dict) -> dict:
                                 if "diesel_heavy_water_warmup_probe" in machine},
         "water_pumps": pumps,
         "waste_collectors": waste_collectors,
+        "tesla_tower": tesla,
         "replication": replication,
         "batch_tiers": batch_tiers,
         "recipe_generation": generation,

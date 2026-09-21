@@ -1017,6 +1017,83 @@ public final class PlannerProbe {
     }
 
     @SuppressWarnings("unchecked")
+    private static JsonObject teslaTower(MachineBlockEntity prototype, MinecraftServer server) throws Exception {
+        var tower = (net.swedz.extended_industrialization.machines.blockentity.multiblock.teslatower.TeslaTowerBlockEntity) prototype;
+        var inputsField = tower.getClass().getDeclaredField("energyInputs");
+        inputsField.setAccessible(true);
+        var inputs = (java.util.List<aztech.modern_industrialization.machines.components.EnergyComponent>) inputsField.get(tower);
+        var originalInputs = new java.util.ArrayList<>(inputs);
+        var matcherField = aztech.modern_industrialization.machines.multiblocks.MultiblockMachineBlockEntity.class.getDeclaredField("shapeMatcher");
+        matcherField.setAccessible(true);
+        var originalMatcher = matcherField.get(tower);
+        aztech.modern_industrialization.machines.components.ActiveShapeComponent shape = null;
+        aztech.modern_industrialization.machines.components.IsActiveComponent active = null;
+        for (var component : tower.components) {
+            if (component instanceof aztech.modern_industrialization.machines.components.ActiveShapeComponent value) shape = value;
+            if (component instanceof aztech.modern_industrialization.machines.components.IsActiveComponent value) active = value;
+        }
+        if (shape == null || active == null) throw new IllegalStateException("Tesla tower components are missing.");
+        var indexField = shape.getClass().getDeclaredField("activeShape");
+        indexField.setAccessible(true);
+        int originalIndex = shape.getActiveShapeIndex();
+        boolean originalValid = tower.shapeValid.shapeValid;
+        boolean originalActive = active.isActive;
+        var first = new aztech.modern_industrialization.machines.components.EnergyComponent(tower, 1000000000000L);
+        var second = new aztech.modern_industrialization.machines.components.EnergyComponent(tower, 1000000000000L);
+        var samples = new JsonArray();
+        try {
+            inputs.clear(); inputs.add(first); inputs.add(second);
+            // This isolates controller ticking. It does not establish that a placed structure matches.
+            matcherField.set(tower, new aztech.modern_industrialization.machines.multiblocks.ShapeMatcher(
+                    server.overworld(), tower.getBlockPos(), tower.getOrientation().facingDirection, tower.getActiveShape(), tower.shapeValid) {
+                @Override public boolean needsRematch() { return false; }
+            });
+            for (int index = 0; index < shape.shapeTemplates.length; index++) {
+                indexField.setInt(shape, index);
+                long drain = tower.getPassiveDrain();
+                var sample = new JsonObject();
+                sample.addProperty("shape", index);
+                sample.addProperty("passive_eu_per_tick", drain);
+                sample.addProperty("max_transfer_eu_per_tick", tower.getMaxTransfer());
+                sample.addProperty("max_axis_distance", tower.getMaxDistance());
+                tower.shapeValid.shapeValid = true;
+                long consumed = 0;
+                for (int tick = 0; tick < 20; tick++) {
+                    first.consumeEu(first.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                    second.consumeEu(second.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                    first.insertEu(drain / 2, aztech.modern_industrialization.util.Simulation.ACT);
+                    second.insertEu(drain - drain / 2, aztech.modern_industrialization.util.Simulation.ACT);
+                    tower.tick();
+                    consumed += drain - first.getEu() - second.getEu();
+                    if (!active.isActive) throw new IllegalStateException("A supplied Tesla tower did not become active.");
+                }
+                sample.addProperty("idle_energy_for_20_ticks", consumed);
+                first.insertEu(drain - 1, aztech.modern_industrialization.util.Simulation.ACT);
+                tower.tick();
+                sample.addProperty("undersupplied_energy_consumed", drain - 1 - first.getEu());
+                sample.addProperty("undersupplied_active", active.isActive);
+                first.insertEu(drain, aztech.modern_industrialization.util.Simulation.ACT);
+                tower.shapeValid.shapeValid = false;
+                tower.tick();
+                sample.addProperty("invalid_shape_energy_consumed", drain - first.getEu());
+                sample.addProperty("invalid_shape_active", active.isActive);
+                first.consumeEu(first.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                samples.add(sample);
+            }
+            var result = new JsonObject();
+            result.addProperty("scope", "Controller ticks with injected shape validity and energy components; no receivers or formed-world geometry claim.");
+            result.add("tiers", samples);
+            return result;
+        } finally {
+            indexField.setInt(shape, originalIndex);
+            matcherField.set(tower, originalMatcher);
+            inputs.clear(); inputs.addAll(originalInputs);
+            tower.shapeValid.shapeValid = originalValid;
+            active.isActive = originalActive;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     private static JsonArray irradiationCycles(MachineBlockEntity prototype, MinecraftServer server) throws Exception {
         var result = new JsonArray();
         var sourceField = prototype.getClass().getDeclaredField("neutronSource");
@@ -1125,6 +1202,7 @@ public final class PlannerProbe {
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.ReplicatorMachineBlockEntity replicator) record.add("replication_probe", replicator(replicator));
                 if (entity instanceof aztech.modern_industrialization.machines.blockentities.AbstractWaterPumpBlockEntity) record.add("water_pump_probe", waterPump(block, server));
                 if (id.matches("extended_industrialization:(bronze|steel|electric)_waste_collector")) record.add("waste_collector_probe", wasteCollector(block, server));
+                if (id.equals("extended_industrialization:tesla_tower")) record.add("tesla_tower_probe", teslaTower(machine, server));
                 if (entity instanceof aztech.modern_industrialization.machines.multiblocks.HatchBlockEntity hatch) {
                     record.addProperty("role", "multiblock_part");
                     record.addProperty("hatch_type", hatch.getHatchType().id().toString());

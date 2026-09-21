@@ -46,6 +46,21 @@ static func markup(value: String) -> String:
 	return value.replace("[", "[lb]")
 
 
+static func power_report(power: Dictionary) -> String:
+	if power.is_empty():
+		return "Add a goal to calculate factory power."
+	var text := "[font_size=20]Factory power[/font_size]\n\n[b]Running generation[/b]\n"
+	for entry: Array in [["Gross generation", "gross_generation_eu_per_tick"], ["Generation and fuel-chain use", "generation_related_consumption_eu_per_tick"], ["Net generation", "net_generation_eu_per_tick"], ["External supply", "external_eu_per_tick"]]:
+		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], number(power.get(entry[1], 0))]
+	text += "\n[b]Factory demand[/b]\n"
+	for entry: Array in [["Other production", "other_production_consumption_eu_per_tick"], ["Infrastructure and power goals", "infrastructure_and_goal_eu_per_tick"], ["Remaining running margin", "operating_margin_eu_per_tick"]]:
+		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], number(power.get(entry[1], 0))]
+	text += "\n[b]Installed capacity[/b]\n%s EU/t generation\n%s EU/t available margin\n%s%% requested reserve\n" % [number(power.installed_generation_eu_per_tick), number(power.installed_margin_eu_per_tick), number(float(power.reserve_fraction) * 100)]
+	text += "\n" + markup(power.get("reserve_basis", "")) + "\n\n" + markup(power.get("attribution_basis", ""))
+	text += "\n\nSustained values assume continuous supplies. Inspect each machine for its peak draw and startup stocks. Installed margin does not establish that every machine can start at once."
+	return text
+
+
 static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictionary[String, String], startup: Dictionary, construction: Dictionary = {}) -> String:
 	var configuration: Dictionary = line.get("configuration_details", {})
 	var capacity: Dictionary = configuration.get("capacity", {})

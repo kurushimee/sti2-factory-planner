@@ -1,4 +1,5 @@
 import {allocateFlows} from './flows.js';
+import {generationSupport} from './power.js';
 import {resolveGoals} from './goals.js';
 import {startupRequirements} from './startup.js';
 import {prepareDataset} from './catalog.js';
@@ -283,14 +284,17 @@ function decode(model, solution) {
   const firmExternal = model.supplies.filter(supply => supply.resource === ENERGY).reduce((sum, supply) => sum + (supply.firm_capacity ?? 0) / 20, 0);
   const reserveRequired = (1 + model.reserve) * (consumption + demand);
   if (model.reserve && generationCapacity + firmExternal < reserveRequired - Math.max(1e-7, reserveRequired * Number.EPSILON * 16)) throw new Error('The numerical solution failed the generation reserve check.');
-  const power = {gross_generation_eu_per_tick: gross, installed_generation_eu_per_tick: generationCapacity,
+  const flows = allocateFlows(lines, external, model.demands);
+  const attribution = generationSupport(lines, flows.connections);
+  const power = {...attribution, gross_generation_eu_per_tick: gross, installed_generation_eu_per_tick: generationCapacity,
+    net_generation_eu_per_tick: gross - attribution.generation_related_consumption_eu_per_tick,
     consumption_eu_per_tick: consumption, infrastructure_and_goal_eu_per_tick: demand,
     external_eu_per_tick: externalPower, operating_margin_eu_per_tick: gross + externalPower - consumption - demand,
     installed_margin_eu_per_tick: generationCapacity + firmExternal - consumption - demand, reserve_fraction: model.reserve,
     reserve_basis: 'Installed generation capacity. Standby fuel and bootstrap stocks are separate requirements.'};
   const construction = decodeConstruction(model.construction, value);
   return {lines, balances, power, startup: startupRequirements(lines), steady_state_only: true, external,
-    ...(construction ? {construction} : {}), ...allocateFlows(lines, external, model.demands)};
+    ...(construction ? {construction} : {}), ...flows};
 }
 
 export function solveFactory(highs, dataset, request) {

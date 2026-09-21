@@ -72,6 +72,7 @@ func _ready() -> void:
 		group_controls[index].focus_next = group_controls[index].get_path_to(group_controls[(index + 1) % group_controls.size()])
 		group_controls[index].focus_previous = group_controls[index].get_path_to(group_controls[(index + group_controls.size() - 1) % group_controls.size()])
 	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request))
+	%Summary.pressed.connect(_show_power)
 	%FactorySettings.settings_changed.connect(func(request: Dictionary) -> void:
 		_remember()
 		_request.assign(request)
@@ -130,7 +131,7 @@ func _ready() -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
-		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
+		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, %Summary, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -438,7 +439,6 @@ func _render_plan(result: Dictionary) -> void:
 		node.queue_free()
 	_nodes.clear()
 	var machine_count := 0
-	var power_total := 0.0
 	for index: int in result.lines.size():
 		var line: Dictionary = result.lines[index]
 		var node := recipe_scene.instantiate() as PlannerRecipeNode
@@ -453,7 +453,6 @@ func _render_plan(result: Dictionary) -> void:
 		node.position_offset = Vector2(saved[0], saved[1])
 		_nodes[String(node.name)] = node
 		machine_count += int(line.machines)
-		power_total += float(line.power_eu_per_tick)
 	var by_key: Dictionary[String, PlannerRecipeNode] = {}
 	for node: PlannerRecipeNode in _nodes.values():
 		by_key[node.get_meta("position_key")] = node
@@ -463,7 +462,7 @@ func _render_plan(result: Dictionary) -> void:
 		var source: PlannerRecipeNode = by_key[connection.source]
 		var destination: PlannerRecipeNode = by_key[connection.destination]
 		graph.connect_node(source.name, source.output_ports[connection.resource], destination.name, destination.input_ports[connection.resource])
-	%Summary.text = "%d %s  ·  %s EU/t" % [machine_count, "machine" if machine_count == 1 else "machines", String.num(power_total, 2)]
+	%Summary.text = "%d %s  ·  Power details" % [machine_count, "machine" if machine_count == 1 else "machines"]
 	_rendering = false
 	_restore_groups()
 	_settle_node_sizes.call_deferred()
@@ -517,6 +516,14 @@ func _select_node(node: Node) -> void:
 	inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
 	%RemoveGoal.text = "Remove selected goal"
 	%RemoveGoal.disabled = !_request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == _selected)
+
+
+func _show_power() -> void:
+	inspector.text = PlannerDisplay.power_report(_last_result.get("power", {}))
+	inspector.scroll_to_line(0)
+	%EditGoal.disabled = true
+	%RemoveGoal.disabled = true
+	inspector.grab_focus()
 
 
 func _arrange() -> void:

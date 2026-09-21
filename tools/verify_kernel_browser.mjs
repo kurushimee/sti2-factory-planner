@@ -51,6 +51,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/structure_bill.js': 'kernel/structure_bill.js',
       '/kernel/construction.js': 'kernel/construction.js',
       '/kernel/flows.js': 'kernel/flows.js',
+      '/kernel/power.js': 'kernel/power.js',
       '/kernel/goals.js': 'kernel/goals.js',
       '/kernel/startup.js': 'kernel/startup.js',
       '/kernel/capacity.js': 'kernel/capacity.js',
