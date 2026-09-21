@@ -75,5 +75,12 @@ func _run() -> void:
 	var previous_count := workspace._nodes.size()
 	workspace._calculated({"status": "limit", "optimal": false})
 	assert(workspace._nodes.size() == previous_count)
+	workspace._calculated({"status": "numerical_error", "optimal": false, "reason": "The output flow is smaller than the verified calculation precision."})
+	assert(workspace._nodes.size() == previous_count)
+	assert("precision could not be verified" in workspace.status.text)
+	assert("output flow" in workspace.get_node("%Notice").dialog_text)
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/certus/numerical-failure.png")
 	print("The complete feasible graph, cost bound, power report, and failed-calculation recovery pass.")
 	quit()

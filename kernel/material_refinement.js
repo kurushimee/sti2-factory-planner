@@ -132,7 +132,8 @@ export function refineMaterialPlan(highs, dataset, request, solveOrdinary, deadl
     checkBudget();
     progress({phase: 'construction_baseline'});
     const order = priceOrder(highs, dataset, request, baseline, deadline, checkBudget, progress);
-    if (!order.construction) return {status: 'limit', optimal: false, phase: 'construction', construction_status: order.status,
+    if (!order.construction) return {status: order.status === 'numerical_error' ? 'numerical_error' : 'limit',
+      optimal: false, phase: 'construction', construction_status: order.status, ...(order.balance ? {balance: order.balance} : {}),
       reason: order.reason ?? 'No complete construction order was established with the available workstation candidates.'};
     best = attachCost(baseline, order);
     if (!order.marginal_costs) return best;

@@ -43,18 +43,18 @@ export function productionRouteOwnership(plan, request) {
       for (const flow of line.outputs) flows.set(flow.resource, (flows.get(flow.resource) ?? 0) + flow[amountField]);
       for (const flow of line.inputs) {
         flows.set(flow.resource, (flows.get(flow.resource) ?? 0) - flow[amountField]);
-        if (flow[amountField] > 1e-10) useful.add(flow.resource);
+        if (flow[amountField] > 0) useful.add(flow.resource);
       }
       if (line.power_eu_per_tick > 0) useful.add('energy:eu');
     }
     for (const [recipe, flows] of net) {
       if (!outputs.has(recipe)) outputs.set(recipe, new Set());
-      for (const [resource, amount] of flows) if (amount > 1e-10) outputs.get(recipe).add(resource);
+      for (const [resource, amount] of flows) if (amount > 0) outputs.get(recipe).add(resource);
     }
   };
-  addScope(plan.lines.filter(line => line.operations_per_second > 1e-10), 'rate');
+  addScope(plan.lines.filter(line => line.operations_per_second > 0), 'rate');
   addScope(plan.construction?.routes ?? [], 'amount');
-  for (const flow of plan.construction?.requirements ?? []) if (flow.amount > 1e-10) useful.add(flow.resource);
+  for (const flow of plan.construction?.requirements ?? []) if (flow.amount > 0) useful.add(flow.resource);
   const selected = new Map();
   for (const goal of request.goals ?? []) {
     if (!goal.recipe) continue;

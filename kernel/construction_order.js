@@ -30,6 +30,7 @@ export function solveConstructionOrder(highs, model, timeLimitSeconds = 60, prod
   const pending = [forcedExclusions], visited = new Set();
   let lowerBound = null;
   let numericalRetries = 0;
+  const rowScales = new Map();
   const native = highs.createModel({format: 'lp', data: model.text});
   try {
     native.options.set({output_flag: false, mip_rel_gap: 0, mip_feasibility_tolerance: 1e-9, primal_feasibility_tolerance: 1e-9});
@@ -56,30 +57,47 @@ export function solveConstructionOrder(highs, model, timeLimitSeconds = 60, prod
         if (visited.size === 1) return {status: result.status, optimal: false, construction: null};
         continue;
       }
-      let decoded;
-      try { decoded = decodeOrder(model, result); }
-      catch (error) {
-        if (!(error instanceof ConstructionBalanceError)) throw error;
-        numericalRetries++;
-        onProgress({phase: 'construction_precision', attempt: visited.size, resource: error.balance.resource});
-        if (Date.now() >= deadline) return numericalFailure(error);
-        native.clearSolver();
-        native.options.set({presolve: 'off', simplex_scale_strategy: 0, primal_feasibility_tolerance: 1e-10,
-          time_limit: native.getRunTime() + Math.max(0.001, (deadline - Date.now()) / 1000)});
-        native.run();
-        result = readSolverResult(highs, native, {row_duals: !model.integers.length});
-        if (!result.feasible) return numericalFailure(error);
-        try { decoded = decodeOrder(model, result); }
-        catch (retryError) {
-          if (!(retryError instanceof ConstructionBalanceError)) throw retryError;
-          return numericalFailure(retryError);
+      let decoded, unscaledRetry = false;
+      for (let retry = 0; !decoded; retry++) {
+        try {
+          const adjusted = result.row_duals ? {...result, row_duals: {...result.row_duals}} : result;
+          if (adjusted.row_duals) for (const [row, scale] of rowScales) adjusted.row_duals[row] *= scale;
+          decoded = decodeOrder(model, adjusted);
+        } catch (error) {
+          if (!(error instanceof ConstructionBalanceError)) throw error;
+          if (Date.now() >= deadline || retry >= 16) return numericalFailure(error);
+          const resource = error.balance.resource;
+          const index = model.balanceResources.indexOf(resource);
+          const check = model.construction.ingredientChecks.find(value => `${value.recipe}, ingredient ${value.slot + 1}` === resource);
+          const row = index >= 0 ? `construction_balance_${index}` : check?.row;
+          const terms = index >= 0 ? model.construction.rows.get(resource) : check?.terms;
+          const largest = terms ? [...terms.values()].reduce((maximum, coefficient) => Math.max(maximum, Math.abs(coefficient)), 0) : Infinity;
+          const factor = Math.max(1, Math.min(1e6, 1e12 / largest));
+          if (error.balance.magnitude < 1 && row && !rowScales.has(row) && factor > 1) {
+            const rowIndex = native.getRowByName(row);
+            // Restore original coefficients too: the parser may have dropped a tiny one.
+            for (const [variable, coefficient] of terms) native.changeCoefficient(rowIndex, native.getColByName(variable), coefficient * factor);
+            rowScales.set(row, factor);
+          } else if (!unscaledRetry) {
+            unscaledRetry = true;
+            native.clearSolver();
+            native.options.set({presolve: 'off', simplex_scale_strategy: 0, primal_feasibility_tolerance: 1e-10});
+          } else return numericalFailure(error);
+          numericalRetries++;
+          onProgress({phase: 'construction_precision', attempt: visited.size, resource,
+            deficit: -error.balance.surplus, magnitude: error.balance.magnitude, tolerance: error.balance.tolerance});
+          native.options.set('time_limit', native.getRunTime() + Math.max(0.001, (deadline - Date.now()) / 1000));
+          native.run();
+          result = readSolverResult(highs, native, {row_duals: !model.integers.length});
+          if (!result.feasible) return numericalFailure(error);
         }
       }
       if (visited.size === 1) lowerBound = result.lower_bound;
+      if (rowScales.size) lowerBound = null;
       const ownership = productionRouteOwnership({...production, construction: decoded.construction}, model.request);
       onProgress({phase: 'construction_routes', attempt: visited.size, conflicts: ownership.conflict});
       if (!ownership.conflict.length) {
-        const optimal = result.optimal && excluded.size === forcedExclusions.size;
+        const optimal = result.optimal && excluded.size === forcedExclusions.size && !rowScales.size;
         return {...decoded, status: optimal ? 'optimal' : 'feasible', optimal,
           primary_routes: ownership.assignments, search: {excluded_recipes: [...excluded], attempts: visited.size,
             ...(numericalRetries ? {numerical_retries: numericalRetries} : {})},
@@ -103,7 +121,7 @@ function fixedProductionExclusions(model, production) {
   if (model.request.single_primary_route === false) return new Set();
   const net = new Map();
   for (const line of production.lines) {
-    if (!(line.operations_per_second > 1e-10)) continue;
+    if (!(line.operations_per_second > 0)) continue;
     if (!net.has(line.recipe)) net.set(line.recipe, new Map());
     const flows = net.get(line.recipe);
     for (const flow of line.outputs) flows.set(flow.resource, (flows.get(flow.resource) ?? 0) + flow.rate);
@@ -111,8 +129,8 @@ function fixedProductionExclusions(model, production) {
   }
   const owners = new Map();
   for (const [recipe, flows] of net) {
-    const outputs = [...flows].filter(([resource, amount]) => resource !== 'energy:eu' && amount > 1e-10);
-    if (outputs.length !== 1 || (flows.get('energy:eu') ?? 0) > 1e-10) continue;
+    const outputs = [...flows].filter(([resource, amount]) => resource !== 'energy:eu' && amount > 0);
+    if (outputs.length !== 1 || (flows.get('energy:eu') ?? 0) > 0) continue;
     const resource = outputs[0][0];
     if (!owners.has(resource)) owners.set(resource, new Set());
     owners.get(resource).add(recipe);

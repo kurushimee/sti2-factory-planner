@@ -423,6 +423,7 @@ func _calculated(result: Dictionary) -> void:
 			if !available.is_empty():
 				_request.available_machines = available
 		_autosave()
+		%Notice.title = "World import"
 		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d infrastructure configurations; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
 		%Notice.popup_centered()
 		status.text = "World configuration read locally."
@@ -430,6 +431,12 @@ func _calculated(result: Dictionary) -> void:
 			_recalculate()
 		return
 	if result.get("status") not in ["optimal", "feasible"]:
+		if result.get("status") == "numerical_error":
+			_failed("The requested precision could not be verified. The previous graph is preserved.")
+			%Notice.title = "Calculation precision"
+			%Notice.dialog_text = "The calculation could not verify every flow at the requested precision. It has not replaced your plan.\n\n" + String(result.get("reason", "A numerical balance check failed."))
+			%Notice.popup_centered()
+			return
 		_failed("The goals could not be solved (%s). Check available routes and supplies. The previous graph is preserved." % result.get("status", "unknown"))
 		return
 	_last_result.assign(result)

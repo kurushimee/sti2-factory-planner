@@ -56,6 +56,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/construction.js': 'kernel/construction.js',
       '/kernel/construction_order.js': 'kernel/construction_order.js',
       '/kernel/material_refinement.js': 'kernel/material_refinement.js',
+      '/kernel/numerics.js': 'kernel/numerics.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/power.js': 'kernel/power.js',
       '/kernel/infrastructure.js': 'kernel/infrastructure.js',
@@ -129,6 +130,18 @@ try {
   assert.deepEqual(actual.phases, ['loading_solver', 'solving']);
   assert.equal(actual.isolated, false);
   assert.deepEqual(errors, []);
+  const tinyData = {format: 1, resources: [{id: 'ore'}, {id: 'part'}], recipes: [{id: 'tiny', primary: 'part',
+    inputs: [{resource: 'ore', amount: 1}], outputs: [{resource: 'part', amount: 1}],
+    configurations: [{id: 'bench', machine: 'bench', operations_per_second: 1}]}]};
+  for (const rate of [1e-12, 1e-30]) {
+    const selection = {goals: [{resource: 'part', rate}], external: [{resource: 'ore'}]};
+    const expectedTiny = solveFactory(await loadHighs(), tinyData, selection);
+    const tiny = await solveInBrowser(tinyData, selection);
+    assert.deepEqual(tiny.result, expectedTiny);
+    if (rate === 1e-12) assert.equal(tiny.result.lines[0].machines, 1);
+    else assert.equal(tiny.result.status, 'numerical_error');
+  }
+  console.log('Tiny positive rates and explicit precision failures match Node in the browser Worker.');
   const orderInput = {lines: dataset.recipes.flatMap(recipe => recipe.configurations.map(configuration => ({recipe, configuration}))),
     resources: dataset.resources, request: {construction: {external: [{resource: 'ore'}, {resource: 'fuel'}]}},
     requirements: [{resource: 'plate', amount: 14}]};

@@ -6,11 +6,12 @@ import {startupRequirements} from './startup.js';
 import {prepareDataset} from './catalog.js';
 import {validateDataset} from './validation.js';
 import {attachStructureBills} from './structure_bill.js';
-import {addConstruction, constructionBill, decodeConstruction} from './construction.js';
+import {addConstruction, constructionBill, ConstructionBalanceError, decodeConstruction} from './construction.js';
 import {productionRouteOwnership} from './route_ownership.js';
 import {runSolver} from './solver.js';
 import {findFactorySeed} from './seed.js';
 import {refineMaterialPlan} from './material_refinement.js';
+import {balanceTolerance, diagnosticNumber, scaleConstraintRows} from './numerics.js';
 
 const ENERGY = 'energy:eu';
 
@@ -37,7 +38,7 @@ function own(record, key) {
 function combineFlows(flows) {
   const totals = new Map();
   for (const flow of flows) totals.set(flow.resource, (totals.get(flow.resource) ?? 0) + flow.rate);
-  return [...totals].filter(([, rate]) => rate > 1e-12).map(([resource, rate]) => ({resource, rate}));
+  return [...totals].filter(([, rate]) => rate > 0).map(([resource, rate]) => ({resource, rate}));
 }
 
 export function compileFactory(dataset, request, routeChoices = {}) {
@@ -110,7 +111,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
       if (own(routeChoices, recipe.id) === false) constraints.push(`excluded_route_${index}: ${operation} = 0`);
       bounds.push(`${operation} >= 0`, `${machine} >= 0`);
       integers.push(machine);
-      const inputTerms = [];
+      const inputTerms = [], inputChecks = [];
       const allInputs = [...recipe.inputs, ...(configuration.inputs ?? [])].map(flow => ({flow, variable: operation}));
       if (configuration.operating_points) {
         const allocations = new Map([[machine, -1]]);
@@ -144,6 +145,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
             inputTerms.push({resource, variable, coefficient: 1, slot});
           });
           constraints.push(`ingredient_${index}_${slot}: ${expression(alternatives)} = 0`);
+          inputChecks.push({slot, terms: alternatives});
         }
       }
       const returnTerms = [];
@@ -177,7 +179,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
         if (dispatch.minimum !== undefined) constraints.push(`dispatch_min_${index}: ${operation} >= ${nonnegative(dispatch.minimum, 'Minimum operation rate')}`);
         if (dispatch.maximum !== undefined) constraints.push(`dispatch_max_${index}: ${operation} <= ${nonnegative(dispatch.maximum, 'Maximum operation rate')}`);
       }
-      lines.push({recipe, configuration, operation, machine, inputTerms, returnTerms});
+      lines.push({recipe, configuration, operation, machine, inputTerms, inputChecks, returnTerms});
       hasConfiguration = true;
     }
     if (hasConfiguration) {
@@ -245,7 +247,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
 
 export class FactoryBalanceError extends Error {
   constructor(resource, demand, net, tolerance, magnitude, terms, value) {
-    super(`The numerical solution failed the resource balance check for ${resource}: deficit ${demand - net}, tolerance ${tolerance}.`);
+    super(`The numerical solution failed the resource balance check for ${resource}: deficit ${diagnosticNumber(demand - net)}, tolerance ${diagnosticNumber(tolerance)}.`);
     this.balance = {resource, demand, net, tolerance, magnitude, terms: [...terms]
       .map(([variable, coefficient]) => ({variable, coefficient, value: value(variable)})).filter(term => term.value !== 0)};
   }
@@ -260,14 +262,26 @@ export function decodeFactory(model, solution) {
     }
   }
   for (const line of model.lines) {
+    for (const {slot, terms} of line.inputChecks ?? []) {
+      let residual = 0, magnitude = 0;
+      for (const [variable, coefficient] of terms) {
+        const amount = coefficient * value(variable);
+        residual += amount;
+        magnitude += Math.abs(amount);
+      }
+      const tolerance = balanceTolerance(magnitude);
+      if (Math.abs(residual) > tolerance) throw new FactoryBalanceError(`${line.recipe.id}, ingredient ${slot + 1}`,
+        Math.abs(residual), 0, tolerance, magnitude, terms, value);
+    }
     const count = value(line.machine);
     if (!Number.isSafeInteger(Math.round(count)) || Math.abs(count - Math.round(count)) > 1e-6) {
       throw new Error(`The solver returned a non-integral machine count for ${line.configuration.id}.`);
     }
     const capacity = Math.round(count) * line.configuration.operations_per_second;
-    const tolerance = Math.max(1e-7, Number.EPSILON * Math.abs(capacity) * 16);
+    const tolerance = capacity > 0 ? balanceTolerance(Math.abs(capacity)) : 0;
     if (value(line.operation) > capacity + tolerance) {
-      throw new Error(`The allocation exceeds capacity for ${line.configuration.id}.`);
+      throw new FactoryBalanceError(`machine capacity for ${line.configuration.id}`, value(line.operation), capacity,
+        tolerance, capacity, new Map([[line.operation, 1], [line.machine, -line.configuration.operations_per_second]]), value);
     }
   }
   const lines = model.lines.filter(line => value(line.machine) > 0.5).map(line => ({
@@ -280,7 +294,7 @@ export function decodeFactory(model, solution) {
     capacity_per_second: Math.round(value(line.machine)) * line.configuration.operations_per_second,
     utilization: value(line.operation) / (Math.round(value(line.machine)) * line.configuration.operations_per_second),
     inputs: combineFlows(line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable)}))),
-    ingredient_choices: line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable), slot: term.slot})).filter(flow => flow.rate > 1e-12),
+    ingredient_choices: line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable), slot: term.slot})).filter(flow => flow.rate > 0),
     outputs: combineFlows([...line.recipe.outputs.map(flow => ({resource: flow.resource, rate: flow.amount * value(line.operation)})),
       ...line.returnTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable)}))]),
     power_eu_per_tick: value(line.operation) * (line.configuration.eu_per_operation ?? 0) / 20 + Math.round(value(line.machine)) * (line.configuration.idle_eu_per_tick ?? 0),
@@ -296,7 +310,7 @@ export function decodeFactory(model, solution) {
       magnitude += Math.abs(value(name) * coefficient);
     }
     const demand = model.demands.get(resource);
-    const tolerance = Math.max(1e-7, magnitude * Number.EPSILON * 16);
+    const tolerance = balanceTolerance(Math.max(magnitude, Math.abs(demand)));
     if (net < demand - tolerance) {
       throw new FactoryBalanceError(resource, demand, net, tolerance, magnitude, terms, value);
     }
@@ -348,7 +362,7 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
   const branches = [{}];
   const recipes = new Map(dataset.recipes.map(recipe => [recipe.id, recipe]));
   let best = null, lowerBound = null, completeSearch = true;
-  let visited = 0;
+  let visited = 0, numericalRetries = 0;
   let lastExclusions = [];
   const finish = (status) => {
     if (!best) return {status, optimal: false, exclusions: lastExclusions, branches: visited};
@@ -389,13 +403,30 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
       }
       if (Date.now() >= deadline) return finish('limit');
     }
-    const solution = runSolver(highs, model.text, {time_limit: Math.max(0.001, (deadline - Date.now()) / 1000)});
+    let solution = runSolver(highs, model.text, {time_limit: Math.max(0.001, (deadline - Date.now()) / 1000)});
     visited++;
     if (visited === 1) lowerBound = solution.optimal ? solution.objective : solution.lower_bound;
     if (solution.status === 'infeasible') continue;
     if (!solution.feasible) return finish('limit');
     if (best && solution.objective >= best.objective - 1e-9 && solution.optimal) continue;
-    const decoded = decodeFactory(model, {Columns: Object.fromEntries(Object.entries(solution.columns).map(([name, Primal]) => [name, {Primal}]))});
+    const decode = () => decodeFactory(model, {Columns: Object.fromEntries(Object.entries(solution.columns).map(([name, Primal]) => [name, {Primal}]))});
+    let decoded;
+    try {decoded = decode();}
+    catch (error) {
+      if (!(error instanceof FactoryBalanceError) && !(error instanceof ConstructionBalanceError)) throw error;
+      onProgress({phase: 'production_precision', resource: error.balance.resource});
+      numericalRetries++;
+      if (Date.now() >= deadline) return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: error.message};
+      solution = runSolver(highs, scaleConstraintRows(model.text), {time_limit: Math.max(0.001, (deadline - Date.now()) / 1000)});
+      if (!solution.feasible) return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: error.message};
+      try {decoded = decode();}
+      catch (retryError) {
+        if (!(retryError instanceof FactoryBalanceError) && !(retryError instanceof ConstructionBalanceError)) throw retryError;
+        return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: retryError.message};
+      }
+      completeSearch = false;
+      lowerBound = null;
+    }
     const ownership = productionRouteOwnership(decoded, request);
     if (ownership.conflict.length) {
       // Omitting a conflicting route is a heuristic when future consumers could make another coproduct useful.
@@ -411,7 +442,8 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
       }
     } else if (!best || solution.objective < best.objective) {
       best = {...decoded, primary_routes: ownership.assignments, targets: resolved.targets,
-        objective: solution.objective, exclusions: model.exclusions};
+        objective: solution.objective, exclusions: model.exclusions,
+        ...(numericalRetries ? {search: {method: 'precision_recovery', numerical_retries: numericalRetries}} : {})};
     }
     if (!solution.optimal) return finish('limit');
   }

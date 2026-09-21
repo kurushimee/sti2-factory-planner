@@ -1,3 +1,5 @@
+import {balanceTolerance, diagnosticNumber} from './numerics.js';
+
 function number(value, name, positive = false) {
   if (!Number.isFinite(value) || value < (positive ? Number.MIN_VALUE : 0) || value > Number.MAX_SAFE_INTEGER) {
     throw new Error(`${name} must be ${positive ? 'positive' : 'nonnegative'}, finite, and within the supported numeric range.`);
@@ -14,7 +16,7 @@ function expression(row) {
 
 export class ConstructionBalanceError extends Error {
   constructor(resource, surplus, tolerance, magnitude, terms, value) {
-    super(`The construction balance failed for ${resource}: deficit ${-surplus}, tolerance ${tolerance}, total flow ${magnitude}.`);
+    super(`The construction balance failed for ${resource}: deficit ${diagnosticNumber(-surplus)}, tolerance ${diagnosticNumber(tolerance)}, total flow ${diagnosticNumber(magnitude)}.`);
     this.balance = {resource, surplus, tolerance, magnitude, terms: [...terms]
       .map(([variable, coefficient]) => ({variable, coefficient, value: value(variable)})).filter(term => term.value !== 0)};
   }
@@ -122,7 +124,7 @@ export function addConstruction(model, resources, request, definitions = new Map
       }
       if (choices.length !== 1) {
         model.constraints.push(`construction_choice_${index}_${slot}: ${expression(alternatives)} = 0`);
-        ingredientChecks.push({recipe: recipe.id, slot, terms: alternatives});
+        ingredientChecks.push({recipe: recipe.id, slot, row: `construction_choice_${index}_${slot}`, terms: alternatives});
       }
     }
     for (const flow of recipe.outputs) {
@@ -169,24 +171,24 @@ export function decodeConstruction(model, value) {
       residual += amount;
       magnitude += Math.abs(amount);
     }
-    const tolerance = Math.max(Math.min(1e-7, magnitude * 1e-7), magnitude * Number.EPSILON * 16);
+    const tolerance = balanceTolerance(magnitude);
     if (Math.abs(residual) > tolerance) throw new ConstructionBalanceError(`${recipe}, ingredient ${slot + 1}`,
       -Math.abs(residual), tolerance, magnitude, terms, value);
   }
   const quantities = terms => {
     const totals = new Map();
     for (const term of terms) totals.set(term.resource, (totals.get(term.resource) ?? 0) + term.amount * value(term.variable));
-    return [...totals].filter(([, amount]) => amount > 1e-9).map(([resource, amount]) => ({resource, amount}));
+    return [...totals].filter(([, amount]) => amount > 0).map(([resource, amount]) => ({resource, amount}));
   };
   const balances = [];
   for (const [resource, terms] of model.rows) {
     let surplus = 0, magnitude = 0;
     for (const [variable, amount] of terms) { surplus += amount * value(variable); magnitude += Math.abs(amount * value(variable)); }
-    const tolerance = Math.max(1e-7, magnitude * Number.EPSILON * 16);
+    const tolerance = balanceTolerance(magnitude);
     if (surplus < -tolerance) throw new ConstructionBalanceError(resource, surplus, tolerance, magnitude, terms, value);
     if (magnitude) balances.push({resource, surplus, numerical_tolerance: tolerance});
   }
-  const routes = model.routes.filter(route => value(route.variable) > 1e-9).map(route => ({
+  const routes = model.routes.filter(route => value(route.variable) > 0).map(route => ({
     recipe: route.recipe, name: route.name, configuration: route.configuration, operations: value(route.variable),
     work_seconds: value(route.variable) / route.capacity, energy_eu: value(route.variable) * route.energy,
     ...(model.rounded ? {batches: Math.round(value(route.variable) / route.batch), batch_size: route.batch} : {}),
@@ -198,7 +200,7 @@ export function decodeConstruction(model, value) {
       throw new Error(`The construction recipe has a non-integral batch count: ${route.recipe}.`);
     }
   }
-  const external = model.supplies.map(supply => ({resource: supply.resource, amount: value(supply.variable), unit_cost: supply.cost})).filter(supply => supply.amount > 1e-9);
+  const external = model.supplies.map(supply => ({resource: supply.resource, amount: value(supply.variable), unit_cost: supply.cost})).filter(supply => supply.amount > 0);
   const work = routes.reduce((sum, route) => sum + route.work_seconds, 0);
   const energy = routes.reduce((sum, route) => sum + route.energy_eu, 0);
   const materialCost = external.reduce((sum, supply) => sum + supply.amount * supply.unit_cost, 0);

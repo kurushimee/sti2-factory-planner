@@ -26,7 +26,7 @@ export function findFactorySeed(highs, model, request, deadline, validate = () =
       native.run();
       return native.getModelStatus() === highs.constants.modelStatus.optimal;
     };
-    const summary = (values, disabled) => ({lines: model.lines.filter(line => !disabled.has(line.recipe.id) && values[indices.get(line.operation)] > 1e-9).map(line => {
+    const summary = (values, disabled) => ({lines: model.lines.filter(line => !disabled.has(line.recipe.id) && values[indices.get(line.operation)] > 0).map(line => {
       const value = name => values[indices.get(name)];
       return {recipe: line.recipe.id, operations_per_second: value(line.operation),
         inputs: line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable)})),

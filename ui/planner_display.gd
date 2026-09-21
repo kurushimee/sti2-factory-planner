@@ -74,6 +74,8 @@ static func optimization_report(result: Dictionary) -> String:
 	elif result.get("search", {}).get("method") == "material_cost_refinement":
 		text += "Machine and upgrade choices were compared using complete construction recipes. A change was accepted only after checking its production and construction balances and total cost.\n"
 		text += "This search compares loadouts within the initial production routes. Other routes or loadouts may cost less; no global cost bound is available.\n"
+	elif result.get("search", {}).get("method") == "precision_recovery":
+		text += "Small flows were rechecked with rescaled equations. Whole-machine capacity and resource balances pass, but this numerical retry does not establish the lowest cost.\n"
 	return text + "\n"
 
 

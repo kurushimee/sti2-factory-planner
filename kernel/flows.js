@@ -1,3 +1,5 @@
+import {balanceTolerance} from './numerics.js';
+
 export function allocateFlows(lines, external, demands) {
   const supply = new Map(), connections = [], retained = [];
   const magnitude = new Map(), residuals = new Map();
@@ -38,7 +40,7 @@ export function allocateFlows(lines, external, demands) {
     const remaining = (rate - received.sum) - received.correction;
     if (remaining > 0) {
       const total = magnitude.get(resource);
-      const tolerance = Math.max(1e-7, (total.sum + total.correction) * Number.EPSILON * 16);
+      const tolerance = balanceTolerance(total.sum + total.correction);
       const omitted = (residuals.get(resource)?.rate ?? 0) + remaining;
       if (omitted > tolerance) throw new Error(`Could not allocate the solved flow for ${resource}: deficit ${omitted}/s exceeds numerical tolerance ${tolerance}/s.`);
       residuals.set(resource, {resource, rate: omitted, numerical_tolerance: tolerance});

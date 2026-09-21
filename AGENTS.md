@@ -51,6 +51,8 @@ Keep recipe display defaults separate from primary-route ownership. A feasible h
 
 Large construction requests compare complete fixed construction orders around a feasible production plan. Accept a loadout change only after its actual total cost and both balances pass; marginal prices alone are not evidence of an improvement. This restricted search has no global cost bound. Use `node tools/verify_material_endgame.mjs data/statech-2.0.1.json.gz <result.json>` and add `--material` to the browser Worker check. Keep workstation and bootstrap assumptions visible. Progress files are temporary job files and must be cleaned up after completion, cancellation, or failure.
 
+Keep every positive flow in decoded plans. An absolute solver tolerance must not erase a tiny goal, ingredient, or construction quantity. Numerical recovery must pass the original-unit balances and whole-machine checks; report an explicit failure if it cannot. Row scaling changes dual units, so convert marginal costs back before using them. `kernel/tiny_rates.test.js` covers these boundaries and exact finite-goal time.
+
 Use `PlannerJson.parse` at Godot data boundaries and full-precision `JSON.stringify` for calculation requests and saved plans. The stock parser can corrupt the precision or magnitude of long decimal tokens; `tools/test_json.gd` and `tools/test_computation.gd` cover the workaround. Read stepped goal controls through `PlannerDisplay.input_value` to preserve their displayed decimal value.
 
 Autosave keeps immutable datasets separately by content hash; portable exports still embed them. Keep the prior plan recoverable if a dataset write fails. Verify storage changes with `tools/test_ui.gd`, `node tools/verify_storage_browser.mjs`, and the exported application checks.

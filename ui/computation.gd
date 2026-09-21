@@ -114,6 +114,7 @@ func _accept(response: Variant) -> void:
 			"construction_verification": "Checking the new plan's full construction cost…",
 			"construction_routes": "Balancing shared construction routes…",
 			"construction_precision": "Checking construction balance precision…",
+			"production_precision": "Checking small production rates and machine capacity…",
 		}
 		progress.emit(messages.get(response.phase, String(response.phase).replace("_", " ").capitalize()))
 		return
