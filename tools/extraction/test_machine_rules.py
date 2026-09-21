@@ -4,6 +4,15 @@ from machine_rules import machine_rules
 
 
 class MachineRuleTests(unittest.TestCase):
+    def test_tesla_infrastructure_preserves_loaded_limits_without_becoming_a_recipe(self):
+        [rule] = machine_rules([{"id": "test:tesla", "class": "ei.TeslaTowerBlockEntity",
+            "tesla_tower_probe": {"tiers": [{"shape": 0, "passive_eu_per_tick": 64,
+                "max_transfer_eu_per_tick": 1536, "max_axis_distance": 32}]}}], {})
+        self.assertEqual(rule["status"], "infrastructure")
+        self.assertEqual(rule["infrastructure"][0]["passive_eu_per_tick"], 64)
+        self.assertEqual(rule["infrastructure"][0]["max_transfer_eu_per_tick"], 1536)
+        self.assertIsNone(rule["recipe_type"])
+
     def test_recipe_generators_keep_their_own_structure_requirements(self):
         siphon, pulse = machine_rules([
             {"id": "yet_another_industrialization:dragon_egg_energy_siphon", "class": "yai.Siphon",

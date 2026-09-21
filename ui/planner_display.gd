@@ -56,7 +56,19 @@ static func power_report(power: Dictionary) -> String:
 	for entry: Array in [["Other production", "other_production_consumption_eu_per_tick"], ["Infrastructure and power goals", "infrastructure_and_goal_eu_per_tick"], ["Remaining running margin", "operating_margin_eu_per_tick"]]:
 		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], number(power.get(entry[1], 0))]
 	text += "\n[b]Installed capacity[/b]\n%s EU/t generation\n%s EU/t available margin\n%s%% requested reserve\n" % [number(power.installed_generation_eu_per_tick), number(power.installed_margin_eu_per_tick), number(float(power.reserve_fraction) * 100)]
-	text += "\n" + markup(power.get("reserve_basis", "")) + "\n\n" + markup(power.get("attribution_basis", ""))
+	var infrastructure: Dictionary = power.get("infrastructure", {})
+	if !infrastructure.get("entries", []).is_empty():
+		text += "\n[b]Configured infrastructure[/b]\n%s EU/t manual overhead\n" % number(infrastructure.manual_eu_per_tick)
+		for entry: Dictionary in infrastructure.entries:
+			text += "\n%s × %s\n%s EU/t added drain\n" % [number(entry.count), markup(entry.name), number(entry.passive_eu_per_tick)]
+			if entry.get("transfer_eu_per_tick_per_machine") != null:
+				text += "%s EU/t transfer limit per machine\n" % number(entry.transfer_eu_per_tick_per_machine)
+			if entry.get("max_axis_distance") != null:
+				text += "%s blocks of range along each axis\n" % number(entry.max_axis_distance)
+			for assumption: String in entry.assumptions:
+				text += markup(assumption) + "\n"
+			text += markup(entry.construction_status) + "\n"
+	text += "\n" + markup(power.get("reserve_basis", "")) + " External supply contributes to installed reserve only when it has a declared firm capacity.\n\n" + markup(power.get("attribution_basis", ""))
 	text += "\n\nSustained values assume continuous supplies. Inspect each machine for its peak draw and startup stocks. Installed margin does not establish that every machine can start at once."
 	return text
 

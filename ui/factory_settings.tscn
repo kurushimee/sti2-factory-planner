@@ -110,6 +110,16 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Next"
 
+[node name="InfrastructureCount" type="SpinBox" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+min_value = 1.0
+max_value = 1000000.0
+step = 1.0
+suffix = "enabled machines"
+tooltip_text = "Select an enabled infrastructure entry to change its count. Uncheck the entry to remove it."
+
 [node name="Supply" type="VBoxContainer" parent="Content/Availability"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -160,7 +170,7 @@ step = 0.1
 
 [node name="OverheadLabel" type="Label" parent="Content/Priorities"]
 layout_mode = 2
-text = "Infrastructure overhead (EU/t)"
+text = "Other infrastructure overhead (EU/t)"
 
 [node name="Overhead" type="SpinBox" parent="Content/Priorities"]
 unique_name_in_owner = true

@@ -1,5 +1,6 @@
 import {allocateFlows} from './flows.js';
 import {generationSupport} from './power.js';
+import {infrastructurePower} from './infrastructure.js';
 import {resolveGoals} from './goals.js';
 import {startupRequirements} from './startup.js';
 import {prepareDataset} from './catalog.js';
@@ -45,9 +46,10 @@ export function compileFactory(dataset, request, routeChoices = {}) {
     if (!resources.has(goal.resource)) throw new Error(`Unknown goal resource: ${goal.resource}.`);
     demands.set(goal.resource, demands.get(goal.resource) + nonnegative(goal.rate, 'Goal rate'));
   }
-  if (request.overhead_eu_per_tick) {
+  const infrastructure = infrastructurePower(dataset, request);
+  if (infrastructure.total_eu_per_tick) {
     if (!resources.has(ENERGY)) throw new Error('Infrastructure power needs an energy resource.');
-    demands.set(ENERGY, demands.get(ENERGY) + nonnegative(request.overhead_eu_per_tick, 'Infrastructure power') * 20);
+    demands.set(ENERGY, demands.get(ENERGY) + infrastructure.total_eu_per_tick * 20);
   }
   const weights = {external: 1000, machines: 1, energy: 0.000001, ...request.weights};
   for (const [key, value] of Object.entries(weights)) nonnegative(value, `${key} priority`);
@@ -221,7 +223,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
     new Map(dataset.resources.map(resource => [resource.id, resource])));
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');
-  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers};
+  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers, infrastructure};
 }
 
 function decode(model, solution) {
@@ -286,7 +288,7 @@ function decode(model, solution) {
   if (model.reserve && generationCapacity + firmExternal < reserveRequired - Math.max(1e-7, reserveRequired * Number.EPSILON * 16)) throw new Error('The numerical solution failed the generation reserve check.');
   const flows = allocateFlows(lines, external, model.demands);
   const attribution = generationSupport(lines, flows.connections);
-  const power = {...attribution, gross_generation_eu_per_tick: gross, installed_generation_eu_per_tick: generationCapacity,
+  const power = {...attribution, infrastructure: model.infrastructure, gross_generation_eu_per_tick: gross, installed_generation_eu_per_tick: generationCapacity,
     net_generation_eu_per_tick: gross - attribution.generation_related_consumption_eu_per_tick,
     consumption_eu_per_tick: consumption, infrastructure_and_goal_eu_per_tick: demand,
     external_eu_per_tick: externalPower, operating_margin_eu_per_tick: gross + externalPower - consumption - demand,
@@ -301,6 +303,7 @@ export function solveFactory(highs, dataset, request) {
   const duration = nonnegative(request.time_limit_ms ?? 20000, 'Calculation time limit');
   const deadline = Date.now() + duration;
   validateDataset(dataset);
+  infrastructurePower(dataset, request);
   const exhausted = new Error('The configuration search reached its time limit.');
   try {
     dataset = prepareDataset(dataset, request, () => { if (Date.now() >= deadline) throw exhausted; });

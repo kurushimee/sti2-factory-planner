@@ -18,6 +18,17 @@ def machine_rules(capture, upgrades):
             record.update(status="structural", role="multiblock_part", hatch_type=machine.get("hatch_type"),
                           upgrades_steam_to_steel=machine.get("upgrades_steam_to_steel", False),
                           hatch_capacity=machine.get("hatch_capacity", {}))
+        elif machine.get("tesla_tower_probe"):
+            names = ["Copper", "Electrum", "Aluminum", "Annealed copper", "Superconductor"]
+            record.update(status="infrastructure", mechanic="passive_infrastructure", infrastructure=[{
+                "id": str(tier["shape"]), "name": names[tier["shape"]] + " Tesla tower",
+                "shape": tier["shape"], "passive_eu_per_tick": tier["passive_eu_per_tick"],
+                "max_transfer_eu_per_tick": tier["max_transfer_eu_per_tick"], "max_axis_distance": tier["max_axis_distance"],
+                "assumptions": ["The formed tower stays enabled and fully supplied, even when no receivers need power.",
+                    "Transfer and range are per tower. Receiver placement, same-tier energy hatches, and network reachability need separate verification.",
+                    "Transmitted energy is already charged to consuming machines; only the tower drain is extra overhead."]
+                } for tier in machine["tesla_tower_probe"]["tiers"]],
+                infrastructure_evidence=machine["tesla_tower_probe"])
         elif machine.get("water_pump_probe"):
             record.update(status="supported", mechanic="fixed_cycle", **machine["water_pump_probe"])
         elif machine.get("waste_collector_probe"):

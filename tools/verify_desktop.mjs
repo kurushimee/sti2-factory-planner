@@ -39,6 +39,7 @@ const saved = JSON.parse(await readFile(join(user, 'autosave.json'), 'utf8'));
 assert.equal(saved.dataset_identity, plan.dataset_identity);
 assert.equal(saved.request.goals[0].recipe, recipe);
 assert.deepEqual(saved.request.construction, plan.request.construction);
+assert.deepEqual(saved.request.infrastructure, plan.request.infrastructure);
 assert.ok(Object.keys(saved.positions).some(key => key.includes(recipe)));
 assert.ok((await stat(capture)).mtimeMs >= started);
 assert.ok((await stat(capture)).size > 10000);

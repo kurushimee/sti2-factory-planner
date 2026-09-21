@@ -90,6 +90,11 @@ jobs:
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_power_ui.gd 2>&1 | tee /tmp/power-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/power-check.log
+      - name: Check loaded infrastructure controls and power
+        run: |
+          node tools/verify_infrastructure_catalog.mjs
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_infrastructure_ui.gd 2>&1 | tee /tmp/infrastructure-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/infrastructure-check.log
       - name: Check graph layout and group editing
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_graph_layout.gd 2>&1 | tee /tmp/layout-check.log

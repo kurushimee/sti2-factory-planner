@@ -52,6 +52,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/construction.js': 'kernel/construction.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/power.js': 'kernel/power.js',
+      '/kernel/infrastructure.js': 'kernel/infrastructure.js',
       '/kernel/goals.js': 'kernel/goals.js',
       '/kernel/startup.js': 'kernel/startup.js',
       '/kernel/capacity.js': 'kernel/capacity.js',
@@ -158,6 +159,14 @@ try {
     const result = await solveInBrowser(worldDataset, request);
     assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
     console.log('Waste collection and its retained live animal match Node in the browser Worker.');
+  }
+  if (worldDataset.machines?.some(machine => machine.infrastructure?.length)) {
+    const request = {goals: [], available_machines: [], external: [{resource: 'energy:eu'}],
+      infrastructure: [{machine: 'extended_industrialization:tesla_tower', variant: '4', count: 2}], overhead_eu_per_tick: 5};
+    const result = await solveInBrowser(worldDataset, request);
+    assert.equal(result.result.power.external_eu_per_tick, 32773);
+    assert.deepEqual(result.result, solveFactory(await loadHighs(), worldDataset, request));
+    console.log('Tesla infrastructure and its loaded limits match Node in the browser Worker.');
   }
   const imported = await frame.evaluate(async dataset => {
     const bytes = await (await fetch('/fixture.zip')).arrayBuffer();

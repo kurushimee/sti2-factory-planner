@@ -31,6 +31,16 @@ export function validateDataset(dataset) {
   for (const resource of dataset.resources) if (resource.max_stack_size !== undefined) number(resource.max_stack_size, `resource ${resource.id}.max_stack_size`, 1, true);
   records(dataset.recipes, 'recipes');
   const machines = records(dataset.machines ?? [], 'machines');
+  for (const machine of dataset.machines ?? []) {
+    if (machine.infrastructure === undefined) continue;
+    records(machine.infrastructure, `machine ${machine.id}.infrastructure`);
+    for (const variant of machine.infrastructure) {
+      number(variant.passive_eu_per_tick, `infrastructure ${variant.id}.passive_eu_per_tick`);
+      for (const field of ['max_transfer_eu_per_tick', 'max_axis_distance']) {
+        if (variant[field] !== undefined) number(variant[field], `infrastructure ${variant.id}.${field}`);
+      }
+    }
+  }
   const upgrades = records(dataset.upgrades ?? [], 'upgrades');
   const flows = (values, path, alternatives = false) => {
     array(values, path);
@@ -111,7 +121,7 @@ export function validateDataset(dataset) {
     if (preset.available_parts) references(preset.available_parts, machines, `progression ${preset.id}.available_parts`);
   }
   for (const machine of dataset.machines ?? []) {
-    if (!['supported', 'unsupported', 'structural'].includes(machine.status)) fail(`machine ${machine.id}`, 'unknown support status');
+    if (!['supported', 'unsupported', 'structural', 'infrastructure'].includes(machine.status)) fail(`machine ${machine.id}`, 'unknown support status');
     if (machine.status === 'supported') text(machine.mechanic, `machine ${machine.id}.mechanic`);
     if (machine.upgrades !== undefined) references(machine.upgrades, upgrades, `machine ${machine.id}.upgrades`);
     if (machine.shapes !== undefined) {

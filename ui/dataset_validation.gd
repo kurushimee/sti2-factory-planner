@@ -112,6 +112,13 @@ static func check_plan(value: Variant) -> String:
 	for field: String in ["reserve_fraction", "overhead_eu_per_tick"]:
 		if value.request.has(field) && !_nonnegative(value.request[field]):
 			return "The plan's %s field must be nonnegative." % field
+	if !(value.request.get("infrastructure", []) is Array):
+		return "Infrastructure must be a list of configured machines."
+	for entry: Variant in value.request.get("infrastructure", []):
+		if !(entry is Dictionary) || !(entry.get("machine") is String) || !(entry.get("variant") is String) || !_nonnegative(entry.get("count")):
+			return "Each infrastructure entry needs a machine, variant, and whole count."
+		if float(entry.count) != floorf(float(entry.count)):
+			return "Infrastructure counts must be whole numbers."
 	for goal: Variant in value.request.goals:
 		if !(goal is Dictionary) || !(goal.get("resource") is String):
 			return "The plan contains an invalid goal."

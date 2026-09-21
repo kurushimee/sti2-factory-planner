@@ -17,7 +17,7 @@ var _construction: Dictionary = {}
 
 
 func _ready() -> void:
-	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches", "Construction costs"]:
+	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches", "Construction costs", "Infrastructure"]:
 		%SettingsCategory.add_item(title_text)
 	%SettingsCategory.item_selected.connect(_category_changed)
 	%ProgressionPreset.item_selected.connect(func(index: int) -> void:
@@ -37,9 +37,16 @@ func _ready() -> void:
 		get_ok_button().disabled = value <= 0
 		%SettingsError.text = "Machine priority must be positive." if value <= 0 else ""
 	)
+	%InfrastructureCount.value_changed.connect(func(value: float) -> void:
+		var selected: TreeItem = %SettingsEntries.get_selected()
+		if selected:
+			for entry: Dictionary in _request.infrastructure:
+				if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
+					entry.count = int(value)
+	)
 	confirmed.connect(_apply)
 	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %ConstructionEnabled, %ConstructionWeight.get_line_edit(), %ConstructionRounding, %SettingsEntries, %SettingsPrevious,
-		%SettingsNext, %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
+		%SettingsNext, %InfrastructureCount.get_line_edit(), %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
 		%Reserve.get_line_edit(), %Overhead.get_line_edit(), %ResourceWeight.get_line_edit(),
 		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), get_ok_button(), get_cancel_button()]
 	for index: int in controls.size():
@@ -78,7 +85,7 @@ func open_settings(dataset: Dictionary, request: Dictionary) -> void:
 		for id: String in _request.get(pair[1], []):
 			_request.get(pair[0], []).erase(id)
 		_request.erase(pair[1])
-	for field: String in ["available_upgrades", "disabled_recipes", "obtained_resources", "external"]:
+	for field: String in ["available_upgrades", "disabled_recipes", "obtained_resources", "external", "infrastructure"]:
 		if !_request.has(field):
 			_request[field] = []
 	var weights: Dictionary = _request.get("weights", {})
@@ -119,6 +126,8 @@ func _use_preset() -> void:
 
 func _category_changed(category: int) -> void:
 	_entries.clear()
+	%InfrastructureCount.visible = category == 7
+	%InfrastructureCount.editable = false
 	_supply_reset()
 	%Supply.visible = category in [4, 6]
 	%ConstructionOptions.visible = category == 6
@@ -133,13 +142,14 @@ func _category_changed(category: int) -> void:
 		"Mark resources already obtained as replication templates. Each replicator also needs one retained template item.",
 		"External supplies are deliberate imports into the factory. Select a resource to set its rate limit and cost. Item rates use items/s; fluid rates use mB/s; power uses EU/s.",
 		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible.",
-		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. Construction workstations must already be available. Whole batches round crafts and tools; random yields remain estimates. Supplies here are quantities, not rates."]
+		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. Construction workstations must already be available. Whole batches round crafts and tools; random yields remain estimates. Supplies here are quantities, not rates.",
+		"Set the number of continuously enabled towers. Their measured idle drain adds to manual overhead. Receiver placement and structure construction remain separate checks; transfer limits do not prove network coverage."]
 	%SettingsHint.text = hints[category]
 	match category:
 		0:
 			var seen: Dictionary[String, bool] = {}
 			for machine: Dictionary in _dataset.get("machines", []):
-				if machine.get("status") == "structural":
+				if machine.get("status") in ["structural", "infrastructure"]:
 					continue
 				seen[machine.id] = true
 				_entries.append({"id": machine.id, "name": _names.get("item:" + str(machine.id), machine.id),
@@ -165,6 +175,11 @@ func _category_changed(category: int) -> void:
 				if machine.has("hatch_capacity"):
 					_entries.append({"id": machine.id, "name": _names.get("item:" + str(machine.id), machine.id),
 						"unsupported": supported.search(machine.id) == null})
+		7:
+			for machine: Dictionary in _dataset.get("machines", []):
+				for variant: Dictionary in machine.get("infrastructure", []):
+					_entries.append({"id": str(machine.id) + "|" + str(variant.id), "name": variant.get("name", variant.id),
+						"detail": "%s EU/t per enabled machine. Transfer and range do not prove receiver coverage." % PlannerDisplay.number(variant.passive_eu_per_tick)})
 	_filter(%SettingsSearch.text)
 
 
@@ -213,6 +228,7 @@ func _enabled(id: String) -> bool:
 		3: return id in _request.obtained_resources
 		4: return _request.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
 		5: return id in _request.available_parts
+		7: return _request.infrastructure.any(func(entry: Dictionary) -> bool: return str(entry.machine) + "|" + str(entry.variant) == id)
 		6: return _construction.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
 	return false
 
@@ -222,6 +238,13 @@ func _entry_changed() -> void:
 	if !item:
 		return
 	var id: String = item.get_metadata(0)
+	if %SettingsCategory.selected == 7:
+		var parts := id.split("|")
+		_request.infrastructure = _request.infrastructure.filter(func(entry: Dictionary) -> bool: return entry.machine != parts[0] || entry.variant != parts[1])
+		if item.is_checked(0):
+			_request.infrastructure.append({"machine": parts[0], "variant": parts[1], "count": 1})
+		_entry_selected()
+		return
 	var enabled := item.is_checked(0)
 	if %SettingsCategory.selected in [4, 6]:
 		var record: Dictionary = _construction if %SettingsCategory.selected == 6 else _request
@@ -239,6 +262,15 @@ func _entry_changed() -> void:
 
 func _entry_selected() -> void:
 	_supply_reset()
+	if %SettingsCategory.selected == 7:
+		%InfrastructureCount.editable = false
+		var selected: TreeItem = %SettingsEntries.get_selected()
+		if selected:
+			for entry: Dictionary in _request.infrastructure:
+				if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
+					%InfrastructureCount.set_value_no_signal(entry.count)
+					%InfrastructureCount.editable = true
+		return
 	if !%SettingsCategory.selected in [4, 6]:
 		return
 	var item: TreeItem = %SettingsEntries.get_selected()

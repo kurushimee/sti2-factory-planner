@@ -148,7 +148,7 @@ export function prepareDataset(dataset, request, checkBudget = () => {}) {
   const structures = structureContext(dataset);
   const selected = new Map();
   const needed = new Set((request.goals ?? []).map(goal => goal.resource));
-  if (request.overhead_eu_per_tick) needed.add('energy:eu');
+  if (request.overhead_eu_per_tick || request.infrastructure?.some(value => value.count > 0)) needed.add('energy:eu');
   const queue = [...needed];
   for (const recipe of dataset.recipes) {
     checkBudget();
