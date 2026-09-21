@@ -8,7 +8,7 @@ export function worldMachineKey(machine) {
 export function reconstructFactory(imported, dataset, corrections = {}) {
   const machines = new Map((dataset.machines ?? []).map(value => [value.id, value]));
   const upgrades = new Map((dataset.upgrades ?? []).map(value => [value.id, value]));
-  const assignments = [], unresolved = [];
+  const assignments = [], unresolved = [], infrastructure = [], infrastructureCandidates = [];
   const candidates = new Map();
   for (const recipe of dataset.recipes ?? []) {
     for (const id of new Set([recipe.id, recipe.source_id].filter(Boolean))) {
@@ -24,6 +24,40 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     const possible = (candidates.get(recipeId) ?? []).filter(recipe => !saved.recipe_type || recipe.type === saved.recipe_type || recipe.process?.type === saved.recipe_type);
     const pending = reason => unresolved.push({machine: key, origin: saved.origin, machine_id: saved.id, recipe_id: recipeId, reason,
       recipe_candidates: saved.provider_candidates ?? [], facts: saved});
+    const definition = machines.get(saved.id);
+    if (definition?.mechanic === 'passive_infrastructure') {
+      const enabled = correction.infrastructure_enabled;
+      const candidate = {machine: key, origin: saved.origin, enabled: enabled ?? true,
+        evidence: 'saved_structure_and_unique_energy_hatches',
+        assumption: 'Continuous enabled operation with supplied power; no observed transmission rate or verified receiver network.'};
+      infrastructureCandidates.push(candidate);
+      if (enabled === false) continue;
+      const variant = definition.infrastructure?.find(value => value.structure?.shape === saved.shape);
+      if (!variant || saved.structure?.status !== 'matching_saved_geometry') {
+        pending('The infrastructure needs a supported winding and a matching saved structure.'); continue;
+      }
+      const hatches = (imported.parts ?? []).filter(part => part.controller && worldMachineKey({origin: part.controller}) === key
+        && part.association_evidence === 'unique_matching_saved_geometry' && part.hatch_type === 'modern_industrialization:energy_input');
+      const types = [...new Set(hatches.map(part => part.id))];
+      if (types.length !== 1 || !machines.get(types[0])?.hatch_capacity?.cable_eu_per_tick) {
+        pending('The infrastructure needs uniquely associated energy input hatches of one supported tier.'); continue;
+      }
+      if (saved.facts?.redstoneModuleStack?.id && enabled !== true) {
+        candidate.enabled = false;
+        pending('This tower has redstone control. Confirm continuous operation or leave it excluded; its saved configuration does not establish a duty cycle.'); continue;
+      }
+      const selection = {id: `world:${key}`, machine: saved.id, variant: variant.id, count: 1, energy_hatch: types[0],
+        transmit_eu_per_tick: variant.max_transfer_eu_per_tick, origins: [saved.origin],
+        imported_hatches: hatches.map(part => ({id: part.id, origin: part.origin})),
+        transmission_basis: 'Winding capacity target, not a saved operating rate. Support hatches may be resized.',
+        operation_basis: candidate.assumption};
+      if (saved.facts?.tesla_tower_upgrade_stack?.id) {
+        pending('The saved Tesla upgrade needs a network and construction adapter before this tower can be included.'); continue;
+      }
+      candidate.configuration = selection;
+      infrastructure.push(selection);
+      continue;
+    }
     if (!correction.recipe && saved.assignment_error) { pending(saved.assignment_error); continue; }
     if (!recipeId) { pending('No unique recipe assignment was saved or inferred.'); continue; }
     if (possible.length !== 1) { pending('The saved recipe does not identify one recipe in this dataset.'); continue; }
@@ -110,6 +144,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
   }
   if (assignments.length && !goals.length && goalCandidates.every(value => value.consumers.length && value.evidence !== 'player_correction')) unresolved.push({reason: 'Assigned production forms a cycle with no clear retained primary output. Choose an end goal.', machines: assignments.map(value => value.machine)});
   return {assignments, goals, goal_candidates: goalCandidates, machine_setups: machineSetups, unresolved,
+    infrastructure, infrastructure_candidates: infrastructureCandidates,
     ingredients, obtained_resources: [...obtained],
     stock_targets: (imported.requesters ?? []).flatMap(requester => requester.requests.map(value => ({...value, origin: requester.origin}))),
     inference: 'Primary outputs with no other assigned consumer become capacity goals. Shared-resource connectivity is inferred, not a recovered cable network. Byproduct retention and cycles may need correction.',

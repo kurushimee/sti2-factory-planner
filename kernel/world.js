@@ -136,6 +136,8 @@ export function zipEntries(bytes) {
 }
 
 export function readRegion(bytes, origin, external = () => null, selectedIndices = null) {
+  // Minecraft leaves newly opened regions empty until a chunk is written.
+  if (!bytes.length) return {chunks: [], errors: []};
   if (bytes.length < 8192 || bytes.length % 4096) throw new Error('A region file has an invalid sector length.');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const chunks = [], errors = [];

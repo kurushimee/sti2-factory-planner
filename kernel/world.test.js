@@ -4,6 +4,11 @@ import {zipSync, zlibSync, gzipSync} from 'fflate';
 import {readNbt} from './nbt.js';
 import {zipEntries, readRegion, inspectWorld} from './world.js';
 
+test('empty regions contain no chunks while partial headers remain errors', () => {
+  assert.deepEqual(readRegion(new Uint8Array(), {x: 1, z: 0}), {chunks: [], errors: []});
+  for (const length of [1, 4096, 8191, 8193]) assert.throws(() => readRegion(new Uint8Array(length), {x: 1, z: 0}), /sector length/);
+});
+
 test('NBT preserves signed long values and prototype-like keys', () => {
   const bytes = Uint8Array.from([10, 0, 0, 4, 0, 1, 120, 0x7f, 255, 255, 255, 255, 255, 255, 255,
     1, 0, 9, ...Buffer.from('__proto__'), 7, 0]);

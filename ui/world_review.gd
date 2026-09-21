@@ -47,7 +47,7 @@ func open_review(world: Dictionary, dataset: Dictionary) -> void:
 	%RetainOutput.disabled = true
 	_filter_recipes("")
 	var reconstruction: Dictionary = _world.get("reconstruction", {})
-	%WorldSummary.text = "%d machines · %d capacity goals · %d need correction\nSaved capacity assumes continuous supply. Requester stocks are quantities." % [_world.get("machines", []).size(), reconstruction.get("goals", []).size(), reconstruction.get("unresolved", []).size()]
+	%WorldSummary.text = "%d machines · %d capacity goals · %d infrastructure configurations · %d need correction\nSaved capacity assumes continuous supply. Requester stocks are quantities." % [_world.get("machines", []).size(), reconstruction.get("goals", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size()]
 	if %WorldMachines.item_count:
 		%WorldMachines.select(0)
 		_select_machine(0)
@@ -96,6 +96,7 @@ func _key(machine: Dictionary) -> String:
 func _select_machine(index: int) -> void:
 	_selected = index
 	%RetainOutput.disabled = false
+	%RetainOutput.text = "Retain this output as a goal"
 	var machine: Dictionary = _world.machines[index]
 	var key := _key(machine)
 	var retained := true
@@ -110,13 +111,27 @@ func _select_machine(index: int) -> void:
 	for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
 		if unresolved.get("machine") == key:
 			%WorldDetails.text += "\n" + str(unresolved.reason)
+	for candidate: Dictionary in _world.get("reconstruction", {}).get("infrastructure_candidates", []):
+		if candidate.machine != key:
+			continue
+		%RetainOutput.text = "Plan continuous infrastructure operation"
+		%RetainOutput.set_pressed_no_signal(_corrections.get(key, {}).get("infrastructure_enabled", candidate.enabled))
+		%WorldDetails.text = "%s · %d, %d, %d\n%s\n%s" % [str(machine.id).get_slice(":", 1).replace("_", " ").capitalize(), machine.origin.x, machine.origin.y, machine.origin.z, machine.origin.dimension, candidate.assumption]
+		var configuration: Dictionary = candidate.get("configuration", {})
+		if !configuration.is_empty():
+			%WorldDetails.text += "\nInput and receiver tier: %s\nSaved input hatches: %d\nTransmission capacity target: %s EU/t\n%s" % [configuration.energy_hatch, configuration.imported_hatches.size(), PlannerDisplay.number(configuration.transmit_eu_per_tick), configuration.transmission_basis]
+		for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
+			if unresolved.get("machine") == key:
+				%WorldDetails.text += "\n" + str(unresolved.reason)
 	_filter_recipes(%WorldRecipeSearch.text, true)
 
 
 func _filter_recipes(query: String, reveal_selected: bool = false) -> void:
 	_recipe_matches.clear()
 	_recipe_page = 0
-	if _selected >= 0:
+	%WorldRecipeSearch.editable = !_is_infrastructure()
+	%WorldRecipeSearch.placeholder_text = "This infrastructure has no recipe assignment." if _is_infrastructure() else "Find a compatible recipe…"
+	if _selected >= 0 && !_is_infrastructure():
 		var machine: Dictionary = _world.machines[_selected]
 		var chosen: String = str(_corrections.get(_key(machine), {}).get("recipe", machine.get("recipe_id", "")))
 		var search := query.to_lower()
@@ -166,4 +181,11 @@ func _retain_changed(enabled: bool) -> void:
 	var key := _key(_world.machines[_selected])
 	if !_corrections.has(key):
 		_corrections[key] = {}
-	_corrections[key].goal = enabled
+	_corrections[key]["infrastructure_enabled" if _is_infrastructure() else "goal"] = enabled
+
+
+func _is_infrastructure() -> bool:
+	if _selected < 0:
+		return false
+	var key := _key(_world.machines[_selected])
+	return _world.get("reconstruction", {}).get("infrastructure_candidates", []).any(func(candidate: Dictionary) -> bool: return candidate.machine == key)

@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 
 const root = resolve('builds/web');
 const [worldPath, machineCapturePath, catalogPath, fixtureKind] = process.argv.slice(2);
-const irradiationFixture = fixtureKind === 'irradiation';
+const teslaFixture = fixtureKind === 'tesla';
+const irradiationFixture = fixtureKind === 'irradiation' || teslaFixture;
 const structureFixture = fixtureKind === 'structure' || irradiationFixture;
 const extendedFixture = fixtureKind === 'extended' || structureFixture;
 const artifacts = resolve('.plans/artifacts/workspace');
@@ -206,9 +207,15 @@ try {
   }
   if (worldPath) {
     await importFile(worldPath);
-    plan = await waitPlan(value => value?.imported_world?.machines?.length === (irradiationFixture ? 9 : structureFixture ? 7 : extendedFixture ? 6 : 4));
+    plan = await waitPlan(value => value?.imported_world?.machines?.length === (teslaFixture ? 10 : irradiationFixture ? 9 : structureFixture ? 7 : extendedFixture ? 6 : 4));
     assert.equal(plan.imported_world.providers.length, structureFixture ? 3 : 2);
     assert.deepEqual(plan.imported_world.errors, []);
+    if (teslaFixture) {
+      assert.equal(plan.request.infrastructure.length, 1);
+      assert.equal(plan.request.infrastructure[0].energy_hatch, 'modern_industrialization:lv_energy_input_hatch');
+      assert.equal(plan.request.infrastructure[0].imported_hatches.length, 7);
+      assert.equal(plan.request.infrastructure[0].transmit_eu_per_tick, 1536);
+    }
     if (catalogPath) {
       assert.equal(plan.request.goals[0].kind, 'capacity');
       assert.equal(plan.request.goals[0].machines, 1);

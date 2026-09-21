@@ -1,0 +1,97 @@
+{
+  "archive_sha256": "46b4c8e1885b91e2ce73c6e1184e4b0a68dd457364c49fe6bf24b425bea946f5",
+  "configuration": {
+    "id": "world:minecraft:overworld|256|100|0",
+    "machine": "extended_industrialization:tesla_tower",
+    "variant": "0",
+    "count": 1,
+    "energy_hatch": "modern_industrialization:lv_energy_input_hatch",
+    "transmit_eu_per_tick": 1536,
+    "origins": [
+      {
+        "dimension": "minecraft:overworld",
+        "x": 256,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      }
+    ],
+    "imported_hatches": [
+      {
+        "id": "modern_industrialization:lv_energy_input_hatch",
+        "origin": {
+          "dimension": "minecraft:overworld",
+          "x": 254,
+          "y": 100,
+          "z": 0,
+          "region": "example/region/r.0.0.mca"
+        }
+      },
+      {
+        "id": "modern_industrialization:lv_energy_input_hatch",
+        "origin": {
+          "dimension": "minecraft:overworld",
+          "x": 254,
+          "y": 100,
+          "z": 1,
+          "region": "example/region/r.0.0.mca"
+        }
+      },
+      {
+        "id": "modern_industrialization:lv_energy_input_hatch",
+        "origin": {
+          "dimension": "minecraft:overworld",
+          "x": 255,
+          "y": 100,
+          "z": 0,
+          "region": "example/region/r.0.0.mca"
+        }
+      },
+      {
+        "id": "modern_industrialization:lv_energy_input_hatch",
+        "origin": {
+          "dimension": "minecraft:overworld",
+          "x": 259,
+          "y": 100,
+          "z": 1,
+          "region": "example/region/r.0.0.mca"
+        }
+      },
+      {
+        "id": "modern_industrialization:lv_energy_input_hatch",
+        "origin": {
+          "dimension": "minecraft:overworld",
+          "x": 257,
+          "y": 100,
+          "z": 0,
+          "region": "example/region/r.0.0.mca"
+        }
+      },
+      {
+        "id": "modern_industrialization:lv_energy_input_hatch",
+        "origin": {
+          "dimension": "minecraft:overworld",
+          "x": 258,
+          "y": 100,
+          "z": 0,
+          "region": "example/region/r.0.0.mca"
+        }
+      },
+      {
+        "id": "modern_industrialization:lv_energy_input_hatch",
+        "origin": {
+          "dimension": "minecraft:overworld",
+          "x": 258,
+          "y": 100,
+          "z": 1,
+          "region": "example/region/r.0.0.mca"
+        }
+      }
+    ],
+    "transmission_basis": "Winding capacity target, not a saved operating rate. Support hatches may be resized.",
+    "operation_basis": "Continuous enabled operation with supplied power; no observed transmission rate or verified receiver network."
+  },
+  "passive_eu_per_tick": 64,
+  "evidence": "A stopped real world contains a matching copper Tesla structure and seven uniquely associated LV input hatches.",
+  "limits": "Continuous enabled operation is assumed. The winding limit becomes an editable capacity target. Saved energy is a quantity; receiver coverage and observed transmission are not established."
+}

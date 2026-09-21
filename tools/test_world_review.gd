@@ -57,5 +57,21 @@ func _run() -> void:
 	await dialog.open_review({"machines": []}, dataset)
 	assert(dialog.get_node("%WorldRecipes").item_count == 0)
 	assert(dialog.get_node("%RetainOutput").disabled)
+	var origin := {"dimension": "minecraft:overworld", "x": 256, "y": 100, "z": 0}
+	var key := "minecraft:overworld|256|100|0"
+	var tower := {"id": "extended_industrialization:tesla_tower", "origin": origin}
+	var selection := {"id": "world:" + key, "machine": tower.id, "variant": "0", "count": 1, "energy_hatch": "modern_industrialization:lv_energy_input_hatch", "transmit_eu_per_tick": 1536, "imported_hatches": [{}, {}, {}, {}, {}, {}, {}], "transmission_basis": "Winding capacity target, not a saved operating rate. Support hatches may be resized."}
+	var candidate := {"machine": key, "enabled": true, "configuration": selection, "assumption": "Continuous enabled operation with supplied power; no observed transmission rate or verified receiver network."}
+	await dialog.open_review({"machines": [tower], "reconstruction": {"infrastructure": [selection], "infrastructure_candidates": [candidate]}}, dataset)
+	assert(dialog.get_node("%WorldRecipes").item_count == 0)
+	assert(dialog.get_node("%RetainOutput").button_pressed)
+	assert("Saved input hatches: 7" in dialog.get_node("%WorldDetails").text)
+	dialog._retain_changed(false)
+	assert(dialog._corrections[key] == {"infrastructure_enabled": false})
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/world-review-tesla.png")
+	dialog.hide()
 	print("World review passed large lists, page selection, search, staged corrections, cancellation, and empty imports.")
 	quit()

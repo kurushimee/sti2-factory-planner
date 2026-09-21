@@ -12,7 +12,8 @@ export function infrastructurePower(dataset, request) {
     const machine = dataset.machines?.find(value => value.id === selection.machine);
     const variant = machine?.infrastructure?.find(value => value.id === selection.variant);
     if (!variant) throw new Error(`Unknown infrastructure configuration: ${selection.machine}, ${selection.variant}.`);
-    const key = `${selection.machine}|${selection.variant}`;
+    if (selection.id !== undefined && (typeof selection.id !== 'string' || !selection.id)) throw new Error('Infrastructure identifiers must be nonempty text.');
+    const key = selection.id ?? `${selection.machine}|${selection.variant}`;
     if (seen.has(key)) throw new Error(`Duplicate infrastructure configuration: ${key}.`);
     seen.add(key);
     if (!selection.count) continue;

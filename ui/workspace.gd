@@ -381,11 +381,14 @@ func _calculated(result: Dictionary) -> void:
 		return
 	if _job_kind in ["import_world", "correct_world"]:
 		var apply_empty: bool = _job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("goals", []).is_empty()
+		var replace_infrastructure: bool = !result.get("reconstruction", {}).get("infrastructure", []).is_empty() || (_job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("infrastructure", []).is_empty())
 		_remember()
 		_world_import.assign(result)
 		%ReviewWorld.disabled = false
 		var reconstruction: Dictionary = result.get("reconstruction", {})
 		var goals: Array = reconstruction.get("goals", [])
+		if replace_infrastructure:
+			_request.infrastructure = reconstruction.get("infrastructure", []).duplicate(true)
 		if !goals.is_empty() || apply_empty:
 			_request.goals = goals.duplicate(true)
 			_request.machine_setups = reconstruction.get("machine_setups", {}).duplicate(true)
@@ -405,10 +408,10 @@ func _calculated(result: Dictionary) -> void:
 			if !available.is_empty():
 				_request.available_machines = available
 		_autosave()
-		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
+		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d infrastructure configurations; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
 		%Notice.popup_centered()
 		status.text = "World configuration read locally."
-		if !goals.is_empty() || apply_empty:
+		if !goals.is_empty() || apply_empty || replace_infrastructure:
 			_recalculate()
 		return
 	if result.get("status") != "optimal":

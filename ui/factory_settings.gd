@@ -41,7 +41,7 @@ func _ready() -> void:
 		var selected: TreeItem = %SettingsEntries.get_selected()
 		if selected:
 			for entry: Dictionary in _request.infrastructure:
-				if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
+				if _infrastructure_key(entry) == selected.get_metadata(0):
 					entry.count = int(value)
 	)
 	%InfrastructureHatch.item_selected.connect(func(_index: int) -> void: _infrastructure_changed())
@@ -181,9 +181,22 @@ func _category_changed(category: int) -> void:
 			for machine: Dictionary in _dataset.get("machines", []):
 				for variant: Dictionary in machine.get("infrastructure", []):
 					_entries.append({"id": str(machine.id) + "|" + str(variant.id), "name": variant.get("name", variant.id),
-						"variant": variant,
+						"variant": variant, "machine": machine.id,
 						"detail": "%s EU/t per enabled machine. Transfer and range do not prove receiver coverage." % PlannerDisplay.number(variant.passive_eu_per_tick)})
+			for selection: Dictionary in _request.infrastructure:
+				if !selection.has("id"):
+					continue
+				for machine: Dictionary in _dataset.get("machines", []):
+					if machine.id != selection.machine:
+						continue
+					for variant: Dictionary in machine.get("infrastructure", []):
+						if variant.id == selection.variant:
+							_entries.append({"id": selection.id, "name": "%s · %s" % [variant.get("name", variant.id), selection.id], "variant": variant, "selection": selection.duplicate(true), "detail": selection.get("operation_basis", "Separate infrastructure configuration.")})
 	_filter(%SettingsSearch.text)
+
+
+func _infrastructure_key(entry: Dictionary) -> String:
+	return entry.get("id", str(entry.machine) + "|" + str(entry.variant))
 
 
 func _supply_reset() -> void:
@@ -231,7 +244,7 @@ func _enabled(id: String) -> bool:
 		3: return id in _request.obtained_resources
 		4: return _request.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
 		5: return id in _request.available_parts
-		7: return _request.infrastructure.any(func(entry: Dictionary) -> bool: return str(entry.machine) + "|" + str(entry.variant) == id)
+		7: return _request.infrastructure.any(func(entry: Dictionary) -> bool: return _infrastructure_key(entry) == id)
 		6: return _construction.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
 	return false
 
@@ -242,12 +255,14 @@ func _entry_changed() -> void:
 		return
 	var id: String = item.get_metadata(0)
 	if %SettingsCategory.selected == 7:
-		var parts := id.split("|")
-		_request.infrastructure = _request.infrastructure.filter(func(entry: Dictionary) -> bool: return entry.machine != parts[0] || entry.variant != parts[1])
+		_request.infrastructure = _request.infrastructure.filter(func(entry: Dictionary) -> bool: return _infrastructure_key(entry) != id)
 		if item.is_checked(0):
-			var definition: Dictionary = _entries.filter(func(entry: Dictionary) -> bool: return entry.id == id)[0].variant
-			var selection: Dictionary = {"machine": parts[0], "variant": parts[1], "count": 1}
-			if definition.has("default_energy_hatch"):
+			var row: Dictionary = _entries.filter(func(entry: Dictionary) -> bool: return entry.id == id)[0]
+			var definition: Dictionary = row.variant
+			var selection: Dictionary = row.get("selection", {}).duplicate(true)
+			if selection.is_empty():
+				selection = {"machine": row.machine, "variant": definition.id, "count": 1}
+			if !selection.has("energy_hatch") && definition.has("default_energy_hatch"):
 				selection.energy_hatch = definition.default_energy_hatch
 				selection.transmit_eu_per_tick = definition.max_transfer_eu_per_tick
 			_request.infrastructure.append(selection)
@@ -277,7 +292,7 @@ func _entry_selected() -> void:
 		var selected: TreeItem = %SettingsEntries.get_selected()
 		if selected:
 			for entry: Dictionary in _request.infrastructure:
-				if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
+				if _infrastructure_key(entry) == selected.get_metadata(0):
 					%InfrastructureCount.set_value_no_signal(entry.count)
 					%InfrastructureCount.editable = true
 					_loading = true
@@ -324,7 +339,7 @@ func _infrastructure_changed() -> void:
 	if !selected:
 		return
 	for entry: Dictionary in _request.infrastructure:
-		if str(entry.machine) + "|" + str(entry.variant) == selected.get_metadata(0):
+		if _infrastructure_key(entry) == selected.get_metadata(0):
 			var hatch: String = %InfrastructureHatch.get_selected_metadata()
 			if hatch.is_empty(): entry.erase("energy_hatch")
 			else: entry.energy_hatch = hatch
