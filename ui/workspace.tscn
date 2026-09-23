@@ -166,10 +166,22 @@ step = 0.001
 value = 1.0
 allow_greater = false
 
-[node name="AddGoal" type="Button" parent="Margin/Layout/Body/Library/Column"]
+[node name="GoalActions" type="HBoxContainer" parent="Margin/Layout/Body/Library/Column"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AddGoal" type="Button" parent="Margin/Layout/Body/Library/Column/GoalActions"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Add goal"
+
+[node name="PinRoute" type="Button" parent="Margin/Layout/Body/Library/Column/GoalActions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Pin route"
+tooltip_text = "Use this recipe to supply its main output. This does not add a goal."
 
 [node name="Replication" type="CheckButton" parent="Margin/Layout/Body/Library/Column"]
 unique_name_in_owner = true

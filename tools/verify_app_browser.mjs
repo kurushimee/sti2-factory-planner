@@ -42,7 +42,7 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/embed`);
   let frame = page.frames().find(frame => frame !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
-  await page.mouse.click(145, 729, {delay: 100});
+  await page.mouse.click(85, 729, {delay: 100});
   const savedRecord = async (key, compact = false) => frame.evaluate(({key, compact}) => new Promise((resolve, reject) => {
     const open = indexedDB.open('factory-planner', 1);
     open.onerror = () => reject(open.error);
@@ -62,7 +62,12 @@ try {
       get.onerror = () => reject(get.error);
     };
   }), {key, compact});
-  const savedPlan = (compact = false) => savedRecord('autosave', compact);
+  const savedPlan = async (compact = false) => {
+    const plan = await savedRecord('autosave', compact);
+    const view = await savedRecord('workspace-view', true);
+    if (plan && view?.dataset_identity === plan.dataset_identity) plan.view = view.view;
+    return plan;
+  };
   await page.waitForFunction(() => true);
   let plan;
   for (let attempt = 0; attempt < 100; attempt++) {
@@ -75,7 +80,7 @@ try {
     console.log(errors);
   }
   assert.equal(plan?.request.goals[0]?.rate, 1);
-  await new Promise(resolve => setTimeout(resolve, 350));
+  await new Promise(resolve => setTimeout(resolve, 800));
   const grouped = await savedPlan();
   assert.equal(Object.keys(grouped.groups).length, 2);
   const groupId = Object.keys(grouped.groups).find(key => grouped.groups[key].title === 'Extraction');
@@ -289,7 +294,7 @@ try {
     await waitPlan(value => !value?.request.available_parts);
   }
   const previousView = await savedRecord('workspace-view');
-  const planBeforeView = await savedPlan();
+  const planBeforeView = await savedRecord('autosave');
   await page.mouse.move(810, 425);
   await page.mouse.down({button: 'middle'});
   await page.mouse.move(925, 460, {steps: 8});
@@ -299,7 +304,7 @@ try {
   const viewRecord = await savedRecord('workspace-view');
   assert.notDeepEqual(viewRecord.view.scroll, previousView.view.scroll);
   assert.notEqual(viewRecord.view.zoom, previousView.view.zoom);
-  assert.deepEqual(await savedPlan(), planBeforeView);
+  assert.deepEqual(await savedRecord('autosave'), planBeforeView);
   await page.mouse.click(1200, 871, {delay: 100});
   plan = await waitPlan(value => value?.preferences?.sound === true);
   assert.deepEqual(plan.view, viewRecord.view);

@@ -1,7 +1,10 @@
 class_name PlannerGraphLayout
 extends RefCounted
 
-const GROUP_ORDER: Array[String] = ["Extraction", "Ore processing", "Metals", "Chemicals", "Fuels", "Circuits", "Components", "Machinery", "Power", "Production"]
+const GROUP_ORDER: Array[String] = [
+	"Extraction", "Ore processing", "Metals", "Chemicals", "Fuels",
+	"Circuits", "Components", "Machinery", "Power", "Production"
+]
 
 
 static func arrange(entries: Array[Entry], connections: Array) -> Result:
@@ -101,7 +104,6 @@ static func arrange(entries: Array[Entry], connections: Array) -> Result:
 		return ai < bi if ai != bi else a < b
 	)
 	var origin := Vector2(25, 55)
-	var row_height := 0.0
 	for index: int in names.size():
 		var group: String = names[index]
 		var columns: Dictionary[int, Array] = {}
@@ -126,12 +128,7 @@ static func arrange(entries: Array[Entry], connections: Array) -> Result:
 			x += width + 80
 		var bounds := Rect2(origin, Vector2(x - origin.x - 56, height))
 		result.groups[group] = bounds
-		row_height = maxf(row_height, height)
-		if index % 2 == 0:
-			origin.x = bounds.end.x + 100
-		else:
-			origin = Vector2(25, origin.y + row_height + 100)
-			row_height = 0
+		origin.x = bounds.end.x + 100
 	return result
 
 
