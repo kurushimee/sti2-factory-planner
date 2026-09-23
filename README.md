@@ -1,10 +1,10 @@
 # STI2 Factory Planner
 
-This project is under development. The desktop and browser workspace loads the bundled StaTech Industry 2.0.1 catalog. It currently contains 28,981 planning routes and 12,024 resources, including generated utility routes. Required process adapters and planning features are still in progress, so the catalog remains marked incomplete and development exports are not a finished release. [Issue #2](https://github.com/kurushimee/sti2-factory-planner/issues/2) tracks the complete delivery.
+This project is under development. The desktop and browser workspace loads the bundled StaTech Industry 2.0.1 catalog. It currently contains 29,069 planning routes and 12,042 resources, including generated utility routes. Required process adapters and planning features are still in progress, so the catalog remains marked incomplete and development exports are not a finished release. [Issue #2](https://github.com/kurushimee/sti2-factory-planner/issues/2) tracks the complete delivery.
 
 The reference pack is StaTech Industry 2.0.1 for Minecraft 1.21.1 and NeoForge 21.1.250. Runtime extraction tools capture effective recipes, tags, upgrade and fuel values, and machine evidence from an isolated copy of the released server. The recorded capture includes 26,481 recipe/type pairs and 211 machine probes. This evidence is not yet a complete normalized planner dataset.
 
-The calculation kernel uses the same HiGHS WebAssembly build in Node and a browser Worker. The Godot workspace supports goals, resource connections, inspection, movable and resizable groups, undo/redo, and portable plans. The world reader recovers tested MI configuration and both AE2 provider forms, but complete production-line reconstruction is unfinished.
+The calculation kernel uses the same HiGHS WebAssembly build in Node and a browser Worker. The Godot workspace supports goals, resource connections, inspection, movable and resizable groups, undo/redo, and portable plans. Clear-weather solar routes now use measured MI storage limits, cell and water supplies, and an explicit initial-charge requirement. The world reader recovers tested MI configuration and both AE2 provider forms, but complete production-line reconstruction is unfinished.
 
 See [delivery requirements](docs/delivery.md), [extraction instructions](docs/extraction.md), [kernel behavior and limits](docs/planning-kernel.md), and [Godot tooling](docs/godot_tooling.md). Keep downloaded game files, saves, and extraction instances outside this repository.
 

@@ -4,6 +4,10 @@ import {createHash} from 'node:crypto';
 
 if (process.platform !== 'win32') throw new Error('Build the Windows runtime package on Windows with the pinned Node version.');
 const destination = process.argv[2] ?? 'builds/windows';
+if (destination.replaceAll('\\', '/').startsWith('builds/')) {
+  await mkdir('builds', {recursive: true});
+  await writeFile('builds/.gdignore', '');
+}
 await mkdir(`${destination}/runtime`, {recursive: true});
 await mkdir(`${destination}/kernel`, {recursive: true});
 await mkdir(`${destination}/licenses`, {recursive: true});

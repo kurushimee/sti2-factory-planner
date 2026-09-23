@@ -58,6 +58,7 @@ const server = createServer(async (incoming, response) => {
       '/kernel/material_refinement.js': 'kernel/material_refinement.js',
       '/kernel/numerics.js': 'kernel/numerics.js',
       '/kernel/recipe_preferences.js': 'kernel/recipe_preferences.js',
+      '/kernel/periodic_model.js': 'kernel/periodic_model.js',
       '/kernel/flows.js': 'kernel/flows.js',
       '/kernel/power.js': 'kernel/power.js',
       '/kernel/infrastructure.js': 'kernel/infrastructure.js',
@@ -320,6 +321,19 @@ try {
     delete actual.result.search?.elapsed_ms;
     assert.deepEqual(actual.result, expected);
     console.log('The measured Color Picker capacity matches Node in the browser Worker.');
+  }
+  if (process.argv.includes('--solar')) {
+    const panel = 'extended_industrialization:lv_solar_panel';
+    const storage = 'modern_industrialization:lv_storage_unit';
+    const selection = {goals: [{resource: 'energy:eu', rate: 280}],
+      available_machines: [panel, storage], periodic_storage: [storage],
+      external: [{resource: 'item:extended_industrialization:lv_photovoltaic_cell'}],
+      time_limit_ms: 30000};
+    const expectedSolar = solveFactory(await loadHighs(), worldDataset, selection);
+    const actualSolar = await solveInBrowser(worldDataset, selection);
+    assert.deepEqual(actualSolar.result, expectedSolar);
+    assert.equal(actualSolar.result.periodic_power.storage[0].machines, 1);
+    console.log('The measured solar and storage dispatch matches Node in the embedded browser Worker.');
   }
   if (process.argv.includes('--material')) {
     const request = {...endgameRequest(worldDataset), time_limit_ms: 180000,

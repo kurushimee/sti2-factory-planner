@@ -95,6 +95,32 @@ export function validateDataset(dataset) {
       for (const field of ['eu_per_operation', 'idle_eu_per_tick']) if (configuration[field] !== undefined) number(configuration[field], `${location}.${field}`);
       if (configuration.build_cost !== undefined) number(configuration.build_cost, `${location}.build_cost`, Number.MIN_VALUE);
       for (const field of ['inputs', 'startup_inputs', 'build_requirements']) if (configuration[field] !== undefined) flows(configuration[field], `${location}.${field}`, field === 'inputs');
+      if (configuration.periodic_generation !== undefined) {
+        const generation = configuration.periodic_generation;
+        object(generation, `${location}.periodic_generation`);
+        number(generation.period_ticks, `${location}.periodic_generation.period_ticks`, 1, true);
+        if (generation.period_ticks > 1000000) fail(location, 'periodic generation exceeds one million ticks');
+        array(generation.segments, `${location}.periodic_generation.segments`);
+        let covered = 0;
+        for (const segment of generation.segments) {
+          object(segment, `${location}.periodic_generation.segment`);
+          number(segment.ticks, `${location}.periodic_generation.segment.ticks`, 1, true);
+          number(segment.eu_per_tick, `${location}.periodic_generation.segment.eu_per_tick`);
+          covered += segment.ticks;
+        }
+        if (covered !== generation.period_ticks) fail(location, 'periodic segments must cover exactly one period');
+        if (generation.one_event_loss_eu_per_period !== undefined) {
+          number(generation.one_event_loss_eu_per_period, `${location}.periodic_generation.one_event_loss_eu_per_period`);
+          if (generation.one_event_loss_eu_per_period > generation.segments.reduce((peak, segment) =>
+            Math.max(peak, segment.eu_per_tick), 0)) {
+            fail(location, 'a single event cannot lose more than one peak output tick');
+          }
+        }
+        if (generation.assumptions !== undefined) {
+          array(generation.assumptions, `${location}.periodic_generation.assumptions`);
+          for (const assumption of generation.assumptions) text(assumption, `${location}.periodic_generation.assumption`);
+        }
+      }
       if (configuration.operating_points !== undefined) {
         array(configuration.operating_points, `${location}.operating_points`);
         let previous = -1;

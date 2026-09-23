@@ -137,6 +137,38 @@ step = 0.001
 suffix = "EU/t planned transfer per tower"
 tooltip_text = "Sizes the input hatches for this transfer plus the tower drain. Transmitted power is already charged to consumers. This does not establish receiver coverage."
 
+[node name="StorageDetails" type="VBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+
+[node name="StorageInstalledEnabled" type="CheckButton" parent="Content/Availability/StorageDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Fix the installed count"
+tooltip_text = "Use exactly this many already planned storage units. Their stored charge is a separate startup requirement."
+
+[node name="StorageInstalled" type="SpinBox" parent="Content/Availability/StorageDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000.0
+step = 1.0
+value = 1.0
+suffix = "installed units"
+
+[node name="StorageLimitEnabled" type="CheckButton" parent="Content/Availability/StorageDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Limit the number the planner may use"
+
+[node name="StorageLimit" type="SpinBox" parent="Content/Availability/StorageDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000.0
+step = 1.0
+value = 1.0
+suffix = "units maximum"
+
 [node name="Supply" type="VBoxContainer" parent="Content/Availability"]
 unique_name_in_owner = true
 layout_mode = 2

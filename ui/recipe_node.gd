@@ -43,3 +43,23 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 			else:
 				output_ports[flow.resource] = output_ports.size()
 	tooltip_text = "%s\n%s\n%s\n%s" % [title, summary.text, loadout.text, line.machine]
+
+
+func configure_storage(unit: Dictionary, resources: Dictionary[String, String]) -> void:
+	recipe_id = "planner:storage|" + str(unit.machine)
+	allocation.assign({"recipe": recipe_id, "configuration": recipe_id, "machine": unit.machine,
+		"machines": unit.machines})
+	title = PlannerDisplay.machine_name(unit.machine, resources)
+	summary.text = "%d × %s" % [int(unit.machines), title]
+	loadout.text = "Lossless power buffer"
+	throughput.text = "%s EU capacity · %s EU planned charge" % [PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.initial_charge_eu)]
+	power.text = "%s EU/t charge · %s EU/t discharge" % [PlannerDisplay.number(unit.charge_eu_per_tick), PlannerDisplay.number(unit.discharge_eu_per_tick)]
+	var connection := flow_scene.instantiate() as Label
+	var slot := get_child_count()
+	add_child(connection)
+	connection.text = "← Electricity · dispatch buffer"
+	connection.tooltip_text = "This link shows that generation can charge storage. It is not an extra sustained demand."
+	var tint := Color("d5a36a")
+	set_slot(slot, true, 0, tint, false, 0, tint)
+	input_ports["energy:eu"] = 0
+	tooltip_text = "%s\nStored energy is a startup requirement, not a sustained source.\nPower transfer depends on the player's cable network." % title

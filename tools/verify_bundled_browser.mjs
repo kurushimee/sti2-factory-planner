@@ -1,12 +1,15 @@
 import {createServer} from 'node:http';
 import {readFile, mkdir} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
+import {createHash} from 'node:crypto';
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
 const root = resolve(process.env.STI2_WEB_ROOT ?? 'builds/web'), artifacts = resolve('.plans/artifacts/workspace');
 const manifest = JSON.parse(await readFile('data/provenance/distribution-manifest.json', 'utf8'));
 const inkReport = JSON.parse(await readFile('data/provenance/spectrum-ink-report.json', 'utf8'));
+const solarReportBytes = await readFile('data/provenance/solar-panel-report.json');
+const solarReport = JSON.parse(solarReportBytes);
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
@@ -71,6 +74,9 @@ try {
   assert.equal(plan.dataset.source.spectrum_ink_capture_sha256, inkReport.trial_capture_sha256);
   assert.equal(plan.dataset.recipes.filter(recipe => recipe.type === 'spectrum:ink_converting').length, inkReport.color_picker_recipes);
   assert.equal(plan.dataset.resources.filter(resource => resource.kind === 'ink').length, inkReport.ink_colors);
+  assert.equal(plan.dataset.source.solar_report_sha256, createHash('sha256').update(solarReportBytes).digest('hex'));
+  assert.equal(plan.dataset.recipes.filter(recipe => recipe.type === 'planner:solar_generation').length, 6);
+  assert.equal(solarReport.panels.length, 3);
   assert.equal(plan.dataset.complete, false);
   assert.equal(plan.request.goals.length, 0);
   assert.equal(plan.dataset.machines.filter(machine => machine.availability?.automatic === false).length, 4);
