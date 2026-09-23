@@ -1,0 +1,64 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "world_archive_sha256": "eae4b69f5eb38ba8f6e79e26608e88564ff46fbf5b885cf32f0afbdca197df14",
+  "fixture_sha256": "2392c35f5873629c598685422fa5f6fe25ad77ac4bb01da0c81d30efc632719f",
+  "dataset_sha256": "44410c0d2663c477f913e5ffc208442d9a780c87587703dacdc46edd8dbf6770",
+  "machines": [
+    {
+      "machine": "modern_industrialization:lv_storage_unit",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 400,
+        "y": 160,
+        "z": 0
+      },
+      "saved_charge_eu": "1066666",
+      "evidence": "saved_storedEu"
+    },
+    {
+      "machine": "modern_industrialization:mv_storage_unit",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 404,
+        "y": 160,
+        "z": 0
+      },
+      "saved_charge_eu": "4266666",
+      "evidence": "saved_storedEu"
+    },
+    {
+      "machine": "modern_industrialization:hv_storage_unit",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 408,
+        "y": 160,
+        "z": 0
+      },
+      "saved_charge_eu": "34133333",
+      "evidence": "saved_storedEu"
+    },
+    {
+      "machine": "modern_industrialization:ev_storage_unit",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 412,
+        "y": 160,
+        "z": 0
+      },
+      "saved_charge_eu": "273066666",
+      "evidence": "saved_storedEu"
+    },
+    {
+      "machine": "modern_industrialization:superconductor_storage_unit",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 416,
+        "y": 160,
+        "z": 0
+      },
+      "saved_charge_eu": "4266666666666",
+      "evidence": "saved_storedEu"
+    }
+  ],
+  "limitation": "Saved charge is a quantity, not a sustained output rate. The current planner still asks for recipe assignments on these recognized storage units; issue #41 tracks their dedicated import."
+}

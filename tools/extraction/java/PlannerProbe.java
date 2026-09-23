@@ -53,6 +53,12 @@ public final class PlannerProbe {
                     try { return checkSolarRoofs(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_fixture_storage")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return createStorageFixture(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -1632,6 +1638,93 @@ public final class PlannerProbe {
         return result;
     }
 
+    private static JsonObject storageUnit(aztech.modern_industrialization.machines.blockentities.StorageMachineBlockEntity storage,
+            MinecraftServer server) throws Exception {
+        var tier = storage.getCableTier();
+        var energy = storage.getEnergyComponent();
+        long original = energy.getEu();
+        var parent = aztech.modern_industrialization.machines.blockentities.AbstractStorageMachineBlockEntity.class;
+        var inputField = parent.getDeclaredField("insertable");
+        var outputField = parent.getDeclaredField("extractable");
+        inputField.setAccessible(true);
+        outputField.setAccessible(true);
+        var input = (aztech.modern_industrialization.api.energy.MIEnergyStorage) inputField.get(storage);
+        var output = (aztech.modern_industrialization.api.energy.MIEnergyStorage) outputField.get(storage);
+        var peerEnergy = new aztech.modern_industrialization.machines.components.EnergyComponent(storage,
+                tier.getMaxTransfer() * 100);
+        var peerOutput = peerEnergy.buildExtractable(value -> value == tier);
+        var peerInput = peerEnergy.buildInsertable(value -> value == tier);
+        var result = new JsonObject();
+        result.addProperty("scope", "Loaded storage adapters on a one-node cable network. A placed cable topology is not established.");
+        result.addProperty("capacity_eu", energy.getCapacity());
+        result.addProperty("nominal_tier_eu", tier.getEu());
+        result.addProperty("cable_limit_eu_per_tick", tier.getMaxTransfer());
+        try {
+            for (boolean charging : new boolean[]{true, false}) {
+                var nodes = new java.util.ArrayList<aztech.modern_industrialization.pipes.api.PipeNetwork.PosNode>();
+                var node = new aztech.modern_industrialization.pipes.electricity.ElectricityNetworkNode() {
+                    @Override public void appendAttributes(net.minecraft.server.level.ServerLevel world, BlockPos pos,
+                            aztech.modern_industrialization.api.energy.CableTier cableTier,
+                            java.util.List<aztech.modern_industrialization.api.energy.MIEnergyStorage> storages) {
+                        if (charging) { storages.add(peerOutput); storages.add(input); }
+                        else { storages.add(output); storages.add(peerInput); }
+                    }
+                };
+                nodes.add(new aztech.modern_industrialization.pipes.api.PipeNetwork.PosNode(BlockPos.ZERO, node));
+                var network = new aztech.modern_industrialization.pipes.electricity.ElectricityNetwork(0, null, tier) {
+                    @Override public java.util.Collection<aztech.modern_industrialization.pipes.api.PipeNetwork.PosNode> iterateTickingNodes() { return nodes; }
+                };
+                long moved = 0;
+                for (int tick = 0; tick < 20; tick++) {
+                    energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                    peerEnergy.consumeEu(peerEnergy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                    if (charging) peerEnergy.insertEu(peerEnergy.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                    else energy.insertEu(energy.getCapacity(), aztech.modern_industrialization.util.Simulation.ACT);
+                    network.tick(server.overworld());
+                    long transferred = charging ? energy.getEu() : peerEnergy.getEu();
+                    if (transferred != tier.getMaxTransfer()) throw new IllegalStateException("Storage transfer differs from the loaded cable limit.");
+                    moved += transferred;
+                }
+                result.addProperty(charging ? "charge_eu_over_20_ticks" : "discharge_eu_over_20_ticks", moved);
+            }
+        } finally {
+            energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+            energy.insertEu(original, aztech.modern_industrialization.util.Simulation.ACT);
+        }
+        return result;
+    }
+
+    private static int createStorageFixture(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var rows = new JsonArray();
+        var tiers = new String[]{"lv", "mv", "hv", "ev", "superconductor"};
+        for (int index = 0; index < tiers.length; index++) {
+            var id = "modern_industrialization:" + tiers[index] + "_storage_unit";
+            var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(id));
+            var position = new BlockPos(400 + index * 4, 160, 0);
+            level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            level.setBlockAndUpdate(position, block.defaultBlockState());
+            var storage = (aztech.modern_industrialization.machines.blockentities.StorageMachineBlockEntity)
+                    level.getBlockEntity(position);
+            if (storage == null) throw new IllegalStateException("A placed storage unit had no block entity: " + id);
+            var energy = storage.getEnergyComponent();
+            long filled = energy.getCapacity() / 3;
+            energy.insertEu(filled, aztech.modern_industrialization.util.Simulation.ACT);
+            if (energy.getEu() != filled) throw new IllegalStateException("The placed storage unit did not accept its initial charge.");
+            var row = new JsonObject();
+            row.addProperty("machine", id);
+            row.addProperty("x", position.getX());
+            row.addProperty("y", position.getY());
+            row.addProperty("z", position.getZ());
+            row.addProperty("stored_eu", filled);
+            rows.add(row);
+        }
+        Files.createDirectories(Path.of("planner-extraction"));
+        Files.writeString(Path.of("planner-extraction/storage-fixture.json"), new GsonBuilder().setPrettyPrinting().create().toJson(rows));
+        System.out.println("Planner storage fixture placed five charged MI storage units.");
+        return 1;
+    }
+
     private static JsonObject teslaTower(MachineBlockEntity prototype, MinecraftServer server) throws Exception {
         var tower = (net.swedz.extended_industrialization.machines.blockentity.multiblock.teslatower.TeslaTowerBlockEntity) prototype;
         var inputsField = tower.getClass().getDeclaredField("energyInputs");
@@ -1809,6 +1902,8 @@ public final class PlannerProbe {
                 var record = new JsonObject();
                 record.addProperty("id", id);
                 record.addProperty("class", entity.getClass().getName());
+                if (entity instanceof aztech.modern_industrialization.machines.blockentities.StorageMachineBlockEntity storage)
+                    record.add("storage_probe", storageUnit(storage, server));
                 if (id.equals("yet_another_industrialization:nuclear_rod_irradiator")) record.add("irradiation_probe", irradiationCycles(machine, server));
                 if (id.equals("yet_another_industrialization:dragon_egg_energy_siphon")
                         || id.equals("yet_another_industrialization:pulse_detonation_generator")) {
