@@ -59,11 +59,17 @@ func _run() -> void:
 	await workspace.computation.completed
 	await process_frame
 	assert(!dialog.get_ok_button().disabled)
-	assert("Approximately" in dialog.get_node("%GoalPreview").text)
+	assert("1,000,000,000,000,000,000,000,000,000,001/2 seconds" in dialog.get_node("%GoalPreview").text)
+	assert("10,000,000,000,000,000,000,000,000,000,010 ticks" in dialog.get_node("%GoalPreview").text)
 	if DisplayServer.get_name() != "headless":
 		await create_timer(0.2).timeout
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/large-quantity.png")
+		root.size = Vector2i(1280, 720)
+		dialog.popup_centered(Vector2i(900, 680))
+		await create_timer(0.2).timeout
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/large-quantity-1280.png")
 	dialog.confirmed.emit()
 	dialog.hide()
 	await workspace.computation.completed

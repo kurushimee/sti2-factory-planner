@@ -209,10 +209,20 @@ func show_preview(result: Dictionary) -> void:
 		text += "%s: %s /s%s\n" % [_resource_name(output.resource), String.num(output.rate_per_machine * count, 4), " per machine" if %GoalKind.selected != 1 else ""]
 	text += "%s operations/s per machine · %s EU per operation\n" % [String.num(configuration.operations_per_second, 4), String.num(configuration.get("eu_per_operation", 0), 3)]
 	if %GoalKind.selected == 2:
-		text += "Production time after startup: %s.\n" % result.production_time.time_display
+		text += "Production time after startup: %s\n" % result.production_time.time_display
+		text += "Whole-tick rate equivalent: %s ticks, rounded up.\n" % _group_whole(result.production_time.completion_ticks_ceil)
 	text += "Capacity assumes continuous ingredients. The connected plan supplies the remaining demand."
 	%GoalPreview.text = text
 	get_ok_button().disabled = false
+
+
+func _group_whole(value: String) -> String:
+	var grouped := ""
+	for index: int in value.length():
+		if index > 0 && (value.length() - index) % 3 == 0:
+			grouped += ","
+		grouped += value.substr(index, 1)
+	return grouped
 
 
 func show_error(message: String) -> void:

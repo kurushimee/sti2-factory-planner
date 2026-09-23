@@ -15,12 +15,38 @@ function decimal(value, label) {
 
 function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 
-function scientific(numerator, denominator) {
-  const top = numerator.toString(), bottom = denominator.toString();
-  const a = top.slice(0, 15), b = bottom.slice(0, 15);
-  const ratio = Number(a) / Number(b), shift = Math.floor(Math.log10(ratio));
-  const exponent = top.length - a.length - bottom.length + b.length + shift;
-  return `${(ratio / 10 ** shift).toFixed(5)}e${exponent >= 0 ? '+' : ''}${exponent}`;
+function exactNumber(numerator, denominator) {
+  const value = Number(numerator) / Number(denominator);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  const bytes = new DataView(new ArrayBuffer(8));
+  bytes.setFloat64(0, value);
+  const bits = bytes.getBigUint64(0);
+  const exponent = Number((bits >> 52n) & 0x7ffn);
+  const fraction = bits & 0x000fffffffffffffn;
+  const significand = exponent ? (1n << 52n) + fraction : fraction;
+  const shift = (exponent || 1) - 1023 - 52;
+  const exact = shift >= 0 ? numerator === denominator * (significand << BigInt(shift))
+    : (numerator << BigInt(-shift)) === denominator * significand;
+  return exact ? value : null;
+}
+
+function grouped(value) { return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+function exactInteger(value) {
+  const digits = value.toString();
+  const trailing = digits.match(/0+$/)?.[0].length ?? 0;
+  if (digits.length > 60 && trailing > 20) {
+    const coefficient = grouped(digits.slice(0, -trailing));
+    return coefficient === '1' ? `10^${trailing}` : `${coefficient} × 10^${trailing}`;
+  }
+  return grouped(digits);
+}
+
+function exactDisplay(numerator, denominator) {
+  const top = exactInteger(numerator);
+  if (denominator === 1n) return `${top} seconds`;
+  const bottom = exactInteger(denominator);
+  return `${top.includes(' × ') ? `(${top})` : top}/${bottom.includes(' × ') ? `(${bottom})` : bottom} seconds`;
 }
 
 export function productionTime(quantity, rate) {
@@ -29,15 +55,9 @@ export function productionTime(quantity, rate) {
   let numerator = amount.numerator * speed.denominator, denominator = amount.denominator * speed.numerator;
   const divisor = gcd(numerator, denominator);
   numerator /= divisor; denominator /= divisor;
-  const ratio = Number(numerator) / Number(denominator);
-  const numeric = Number.isFinite(ratio) ? ratio : Number(scientific(numerator, denominator));
-  const finite = Number.isFinite(numeric) && numeric > 0;
-  const rounded = !finite || numerator % denominator !== 0n || numeric > 1e12;
-  const display = finite ? (numeric > 1e12 || numeric < 0.001 ? numeric.toExponential(5) : numeric.toLocaleString('en-US', {maximumFractionDigits: 3}))
-    : scientific(numerator, denominator);
-  return {quantity, steady_production_seconds: finite ? numeric : null,
+  return {quantity, steady_production_seconds: exactNumber(numerator, denominator),
     steady_production_seconds_exact: {numerator: numerator.toString(), denominator: denominator.toString()},
     completion_ticks_ceil: ((numerator * 20n + denominator - 1n) / denominator).toString(),
-    time_display: `${rounded ? 'Approximately ' : ''}${display} seconds`,
-    time_basis: 'After startup, at the requested sustained output rate. Whole-tick completion is rounded upward.'};
+    time_display: exactDisplay(numerator, denominator),
+    time_basis: 'After startup, this is the exact quantity-to-sustained-rate quotient. The whole-tick rate equivalent rounds upward and does not include recipe batching.'};
 }
