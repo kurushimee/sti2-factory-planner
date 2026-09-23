@@ -38,6 +38,6 @@ const machines = fixture.map(expected => {
 const report = {pack: 'StaTech Industry 2.0.1', world_archive_sha256: createHash('sha256').update(archive).digest('hex'),
   fixture_sha256: createHash('sha256').update(await readFile(fixturePath)).digest('hex'),
   dataset_sha256: createHash('sha256').update(await readFile(datasetPath)).digest('hex'),
-  machines, limitation: 'Saved charge is a starting quantity, not a sustained output rate. The planner still needs to carry imported storage into periodic power settings and the graph.'};
+  machines, limitation: 'Saved charge is a starting quantity, not a sustained output rate. Imported storage counts enter the editable power settings; actual transfer depends on the player\'s cable network.'};
 await writeFile(reportPath, JSON.stringify(report, null, 2) + '\n');
 console.log('The real world archive preserved five distinct charged storage units and their exact saved EU quantities.');

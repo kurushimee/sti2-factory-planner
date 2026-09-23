@@ -7,6 +7,7 @@ const PAGE_SIZE := 150
 
 var _dataset: Dictionary[String, Variant] = {}
 var _request: Dictionary[String, Variant] = {}
+var _imported_storage: Dictionary = {}
 var _names: Dictionary[String, String] = {}
 var _entries: Array[Dictionary] = []
 var _matches: Array[Dictionary] = []
@@ -62,9 +63,18 @@ func _ready() -> void:
 		controls[index].focus_previous = controls[index].get_path_to(controls[(index + controls.size() - 1) % controls.size()])
 
 
-func open_settings(dataset: Dictionary, request: Dictionary) -> void:
+func open_settings(dataset: Dictionary, request: Dictionary, world: Dictionary = {}) -> void:
 	_dataset.assign(dataset)
 	_request.assign(request.duplicate(true))
+	_imported_storage.clear()
+	for unit: Dictionary in world.get("reconstruction", {}).get("storage_units", []):
+		var id: String = unit.machine_id
+		if !_imported_storage.has(id):
+			_imported_storage[id] = {"count": 0, "included": 0, "saved_charge_eu": 0}
+		var record: Dictionary = _imported_storage[id]
+		record.count += 1
+		record.included += 1 if unit.get("enabled", true) else 0
+		record.saved_charge_eu += int(unit.saved_charge_eu)
 	_construction = _request.get("construction", {}).duplicate(true)
 	if !_construction.has("external"):
 		_construction.external = []
@@ -148,6 +158,9 @@ func _category_changed(category: int) -> void:
 	%ConstructionRounding.visible = category == 6
 	%Progression.visible = category != 6 && !_dataset.get("progression", []).is_empty()
 	%SettingsEntries.custom_minimum_size.y = 135 if category == 8 else (155 if category == 7 else (235 if category == 6 else 275))
+	%SettingsEntries.size_flags_vertical = Control.SIZE_FILL if category == 8 else Control.SIZE_EXPAND_FILL
+	if category == 8:
+		_fit_storage_dialog()
 	%SupplyUnlimited.text = "No construction quantity limit" if category == 6 else "No external supply rate limit"
 	%SupplyLimit.suffix = "quantity available" if category == 6 else "/s maximum"
 	var hints: Array[String] = ["Choose machines the planner may build. Unsupported machines remain visible but cannot be enabled.",
@@ -216,6 +229,12 @@ func _category_changed(category: int) -> void:
 				_entries.append({"id": machine.id, "name": _names.get("item:" + str(machine.id), machine.id),
 					"detail": "%s EU capacity; %s EU/t charge and %s EU/t discharge per unit. %s" % [PlannerDisplay.number(rule.capacity_eu), PlannerDisplay.number(rule.charge_eu_per_tick), PlannerDisplay.number(rule.discharge_eu_per_tick), rule.get("basis", "")]})
 	_filter(%SettingsSearch.text)
+
+
+func _fit_storage_dialog() -> void:
+	get_tree().create_timer(0.01).timeout.connect(func() -> void:
+		if %SettingsCategory.selected == 8:
+			size = Vector2i(1040, 710))
 
 
 func _infrastructure_key(entry: Dictionary) -> String:
@@ -319,6 +338,11 @@ func _entry_selected() -> void:
 	_supply_reset()
 	if %SettingsCategory.selected == 8:
 		var chosen: TreeItem = %SettingsEntries.get_selected()
+		%StorageImported.text = "Select a storage tier to inspect saved units."
+		if chosen:
+			var snapshot: Dictionary = _imported_storage.get(chosen.get_metadata(0), {})
+			if !snapshot.is_empty():
+				%StorageImported.text = "World snapshot: %d units, %s EU saved; %d included. Saved charge is initial stock." % [snapshot.count, str(snapshot.saved_charge_eu), snapshot.included]
 		var enabled: bool = chosen != null && chosen.get_metadata(0) in _request.periodic_storage
 		%StorageInstalledEnabled.disabled = !enabled
 		%StorageLimitEnabled.disabled = !enabled

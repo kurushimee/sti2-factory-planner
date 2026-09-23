@@ -25,6 +25,10 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     const pending = reason => unresolved.push({machine: key, origin: saved.origin, machine_id: saved.id, recipe_id: recipeId, reason,
       recipe_candidates: saved.recipe_candidates ?? saved.provider_candidates ?? [], facts: saved});
     const definition = machines.get(saved.id);
+    if (saved.id.endsWith('_storage_unit') && !definition?.storage) {
+      pending('This saved storage tier is missing from the dataset. Its charge and transfer cannot be used until a matching rule is supplied.');
+      continue;
+    }
     if (definition?.mechanic === 'energy_storage') {
       const rule = definition.storage;
       const raw = saved.facts?.[rule?.saved_charge_field ?? 'storedEu'];
@@ -38,6 +42,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
         pending('The saved charge is missing, invalid, or exceeds this storage unit capacity.'); continue;
       }
       storageUnits.push({machine: key, machine_id: saved.id, origin: saved.origin,
+        enabled: correction.storage_enabled !== false,
         saved_charge_eu: String(raw), capacity_eu: rule.capacity_eu,
         charge_eu_per_tick: rule.charge_eu_per_tick, discharge_eu_per_tick: rule.discharge_eu_per_tick,
         loss_eu_per_tick: rule.loss_eu_per_tick, evidence: `saved_${rule.saved_charge_field ?? 'storedEu'}`,

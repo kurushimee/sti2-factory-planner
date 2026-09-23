@@ -83,11 +83,13 @@ func _run() -> void:
 		{"machines": [storage_rule], "recipes": recipes})
 	assert(dialog.get_node("%WorldRecipes").item_count == 0)
 	assert(!dialog.get_node("%WorldRecipeSearch").editable)
-	assert(dialog.get_node("%RetainOutput").disabled)
+	assert(!dialog.get_node("%RetainOutput").disabled)
+	assert(dialog.get_node("%RetainOutput").button_pressed)
+	assert(dialog.get_node("%RetainOutput").text == "Include this storage in the power plan")
 	assert("Saved charge: 1066666 / 3.2 M EU" in dialog.get_node("%WorldDetails").text)
 	assert("not a sustained power supply" in dialog.get_node("%WorldDetails").text)
-	dialog._retain_changed(true)
-	assert(!dialog._corrections.has(storage_key))
+	dialog._retain_changed(false)
+	assert(dialog._corrections[storage_key] == {"storage_enabled": false})
 	if DisplayServer.get_name() != "headless":
 		await process_frame
 		await RenderingServer.frame_post_draw

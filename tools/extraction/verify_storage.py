@@ -57,7 +57,7 @@ def main():
               "mod_jar_sha256": JAR_SHA256, "capture_sha256": sha256(args.capture),
               "private_world_archive_sha256": sha256(args.world),
               "source_method": "The matching storage-unit registration and EnergyComponent bytecode give capacity, saved energy, and absence of intrinsic decay. Loaded adapters transferred through a one-node ElectricityNetwork for 20 ticks in each direction.",
-              "planning_status": "Storage is not selectable until a periodic power balance and construction bill are integrated.",
+              "planning_status": "The planner sizes whole units in periodic dispatch and imports saved counts and charge as editable power-plan facts.",
               "limits": ["The transfer samples use injected adjacent adapters, not a placed cable layout.",
                          "A player's shared network, transformer chain, and distribution topology can reduce available transfer.",
                          "Stored charge is a starting quantity, not a sustained power source."],
