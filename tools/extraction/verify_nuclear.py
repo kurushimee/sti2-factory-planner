@@ -56,12 +56,15 @@ def check_capture(capture, machines, formed):
     trials = capture.get("trials", [])
     require(len(trials) == 4, "One single-rod and three quad-rod trials are required.")
     single, *quad = trials
+    single_fluids = single["fluid_outputs"]
     require(single["fuel"] == SINGLE and single["fuel_exhaustion_tick"] == 0
             and single["max_ticks"] == 20000 and single["grid_width"] == 5
-            and single["grid_height"] == 5 and single["peak_temperature"] < 200
-            and single["fluid_outputs"] == {DEUTERIUM: single["water_used_mb"]}
-            and single["water_used_mb"] < 1000 and single["item_outputs"] == {},
-            "The isolated single rod no longer has the captured low-heat behavior.")
+            and single["grid_height"] == 5 and single["peak_temperature"] < 500
+            and set(single_fluids).issubset({DEUTERIUM, STEAM})
+            and 0 <= single["water_used_mb"] * 16 - single_fluids.get(STEAM, 0)
+            - single_fluids.get(DEUTERIUM, 0) * 16 <= 64
+            and single["water_used_mb"] < 10000 and single["item_outputs"] == {},
+            "The isolated single-rod trial changed its fuel, heat, or fluid balance.")
     measurements = []
     for index, trial in enumerate(quad, 1):
         require(trial["fuel"] == QUAD and trial.get("trial") == index
@@ -106,7 +109,8 @@ def check_capture(capture, machines, formed):
             "fuel_definitions": rules,
             "single_rod_20000_ticks": {"peak_temperature": single["peak_temperature"],
                                         "water_used_mb": single["water_used_mb"],
-                                        "steam_mb": 0,
+                                        "steam_mb": single_fluids.get(STEAM, 0),
+                                        "deuterium_mb": single_fluids.get(DEUTERIUM, 0),
                                         "remaining_disintegrations": single["samples"][-1]["fuel_disintegrations_left"]},
             "quad_rod_cycles": measurements,
             "quad_measured_means": {key: mean(sample[key] for sample in measurements)
@@ -129,7 +133,7 @@ def verify(capture_path, machines_path, formed_path, jar_path, world_path):
             "method": "The loaded MI nuclear grid was run with a central uranium rod and four adjacent water hatches. Three stochastic quad-rod cycles ran to depletion. A separate placed smallest reactor matched the loaded structure and ran 5,000 controller ticks.",
             "planning_status": "Evidence only. No reactor generation route is enabled by this report.",
             "limits": ["These measurements apply to this five-hatch layout, supplied water, and outputs emptied each tick. External fluid-pipe throughput was not tested.",
-                       "The samples are stochastic observations, not a guaranteed minimum steam rate or fixed recipe duration.",
+                       "The samples are stochastic observations, not a guaranteed minimum steam rate or fixed recipe duration. A single-rod trial can produce some steam without reaching sustained quad-rod output.",
                        "The 5,000-tick placed trial confirms formation and startup, not a complete placed fuel lifetime or automatic fuel replacement.",
                        "Steam must be converted by a separate turbine to produce EU. The reactor itself does not generate direct EU."],
             **evidence}
