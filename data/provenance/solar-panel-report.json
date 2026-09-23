@@ -1,0 +1,175 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "mod": "Extended Industrialization 1.16.2-1.21.1",
+  "mod_jar_sha256": "22c68835266a83a77511d3f341cbdecb7c9eee0f1c9e7318d7c77283691e5c9c",
+  "capture_sha256": "4ddb3e1f5916eb3f4f520c640782e399898748b2513bbc72d7e555cea53d10e0",
+  "private_world_archive_sha256": "f648fff7aa03279f480d178aa9e33ff87e91368247585b59ce59f0e47d90b585",
+  "source_method": "The matching SolarSunlightComponent and SolarGeneratorComponent bytecode gives the curve, item wear, and water rule. Loaded panels confirmed the listed output and condition samples.",
+  "planning_status": "The period-average output cannot supply a continuous factory without verified energy storage. Solar generation remains unsupported by the planner.",
+  "profile_limits": [
+    "The daily totals assume clear weather, open sky, supplied cells, and an empty output buffer.",
+    "They omit the one-tick output gap when a cell expires and a replacement enters.",
+    "The storage figure assumes an ideal lossless store and a flat load at exactly the daily average; it is not a build bill."
+  ],
+  "panels": [
+    {
+      "machine": "extended_industrialization:lv_solar_panel",
+      "cell": "extended_industrialization:lv_photovoltaic_cell",
+      "cell_lifetime_active_ticks": 12000,
+      "peak_eu_per_tick": 32,
+      "clear_samples": [
+        {
+          "time": 0,
+          "generated_eu": 0,
+          "cell_ticks": 0
+        },
+        {
+          "time": 1500,
+          "generated_eu": 32,
+          "cell_ticks": 1
+        },
+        {
+          "time": 6000,
+          "generated_eu": 32,
+          "cell_ticks": 2
+        },
+        {
+          "time": 10500,
+          "generated_eu": 32,
+          "cell_ticks": 3
+        },
+        {
+          "time": 12000,
+          "generated_eu": 0,
+          "cell_ticks": 3
+        },
+        {
+          "time": 12001,
+          "generated_eu": 0,
+          "cell_ticks": 3
+        }
+      ],
+      "water_boost_eu_per_tick_at_noon": 48,
+      "rain_eu_per_tick_at_noon": 0,
+      "settled_roof_eu_per_tick_at_noon": 0,
+      "dry_clear_day": {
+        "nominal_eu_per_day": 336782,
+        "daily_average_eu_per_tick": 14.032583333333333,
+        "ideal_storage_eu_for_flat_average": 177357.3909167039,
+        "distilled_water_mb_per_clear_day": 0
+      },
+      "water_clear_day": {
+        "nominal_eu_per_day": 505934,
+        "daily_average_eu_per_tick": 21.080583333333333,
+        "ideal_storage_eu_for_flat_average": 266146.4214166984,
+        "distilled_water_mb_per_clear_day": 11999
+      }
+    },
+    {
+      "machine": "extended_industrialization:mv_solar_panel",
+      "cell": "extended_industrialization:mv_photovoltaic_cell",
+      "cell_lifetime_active_ticks": 12000,
+      "peak_eu_per_tick": 128,
+      "clear_samples": [
+        {
+          "time": 0,
+          "generated_eu": 0,
+          "cell_ticks": 0
+        },
+        {
+          "time": 1500,
+          "generated_eu": 128,
+          "cell_ticks": 1
+        },
+        {
+          "time": 6000,
+          "generated_eu": 128,
+          "cell_ticks": 2
+        },
+        {
+          "time": 10500,
+          "generated_eu": 128,
+          "cell_ticks": 3
+        },
+        {
+          "time": 12000,
+          "generated_eu": 0,
+          "cell_ticks": 3
+        },
+        {
+          "time": 12001,
+          "generated_eu": 0,
+          "cell_ticks": 3
+        }
+      ],
+      "water_boost_eu_per_tick_at_noon": 192,
+      "rain_eu_per_tick_at_noon": 0,
+      "settled_roof_eu_per_tick_at_noon": 0,
+      "dry_clear_day": {
+        "nominal_eu_per_day": 1351638,
+        "daily_average_eu_per_tick": 56.31825,
+        "ideal_storage_eu_for_flat_average": 710081.402249912,
+        "distilled_water_mb_per_clear_day": 0
+      },
+      "water_clear_day": {
+        "nominal_eu_per_day": 2028224,
+        "daily_average_eu_per_tick": 84.50933333333333,
+        "ideal_storage_eu_for_flat_average": 1065231.9333332218,
+        "distilled_water_mb_per_clear_day": 11999
+      }
+    },
+    {
+      "machine": "extended_industrialization:hv_solar_panel",
+      "cell": "extended_industrialization:hv_photovoltaic_cell",
+      "cell_lifetime_active_ticks": 12000,
+      "peak_eu_per_tick": 512,
+      "clear_samples": [
+        {
+          "time": 0,
+          "generated_eu": 0,
+          "cell_ticks": 0
+        },
+        {
+          "time": 1500,
+          "generated_eu": 512,
+          "cell_ticks": 1
+        },
+        {
+          "time": 6000,
+          "generated_eu": 512,
+          "cell_ticks": 2
+        },
+        {
+          "time": 10500,
+          "generated_eu": 512,
+          "cell_ticks": 3
+        },
+        {
+          "time": 12000,
+          "generated_eu": 0,
+          "cell_ticks": 3
+        },
+        {
+          "time": 12001,
+          "generated_eu": 0,
+          "cell_ticks": 3
+        }
+      ],
+      "water_boost_eu_per_tick_at_noon": 768,
+      "rain_eu_per_tick_at_noon": 0,
+      "settled_roof_eu_per_tick_at_noon": 0,
+      "dry_clear_day": {
+        "nominal_eu_per_day": 5411078,
+        "daily_average_eu_per_tick": 225.46158333333332,
+        "ideal_storage_eu_for_flat_average": 2840979.593249452,
+        "distilled_water_mb_per_clear_day": 0
+      },
+      "water_clear_day": {
+        "nominal_eu_per_day": 8117370,
+        "daily_average_eu_per_tick": 338.22375,
+        "ideal_storage_eu_for_flat_average": 4261574.198750845,
+        "distilled_water_mb_per_clear_day": 11999
+      }
+    }
+  ]
+}
