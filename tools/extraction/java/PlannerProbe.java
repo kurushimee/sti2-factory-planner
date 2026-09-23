@@ -77,6 +77,12 @@ public final class PlannerProbe {
                     try { return checkSolarRoofs(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_probe_nuclear")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return captureNuclearGrid(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_storage")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
@@ -969,6 +975,11 @@ public final class PlannerProbe {
         if (bill.get("machine").getAsString().equals("yet_another_industrialization:nuclear_rod_irradiator")) {
             result.add("startup_cycle", formedIrradiatorCycle(controller, matcher, server));
         }
+        if (bill.get("machine").getAsString().equals("modern_industrialization:nuclear_reactor")) {
+            result.add("reactor_cycle", formedNuclearCycle(
+                    (aztech.modern_industrialization.machines.blockentities.multiblocks.NuclearReactorMultiblockBlockEntity) controller,
+                    matcher, server));
+        }
         if (controller instanceof net.swedz.extended_industrialization.machines.blockentity.multiblock.teslatower.TeslaTowerBlockEntity tower) {
             result.add("idle_cycle", formedTeslaCycle(tower, matcher, server));
         }
@@ -977,6 +988,74 @@ public final class PlannerProbe {
         controller.setChanged();
         System.out.println("Planner structural bill matched the loaded world structure.");
         return 1;
+    }
+
+    private static JsonObject formedNuclearCycle(
+            aztech.modern_industrialization.machines.blockentities.multiblocks.NuclearReactorMultiblockBlockEntity reactor,
+            aztech.modern_industrialization.machines.multiblocks.ShapeMatcher matcher, MinecraftServer server) {
+        var origin = reactor.getBlockPos();
+        var fuelPosition = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldPos(
+                origin, net.minecraft.core.Direction.NORTH, new BlockPos(0, 3, 2));
+        aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch fuelHatch = null;
+        var coolants = new ArrayList<aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch>();
+        for (var hatch : matcher.getMatchedHatches()) {
+            if (!(hatch instanceof aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch nuclear)) continue;
+            if (nuclear.getBlockPos().equals(fuelPosition)) fuelHatch = nuclear;
+            else coolants.add(nuclear);
+        }
+        if (fuelHatch == null || coolants.size() != 4) throw new IllegalStateException("The formed reactor has an unexpected hatch layout.");
+        var fuelSlot = fuelHatch.getInventory().getItemStacks().getFirst();
+        fuelSlot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(
+                BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:uranium_fuel_rod_quad"))));
+        fuelSlot.setAmount(1);
+        for (var hatch : coolants) {
+            var input = hatch.getInventory().getFluidStacks().getFirst();
+            input.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(
+                    net.minecraft.world.level.material.Fluids.WATER));
+            input.setAmount(input.getCapacity());
+        }
+        matcher.unlinkHatches();
+        var levelData = (net.minecraft.world.level.storage.ServerLevelData) server.overworld().getLevelData();
+        long previousTime = levelData.getGameTime(), waterUsed = 0;
+        var outputs = new JsonObject();
+        double peakTemperature = 0;
+        try {
+            for (int tick = 1; tick <= 5000; tick++) {
+                levelData.setGameTime(tick);
+                reactor.tick();
+                for (var hatch : coolants) {
+                    var slots = hatch.getInventory().getFluidStacks();
+                    var input = slots.getFirst();
+                    waterUsed += input.getCapacity() - input.getAmount();
+                    input.setAmount(input.getCapacity());
+                    for (int index = 1; index < slots.size(); index++) {
+                        var output = slots.get(index);
+                        if (output.getAmount() == 0) continue;
+                        String id = BuiltInRegistries.FLUID.getKey(output.getVariant().getFluid()).toString();
+                        long previous = outputs.has(id) ? outputs.get(id).getAsLong() : 0;
+                        outputs.addProperty(id, previous + output.getAmount());
+                        output.setAmount(0);
+                    }
+                    peakTemperature = Math.max(peakTemperature, hatch.getTemperature());
+                }
+                peakTemperature = Math.max(peakTemperature, fuelHatch.getTemperature());
+                if (fuelSlot.getAmount() == 0) throw new IllegalStateException("The formed reactor lost its fuel before the short trial ended.");
+            }
+        } finally { levelData.setGameTime(previousTime); }
+        if (!reactor.shapeValid.shapeValid || !outputs.has("modern_industrialization:steam")
+                || outputs.get("modern_industrialization:steam").getAsLong() < 1000000)
+            throw new IllegalStateException("The formed reactor did not produce the measured steam profile.");
+        var result = new JsonObject();
+        result.addProperty("ticks", 5000);
+        result.addProperty("water_used_mb", waterUsed);
+        result.addProperty("peak_temperature", peakTemperature);
+        result.addProperty("fuel_disintegrations_left", ((aztech.modern_industrialization.nuclear.NuclearFuel)
+                fuelSlot.toStack().getItem()).getRemainingDesintegrations(fuelSlot.toStack()));
+        result.add("fluid_outputs", outputs);
+        result.addProperty("scope", "Placed controller and matched hatches ticked with direct water refill and emptied fluid outputs. External pipe throughput and whole fuel lifetime remain separate checks.");
+        fuelHatch.setChanged();
+        for (var hatch : coolants) hatch.setChanged();
+        return result;
     }
 
     private static JsonObject formedArrayCycle(
@@ -2654,6 +2733,129 @@ public final class PlannerProbe {
             tower.shapeValid.shapeValid = originalValid;
             active.isActive = originalActive;
         }
+    }
+
+    private static int captureNuclearGrid(MinecraftServer server) throws Exception {
+        var report = new JsonObject();
+        report.addProperty("scope", "Loaded MI 2.5.8 component simulations using the smallest reactor grid. The hatches are not assembled into a placed multiblock.");
+        var trials = new JsonArray();
+        trials.add(simulateNuclearGrid(server, "modern_industrialization:uranium_fuel_rod", 20000));
+        for (int trial = 1; trial <= 3; trial++) {
+            var result = simulateNuclearGrid(server, "modern_industrialization:uranium_fuel_rod_quad", 100000);
+            result.addProperty("trial", trial);
+            trials.add(result);
+        }
+        report.add("trials", trials);
+        Files.createDirectories(Path.of("planner-extraction"));
+        Files.writeString(Path.of("planner-extraction/nuclear-grid.json"),
+                new GsonBuilder().setPrettyPrinting().create().toJson(report));
+        System.out.println("Planner nuclear component grid captured.");
+        return 1;
+    }
+
+    private static JsonObject simulateNuclearGrid(MinecraftServer server, String fuelId, int maxTicks) throws Exception {
+        var itemBlock = (EntityBlock) BuiltInRegistries.BLOCK.get(
+                net.minecraft.resources.ResourceLocation.parse("modern_industrialization:nuclear_item_hatch"));
+        var fluidBlock = (EntityBlock) BuiltInRegistries.BLOCK.get(
+                net.minecraft.resources.ResourceLocation.parse("modern_industrialization:nuclear_fluid_hatch"));
+        var itemState = ((net.minecraft.world.level.block.Block) itemBlock).defaultBlockState();
+        var fluidState = ((net.minecraft.world.level.block.Block) fluidBlock).defaultBlockState();
+        var layoutField = aztech.modern_industrialization.machines.blockentities.multiblocks.NuclearReactorMultiblockBlockEntity.class
+                .getDeclaredField("gridLayout");
+        layoutField.setAccessible(true);
+        var layout = ((boolean[][][]) layoutField.get(null))[0];
+        int centerX = layout.length / 2, centerY = layout[0].length / 2;
+        var gridHatches = new aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch
+                [layout.length][layout[0].length];
+        var fuelHatch = (aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch)
+                itemBlock.newBlockEntity(BlockPos.ZERO, itemState);
+        fuelHatch.setLevel(server.overworld());
+        var fuelSlot = fuelHatch.getInventory().getItemStacks().getFirst();
+        fuelSlot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(
+                BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(fuelId))));
+        fuelSlot.setAmount(1);
+        if (!layout[centerX][centerY]) throw new IllegalStateException("The smallest reactor has no central hatch.");
+        gridHatches[centerX][centerY] = fuelHatch;
+        var coolants = new ArrayList<aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch>();
+        for (var coordinate : new int[][]{{centerX - 1, centerY}, {centerX, centerY - 1},
+                {centerX, centerY + 1}, {centerX + 1, centerY}}) {
+            if (!layout[coordinate[0]][coordinate[1]])
+                throw new IllegalStateException("The smallest reactor lacks an adjacent coolant hatch.");
+            var hatch = (aztech.modern_industrialization.machines.blockentities.hatches.NuclearHatch)
+                    fluidBlock.newBlockEntity(BlockPos.ZERO, fluidState);
+            hatch.setLevel(server.overworld());
+            var input = hatch.getInventory().getFluidStacks().getFirst();
+            input.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(
+                    net.minecraft.world.level.material.Fluids.WATER));
+            input.setAmount(input.getCapacity());
+            gridHatches[coordinate[0]][coordinate[1]] = hatch;
+            coolants.add(hatch);
+        }
+        var grid = new aztech.modern_industrialization.nuclear.NuclearGrid(layout.length, layout[0].length, gridHatches);
+        var history = new aztech.modern_industrialization.machines.components.NuclearEfficiencyHistoryComponent();
+        var samples = new JsonArray();
+        var outputs = new JsonObject();
+        long waterUsed = 0;
+        double peakTemperature = 0;
+        int fuelExhaustionTick = 0;
+        for (int tick = 1; tick <= maxTicks; tick++) {
+            aztech.modern_industrialization.nuclear.NuclearGridHelper.simulate(grid, history);
+            history.tick();
+            for (var hatch : coolants) {
+                var slots = hatch.getInventory().getFluidStacks();
+                var input = slots.getFirst();
+                waterUsed += input.getCapacity() - input.getAmount();
+                input.setAmount(input.getCapacity());
+                for (int index = 1; index < slots.size(); index++) {
+                    var output = slots.get(index);
+                    if (output.getAmount() == 0) continue;
+                    String id = BuiltInRegistries.FLUID.getKey(output.getVariant().getFluid()).toString();
+                    long previous = outputs.has(id) ? outputs.get(id).getAsLong() : 0;
+                    outputs.addProperty(id, previous + output.getAmount());
+                    output.setAmount(0);
+                }
+            }
+            for (var hatch : coolants) peakTemperature = Math.max(peakTemperature, hatch.getTemperature());
+            peakTemperature = Math.max(peakTemperature, fuelHatch.getTemperature());
+            if (fuelSlot.getAmount() == 0) {
+                fuelExhaustionTick = tick;
+                break;
+            }
+            if (tick == 1 || tick % 1000 == 0) {
+                var sample = new JsonObject();
+                sample.addProperty("tick", tick);
+                sample.addProperty("water_used_mb", waterUsed);
+                sample.addProperty("fuel_temperature", fuelHatch.getTemperature());
+                sample.addProperty("coolant_temperature", coolants.getFirst().getTemperature());
+                sample.addProperty("fuel_disintegrations_left", ((aztech.modern_industrialization.nuclear.NuclearFuel)
+                        fuelSlot.toStack().getItem()).getRemainingDesintegrations(fuelSlot.toStack()));
+                sample.add("fluid_outputs", outputs.deepCopy());
+                samples.add(sample);
+            }
+        }
+        var report = new JsonObject();
+        report.addProperty("fuel", fuelId);
+        report.addProperty("coolant", "minecraft:water");
+        report.addProperty("layout", "one central fuel hatch and four adjacent fluid hatches");
+        report.addProperty("operation", "Outputs are drained and water is refilled after each simulated tick.");
+        report.addProperty("grid_width", layout.length);
+        report.addProperty("grid_height", layout[0].length);
+        report.addProperty("max_ticks", maxTicks);
+        report.addProperty("fuel_exhaustion_tick", fuelExhaustionTick);
+        report.addProperty("fuel_max_temperature", ((aztech.modern_industrialization.nuclear.NuclearFuel)
+                BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(fuelId))).getMaxTemperature());
+        report.addProperty("peak_temperature", peakTemperature);
+        report.addProperty("water_used_mb", waterUsed);
+        report.add("fluid_outputs", outputs);
+        var itemOutputs = new JsonObject();
+        for (var output : fuelHatch.getInventory().getItemStacks().subList(1,
+                fuelHatch.getInventory().getItemStacks().size())) {
+            if (output.getAmount() > 0) itemOutputs.addProperty(
+                    BuiltInRegistries.ITEM.getKey(output.toStack().getItem()).toString(), output.getAmount());
+        }
+        report.add("item_outputs", itemOutputs);
+        report.add("samples", samples);
+        return report;
     }
 
     @SuppressWarnings("unchecked")

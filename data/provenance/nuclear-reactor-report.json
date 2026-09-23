@@ -1,0 +1,96 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "mod": "Modern Industrialization 2.5.8",
+  "mod_jar_sha256": "95c910c40f6f34dfcf398272303a666e3ccf54dc71650c7d8c5662b10b1b95b1",
+  "machine_capture_sha256": "d6277cbd1ee264afdbeb6e36869508fa833bcfa2cebf5e46b6c57a8ac03733fc",
+  "component_capture_sha256": "87bbd9de6bd22e5a3fe2da79144ac95b42891d32f0cd6e780d02159d1722de10",
+  "formed_capture_sha256": "06903b7fb7b370df6d4ba54fc9764449adc159a5c7a94c475d32108c1c083bf6",
+  "private_world_archive_sha256": "4f99d180b6c5da04bce3af27ffc70b3377de291e26328d0d6808b808b9b06d1b",
+  "method": "The loaded MI nuclear grid was run with a central uranium rod and four adjacent water hatches. Three stochastic quad-rod cycles ran to depletion. A separate placed smallest reactor matched the loaded structure and ran 5,000 controller ticks.",
+  "planning_status": "Evidence only. No reactor generation route is enabled by this report.",
+  "limits": [
+    "These measurements apply to this five-hatch layout, supplied water, and outputs emptied each tick. External fluid-pipe throughput was not tested.",
+    "The samples are stochastic observations, not a guaranteed minimum steam rate or fixed recipe duration.",
+    "The 5,000-tick placed trial confirms formation and startup, not a complete placed fuel lifetime or automatic fuel replacement.",
+    "Steam must be converted by a separate turbine to produce EU. The reactor itself does not generate direct EU."
+  ],
+  "structure_blocks_excluding_controller": {
+    "modern_industrialization:nuclear_alloy_machine_casing_pipe": 27,
+    "modern_industrialization:nuclear_casing": 72,
+    "modern_industrialization:nuclear_fluid_hatch": 4,
+    "modern_industrialization:nuclear_item_hatch": 1
+  },
+  "fuel_definitions": {
+    "modern_industrialization:uranium_fuel_rod": {
+      "disintegrations": 10240000,
+      "product": "modern_industrialization:uranium_fuel_rod_depleted",
+      "product_amount": 1,
+      "size": 1,
+      "direct_eu_per_disintegration": 14,
+      "total_eu_per_disintegration": 62
+    },
+    "modern_industrialization:uranium_fuel_rod_quad": {
+      "disintegrations": 40960000,
+      "product": "modern_industrialization:uranium_fuel_rod_depleted",
+      "product_amount": 4,
+      "size": 4,
+      "direct_eu_per_disintegration": 14,
+      "total_eu_per_disintegration": 62
+    }
+  },
+  "single_rod_20000_ticks": {
+    "peak_temperature": 148.87298257693124,
+    "water_used_mb": 620,
+    "steam_mb": 0,
+    "remaining_disintegrations": 9992470
+  },
+  "quad_rod_cycles": [
+    {
+      "trial": 1,
+      "fuel_lifetime_ticks": 66268,
+      "peak_temperature": 1767.2329132650514,
+      "water_used_mb": 24973804,
+      "steam_mb": 398565587,
+      "deuterium_mb": 63452,
+      "depleted_rods": 4,
+      "first_1000_ticks_steam_mb": 921729
+    },
+    {
+      "trial": 2,
+      "fuel_lifetime_ticks": 66502,
+      "peak_temperature": 1769.027144257481,
+      "water_used_mb": 25016980,
+      "steam_mb": 399250320,
+      "deuterium_mb": 63833,
+      "depleted_rods": 4,
+      "first_1000_ticks_steam_mb": 1197420
+    },
+    {
+      "trial": 3,
+      "fuel_lifetime_ticks": 66652,
+      "peak_temperature": 1752.2576015663105,
+      "water_used_mb": 25021676,
+      "steam_mb": 399335036,
+      "deuterium_mb": 63235,
+      "depleted_rods": 4,
+      "first_1000_ticks_steam_mb": 539946
+    }
+  ],
+  "quad_measured_means": {
+    "fuel_lifetime_ticks": 66474,
+    "water_used_mb": 25004153.333333332,
+    "steam_mb": 399050314.3333333,
+    "deuterium_mb": 63506.666666666664
+  },
+  "formed_5000_tick_trial": {
+    "ticks": 5000,
+    "water_used_mb": 1557012,
+    "peak_temperature": 1767.077005467326,
+    "fuel_disintegrations_left": 38411680,
+    "fluid_outputs": {
+      "modern_industrialization:deuterium": 3898,
+      "modern_industrialization:steam": 24849799
+    },
+    "scope": "Placed controller and matched hatches ticked with direct water refill and emptied fluid outputs. External pipe throughput and whole fuel lifetime remain separate checks."
+  }
+}
