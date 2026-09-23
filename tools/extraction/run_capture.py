@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--blasting-save-fixture", action="store_true", help="Save four active and ambiguous blast furnaces for ZIP import checks.")
     parser.add_argument("--crystallarieum-fixture", action="store_true", help="Measure loaded Spectrum growth and harvesting in the isolated test world.")
     parser.add_argument("--spectrum-automation", action="store_true", help="Measure ink transfer, dropped inputs, and AE2 cluster pickup in an isolated world.")
+    parser.add_argument("--turtle-growth", action="store_true", help="Test a CC: Tweaked turtle harvesting and replanting Spectrum growth.")
     parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     parser.add_argument("--certus-farm", action="store_true", help="Build and measure both certus farms in the isolated world.")
     args = parser.parse_args()
@@ -32,16 +33,22 @@ def main() -> None:
     if args.blasting_save_fixture and any((args.solar_panel, args.blasting_fixture, args.fixture,
                                            args.structure_fixture, args.rotation_fixture,
                                            args.structure_bill, args.certus_farm, args.crystallarieum_fixture,
-                                           args.spectrum_automation)):
+                                           args.spectrum_automation, args.turtle_growth)):
         parser.error("Run the blasting save fixture in its own capture.")
     if args.crystallarieum_fixture and any((args.solar_panel, args.storage_fixture, args.blasting_fixture,
                                             args.fixture, args.structure_fixture, args.rotation_fixture,
-                                            args.structure_bill, args.certus_farm, args.spectrum_automation)):
+                                            args.structure_bill, args.certus_farm, args.spectrum_automation,
+                                            args.turtle_growth)):
         parser.error("Run the Crystallarieum fixture in a separate capture.")
     if args.spectrum_automation and any((args.solar_panel, args.storage_fixture, args.blasting_fixture,
                                          args.fixture, args.structure_fixture, args.rotation_fixture,
-                                         args.structure_bill, args.certus_farm, args.crystallarieum_fixture)):
+                                         args.structure_bill, args.certus_farm, args.crystallarieum_fixture,
+                                         args.turtle_growth)):
         parser.error("Run the Spectrum automation fixture in a separate capture.")
+    if args.turtle_growth and any((args.solar_panel, args.storage_fixture, args.blasting_fixture,
+                                   args.fixture, args.structure_fixture, args.rotation_fixture,
+                                   args.structure_bill, args.certus_farm, args.crystallarieum_fixture)):
+        parser.error("Run the turtle growth fixture in a separate capture.")
     instance = args.instance.resolve()
     argument_file = instance / "libraries/net/neoforged/neoforge/21.1.250/win_args.txt"
     if not argument_file.is_file():
@@ -93,6 +100,8 @@ def main() -> None:
                         commands.extend(["forceload add 624 -16 656 16", "tick freeze", "planner_probe_crystallarieum", "save-all flush"])
                     if args.spectrum_automation:
                         commands.extend(["forceload add 672 -16 688 16", "tick freeze", "planner_probe_spectrum_automation", "save-all flush"])
+                    if args.turtle_growth:
+                        commands.extend(["forceload add 704 -16 720 16", "tick freeze", "planner_probe_turtle_growth", "save-all flush"])
                     if not args.solar_panel:
                         commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
@@ -131,6 +140,8 @@ def main() -> None:
                 raise RuntimeError(f"Crystallarieum fixture did not finish. Inspect {log_path}.")
             if args.spectrum_automation and "Planner Spectrum automation measured two ink-fed growth and pickup cycles." not in text:
                 raise RuntimeError(f"Spectrum automation fixture did not finish. Inspect {log_path}.")
+            if args.turtle_growth and "Planner turtle harvested and replanted two ink-fed iron clusters." not in text:
+                raise RuntimeError(f"Turtle growth fixture did not finish. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:

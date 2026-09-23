@@ -1,0 +1,35 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "spectrum": "1.12.7-1.21.1-neo",
+  "cc_tweaked": "1.120.0",
+  "spectrum_jar_sha256": "6b3f8678c580d381a4e681f7640d637d75808ddce2ae3869d28714b3a347025a",
+  "cc_tweaked_jar_sha256": "81a903710d109d129c249c105695a96f4bad5e0acf7068920fb191ba791c14ce",
+  "loaded_runtime_sha256": "3fa1e475de47fd060c4a5bfb030e8af9cd76ccf07fabfad85635586b1f19047c",
+  "trial_capture_sha256": "78b2ecc3299bee5a9822e6ebdf4da5d1981465fb38d8a24c3b435b14e6282dc1",
+  "private_world_archive_sha256": "a9f88b4db62e95f478e48ba5ad7ead857a447b662004d0a901157650345684d7",
+  "probe_jar_sha256": "63a984de38ae5c5a99ca5c2e3f397bcd9117c0bf48234bbe7410d50008d26fa9",
+  "trial": {
+    "cycles": 2,
+    "mature_ticks": [
+      600,
+      600
+    ],
+    "ordinary_harvest_counts": [
+      4,
+      4
+    ],
+    "chest_output_total": 8,
+    "brown_ink_per_growth": 240,
+    "liquid_crystal_initial_fill_mb": 1000,
+    "liquid_crystal_remaining_mb": 1000,
+    "stationary_turtle_fuel_used": 0
+  },
+  "planning_status": "unsupported_passive_route",
+  "limits": [
+    "The fixture chooses turtle commands directly. A loaded Lua program and its scheduling overhead were not measured.",
+    "The fixture advances Color Picker conversion, Spectrum ink transfer, and growth logic directly in a frozen world.",
+    "An external supply for both chests, dye, nuggets, and the initial liquid-crystal fill was not built.",
+    "Nugget consumption and harvest counts are random; the observed values are samples rather than guaranteed rates.",
+    "Construction quantities and a full automatic farm capacity are not established."
+  ]
+}
