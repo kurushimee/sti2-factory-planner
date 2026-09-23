@@ -68,3 +68,37 @@ export function balancePeriodicPower(generation, demand, storage = {}) {
     maximum_charge_eu: maximum, curtailed_generation_eu: chargeLimited + curtailed,
     charge_limited_eu: chargeLimited, capacity_limited_eu: curtailed, period_surplus_eu: total};
 }
+
+export function minimumStorageCount(generation, demand, storage, maximumCount) {
+  for (const field of ['capacity_eu', 'charge_eu_per_tick', 'discharge_eu_per_tick']) {
+    if (!Number.isSafeInteger(storage?.[field]) || storage[field] <= 0) {
+      throw new Error(`Storage ${field} must be a positive whole number within the supported range.`);
+    }
+  }
+  if (storage.loss_eu_per_tick !== 0) throw new Error('This storage sizing rule has no verified loss adapter.');
+  if (!Number.isSafeInteger(maximumCount) || maximumCount < 0) throw new Error('The storage count limit must be a nonnegative whole number.');
+  const safeCount = Math.min(maximumCount, ...['capacity_eu', 'charge_eu_per_tick', 'discharge_eu_per_tick']
+    .map(field => Math.floor(Number.MAX_SAFE_INTEGER / storage[field])));
+  const evaluate = count => balancePeriodicPower(generation, demand, {
+    capacity_eu: count * storage.capacity_eu,
+    charge_eu_per_tick: count * storage.charge_eu_per_tick,
+    discharge_eu_per_tick: count * storage.discharge_eu_per_tick});
+  const empty = evaluate(0);
+  if (empty.status === 'feasible') return {status: 'feasible', count: 0, balance: empty};
+  if (!safeCount) return {status: 'infeasible', maximum_count: 0, reason: empty.reason};
+  let lower = 0, upper = 1, result = evaluate(upper);
+  while (result.status !== 'feasible' && upper < safeCount) {
+    lower = upper;
+    upper = Math.min(safeCount, upper * 2);
+    result = evaluate(upper);
+  }
+  if (result.status !== 'feasible') return {status: 'infeasible', maximum_count: safeCount,
+    reason: result.reason, balance: result};
+  while (upper - lower > 1) {
+    const middle = lower + Math.floor((upper - lower) / 2);
+    const candidate = evaluate(middle);
+    if (candidate.status === 'feasible') { upper = middle; result = candidate; }
+    else lower = middle;
+  }
+  return {status: 'feasible', count: upper, balance: result};
+}

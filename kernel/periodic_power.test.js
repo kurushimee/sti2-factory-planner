@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {balancePeriodicPower} from './periodic_power.js';
+import {balancePeriodicPower, minimumStorageCount} from './periodic_power.js';
+import {clearSolarProfile} from './solar_profile.js';
 
 test('a full day covers a constant load only with an overnight charge', () => {
   const storage = {capacity_eu: 2, charge_eu_per_tick: 1, discharge_eu_per_tick: 1};
@@ -63,4 +64,26 @@ test('circular storage sizing agrees with an independent discrete-state search',
       if (expected.length) assert.equal(result.required_initial_charge_eu, expected[0], `net=${net}, capacity=${capacity}`);
     }
   }
+});
+
+test('whole storage sizing includes both transfer directions and period capacity', () => {
+  const rule = {capacity_eu: 2, charge_eu_per_tick: 2, discharge_eu_per_tick: 1, loss_eu_per_tick: 0};
+  const generation = [4, 0, 0, 0], demand = [1, 1, 1, 1];
+  assert.equal(minimumStorageCount(generation, demand, rule, 1).status, 'infeasible');
+  const sized = minimumStorageCount(generation, demand, rule, 10);
+  assert.equal(sized.count, 2);
+  assert.equal(sized.balance.required_capacity_eu, 3);
+  assert.equal(minimumStorageCount([2], [1], rule, 10).count, 0);
+  assert.throws(() => minimumStorageCount(generation, demand, {...rule, loss_eu_per_tick: 1}, 10), /loss adapter/);
+});
+
+test('one measured LV storage unit covers a verified clear day at 14 EU per tick', () => {
+  const profile = clearSolarProfile(32);
+  const demand = Array(profile.power_eu_per_tick.length).fill(14);
+  const sized = minimumStorageCount(Array.from(profile.power_eu_per_tick), demand,
+    {capacity_eu: 3200000, charge_eu_per_tick: 256, discharge_eu_per_tick: 256,
+      loss_eu_per_tick: 0}, 10);
+  assert.equal(sized.count, 1);
+  assert.ok(sized.balance.required_capacity_eu > 170000);
+  assert.ok(sized.balance.ending_charge_eu >= sized.balance.required_initial_charge_eu);
 });
