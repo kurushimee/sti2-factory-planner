@@ -20,7 +20,8 @@ export function startupRequirements(lines) {
     if (configuration.startup_profile?.kind === 'vanilla_furnace' && line.operations_per_second > 0) {
       const profile = configuration.startup_profile;
       const seconds = profile.first_completion_ticks / 20;
-      for (const flow of line.outputs) add(flow.resource, 'warmup_output_stock', flow.rate * seconds, key);
+      for (const flow of line.outputs) add(flow.resource, 'warmup_output_stock', Math.ceil(flow.rate *
+        (flow.resource === profile.fuel_remainder_resource ? 1 / 20 : seconds)), key);
       add(profile.ingredient_resource, 'first_operation_stock', line.machines, key);
       add(profile.fuel_resource, 'first_operation_stock', line.machines, key);
       continue;

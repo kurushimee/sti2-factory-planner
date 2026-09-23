@@ -48,8 +48,9 @@ def blasting_catalog(capture, report, names):
             fuel_input = {"resource": fuel_resource, "amount": trial["cooking_ticks"] / duration}
             if fuel == "minecraft:lava_bucket":
                 fuel_input["returns"] = {fuel_resource: [{"resource": "item:minecraft:bucket", "amount": 1}]}
+            fuel_name = "coal" if fuel == "minecraft:coal" else "lava bucket"
             recipes.append({"id": identity, "source_id": trial["recipe"], "origin": "loaded_blast_furnace_ticks",
-                            "type": "minecraft:blasting", "name": names.get(output, output) + " in a blast furnace",
+                            "type": "minecraft:blasting", "name": "Blast " + names.get(output, output) + " with " + fuel_name,
                             "primary": output, "inputs": [{"resource": ingredient, "amount": 1}, fuel_input],
                             "outputs": [{"resource": output, "amount": trial["count"]}],
                             "configurations": [{"id": identity, "machine": machine["id"],
@@ -62,7 +63,11 @@ def blasting_catalog(capture, report, names):
                                                 "build_requirements": [{"resource": "item:minecraft:blast_furnace", "amount": 1}],
                                                 "startup_profile": {"kind": "vanilla_furnace", "ingredient_resource": ingredient,
                                                                     "fuel_resource": fuel_resource,
+                                                                    **({"fuel_remainder_resource": "item:minecraft:bucket"}
+                                                                       if fuel == "minecraft:lava_bucket" else {}),
                                                                     "first_completion_ticks": trial["cooking_ticks"]},
                                                 "assumptions": ["Fuel consumption is amortized over complete burn cycles at full load. Buffer ingredients and run in bursts when demand is lower.",
-                                                                "The first operation needs one whole fuel item before its output is available."]}]})
+                                                                "The first operation needs one whole fuel item before its output is available.",
+                                                                *(["The lava bucket was tick-tested with pure iron. This recipe uses the same loaded furnace fuel method, but this exact pairing was not tick-tested."]
+                                                                  if fuel == "minecraft:lava_bucket" and trial["recipe"] != "spectrum:blasting/pure_resources/iron" else [])]}]})
     return machine, recipes, {trial["recipe"] for trial in selected}

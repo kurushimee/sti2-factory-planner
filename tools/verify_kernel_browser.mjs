@@ -290,6 +290,22 @@ try {
     assert.deepEqual(actual.result, expected);
     console.log(`The replicatorless creative-storage plan matches Node in the browser Worker: ${expected.lines.length} allocations, ${expected.status}.`);
   }
+  if (process.argv.includes('--blasting')) {
+    const recipe = worldDataset.recipes.find(value => value.source_id === 'spectrum:blasting/pure_resources/iron' &&
+      value.inputs[1]?.resource === 'item:minecraft:lava_bucket');
+    assert.ok(recipe);
+    const request = {goals: [{recipe: recipe.id, resource: 'item:minecraft:iron_ingot', rate: 1}],
+      available_machines: ['minecraft:blast_furnace'],
+      external: [{resource: 'item:spectrum:pure_iron'}, {resource: 'item:minecraft:lava_bucket'}]};
+    const expected = solveFactory(await loadHighs(), worldDataset, request);
+    const actual = await solveInBrowser(worldDataset, request);
+    assert.equal(expected.status, 'optimal');
+    assert.equal(expected.lines[0].machines, 5);
+    delete expected.search?.elapsed_ms;
+    delete actual.result.search?.elapsed_ms;
+    assert.deepEqual(actual.result, expected);
+    console.log('The loaded blast-furnace plan and whole-fuel startup stock match Node in the browser Worker.');
+  }
   if (process.argv.includes('--material')) {
     const request = {...endgameRequest(worldDataset), time_limit_ms: 180000,
       construction: {external: [{resource: 'energy:eu', cost: 0}], work: 0.001}};

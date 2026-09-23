@@ -49,7 +49,7 @@ jobs:
       - name: Check the embedded browser calculation
         env:
           STI2_ENDGAME_BUDGET_MS: '240000'
-        run: node tools/verify_kernel_browser.mjs - data/statech-2.0.1.json.gz --endgame
+        run: node tools/verify_kernel_browser.mjs - data/statech-2.0.1.json.gz --endgame --blasting
       - name: Check browser dataset persistence and recovery
         run: node tools/verify_storage_browser.mjs
       - name: Check whitespace

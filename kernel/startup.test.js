@@ -74,10 +74,11 @@ test('a blast furnace needs whole initial fuel and an input at each machine', ()
     outputs: [{resource: 'iron', rate: 0.3}, {resource: 'bucket', rate: 0.003}],
     configuration_details: {build_requirements: [{resource: 'blast_furnace', amount: 1}],
       startup_profile: {kind: 'vanilla_furnace', ingredient_resource: 'pure_iron',
-        fuel_resource: 'lava_bucket', first_completion_ticks: 100}}}]);
+        fuel_resource: 'lava_bucket', fuel_remainder_resource: 'bucket', first_completion_ticks: 100}}}]);
   assert.equal(result.resources.find(value => value.resource === 'lava_bucket').first_operation_stock, 3);
   assert.equal(result.resources.find(value => value.resource === 'pure_iron').first_operation_stock, 3);
-  assert.equal(result.resources.find(value => value.resource === 'iron').warmup_output_stock, 1.5);
+  assert.equal(result.resources.find(value => value.resource === 'iron').warmup_output_stock, 2);
+  assert.equal(result.resources.find(value => value.resource === 'bucket').warmup_output_stock, 1);
   assert.deepEqual(result.build_requirements, [{resource: 'blast_furnace', amount: 3}]);
   assert.deepEqual(result.incomplete, []);
 });
