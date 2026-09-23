@@ -1,0 +1,52 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "runtime_sha256": "545ce090d2ae8929b27cd5abdd0dfa81e03d44c34f7546c04a1849d8fba15a62",
+  "catalog_sha256": "44410c0d2663c477f913e5ffc208442d9a780c87587703dacdc46edd8dbf6770",
+  "scope": "The loaded recipe provider converted vanilla smelting and stonecutting to supported MI furnace and cutting-machine processes. These converted routes use their captured EU, duration, and lubricant, not a free manual workstation.",
+  "limits": [
+    "Matching outputs do not prove that a vanilla blasting machine has the same throughput or fuel use.",
+    "Sixteen Spectrum blasting-only inputs remain without a matching smelting route."
+  ],
+  "smelting_exported": 256,
+  "stonecutting_exported": 4322,
+  "blasting_with_matching_smelting_input_and_output": 128,
+  "unmatched_blasting": [
+    "spectrum:blasting/pure_resources/coal",
+    "spectrum:blasting/pure_resources/copper",
+    "spectrum:blasting/pure_resources/diamond",
+    "spectrum:blasting/pure_resources/echo",
+    "spectrum:blasting/pure_resources/emerald",
+    "spectrum:blasting/pure_resources/glowstone",
+    "spectrum:blasting/pure_resources/gold",
+    "spectrum:blasting/pure_resources/iron",
+    "spectrum:blasting/pure_resources/lapis",
+    "spectrum:blasting/pure_resources/netherite_scrap",
+    "spectrum:blasting/pure_resources/prismarine",
+    "spectrum:blasting/pure_resources/quartz",
+    "spectrum:blasting/pure_resources/redstone",
+    "spectrum:mod_integration/ae2/blasting/pure_certus_quartz",
+    "spectrum:mod_integration/ae2/blasting/pure_fluix",
+    "spectrum:mod_integration/create/blasting/pure_zinc"
+  ],
+  "source_namespaces": {
+    "ae2": 43,
+    "architects_palette": 362,
+    "cognition": 2,
+    "create": 343,
+    "createdeco": 1273,
+    "culturalrecipes": 5,
+    "decorative_blocks": 1,
+    "extendedae": 1,
+    "farmersdelight": 9,
+    "industrially_plated": 155,
+    "minecraft": 1756,
+    "modern_industrialization": 63,
+    "morered": 2,
+    "nomansland": 53,
+    "rusticdelight": 22,
+    "spectral_decorations": 10,
+    "spectrum": 206,
+    "supplementaries": 16,
+    "xtonesreworked": 256
+  }
+}
