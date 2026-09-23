@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,6 +24,29 @@ import net.swedz.tesseract.neoforge.compat.mi.component.craft.multiplied.Multipl
 public final class PlannerProbe {
     public PlannerProbe() {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
+        NeoForge.EVENT_BUS.addListener(this::trackTurtleLua);
+    }
+
+    private static final BlockPos TURTLE_LUA_MACHINE = new BlockPos(736, 160, 0);
+    private static final ArrayList<Long> turtleLuaHarvestTicks = new ArrayList<>();
+    private static long turtleLuaStartTick;
+    private static int turtleLuaOutputCount;
+    private static boolean turtleLuaActive;
+
+    private void trackTurtleLua(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        if (!turtleLuaActive) return;
+        var level = event.getServer().overworld();
+        var entity = level.getBlockEntity(TURTLE_LUA_MACHINE.above(2).north());
+        if (!(entity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest)) return;
+        int count = 0;
+        for (int slot = 0; slot < chest.getContainerSize(); slot++)
+            if (BuiltInRegistries.ITEM.getKey(chest.getItem(slot).getItem()).toString()
+                    .equals("spectrum:pure_iron"))
+                count += chest.getItem(slot).getCount();
+        if (count > turtleLuaOutputCount) {
+            turtleLuaOutputCount = count;
+            turtleLuaHarvestTicks.add(level.getGameTime());
+        }
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
@@ -87,6 +111,18 @@ public final class PlannerProbe {
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
                     try { return captureTurtleGrowth(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
+        event.getDispatcher().register(Commands.literal("planner_probe_turtle_lua_setup")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return setupTurtleLua(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
+        event.getDispatcher().register(Commands.literal("planner_probe_turtle_lua_check")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return checkTurtleLua(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
@@ -650,6 +686,136 @@ public final class PlannerProbe {
                     pickerNodePosition, pickerPosition, position})
                 level.setBlockAndUpdate(place, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
         }
+    }
+
+    private static int setupTurtleLua(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var machinePosition = TURTLE_LUA_MACHINE;
+        var turtlePosition = machinePosition.above(2);
+        var pickerPosition = machinePosition.east(4);
+        var machineFeed = machinePosition.south();
+        var pickerFeed = pickerPosition.south();
+        var machineNodePosition = machinePosition.east();
+        var pickerNodePosition = pickerPosition.east();
+        var places = new BlockPos[]{machinePosition, machinePosition.above(), turtlePosition,
+                turtlePosition.above(), turtlePosition.north(), pickerPosition, machineFeed,
+                machineFeed.above(), pickerFeed, pickerFeed.above(), machineNodePosition,
+                pickerNodePosition};
+        for (var place : places)
+            if (!level.getBlockState(place).isAir())
+                throw new IllegalStateException("The autonomous turtle trial area is occupied: " + place);
+        var machineBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.CRYSTALLARIEUM.get();
+        var pickerBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.COLOR_PICKER.get();
+        var nodeBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.INK_NODE.get();
+        var turtleBlock = dan200.computercraft.shared.ModRegistry.Blocks.TURTLE_NORMAL.get();
+        var hopperState = net.minecraft.world.level.block.Blocks.HOPPER.defaultBlockState().setValue(
+                net.minecraft.world.level.block.HopperBlock.FACING, net.minecraft.core.Direction.NORTH);
+        level.setBlockAndUpdate(machinePosition, machineBlock.defaultBlockState());
+        level.setBlockAndUpdate(pickerPosition, pickerBlock.defaultBlockState());
+        level.setBlockAndUpdate(machineNodePosition, nodeBlock.defaultBlockState().setValue(
+                de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlock.FACING,
+                net.minecraft.core.Direction.EAST));
+        level.setBlockAndUpdate(pickerNodePosition, nodeBlock.defaultBlockState().setValue(
+                de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlock.FACING,
+                net.minecraft.core.Direction.EAST));
+        level.setBlockAndUpdate(turtlePosition, turtleBlock.defaultBlockState());
+        level.setBlockAndUpdate(turtlePosition.above(), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        level.setBlockAndUpdate(turtlePosition.north(), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        level.setBlockAndUpdate(machineFeed, hopperState);
+        level.setBlockAndUpdate(machineFeed.above(), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        level.setBlockAndUpdate(pickerFeed, hopperState);
+        level.setBlockAndUpdate(pickerFeed.above(), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        var machine = (de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity)
+                level.getBlockEntity(machinePosition);
+        var turtle = (dan200.computercraft.shared.turtle.blocks.TurtleBlockEntity)
+                level.getBlockEntity(turtlePosition);
+        var rawChest = (net.minecraft.world.level.block.entity.ChestBlockEntity)
+                level.getBlockEntity(turtlePosition.above());
+        var nuggetHopper = (net.minecraft.world.level.block.entity.HopperBlockEntity)
+                level.getBlockEntity(machineFeed);
+        var dyeHopper = (net.minecraft.world.level.block.entity.HopperBlockEntity)
+                level.getBlockEntity(pickerFeed);
+        var nuggetChest = (net.minecraft.world.level.block.entity.ChestBlockEntity)
+                level.getBlockEntity(machineFeed.above());
+        var dyeChest = (net.minecraft.world.level.block.entity.ChestBlockEntity)
+                level.getBlockEntity(pickerFeed.above());
+        var machineNode = (de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity)
+                level.getBlockEntity(machineNodePosition);
+        var pickerNode = (de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity)
+                level.getBlockEntity(pickerNodePosition);
+        rawChest.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 2));
+        nuggetHopper.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_NUGGET, 64));
+        nuggetChest.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_NUGGET, 64));
+        dyeHopper.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_DYE, 64));
+        dyeChest.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_DYE, 64));
+        var liquid = BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse("spectrum:liquid_crystal"));
+        machine.getFluidTank().setFluid(new net.neoforged.neoforge.fluids.FluidStack(liquid, 1000));
+        machineNode.connectToNearbyNodes(null);
+        pickerNode.connectToNearbyNodes(null);
+        if (machineNode.getServerNetwork().isEmpty() || pickerNode.getServerNetwork().isEmpty()
+                || machineNode.getServerNetwork().get() != pickerNode.getServerNetwork().get())
+            throw new IllegalStateException("The autonomous turtle trial ink nodes did not connect.");
+        var upgrade = dan200.computercraft.impl.TurtleUpgrades.instance().get(server.registryAccess(),
+                new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_PICKAXE));
+        if (upgrade == null)
+            throw new IllegalStateException("The loaded turtle has no diamond-pickaxe upgrade.");
+        ((dan200.computercraft.shared.turtle.core.TurtleBrain) turtle.getAccess()).setUpgrade(
+                dan200.computercraft.api.turtle.TurtleSide.LEFT, upgrade);
+        turtle.setDirection(net.minecraft.core.Direction.NORTH);
+        var computer = turtle.createServerComputer();
+        var startup = Files.readAllBytes(Path.of("planner-turtle-startup.lua"));
+        try (var channel = computer.createRootMount().openFile("startup.lua", java.util.Set.of(
+                java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE,
+                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING))) {
+            var bytes = java.nio.ByteBuffer.wrap(startup);
+            while (bytes.hasRemaining()) channel.write(bytes);
+        }
+        turtleLuaHarvestTicks.clear();
+        turtleLuaOutputCount = 0;
+        turtleLuaStartTick = level.getGameTime();
+        turtleLuaActive = true;
+        computer.turnOn();
+        System.out.println("Planner autonomous turtle Lua trial started: computer " + computer.getID());
+        return 1;
+    }
+
+    private static int checkTurtleLua(MinecraftServer server) throws Exception {
+        if (!turtleLuaActive)
+            throw new IllegalStateException("The autonomous turtle trial has not started.");
+        if (turtleLuaHarvestTicks.size() < 2) {
+            System.out.println("Planner autonomous turtle harvests so far: " + turtleLuaHarvestTicks.size());
+            return 1;
+        }
+        var level = server.overworld();
+        var machine = (de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity)
+                level.getBlockEntity(TURTLE_LUA_MACHINE);
+        var picker = (de.dafuqs.spectrum.blocks.ink.gen.ColorPickerBlockEntity)
+                level.getBlockEntity(TURTLE_LUA_MACHINE.east(4));
+        var turtle = (dan200.computercraft.shared.turtle.blocks.TurtleBlockEntity)
+                level.getBlockEntity(TURTLE_LUA_MACHINE.above(2));
+        var inputChest = (net.minecraft.world.level.block.entity.ChestBlockEntity)
+                level.getBlockEntity(TURTLE_LUA_MACHINE.above(3));
+        var brown = de.dafuqs.spectrum.api.ink.color.InkColor.ofIdString("spectrum:brown").orElseThrow();
+        var result = new JsonObject();
+        var ticks = new JsonArray();
+        for (long tick : turtleLuaHarvestTicks) ticks.add(tick - turtleLuaStartTick);
+        result.add("harvest_ticks", ticks);
+        result.addProperty("output_chest_count", turtleLuaOutputCount);
+        result.addProperty("input_chest_remaining", inputChest.getItem(0).getCount());
+        result.addProperty("computer_on", turtle.getServerComputer().isOn());
+        result.addProperty("turtle_fuel_remaining", ((dan200.computercraft.shared.turtle.core.TurtleBrain)
+                turtle.getAccess()).getFuelLevel());
+        result.addProperty("picker_ink", picker.getInkStorage().getEnergy(brown));
+        result.addProperty("machine_ink", machine.getInkStorage().getEnergy(brown));
+        result.addProperty("liquid_crystal_remaining_mb", machine.getFluidTank().getFluidAmount());
+        result.addProperty("machine_nuggets", machine.getItem(0).getCount());
+        result.addProperty("picker_dyes", picker.getItem(1).getCount());
+        Files.createDirectories(Path.of("planner-extraction"));
+        Files.writeString(Path.of("planner-extraction/turtle-lua.json"),
+                new GsonBuilder().setPrettyPrinting().create().toJson(result));
+        turtleLuaActive = false;
+        System.out.println("Planner autonomous turtle completed two harvests.");
+        return 1;
     }
 
     private static int captureBlasting(MinecraftServer server) throws Exception {
