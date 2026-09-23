@@ -33,12 +33,17 @@ def clear_efficiency(tick):
                          f32(f32(2.0 * f32(tick)) / f32(2625.0))))
 
 
-def clear_day(peak, water=False):
+def clear_day_power(peak, water=False):
     output = []
     for tick in range(24000):
         efficiency = clear_efficiency(tick)
         power = f32(peak * efficiency)
         output.append(int(float(power) * (1.5 if water else 1.0)) if efficiency > 0 else 0)
+    return output
+
+
+def clear_day(peak, water=False):
+    output = clear_day_power(peak, water)
     total = sum(output)
     average = total / 24000
     stock = 0.0
@@ -105,10 +110,11 @@ def main():
               "mod_jar_sha256": jar_sha256, "capture_sha256": sha256(args.capture),
               "private_world_archive_sha256": sha256(args.world),
               "source_method": "The matching SolarSunlightComponent and SolarGeneratorComponent bytecode gives the curve, item wear, and water rule. Loaded panels confirmed the listed output and condition samples.",
-              "planning_status": "The period-average output cannot supply a continuous factory without verified energy storage. Solar generation remains unsupported by the planner.",
-              "profile_limits": ["The daily totals assume clear weather, open sky, supplied cells, and an empty output buffer.",
-                                 "They omit the one-tick output gap when a cell expires and a replacement enters.",
-                                 "The storage figure assumes an ideal lossless store and a flat load at exactly the daily average; it is not a build bill."],
+              "planning_status": "The planner pairs these clear-weather profiles with measured MI storage units. Its conservative dispatch allows one cell-expiry gap at any phase each day and reports the initial charge.",
+              "profile_limits": ["The nominal daily totals assume clear weather, open sky, supplied cells, and an empty output buffer.",
+                                 "Nominal totals omit a cell-expiry gap. Planning routes subtract one maximum-output tick per day and reserve storage for its uncertain phase.",
+                                 "The ideal storage figure assumes a flat load at exactly the nominal daily average. It is not the planner's whole-unit build bill.",
+                                 "A player's cable and transformer topology may reduce the measured one-node storage transfer."],
               "panels": verify_samples(samples, machines)}
     with args.output.open("w", encoding="utf-8", newline="\n") as target:
         target.write(json.dumps(report, indent=2) + "\n")

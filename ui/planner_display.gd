@@ -121,6 +121,19 @@ static func power_report(power: Dictionary, resources: Dictionary = {}, construc
 					text += "%s × %s\n" % [number(part.amount), markup(resources.get(part.resource, readable_name(part.resource)))]
 				for assumption: String in entry.structure.assumptions:
 					text += markup(assumption) + "\n"
+	var periodic: Dictionary = power.get("periodic", {})
+	if !periodic.is_empty():
+		text += "\n[b]Periodic generation and storage[/b]\n%s ticks per modeled cycle\n" % number(periodic.period_ticks)
+		for source: Dictionary in periodic.generation:
+			text += "%s × %s: %s EU/t nominal cycle average; %s EU/t after a possible output gap\n" % [number(source.machines), markup(resources.get("item:" + str(source.machine), readable_name(source.machine))), number(source.nominal_average_eu_per_tick), number(source.guaranteed_average_eu_per_tick)]
+		for unit: Dictionary in periodic.storage:
+			text += "%s × %s: %s EU capacity, %s EU/t charge and %s EU/t discharge\n" % [number(unit.machines), markup(resources.get("item:" + str(unit.machine), readable_name(unit.machine))), number(unit.capacity_eu), number(unit.charge_eu_per_tick), number(unit.discharge_eu_per_tick)]
+			text += "%s EU planned initial charge; %s EU at cycle end\n" % [number(unit.initial_charge_eu), number(unit.ending_charge_eu)]
+		if periodic.event_buffer_eu > 0:
+			text += "%s EU of storage is reserved for uncertain generation gaps.\n" % number(periodic.event_buffer_eu)
+		text += "%s EU of modeled output is curtailed per cycle.\n" % number(periodic.curtailed_generation_eu_per_period)
+		for assumption: String in periodic.assumptions:
+			text += markup(assumption) + "\n"
 	text += "\n" + markup(power.get("reserve_basis", "")) + " External supply contributes to installed reserve only when it has a declared firm capacity.\n\n" + markup(power.get("attribution_basis", ""))
 	text += "\n\nSustained values assume continuous supplies. Inspect each machine for its peak draw and startup stocks. Installed margin does not establish that every machine can start at once."
 	text += construction_report(construction, resources)
@@ -141,7 +154,7 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 			text += "None\n"
 		for flow: Dictionary in flows:
 			text += "%s · %s\n" % [markup(resources.get(flow.resource, readable_name(flow.resource))), flow_rate(flow.resource, flow.rate)]
-	text += "\n[b]Capacity and power[/b]\n%s operations/s installed\n%s%% utilization\n%s EU/t sustained\n" % [number(line.capacity_per_second), number(line.utilization * 100), number(line.power_eu_per_tick)]
+	text += "\n[b]Capacity and power[/b]\n%s operations/s installed\n%s%% utilization\nMachine draw: %s EU/t sustained\n" % [number(line.capacity_per_second), number(line.utilization * 100), number(line.power_eu_per_tick)]
 	if capacity.has("ticks_per_batch"):
 		var energy_resource: String = configuration.get("capacity_input", {}).get("machine", {}).get("energy_resource", "energy:eu")
 		var energy_unit: String = "EU" if energy_resource == "energy:eu" else "mB " + resources.get(energy_resource, readable_name(energy_resource))

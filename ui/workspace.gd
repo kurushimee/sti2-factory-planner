@@ -490,7 +490,12 @@ func _calculated(result: Dictionary) -> void:
 
 
 func _render_plan(result: Dictionary) -> void:
-	_reuse_allocation_positions(result.lines)
+	var layout_lines: Array = result.lines.duplicate()
+	for unit: Dictionary in result.get("periodic_power", {}).get("storage", []):
+		if unit.machines > 0:
+			var key: String = "planner:storage|" + str(unit.machine)
+			layout_lines.append({"recipe": key, "configuration": key, "machine": unit.machine})
+	_reuse_allocation_positions(layout_lines)
 	_initial_layout = _positions.is_empty() && _groups.is_empty()
 	if _initial_layout && _pending_view.is_empty():
 		%ConnectionMode.select(2 if result.lines.size() > 80 else 0)
@@ -516,6 +521,22 @@ func _render_plan(result: Dictionary) -> void:
 		node.position_offset = Vector2(saved[0], saved[1])
 		_nodes[String(node.name)] = node
 		machine_count += int(line.machines)
+	for unit: Dictionary in result.get("periodic_power", {}).get("storage", []):
+		if unit.machines <= 0:
+			continue
+		var node := recipe_scene.instantiate() as PlannerRecipeNode
+		node.name = "storage_%d" % _nodes.size()
+		graph.add_child(node)
+		node.configure_storage(unit, _resources)
+		node.set_meta("storage_unit", unit)
+		var key: String = node.recipe_id + "|" + node.recipe_id
+		node.set_meta("position_key", key)
+		if !_positions.has(key):
+			_unplaced.append(key)
+		var saved: Array = _positions.get(key, [45 + (_nodes.size() % 2) * 355, 75 + (_nodes.size() / 2) * 300])
+		node.position_offset = Vector2(saved[0], saved[1])
+		_nodes[String(node.name)] = node
+		machine_count += int(unit.machines)
 	var by_key: Dictionary[String, PlannerRecipeNode] = {}
 	for node: PlannerRecipeNode in _nodes.values():
 		by_key[node.get_meta("position_key")] = node
@@ -606,6 +627,16 @@ func _select_node(node: Node) -> void:
 		return
 	if !(node is PlannerRecipeNode):
 		return
+	if node.has_meta("storage_unit"):
+		var unit: Dictionary = node.get_meta("storage_unit")
+		_selected = ""
+		_inspected_key = node.get_meta("position_key")
+		_refresh_connections()
+		node.selected = true
+		%EditGoal.disabled = true
+		%RemoveGoal.disabled = true
+		inspector.text = "[font_size=20]%s[/font_size]\n\n[b]%s whole units[/b]\n%s EU total capacity\n%s EU/t charge limit\n%s EU/t discharge limit\n%s EU planned initial charge\n%s EU at the cycle end\n\nStored charge is a startup quantity. This valid dispatch may use more than the minimum initial charge. The factory's generation and fuel chains sustain the repeated cycle. Cable reach and network sharing need to match the player's build." % [PlannerDisplay.markup(PlannerDisplay.machine_name(unit.machine, _resources)), PlannerDisplay.number(unit.machines), PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.charge_eu_per_tick), PlannerDisplay.number(unit.discharge_eu_per_tick), PlannerDisplay.number(unit.initial_charge_eu), PlannerDisplay.number(unit.ending_charge_eu)]
+		return
 	%EditGoal.text = "Edit production goal"
 	_selected = node.recipe_id
 	_inspected_key = node.get_meta("position_key")
@@ -636,6 +667,23 @@ func _refresh_connections() -> void:
 		var source: PlannerRecipeNode = by_key[connection.source]
 		var destination: PlannerRecipeNode = by_key[connection.destination]
 		graph.connect_node(source.name, source.output_ports[connection.resource], destination.name, destination.input_ports[connection.resource])
+	if %ConnectionMode.selected == 1:
+		return
+	for unit: Dictionary in _last_result.get("periodic_power", {}).get("storage", []):
+		if unit.machines <= 0:
+			continue
+		var storage_key: String = "planner:storage|%s|planner:storage|%s" % [unit.machine, unit.machine]
+		if !by_key.has(storage_key):
+			continue
+		for source: Dictionary in _last_result.periodic_power.generation:
+			if source.machines <= 0:
+				continue
+			var source_key: String = str(source.recipe) + "|" + str(source.configuration)
+			if !by_key.has(source_key) || %ConnectionMode.selected == 2 && source_key != _inspected_key && storage_key != _inspected_key:
+				continue
+			var producer: PlannerRecipeNode = by_key[source_key]
+			var buffer: PlannerRecipeNode = by_key[storage_key]
+			graph.connect_node(producer.name, producer.output_ports["energy:eu"], buffer.name, buffer.input_ports["energy:eu"])
 
 
 func _focus_recipe() -> void:
@@ -663,10 +711,21 @@ func _arrange() -> void:
 func _apply_layout(announce: bool = true) -> void:
 	var entries: Array[PlannerGraphLayout.Entry] = []
 	for node: PlannerRecipeNode in _nodes.values():
-		var recipe: Dictionary = _recipes[node.recipe_id]
-		var group: String = recipe.get("group", "Power" if recipe.primary == "energy:eu" else "Production")
+		var group := "Power"
+		if !node.has_meta("storage_unit"):
+			var recipe: Dictionary = _recipes[node.recipe_id]
+			group = recipe.get("group", "Power" if recipe.primary == "energy:eu" else "Production")
 		entries.append(PlannerGraphLayout.Entry.new(node.get_meta("position_key"), group, node.size))
-	var layout := PlannerGraphLayout.arrange(entries, _last_result.get("connections", []))
+	var layout_connections: Array = _last_result.get("connections", []).duplicate()
+	for unit: Dictionary in _last_result.get("periodic_power", {}).get("storage", []):
+		if unit.machines <= 0:
+			continue
+		var storage_key: String = "planner:storage|%s|planner:storage|%s" % [unit.machine, unit.machine]
+		for source: Dictionary in _last_result.periodic_power.generation:
+			if source.machines > 0:
+				layout_connections.append({"source": str(source.recipe) + "|" + str(source.configuration),
+					"destination": storage_key, "resource": "dispatch_buffer"})
+	var layout := PlannerGraphLayout.arrange(entries, layout_connections)
 	_rendering = true
 	for node: PlannerRecipeNode in _nodes.values():
 		node.position_offset = layout.positions[node.get_meta("position_key")]
@@ -791,7 +850,11 @@ func _delete_nodes(names: Array[StringName]) -> void:
 	var ids: Array[String] = []
 	for node_name: StringName in names:
 		if _nodes.has(node_name):
-			ids.append(_nodes[node_name].recipe_id)
+			var node: PlannerRecipeNode = _nodes[node_name]
+			if node.has_meta("storage_unit"):
+				_request.periodic_storage.erase(node.get_meta("storage_unit").machine)
+			else:
+				ids.append(node.recipe_id)
 		elif _groups.has(node_name):
 			_groups.erase(node_name)
 	_request.goals = _request.goals.filter(func(goal: Dictionary) -> bool: return !goal.get("recipe") in ids)

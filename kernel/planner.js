@@ -13,6 +13,7 @@ import {findFactorySeed} from './seed.js';
 import {refineMaterialPlan} from './material_refinement.js';
 import {balanceTolerance, diagnosticNumber, scaleConstraintRows} from './numerics.js';
 import {preferredRecipes, describePreferences} from './recipe_preferences.js';
+import {appendPeriodicDispatch, decodePeriodicDispatch, expandPowerProfile, PeriodicBalanceError} from './periodic_model.js';
 
 const ENERGY = 'energy:eu';
 
@@ -66,6 +67,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   const integers = [];
   const lines = [];
   const exclusions = [];
+  const periodicLines = [];
   const recipeIds = new Set();
   const routeCandidates = new Map();
   for (const recipe of dataset.recipes) {
@@ -181,6 +183,25 @@ export function compileFactory(dataset, request, routeChoices = {}) {
         if (dispatch.maximum !== undefined) constraints.push(`dispatch_max_${index}: ${operation} <= ${nonnegative(dispatch.maximum, 'Maximum operation rate')}`);
       }
       lines.push({recipe, configuration, operation, machine, inputTerms, inputChecks, returnTerms});
+      if (configuration.periodic_generation) {
+        if (configuration.operations_per_second !== 1 ||
+            recipe.outputs.filter(flow => flow.resource === ENERGY).length !== 1) {
+          throw new Error(`Periodic generation in ${configuration.id} needs one operation per machine per second and one energy output.`);
+        }
+        const profile = expandPowerProfile(configuration.periodic_generation);
+        const average = profile.reduce((sum, value) => sum + value, 0) / profile.length;
+        const gap = nonnegative(configuration.periodic_generation.one_event_loss_eu_per_period ?? 0,
+          'Periodic event loss');
+        const output = recipe.outputs.find(flow => flow.resource === ENERGY).amount;
+        if (Math.abs(output / 20 - (average - gap / profile.length)) > Math.max(1e-9, average * 1e-9)) {
+          throw new Error(`Periodic generation energy disagrees with the output in ${recipe.id}.`);
+        }
+        constraints.push(`periodic_machine_${index}: ${operation} - ${machine} = 0`);
+        periodicLines.push({variable: machine, operation, output_eu_per_second: output, values: profile,
+          recipe: recipe.id, configuration: configuration.id, machine: configuration.machine,
+          one_event_loss_eu_per_period: gap,
+          assumptions: configuration.periodic_generation.assumptions ?? []});
+      }
       hasConfiguration = true;
     }
     if (hasConfiguration) {
@@ -231,11 +252,50 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   for (const [resource, terms] of rows) {
     constraints.push(`balance_${index++}: ${expression(terms)} >= ${demands.get(resource)}`);
   }
+  let periodic = null;
+  const selectedStorage = [];
+  if (periodicLines.length) {
+    if (!Array.isArray(request.periodic_storage ?? [])) throw new Error('Periodic storage selections must be a list.');
+    const firm = new Map(rows.get(ENERGY));
+    for (const line of periodicLines) add(firm, line.operation, -line.output_eu_per_second);
+    if (reserve) for (const line of lines) {
+      add(firm, line.operation, -reserve * (line.configuration.eu_per_operation ?? 0));
+      add(firm, line.machine, -reserve * (line.configuration.idle_eu_per_tick ?? 0) * 20);
+      for (const input of line.inputTerms) if (input.resource === ENERGY) {
+        add(firm, input.variable, -reserve * input.coefficient);
+      }
+    }
+    for (const id of request.periodic_storage ?? []) {
+      const machine = dataset.machines?.find(candidate => candidate.id === id);
+      if (machine?.mechanic !== 'energy_storage' || machine.status !== 'infrastructure') {
+        throw new Error(`Periodic storage is unavailable: ${id}.`);
+      }
+      if (request.disabled_machines?.includes(id) ||
+          request.available_machines && !request.available_machines.includes(id)) {
+        throw new Error(`Periodic storage is disabled: ${id}.`);
+      }
+      if (selectedStorage.some(unit => unit.id === id)) throw new Error(`Periodic storage is selected twice: ${id}.`);
+      selectedStorage.push({id, variable: `periodic_storage_${selectedStorage.length}`,
+        resource: `item:${id}`, ...machine.storage,
+        build_cost: weights.machines * nonnegative(machine.build_cost ?? 1, 'Storage build cost'),
+        ...((own(request.periodic_storage_limits, id) !== undefined) ?
+          {max_count: own(request.periodic_storage_limits, id)} : {}),
+        ...((own(request.periodic_storage_installed, id) !== undefined) ?
+          {installed_count: own(request.periodic_storage_installed, id)} : {})});
+    }
+    periodic = appendPeriodicDispatch({objective, constraints, bounds, integers}, {
+      profiles: periodicLines, firm_terms: firm, demand_eu_per_tick: demands.get(ENERGY) * (1 + reserve) / 20,
+      storage: selectedStorage});
+  }
   const fixed_builds = request.construction ? infrastructure.entries.map((entry, index) => {
     const variable = `ib${index}`;
     bounds.push(`${variable} = ${entry.count}`);
     return {machine: variable, configuration: {structure: entry.structure, build_requirements: entry.structure.build_requirements}};
   }) : [];
+  if (request.construction) for (const unit of selectedStorage) {
+    if (!resources.has(unit.resource)) throw new Error(`Storage construction item is missing: ${unit.resource}.`);
+    fixed_builds.push({machine: unit.variable, configuration: {build_requirements: [{resource: unit.resource, amount: 1}]}});
+  }
   const construction = addConstruction({lines, fixed_builds, objective, constraints, bounds, integers}, resources, request,
     new Map(dataset.resources.map(resource => [resource.id, resource])));
   for (const route of construction?.routes ?? []) if (own(routeChoices, route.recipe) === false) {
@@ -243,7 +303,8 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   }
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');
-  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers, infrastructure};
+  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers,
+    infrastructure, periodic: periodic && {...periodic, lines: periodicLines, storage: selectedStorage}};
 }
 
 export class FactoryBalanceError extends Error {
@@ -335,8 +396,14 @@ export function decodeFactory(model, solution) {
     installed_margin_eu_per_tick: generationCapacity + firmExternal - consumption - demand, reserve_fraction: model.reserve,
     reserve_basis: 'Installed generation capacity. Standby fuel and bootstrap stocks are separate requirements.'};
   const construction = decodeConstruction(model.construction, value);
-  return {lines, balances, power, startup: startupRequirements(lines), steady_state_only: true, external,
-    ...(construction ? {construction} : {}), ...flows};
+  const periodic = decodePeriodicDispatch(model.periodic, value);
+  const startup = startupRequirements(lines);
+  if (periodic) {
+    power.periodic = periodic;
+    startup.energy_storage_initial_charge_eu = periodic.storage.reduce((sum, unit) => sum + unit.initial_charge_eu, 0);
+  }
+  return {lines, balances, power, startup, steady_state_only: true, external,
+    ...(construction ? {construction} : {}), ...(periodic ? {periodic_power: periodic} : {}), ...flows};
 }
 
 export function solveFactory(highs, dataset, request, onProgress = () => {}) {
@@ -388,6 +455,8 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
     if (!best) return {status, optimal: false, exclusions: lastExclusions, branches: visited};
     attachStructureBills(best, dataset, {allowed_parts: request.available_parts});
     best.startup = startupRequirements(best.lines);
+    if (best.periodic_power) best.startup.energy_storage_initial_charge_eu =
+      best.periodic_power.storage.reduce((sum, unit) => sum + unit.initial_charge_eu, 0);
     const proven = status === 'optimal' && completeSearch;
     return {...best, status: proven ? 'optimal' : 'feasible', optimal: proven, branches: visited,
       optimization: {lower_bound: lowerBound, objective: best.objective,
@@ -404,7 +473,7 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
       const seed = findFactorySeed(highs, model, request, deadline, candidate => {
         try { decodeFactory(model, candidate); return true; }
         catch (error) {
-          if (error instanceof FactoryBalanceError) return false;
+          if (error instanceof FactoryBalanceError || error instanceof PeriodicBalanceError) return false;
           throw error;
         }
       }, onProgress);
@@ -433,7 +502,8 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
     let decoded;
     try {decoded = decode();}
     catch (error) {
-      if (!(error instanceof FactoryBalanceError) && !(error instanceof ConstructionBalanceError)) throw error;
+      if (!(error instanceof FactoryBalanceError) && !(error instanceof ConstructionBalanceError) &&
+          !(error instanceof PeriodicBalanceError)) throw error;
       onProgress({phase: 'production_precision', resource: error.balance.resource});
       numericalRetries++;
       if (Date.now() >= deadline) return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: error.message};
@@ -441,7 +511,8 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
       if (!solution.feasible) return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: error.message};
       try {decoded = decode();}
       catch (retryError) {
-        if (!(retryError instanceof FactoryBalanceError) && !(retryError instanceof ConstructionBalanceError)) throw retryError;
+        if (!(retryError instanceof FactoryBalanceError) && !(retryError instanceof ConstructionBalanceError) &&
+            !(retryError instanceof PeriodicBalanceError)) throw retryError;
         return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: retryError.message};
       }
       completeSearch = false;

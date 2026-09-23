@@ -32,6 +32,9 @@ def main():
     for filename, field in (("distribution-audit.json", "audit_sha256"), ("statech-2.0.1-inputs.json", "extraction_inputs_sha256")):
         if hashlib.sha256((provenance / filename).read_bytes()).hexdigest() != manifest[field]:
             raise ValueError("The bundle's provenance changed: " + filename)
+    solar_report = provenance / "solar-panel-report.json"
+    if hashlib.sha256(solar_report.read_bytes()).hexdigest() != dataset["source"].get("solar_report_sha256"):
+        raise ValueError("The bundled solar rules do not match their loaded-world report.")
     print("The bundled dataset matches its content, audit, and extraction-input hashes.")
 
 

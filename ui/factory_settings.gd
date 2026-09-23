@@ -17,7 +17,7 @@ var _construction: Dictionary = {}
 
 
 func _ready() -> void:
-	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches", "Construction costs", "Infrastructure"]:
+	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches", "Construction costs", "Infrastructure", "Power storage"]:
 		%SettingsCategory.add_item(title_text)
 	%SettingsCategory.item_selected.connect(_category_changed)
 	%ProgressionPreset.item_selected.connect(func(index: int) -> void:
@@ -46,9 +46,15 @@ func _ready() -> void:
 	)
 	%InfrastructureHatch.item_selected.connect(func(_index: int) -> void: _infrastructure_changed())
 	%InfrastructureTransfer.value_changed.connect(func(_value: float) -> void: _infrastructure_changed())
+	%StorageInstalledEnabled.toggled.connect(func(_value: bool) -> void: _storage_changed())
+	%StorageInstalled.value_changed.connect(func(_value: float) -> void: _storage_changed())
+	%StorageLimitEnabled.toggled.connect(func(_value: bool) -> void: _storage_changed())
+	%StorageLimit.value_changed.connect(func(_value: float) -> void: _storage_changed())
 	confirmed.connect(_apply)
 	var controls: Array[Control] = [%ProgressionPreset, %UsePreset, %SettingsCategory, %SettingsSearch, %ConstructionEnabled, %ConstructionWeight.get_line_edit(), %ConstructionRounding, %SettingsEntries, %SettingsPrevious,
-		%SettingsNext, %InfrastructureCount.get_line_edit(), %InfrastructureHatch, %InfrastructureTransfer.get_line_edit(), %SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
+		%SettingsNext, %InfrastructureCount.get_line_edit(), %InfrastructureHatch, %InfrastructureTransfer.get_line_edit(),
+		%StorageInstalledEnabled, %StorageInstalled.get_line_edit(), %StorageLimitEnabled, %StorageLimit.get_line_edit(),
+		%SupplyUnlimited, %SupplyLimit.get_line_edit(), %SupplyCost.get_line_edit(),
 		%Reserve.get_line_edit(), %Overhead.get_line_edit(), %ResourceWeight.get_line_edit(),
 		%MachineWeight.get_line_edit(), %EnergyWeight.get_line_edit(), %RoutePreferences, get_ok_button(), get_cancel_button()]
 	for index: int in controls.size():
@@ -87,9 +93,12 @@ func open_settings(dataset: Dictionary, request: Dictionary) -> void:
 		for id: String in _request.get(pair[1], []):
 			_request.get(pair[0], []).erase(id)
 		_request.erase(pair[1])
-	for field: String in ["available_upgrades", "disabled_recipes", "obtained_resources", "external", "infrastructure"]:
+	for field: String in ["available_upgrades", "disabled_recipes", "obtained_resources", "external", "infrastructure", "periodic_storage"]:
 		if !_request.has(field):
 			_request[field] = []
+	for field: String in ["periodic_storage_limits", "periodic_storage_installed"]:
+		if !_request.has(field):
+			_request[field] = {}
 	var weights: Dictionary = _request.get("weights", {})
 	%ResourceWeight.value = weights.get("external", 1000)
 	%MachineWeight.value = weights.get("machines", 1)
@@ -117,6 +126,7 @@ func _use_preset() -> void:
 		return
 	var preset: Dictionary = _dataset.progression[index]
 	_request.available_machines = preset.available_machines.duplicate()
+	_request.periodic_storage = _request.periodic_storage.filter(func(id: String) -> bool: return id in _request.available_machines)
 	_request.available_upgrades = preset.available_upgrades.duplicate()
 	if preset.has("available_parts"):
 		_request.available_parts = preset.available_parts.duplicate()
@@ -130,13 +140,14 @@ func _use_preset() -> void:
 func _category_changed(category: int) -> void:
 	_entries.clear()
 	%InfrastructureDetails.visible = category == 7
+	%StorageDetails.visible = category == 8
 	%InfrastructureCount.editable = false
 	_supply_reset()
 	%Supply.visible = category in [4, 6]
 	%ConstructionOptions.visible = category == 6
 	%ConstructionRounding.visible = category == 6
 	%Progression.visible = category != 6 && !_dataset.get("progression", []).is_empty()
-	%SettingsEntries.custom_minimum_size.y = 155 if category == 7 else (235 if category == 6 else 275)
+	%SettingsEntries.custom_minimum_size.y = 135 if category == 8 else (155 if category == 7 else (235 if category == 6 else 275))
 	%SupplyUnlimited.text = "No construction quantity limit" if category == 6 else "No external supply rate limit"
 	%SupplyLimit.suffix = "quantity available" if category == 6 else "/s maximum"
 	var hints: Array[String] = ["Choose machines the planner may build. Unsupported machines remain visible but cannot be enabled.",
@@ -146,7 +157,8 @@ func _category_changed(category: int) -> void:
 		"External supplies are deliberate imports into the factory. Select a resource to set its rate limit and cost. Item rates use items/s; fluid rates use mB/s; power uses EU/s.",
 		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible.",
 		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. Construction workstations must already be available. Whole batches round crafts and tools; random yields remain estimates. Supplies here are quantities, not rates.",
-		"Enable towers, then choose their count, input/receiver tier, and planned transfer. Idle drain adds to other overhead. Structural bills assume independent cable networks; receiver coverage needs a separate check."]
+		"Enable towers, then choose their count, input/receiver tier, and planned transfer. Idle drain adds to other overhead. Structural bills assume independent cable networks; receiver coverage needs a separate check.",
+		"Choose lossless storage tiers for periodic generation. The planner sizes whole units and their initial charge. Solar's uncertain cell gap currently supports one selected tier; weather and cable reach remain your assumptions."]
 	%SettingsHint.text = hints[category]
 	match category:
 		0:
@@ -196,6 +208,13 @@ func _category_changed(category: int) -> void:
 					for variant: Dictionary in machine.get("infrastructure", []):
 						if variant.id == selection.variant:
 							_entries.append({"id": selection.id, "name": "%s · %s" % [variant.get("name", variant.id), selection.id], "variant": variant, "selection": selection.duplicate(true), "detail": selection.get("operation_basis", "Separate infrastructure configuration.")})
+		8:
+			for machine: Dictionary in _dataset.get("machines", []):
+				if machine.get("mechanic") != "energy_storage":
+					continue
+				var rule: Dictionary = machine.storage
+				_entries.append({"id": machine.id, "name": _names.get("item:" + str(machine.id), machine.id),
+					"detail": "%s EU capacity; %s EU/t charge and %s EU/t discharge per unit. %s" % [PlannerDisplay.number(rule.capacity_eu), PlannerDisplay.number(rule.charge_eu_per_tick), PlannerDisplay.number(rule.discharge_eu_per_tick), rule.get("basis", "")]})
 	_filter(%SettingsSearch.text)
 
 
@@ -250,6 +269,7 @@ func _enabled(id: String) -> bool:
 		5: return id in _request.available_parts
 		7: return _request.infrastructure.any(func(entry: Dictionary) -> bool: return _infrastructure_key(entry) == id)
 		6: return _construction.external.any(func(entry: Dictionary) -> bool: return entry.resource == id)
+		8: return id in _request.periodic_storage
 	return false
 
 
@@ -272,6 +292,14 @@ func _entry_changed() -> void:
 			_request.infrastructure.append(selection)
 		_entry_selected()
 		return
+	if %SettingsCategory.selected == 8:
+		_request.periodic_storage.erase(id)
+		if item.is_checked(0):
+			_request.periodic_storage.append(id)
+			if !id in _request.available_machines:
+				_request.available_machines.append(id)
+		_entry_selected()
+		return
 	var enabled := item.is_checked(0)
 	if %SettingsCategory.selected in [4, 6]:
 		var record: Dictionary = _construction if %SettingsCategory.selected == 6 else _request
@@ -289,6 +317,24 @@ func _entry_changed() -> void:
 
 func _entry_selected() -> void:
 	_supply_reset()
+	if %SettingsCategory.selected == 8:
+		var chosen: TreeItem = %SettingsEntries.get_selected()
+		var enabled: bool = chosen != null && chosen.get_metadata(0) in _request.periodic_storage
+		%StorageInstalledEnabled.disabled = !enabled
+		%StorageLimitEnabled.disabled = !enabled
+		%StorageInstalled.editable = enabled && %StorageInstalledEnabled.button_pressed
+		%StorageLimit.editable = enabled && %StorageLimitEnabled.button_pressed
+		if enabled:
+			var id: String = chosen.get_metadata(0)
+			_loading = true
+			%StorageInstalledEnabled.set_pressed_no_signal(_request.periodic_storage_installed.has(id))
+			%StorageInstalled.set_value_no_signal(_request.periodic_storage_installed.get(id, 1))
+			%StorageLimitEnabled.set_pressed_no_signal(_request.periodic_storage_limits.has(id))
+			%StorageLimit.set_value_no_signal(_request.periodic_storage_limits.get(id, 1))
+			%StorageInstalled.editable = %StorageInstalledEnabled.button_pressed
+			%StorageLimit.editable = %StorageLimitEnabled.button_pressed
+			_loading = false
+		return
 	if %SettingsCategory.selected == 7:
 		%InfrastructureCount.editable = false
 		%InfrastructureHatch.disabled = true
@@ -348,6 +394,25 @@ func _infrastructure_changed() -> void:
 			if hatch.is_empty(): entry.erase("energy_hatch")
 			else: entry.energy_hatch = hatch
 			entry.transmit_eu_per_tick = PlannerDisplay.input_value(%InfrastructureTransfer)
+
+
+func _storage_changed() -> void:
+	if _loading || %SettingsCategory.selected != 8:
+		return
+	var chosen: TreeItem = %SettingsEntries.get_selected()
+	if !chosen || !chosen.get_metadata(0) in _request.periodic_storage:
+		return
+	var id: String = chosen.get_metadata(0)
+	%StorageInstalled.editable = %StorageInstalledEnabled.button_pressed
+	%StorageLimit.editable = %StorageLimitEnabled.button_pressed
+	if %StorageInstalledEnabled.button_pressed:
+		_request.periodic_storage_installed[id] = int(%StorageInstalled.value)
+	else:
+		_request.periodic_storage_installed.erase(id)
+	if %StorageLimitEnabled.button_pressed:
+		_request.periodic_storage_limits[id] = int(%StorageLimit.value)
+	else:
+		_request.periodic_storage_limits.erase(id)
 
 
 func _supply_changed() -> void:

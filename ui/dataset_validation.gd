@@ -71,6 +71,17 @@ static func check(value: Variant) -> String:
 		for configuration: Variant in recipe.configurations:
 			if !(configuration is Dictionary) || !(configuration.get("id") is String) || !(configuration.get("machine") is String) || !_positive(configuration.get("operations_per_second")):
 				return "Recipe %s has an invalid machine configuration." % recipe.id
+			if configuration.has("periodic_generation"):
+				var profile: Variant = configuration.periodic_generation
+				if !(profile is Dictionary) || !_positive(profile.get("period_ticks")) || floor(profile.period_ticks) != profile.period_ticks || profile.period_ticks > 1000000 || !(profile.get("segments") is Array) || profile.segments.is_empty():
+					return "Periodic generation in %s needs a bounded whole-tick profile." % recipe.id
+				var covered := 0
+				for segment: Variant in profile.segments:
+					if !(segment is Dictionary) || !_positive(segment.get("ticks")) || floor(segment.ticks) != segment.ticks || !_nonnegative(segment.get("eu_per_tick")):
+						return "Periodic generation in %s has an invalid power segment." % recipe.id
+					covered += int(segment.ticks)
+				if covered != profile.period_ticks || !_nonnegative(profile.get("one_event_loss_eu_per_period", 0)):
+					return "Periodic generation in %s does not cover its period or event loss." % recipe.id
 			catalog_ids.machines[configuration.machine] = true
 	if !(value.get("route_preferences", []) is Array):
 		return "Route preferences must be a list."
@@ -113,12 +124,16 @@ static func check_plan(value: Variant) -> String:
 		return "The plan's dataset identity does not match its embedded data."
 	if !(value.get("request") is Dictionary) || !(value.request.get("goals") is Array):
 		return "The plan has no valid goal list."
-	for field: String in ["available_machines", "disabled_machines", "available_upgrades", "disabled_upgrades", "available_parts", "disabled_recipes", "obtained_resources", "available_dimensions", "available_biomes"]:
+	for field: String in ["available_machines", "disabled_machines", "available_upgrades", "disabled_upgrades", "available_parts", "disabled_recipes", "obtained_resources", "available_dimensions", "available_biomes", "periodic_storage"]:
 		if !_string_list(value.request.get(field, [])):
 			return "The plan's %s field must be a list of text IDs." % field
-	for field: String in ["weights", "routes", "configurations", "machine_setups", "ingredients", "catalysts", "installed", "limits", "dispatch"]:
+	for field: String in ["weights", "routes", "configurations", "machine_setups", "ingredients", "catalysts", "installed", "limits", "dispatch", "periodic_storage_limits", "periodic_storage_installed"]:
 		if !(value.request.get(field, {}) is Dictionary):
 			return "The plan's %s field must be an object." % field
+	for field: String in ["periodic_storage_limits", "periodic_storage_installed"]:
+		for amount: Variant in value.request.get(field, {}).values():
+			if !_nonnegative(amount) || floor(amount) != amount:
+				return "The plan's %s counts must be whole and nonnegative." % field
 	if !(value.request.get("external", []) is Array):
 		return "External supplies must be a list."
 	for supply: Variant in value.request.get("external", []):
