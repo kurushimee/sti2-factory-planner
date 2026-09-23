@@ -77,6 +77,12 @@ public final class PlannerProbe {
                     try { return captureCrystallarieum(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_probe_spectrum_automation")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return captureSpectrumAutomation(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -211,6 +217,229 @@ public final class PlannerProbe {
         } finally {
             level.setBlockAndUpdate(above, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
             level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        }
+    }
+
+    private static int captureSpectrumAutomation(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var position = new BlockPos(672, 160, 0);
+        var pickerPosition = position.east(4);
+        var machineNodePosition = position.east();
+        var pickerNodePosition = pickerPosition.east();
+        var planePosition = position.above(2);
+        var storagePosition = planePosition.east();
+        var chestPosition = storagePosition.east();
+        var cellPosition = planePosition.west();
+        var acceptorPosition = cellPosition.above();
+        for (var place : new BlockPos[]{position, position.above(), pickerPosition,
+                machineNodePosition, pickerNodePosition, planePosition, storagePosition,
+                chestPosition, cellPosition, acceptorPosition}) {
+            if (!level.getBlockState(place).isAir())
+                throw new IllegalStateException("The Spectrum automation probe area is occupied.");
+        }
+        var machineBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.CRYSTALLARIEUM.get();
+        var pickerBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.COLOR_PICKER.get();
+        var nodeBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.INK_NODE.get();
+        var liquid = BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse("spectrum:liquid_crystal"));
+        var brown = de.dafuqs.spectrum.api.ink.color.InkColor.ofIdString("spectrum:brown").orElseThrow();
+        var report = new JsonObject();
+        level.setBlockAndUpdate(position, machineBlock.defaultBlockState());
+        level.setBlockAndUpdate(pickerPosition, pickerBlock.defaultBlockState());
+        level.setBlockAndUpdate(machineNodePosition, nodeBlock.defaultBlockState().setValue(
+                de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlock.FACING,
+                net.minecraft.core.Direction.EAST));
+        level.setBlockAndUpdate(pickerNodePosition, nodeBlock.defaultBlockState().setValue(
+                de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlock.FACING,
+                net.minecraft.core.Direction.EAST));
+        level.setBlockAndUpdate(planePosition, appeng.core.definitions.AEBlocks.CABLE_BUS.block().defaultBlockState());
+        level.setBlockAndUpdate(storagePosition, appeng.core.definitions.AEBlocks.CABLE_BUS.block().defaultBlockState());
+        level.setBlockAndUpdate(chestPosition, net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        level.setBlockAndUpdate(cellPosition, appeng.core.definitions.AEBlocks.ENERGY_CELL.block().defaultBlockState());
+        level.setBlockAndUpdate(acceptorPosition, appeng.core.definitions.AEBlocks.ENERGY_ACCEPTOR.block().defaultBlockState());
+        try {
+            var machine = (de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity)
+                    level.getBlockEntity(position);
+            var picker = (de.dafuqs.spectrum.blocks.ink.gen.ColorPickerBlockEntity)
+                    level.getBlockEntity(pickerPosition);
+            var machineNode = (de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity)
+                    level.getBlockEntity(machineNodePosition);
+            var pickerNode = (de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity)
+                    level.getBlockEntity(pickerNodePosition);
+            var planeCable = (appeng.blockentity.networking.CableBusBlockEntity) level.getBlockEntity(planePosition);
+            var storageCable = (appeng.blockentity.networking.CableBusBlockEntity) level.getBlockEntity(storagePosition);
+            planeCable.addPart(appeng.core.definitions.AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT), null, null);
+            storageCable.addPart(appeng.core.definitions.AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT), null, null);
+            var plane = planeCable.addPart(appeng.core.definitions.AEParts.ANNIHILATION_PLANE.get(),
+                    net.minecraft.core.Direction.DOWN, null);
+            var storage = storageCable.addPart(appeng.core.definitions.AEParts.STORAGE_BUS.get(),
+                    net.minecraft.core.Direction.EAST, null);
+            storage.getConfig().setStack(0, new appeng.api.stacks.GenericStack(
+                    appeng.api.stacks.AEItemKey.of(BuiltInRegistries.ITEM.get(
+                            net.minecraft.resources.ResourceLocation.parse("spectrum:pure_iron"))), 1));
+            var chest = (net.minecraft.world.level.block.entity.ChestBlockEntity) level.getBlockEntity(chestPosition);
+            var cell = (appeng.blockentity.networking.EnergyCellBlockEntity) level.getBlockEntity(cellPosition);
+            var acceptor = (appeng.blockentity.networking.EnergyAcceptorBlockEntity) level.getBlockEntity(acceptorPosition);
+            planeCable.onReady();
+            storageCable.onReady();
+            cell.onReady();
+            acceptor.onReady();
+            var grid = (appeng.me.Grid) cell.getMainNode().getGrid();
+            if (grid != plane.getMainNode().getGrid() || grid != storage.getMainNode().getGrid())
+                throw new IllegalStateException("The placed Spectrum harvest grid is disconnected.");
+            machine.getFluidTank().setFluid(new net.neoforged.neoforge.fluids.FluidStack(liquid, 1000));
+            picker.setItem(1, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_DYE, 64));
+            machineNode.connectToNearbyNodes(null);
+            pickerNode.connectToNearbyNodes(null);
+            if (machineNode.getServerNetwork().isEmpty() || pickerNode.getServerNetwork().isEmpty()
+                    || machineNode.getServerNetwork().get() != pickerNode.getServerNetwork().get())
+                throw new IllegalStateException("The placed ink nodes did not form one network.");
+            var earlyStarter = new net.minecraft.world.entity.item.ItemEntity(level,
+                    position.getX() + 0.5, position.getY() + 1, position.getZ() + 0.5,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON));
+            machineBlock.fallOn(level, level.getBlockState(position), position, earlyStarter, 1);
+            if (!earlyStarter.getItem().isEmpty() || !level.getBlockState(position.above()).is(BuiltInRegistries.BLOCK.get(
+                    net.minecraft.resources.ResourceLocation.parse("spectrum:small_iron_bud"))))
+                throw new IllegalStateException("The control bud did not plant.");
+            int earlyRemovedTick = -1;
+            for (int tick = 1; tick <= 200; tick++) {
+                acceptor.injectExternalPower(appeng.api.config.PowerUnit.FE, 403200,
+                        appeng.api.config.Actionable.MODULATE);
+                grid.onServerStartTick();
+                grid.onLevelStartTick(level);
+                grid.onLevelEndTick(level);
+                grid.onServerEndTick();
+                if (level.getBlockState(position.above()).isAir()) {
+                    earlyRemovedTick = tick;
+                    break;
+                }
+            }
+            if (earlyRemovedTick < 0)
+                throw new IllegalStateException("The continuously active plane did not clear the immature control bud.");
+            for (int slot = 0; slot < chest.getContainerSize(); slot++)
+                if (!chest.getItem(slot).isEmpty())
+                    throw new IllegalStateException("The immature control bud reached the filtered output chest.");
+            report.addProperty("always_on_removed_small_bud_after_ticks", earlyRemovedTick);
+            var transfer = new JsonArray();
+            var cycles = new JsonArray();
+            report.addProperty("grid_idle_ae_per_tick", grid.getEnergyService().getIdlePowerUsage());
+            for (int cycle = 0; cycle < 2; cycle++) {
+                var starter = new net.minecraft.world.entity.item.ItemEntity(level,
+                        position.getX() + 0.5, position.getY() + 1, position.getZ() + 0.5,
+                        new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON));
+                machineBlock.fallOn(level, level.getBlockState(position), position, starter, 1);
+                if (!starter.getItem().isEmpty())
+                    throw new IllegalStateException("The dropped starter was not accepted.");
+                if (cycle == 0) {
+                    var additive = new net.minecraft.world.entity.item.ItemEntity(level,
+                            position.getX() + 0.5, position.getY() + 1, position.getZ() + 0.5,
+                            new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_NUGGET, 64));
+                    machineBlock.fallOn(level, level.getBlockState(position), position, additive, 1);
+                    if (!additive.getItem().isEmpty())
+                        throw new IllegalStateException("The dropped additive was not accepted.");
+                }
+                int ticks = 0;
+                int matureTick = -1;
+                long harvested = 0;
+                double energy = 0;
+                while (harvested == 0 && ticks < 2000) {
+                    if (cycle == 1 && ticks == 1)
+                        picker.setItem(1, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_DYE, 64));
+                    if (ticks % 5 == 0) picker.tickLogic(level);
+                    de.dafuqs.spectrum.blocks.pastel_network.network.ServerPastelNetworkManager.get(level).tick();
+                    de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity.serverTick(
+                            level, position, level.getBlockState(position), machine);
+                    if (matureTick < 0 && level.getBlockState(position.above()).is(BuiltInRegistries.BLOCK.get(
+                            net.minecraft.resources.ResourceLocation.parse("spectrum:iron_cluster"))))
+                        matureTick = ticks + 1;
+                    if (matureTick >= 0) {
+                        acceptor.injectExternalPower(appeng.api.config.PowerUnit.FE, 403200,
+                                appeng.api.config.Actionable.MODULATE);
+                        double before = cell.getAECurrentPower();
+                        grid.onServerStartTick();
+                        grid.onLevelStartTick(level);
+                        grid.onLevelEndTick(level);
+                        grid.onServerEndTick();
+                        energy += before - cell.getAECurrentPower();
+                    }
+                    for (int slot = 0; slot < chest.getContainerSize(); slot++) {
+                        var stack = chest.getItem(slot);
+                        if (!stack.isEmpty()) {
+                            if (!BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals("spectrum:pure_iron"))
+                                throw new IllegalStateException("The harvest chest received a different item.");
+                            harvested += stack.getCount();
+                            chest.setItem(slot, net.minecraft.world.item.ItemStack.EMPTY);
+                        }
+                    }
+                    ticks++;
+                    if (ticks == 1 || ticks == 100 || ticks == 600 || ticks == 1000) {
+                        var sample = new JsonObject();
+                        sample.addProperty("cycle", cycle);
+                        sample.addProperty("tick", ticks);
+                        sample.addProperty("picker_ink", picker.getInkStorage().getEnergy(brown));
+                        sample.addProperty("machine_ink", machine.getInkStorage().getEnergy(brown));
+                        transfer.add(sample);
+                    }
+                }
+                if (ticks >= 2000)
+                    throw new IllegalStateException("The ink-fed cluster did not mature in 2,000 ticks: block="
+                            + BuiltInRegistries.BLOCK.getKey(level.getBlockState(position.above()).getBlock())
+                            + ", picker_ink=" + picker.getInkStorage().getEnergy(brown)
+                            + ", machine_ink=" + machine.getInkStorage().getEnergy(brown)
+                            + ", dyes=" + picker.getItem(1).getCount()
+                            + ", additive=" + machine.getItem(0).getCount()
+                            + ", network=" + machineNode.getServerNetwork().isPresent()
+                            + ", plane_active=" + plane.getMainNode().isActive()
+                            + ", mature_tick=" + matureTick);
+                var result = new JsonObject();
+                result.addProperty("cycle", cycle);
+                result.addProperty("growth_ticks", ticks);
+                result.addProperty("mature_tick", matureTick);
+                result.addProperty("harvested", harvested);
+                result.addProperty("network_energy_ae", energy);
+                result.addProperty("plane_active", plane.getMainNode().isActive());
+                result.addProperty("top_cleared", level.getBlockState(position.above()).isAir());
+                result.addProperty("picker_ink", picker.getInkStorage().getEnergy(brown));
+                result.addProperty("machine_ink", machine.getInkStorage().getEnergy(brown));
+                result.addProperty("additive_remaining", machine.getItem(0).getCount());
+                result.addProperty("dyes_remaining", picker.getItem(1).getCount());
+                cycles.add(result);
+                if (!level.getBlockState(position.above()).isAir() || harvested < 3 || harvested > 5)
+                    throw new IllegalStateException("The placed AE2 plane did not clear and collect the mature cluster.");
+            }
+            report.add("ink_transfer", transfer);
+            report.add("cycles", cycles);
+            report.addProperty("pickup_control", "The isolated fixture ticks the placed AE2 grid only after the crop reaches its mature cluster state. A continuous always-on grid harvested immature buds before they could grow.");
+            report.addProperty("fluid_remaining_mb", machine.getFluidTank().getFluidAmount());
+            var loadedRecipes = new java.util.ArrayList<>(server.getRecipeManager().getAllRecipesFor(
+                    de.dafuqs.spectrum.registries.SpectrumRecipeTypes.CRYSTALLARIEUM));
+            loadedRecipes.sort(java.util.Comparator.comparing(holder -> holder.id().toString()));
+            var lootSamples = new JsonArray();
+            for (var holder : loadedRecipes) {
+                var stage = holder.value().getGrowthStages().getLast();
+                level.setBlockAndUpdate(position.above(), stage);
+                var drops = net.minecraft.world.level.block.Block.getDrops(stage, level, position.above(),
+                        null, null, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_PICKAXE));
+                if (drops.size() != 1 || drops.get(0).getCount() < 3 || drops.get(0).getCount() > 5)
+                    throw new IllegalStateException("The loaded cluster loot changed for " + holder.id());
+                var sample = new JsonObject();
+                sample.addProperty("recipe", holder.id().toString());
+                sample.addProperty("cluster", BuiltInRegistries.BLOCK.getKey(stage.getBlock()).toString());
+                sample.addProperty("item", BuiltInRegistries.ITEM.getKey(drops.get(0).getItem()).toString());
+                sample.addProperty("count", drops.get(0).getCount());
+                lootSamples.add(sample);
+            }
+            report.add("loaded_loot_samples", lootSamples);
+            level.setBlockAndUpdate(position.above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            Files.createDirectories(Path.of("planner-extraction"));
+            Files.writeString(Path.of("planner-extraction/spectrum-automation.json"),
+                    new GsonBuilder().setPrettyPrinting().create().toJson(report));
+            System.out.println("Planner Spectrum automation measured two ink-fed growth and pickup cycles.");
+            return 1;
+        } finally {
+            for (var place : new BlockPos[]{position.above(), planePosition, storagePosition,
+                    chestPosition, cellPosition, acceptorPosition, machineNodePosition,
+                    pickerNodePosition, pickerPosition, position})
+                level.setBlockAndUpdate(place, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
         }
     }
 
