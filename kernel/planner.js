@@ -14,6 +14,9 @@ import {refineMaterialPlan} from './material_refinement.js';
 import {balanceTolerance, diagnosticNumber, scaleConstraintRows} from './numerics.js';
 import {preferredRecipes, describePreferences} from './recipe_preferences.js';
 import {appendPeriodicDispatch, decodePeriodicDispatch, expandPowerProfile, PeriodicBalanceError} from './periodic_model.js';
+import {exactInstalledCapacity} from './exact_capacity.js';
+import {recoverExactProduction} from './exact_recovery.js';
+import * as Q from './rational.js';
 
 const ENERGY = 'energy:eu';
 
@@ -304,7 +307,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   }
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');
-  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers,
+  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers, request,
     infrastructure, periodic: periodic && {...periodic, lines: periodicLines, storage: selectedStorage}};
 }
 
@@ -355,6 +358,7 @@ export function decodeFactory(model, solution) {
     machines: Math.round(value(line.machine)),
     operations_per_second: value(line.operation),
     capacity_per_second: Math.round(value(line.machine)) * line.configuration.operations_per_second,
+    capacity_per_second_exact: exactInstalledCapacity(line.configuration, Math.round(value(line.machine))),
     utilization: value(line.operation) / (Math.round(value(line.machine)) * line.configuration.operations_per_second),
     inputs: combineFlows(line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable)}))),
     ingredient_choices: line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable), slot: term.slot})).filter(flow => flow.rate > 0),
@@ -403,8 +407,80 @@ export function decodeFactory(model, solution) {
     power.periodic = periodic;
     startup.energy_storage_initial_charge_eu = periodic.storage.reduce((sum, unit) => sum + unit.initial_charge_eu, 0);
   }
-  return {lines, balances, power, startup, steady_state_only: true, external,
+  const result = {lines, balances, power, startup, steady_state_only: true, external,
     ...(construction ? {construction} : {}), ...(periodic ? {periodic_power: periodic} : {}), ...flows};
+  if (model.request.exact_production) {
+    try {
+      const exact = recoverExactProduction(model, solution, result);
+      const quantity = record => {
+        const rate = Q.ratio(BigInt(record.numerator), BigInt(record.denominator));
+        const numeric = Q.number(rate);
+        if (!Number.isFinite(numeric) || rate.n !== 0n && numeric === 0) {
+          throw new Error('An exact positive flow is outside the graph numeric range.');
+        }
+        return numeric;
+      };
+      const perTick = record => Q.record(Q.divide(Q.ratio(BigInt(record.numerator), BigInt(record.denominator)), Q.decimal(20)));
+      const matched = new Map(exact.lines.map(line => [line.configuration, line]));
+      for (const line of result.lines) {
+        const source = matched.get(line.configuration);
+        if (!source) continue;
+        line.operations_per_second = quantity(source.operations_per_second);
+        line.operations_per_second_exact = source.operations_per_second;
+        line.inputs = source.inputs.map(flow => ({resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate,
+          ...(flow.resource === ENERGY ? {rate_eu_per_tick_exact: perTick(flow.rate)} : {})}));
+        line.outputs = source.outputs.map(flow => ({resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate,
+          ...(flow.resource === ENERGY ? {rate_eu_per_tick_exact: perTick(flow.rate)} : {})}));
+        line.power_eu_per_tick = quantity(source.power_eu_per_second) / 20;
+        line.power_eu_per_second_exact = source.power_eu_per_second;
+        line.power_eu_per_tick_exact = perTick(source.power_eu_per_second);
+        line.utilization = line.operations_per_second / line.capacity_per_second;
+        let capacity = line.capacity_per_second_exact;
+        if (!capacity && Number.isSafeInteger(line.configuration_details.operations_per_second)) {
+          capacity = Q.record(Q.multiply(Q.decimal(line.machines), Q.decimal(line.configuration_details.operations_per_second)));
+          line.capacity_per_second_exact = capacity;
+        }
+        if (capacity) {
+          const utilization = Q.divide(Q.ratio(BigInt(source.operations_per_second.numerator), BigInt(source.operations_per_second.denominator)),
+            Q.ratio(BigInt(capacity.numerator), BigInt(capacity.denominator)));
+          line.utilization_exact = Q.record(utilization);
+          line.utilization_percent_exact = Q.record(Q.multiply(utilization, Q.decimal(100)));
+        }
+      }
+      result.balances = exact.balances.map(balance => ({resource: balance.resource,
+        demand: quantity(balance.demand), net: quantity(balance.net), surplus: quantity(balance.surplus),
+        demand_exact: balance.demand, net_exact: balance.net, surplus_exact: balance.surplus,
+        numerical_tolerance: 0}));
+      result.external = exact.external.map(flow => ({resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate}));
+      result.connections = exact.connections.map(flow => ({source: flow.source, destination: flow.destination,
+        resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate,
+        ...(flow.resource === ENERGY ? {rate_eu_per_tick_exact: perTick(flow.rate)} : {})}));
+      result.retained = exact.retained.map(flow => ({resource: flow.resource, source: flow.source,
+        rate: quantity(flow.rate), rate_exact: flow.rate}));
+      result.flow_roundoff = [];
+      result.flow_roundoff_links = [];
+      const attribution = generationSupport(result.lines, result.connections);
+      const gross = result.lines.reduce((sum, line) => sum + line.outputs.filter(flow => flow.resource === ENERGY)
+        .reduce((amount, flow) => amount + flow.rate / 20, 0), 0);
+      const consumption = result.lines.reduce((sum, line) => sum + line.power_eu_per_tick + line.inputs
+        .filter(flow => flow.resource === ENERGY).reduce((amount, flow) => amount + flow.rate / 20, 0), 0);
+      const externalPower = result.external.filter(flow => flow.resource === ENERGY)
+        .reduce((sum, flow) => sum + flow.rate / 20, 0);
+      result.power = {...result.power, ...attribution, gross_generation_eu_per_tick: gross,
+        net_generation_eu_per_tick: gross - attribution.generation_related_consumption_eu_per_tick,
+        consumption_eu_per_tick: consumption, external_eu_per_tick: externalPower,
+        operating_margin_eu_per_tick: gross + externalPower - consumption - demand};
+      for (const [field, amount] of Object.entries(exact.power)) {
+        result.power[field] = quantity(amount);
+        result.power[`${field}_exact`] = amount;
+      }
+      result.startup = {resources: [], build_requirements: [], incomplete: [],
+        preview_omitted: true, method: 'Warm-up stock requirements are not included in this production preview.'};
+      result.exact_production = {status: 'exact', ...exact};
+    }
+    catch (error) {result.exact_production = {status: 'unavailable', reason: error.message};}
+  }
+  return result;
 }
 
 export function solveFactory(highs, dataset, request, onProgress = () => {}) {
@@ -455,7 +531,7 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
   const finish = (status) => {
     if (!best) return {status, optimal: false, exclusions: lastExclusions, branches: visited};
     attachStructureBills(best, dataset, {allowed_parts: request.available_parts});
-    best.startup = startupRequirements(best.lines);
+    if (best.exact_production?.status !== 'exact') best.startup = startupRequirements(best.lines);
     if (best.periodic_power) best.startup.energy_storage_initial_charge_eu =
       best.periodic_power.storage.reduce((sum, unit) => sum + unit.initial_charge_eu, 0);
     const proven = status === 'optimal' && completeSearch;
@@ -472,7 +548,10 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
     lastExclusions = model.exclusions;
     if (!visited && model.lines.length > 2000 && !request.construction) {
       const seed = findFactorySeed(highs, model, request, deadline, candidate => {
-        try { decodeFactory(model, candidate); return true; }
+        try {
+          const decoded = decodeFactory(model, candidate);
+          return decoded.exact_production?.status !== 'unavailable';
+        }
         catch (error) {
           if (error instanceof FactoryBalanceError || error instanceof PeriodicBalanceError) return false;
           throw error;
@@ -541,6 +620,10 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
       }
       completeSearch = false;
       lowerBound = null;
+    }
+    if (decoded.exact_production?.status === 'unavailable') {
+      return best ? finish('limit') : {status: 'numerical_error', optimal: false,
+        reason: decoded.exact_production.reason};
     }
     const ownership = productionRouteOwnership(decoded, request);
     if (ownership.conflict.length) {

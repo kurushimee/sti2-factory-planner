@@ -85,7 +85,7 @@ func _ready() -> void:
 	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request, _world_import))
 	%Summary.pressed.connect(_show_power)
 	%ConnectionMode.item_selected.connect(func(_index: int) -> void: _refresh_connections(); _save_view())
-	%FocusRecipe.pressed.connect(_focus_recipe)
+	%FocusRecipe.pressed.connect(func() -> void: _focus_recipe(true))
 	%FactorySettings.settings_changed.connect(func(request: Dictionary) -> void:
 		_remember()
 		_request.assign(request)
@@ -363,7 +363,7 @@ func _load_dataset(value: Variant) -> bool:
 func _new_request() -> Dictionary[String, Variant]:
 	if _dataset.get("identity") == "statech-industry-2:2.0.1":
 		var request: Dictionary[String, Variant] = {
-			"goals": [], "replication": false, "production_only": true,
+			"goals": [], "replication": false, "production_only": true, "exact_production": true,
 			"external": [{"resource": "energy:eu", "cost": 0}],
 		}
 		for stage: Dictionary in _dataset.get("progression", []):
@@ -372,7 +372,7 @@ func _new_request() -> Dictionary[String, Variant]:
 				request.available_upgrades = stage.available_upgrades.duplicate()
 				break
 		return request
-	return {"goals": [], "replication": false}
+	return {"goals": [], "replication": false, "exact_production": true}
 
 
 func _filter_recipes(query: String) -> void:
@@ -971,7 +971,8 @@ func _select_node(node: Node) -> void:
 		%RemoveGoal.disabled = true
 		inspector.text = "[font_size=20]%s[/font_size]\n\n%s\n%s\n\n%s" % [
 			node.title, PlannerDisplay.markup(node.summary.text),
-			PlannerDisplay.flow_rate(endpoint.resource, endpoint.rate),
+			PlannerDisplay.flow_rate(endpoint.resource, endpoint.rate,
+				endpoint.get("rate_exact", {}), endpoint.get("rate_eu_per_tick_exact", {})),
 			"Change external supplies in Factory settings." if endpoint.kind == "external" else
 			"Select a producing recipe to change its goal or route." if endpoint.kind == "goal" else
 			"This input was not allocated to a supply. Its amount is within the recorded numerical tolerance and is not credited as production." if endpoint.kind == "gap" else
@@ -1075,7 +1076,7 @@ func _refresh_connections() -> void:
 			graph.connect_node(producer.name, producer.output_ports["energy:eu"], buffer.name, buffer.input_ports["energy:eu"])
 
 
-func _focus_recipe() -> void:
+func _focus_recipe(include_supplier: bool = false) -> void:
 	var by_key: Dictionary[String, PlannerRecipeNode] = {}
 	for node: PlannerRecipeNode in _nodes.values():
 		by_key[node.get_meta("position_key")] = node
@@ -1097,7 +1098,12 @@ func _focus_recipe() -> void:
 			candidates.append({"rect": Rect2(goal.position_offset, goal.size), "distance": 0.0})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.distance < b.distance)
-	graph.zoom = maxf(graph.zoom, 0.85)
+	graph.zoom = maxf(graph.zoom, 1.0)
+	if include_supplier && !candidates.is_empty():
+		var nearby: Rect2 = target.merge(candidates[0].rect)
+		var fit: float = minf((graph.size.x - 60) / nearby.size.x,
+			(graph.size.y - 60) / nearby.size.y)
+		graph.zoom = minf(graph.zoom, clampf(fit, graph.zoom_min, 1.0))
 	var chosen := 0
 	for candidate: Dictionary in candidates:
 		var expanded: Rect2 = target.merge(candidate.rect)

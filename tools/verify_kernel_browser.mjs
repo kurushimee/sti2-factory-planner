@@ -51,6 +51,9 @@ const server = createServer(async (incoming, response) => {
     const files = {
       '/kernel/worker.js': 'kernel/worker.js', '/kernel/planner.js': 'kernel/planner.js',
       '/kernel/solver.js': 'kernel/solver.js', '/kernel/seed.js': 'kernel/seed.js',
+      '/kernel/exact_capacity.js': 'kernel/exact_capacity.js',
+      '/kernel/exact_recovery.js': 'kernel/exact_recovery.js',
+      '/kernel/rational.js': 'kernel/rational.js',
       '/kernel/route_ownership.js': 'kernel/route_ownership.js',
       '/kernel/structure_bill.js': 'kernel/structure_bill.js',
       '/kernel/construction.js': 'kernel/construction.js',
@@ -132,6 +135,20 @@ try {
   assert.deepEqual(actual.phases, ['loading_solver', 'solving']);
   assert.equal(actual.isolated, false);
   assert.deepEqual(errors, []);
+  const exactData = {format: 1, resources: ['ore', 'part', 'scrap'].map(id => ({id})), recipes: [
+    {id: 'press', primary: 'part', inputs: [{resource: 'ore', amount: 1}],
+      outputs: [{resource: 'part', amount: 2}, {resource: 'scrap', amount: 1}],
+      configurations: [{id: 'press', machine: 'press', operations_per_second: 1,
+        capacity: {ticks_per_batch: 20}, build_cost: 1}]},
+    {id: 'recycle', primary: 'ore', inputs: [{resource: 'scrap', amount: 1}],
+      outputs: [{resource: 'ore', amount: 0.5}], configurations: [{id: 'recycle',
+        machine: 'recycle', operations_per_second: 1, capacity: {ticks_per_batch: 20}, build_cost: 1}]},
+  ]};
+  const exactRequest = {goals: [{resource: 'part', rate: 1}], external: [{resource: 'ore'}], exact_production: true};
+  const expectedExact = solveFactory(await loadHighs(), exactData, exactRequest);
+  const actualExact = await solveInBrowser(exactData, exactRequest);
+  assert.equal(actualExact.result.exact_production.status, 'exact');
+  assert.deepEqual(actualExact.result, expectedExact);
   const tinyData = {format: 1, resources: [{id: 'ore'}, {id: 'part'}], recipes: [{id: 'tiny', primary: 'part',
     inputs: [{resource: 'ore', amount: 1}], outputs: [{resource: 'part', amount: 1}],
     configurations: [{id: 'bench', machine: 'bench', operations_per_second: 1}]}]};

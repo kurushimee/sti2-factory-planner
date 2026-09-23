@@ -7,7 +7,7 @@ test('large finite quantities preserve every digit and exact completion ticks', 
   assert.equal(result.quantity, '1000000000000000000000000000001');
   assert.deepEqual(result.steady_production_seconds_exact, {numerator: '4000000000000000000000000000004', denominator: '1'});
   assert.equal(result.completion_ticks_ceil, '80000000000000000000000000000080');
-  assert.match(result.time_display, /Approximately/);
+  assert.equal(result.time_display, '4000000000000000000000000000004 seconds');
 });
 test('decimal quantities and rates give an exact ratio before upward tick rounding', () => {
   const result = productionTime('1.5', 0.9);
@@ -15,8 +15,8 @@ test('decimal quantities and rates give an exact ratio before upward tick roundi
   assert.equal(result.completion_ticks_ceil, '34');
   assert.equal(productionTime('6e2', 1).steady_production_seconds, 600);
   assert.equal(productionTime('1e1000', 1).steady_production_seconds, null);
-  assert.match(productionTime('1e1000', 1).time_display, /Approximately 1.00000e\+1000/);
-  assert.match(productionTime('0.0000001', 1).time_display, /e-7/);
+  assert.equal(productionTime('1e1000', 1).time_display, `${'1' + '0'.repeat(1000)} seconds`);
+  assert.equal(productionTime('0.0000001', 1).time_display, '1/10000000 seconds');
 });
 test('invalid and unbounded quantity text is rejected without rounded integer coercion', () => {
   for (const quantity of [0, -1, Infinity, 1e30, '-4', 'NaN', '0e2', '1e1001', '2'.repeat(1001)]) {

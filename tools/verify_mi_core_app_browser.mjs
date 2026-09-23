@@ -64,6 +64,12 @@ try {
   {timeout: 120000});
   const fresh = await frame.evaluate(() => window.testResult);
   assert.ok(['optimal', 'feasible'].includes(fresh.status));
+  assert.equal(fresh.exact_production.status, 'exact', fresh.exact_production.reason);
+  assert.deepEqual(fresh.flow_roundoff, []);
+  assert.equal(fresh.lines.find(line => line.recipe === goalRecipe).operations_per_second_exact.display,
+    '25411/24259');
+  assert.ok(fresh.connections.length > 100);
+  assert.ok(fresh.connections.every(flow => flow.rate_exact));
   assert.ok(fresh.external.some(flow => flow.resource === 'energy:eu'));
   assert.equal(fresh.lines.some(line => line.outputs.some(flow => flow.resource === 'energy:eu')), false);
   await page.screenshot({path: `${artifacts}/browser-mi-fresh-goal.png`});
@@ -107,6 +113,9 @@ try {
     alternative, {timeout: 120000});
   const result = await frame.evaluate(() => window.testResult);
   assert.ok(['optimal', 'feasible'].includes(result.status));
+  assert.equal(result.exact_production.status, 'exact', result.exact_production.reason);
+  assert.deepEqual(result.flow_roundoff, []);
+  assert.ok(result.connections.every(flow => flow.rate_exact));
   const savedRequest = async () => frame.evaluate(() => new Promise((done, reject) => {
     const opened = indexedDB.open('factory-planner', 1);
     opened.onerror = () => reject(opened.error);

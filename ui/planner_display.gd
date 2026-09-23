@@ -36,10 +36,18 @@ static func number(value: float) -> String:
 	return String.num(value, 3)
 
 
-static func flow_rate(resource: String, rate: float) -> String:
+static func flow_rate(resource: String, rate: float, exact: Dictionary = {}, eu_per_tick_exact: Dictionary = {}) -> String:
 	if resource == "energy:eu":
+		if !eu_per_tick_exact.is_empty():
+			return str(eu_per_tick_exact.display) + " EU/t"
 		return number(rate / 20.0) + " EU/t"
+	if !exact.is_empty():
+		return str(exact.display) + (" mB/s" if resource.begins_with("fluid:") else " /s")
 	return number(rate) + (" mB/s" if resource.begins_with("fluid:") else " /s")
+
+
+static func power_number(power: Dictionary, field: String) -> String:
+	return str(power.get(field + "_exact", {}).get("display", number(power.get(field, 0))))
 
 
 static func loadout(configuration: Dictionary, resources: Dictionary[String, String]) -> String:
@@ -99,11 +107,11 @@ static func power_report(power: Dictionary, resources: Dictionary = {}, construc
 		return "Add a goal to calculate factory power."
 	var text := "[font_size=20]Factory power[/font_size]\n\n[b]Running generation[/b]\n"
 	for entry: Array in [["Gross generation", "gross_generation_eu_per_tick"], ["Generation and fuel-chain use", "generation_related_consumption_eu_per_tick"], ["Net generation", "net_generation_eu_per_tick"], ["External supply", "external_eu_per_tick"]]:
-		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], number(power.get(entry[1], 0))]
+		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], power_number(power, entry[1])]
 	text += "\n[b]Factory demand[/b]\n"
 	for entry: Array in [["Other production", "other_production_consumption_eu_per_tick"], ["Infrastructure and power goals", "infrastructure_and_goal_eu_per_tick"], ["Remaining running margin", "operating_margin_eu_per_tick"]]:
-		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], number(power.get(entry[1], 0))]
-	text += "\n[b]Installed capacity[/b]\n%s EU/t generation\n%s EU/t available margin\n%s%% requested reserve\n" % [number(power.installed_generation_eu_per_tick), number(power.installed_margin_eu_per_tick), number(float(power.reserve_fraction) * 100)]
+		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], power_number(power, entry[1])]
+	text += "\n[b]Installed capacity[/b]\n%s EU/t generation\n%s EU/t available margin\n%s%% requested reserve\n" % [power_number(power, "installed_generation_eu_per_tick"), power_number(power, "installed_margin_eu_per_tick"), number(float(power.reserve_fraction) * 100)]
 	var infrastructure: Dictionary = power.get("infrastructure", {})
 	if !infrastructure.get("entries", []).is_empty():
 		text += "\n[b]Configured infrastructure[/b]\n%s EU/t manual overhead\n" % number(infrastructure.manual_eu_per_tick)
@@ -187,8 +195,16 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 		if flows.is_empty():
 			text += "None\n"
 		for flow: Dictionary in flows:
-			text += "%s · %s\n" % [markup(resources.get(flow.resource, readable_name(flow.resource))), flow_rate(flow.resource, flow.rate)]
-	text += "\n[b]Capacity and power[/b]\n%s operations/s installed\n%s%% utilization\nMachine draw: %s EU/t sustained\n" % [number(line.capacity_per_second), number(line.utilization * 100), number(line.power_eu_per_tick)]
+			text += "%s · %s\n" % [markup(resources.get(flow.resource, readable_name(flow.resource))),
+				flow_rate(flow.resource, flow.rate, flow.get("rate_exact", {}), flow.get("rate_eu_per_tick_exact", {}))]
+	var exact_capacity: Variant = line.get("capacity_per_second_exact")
+	var capacity_text := "Full-speed capacity: %s operations/s" % number(line.capacity_per_second)
+	if exact_capacity is Dictionary:
+		capacity_text = "Full-speed capacity: %s operations/s" % exact_capacity.display
+	text += "\n[b]Capacity and power[/b]\n%s\n" % capacity_text
+	text += "%s%% utilization\nMachine draw: %s EU/t sustained\n" % [
+		line.get("utilization_percent_exact", {}).get("display", number(line.utilization * 100)),
+		line.get("power_eu_per_tick_exact", {}).get("display", number(line.power_eu_per_tick))]
 	if capacity.has("ticks_per_batch"):
 		var energy_resource: String = configuration.get("capacity_input", {}).get("machine", {}).get("energy_resource", "energy:eu")
 		var energy_unit: String = "EU" if energy_resource == "energy:eu" else "mB " + resources.get(energy_resource, readable_name(energy_resource))
@@ -217,6 +233,8 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 			stock_text += "%s · %s%s\n" % [markup(resources.get(stock.resource, readable_name(stock.resource))), number(stock.quantity), " mB" if String(stock.resource).begins_with("fluid:") else ""]
 	if !stock_text.is_empty():
 		text += "\n[b]Startup stocks[/b]\n" + stock_text + "Factory totals for resources used by this line. Conservative cold-start reserves include other consumers.\n"
+	if startup.get("preview_omitted", false):
+		text += "\n[b]Warm-up stocks[/b]\nWarm-up stock requirements are not included in this production preview.\n"
 	var assumptions: Array = configuration.get("assumptions", []).duplicate()
 	assumptions.append_array(structure.get("assumptions", []))
 	if recipe.get("expected_yields", false):
