@@ -41,6 +41,18 @@ public final class PlannerProbe {
                     try { return createRotationFixture(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_probe_solar")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return captureSolarPanels(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
+        event.getDispatcher().register(Commands.literal("planner_probe_solar_roof")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return checkSolarRoofs(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -355,6 +367,91 @@ public final class PlannerProbe {
         }
         Files.writeString(Path.of("planner-extraction", "rotation-fixture.json"), new GsonBuilder().setPrettyPrinting().create().toJson(records));
         System.out.println("Planner rotation fixtures matched all four loaded steam quarries.");
+        return 1;
+    }
+
+    private static int captureSolarPanels(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var rows = new JsonArray();
+        level.setWeatherParameters(100000, 0, false, false);
+        String[] tiers = {"lv", "mv", "hv"};
+        for (int index = 0; index < tiers.length; index++) {
+            String tier = tiers[index];
+            var pos = new BlockPos(400 + index * 8, 250, 0);
+            var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("extended_industrialization:" + tier + "_solar_panel"));
+            var cell = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("extended_industrialization:" + tier + "_photovoltaic_cell"));
+            level.setBlockAndUpdate(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            level.setBlockAndUpdate(pos, block.defaultBlockState());
+            var panel = (net.swedz.extended_industrialization.machines.blockentity.SolarPanelMachineBlockEntity) level.getBlockEntity(pos);
+            var cellSlot = panel.getInventory().getItemStacks().getFirst();
+            cellSlot.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.item.ItemVariant.of(cell));
+            cellSlot.setAmount(1);
+            var energy = (aztech.modern_industrialization.machines.components.EnergyComponent) panel.getEnergyComponent();
+            var record = new JsonObject();
+            record.addProperty("machine", "extended_industrialization:" + tier + "_solar_panel");
+            record.addProperty("cell", "extended_industrialization:" + tier + "_photovoltaic_cell");
+            record.addProperty("can_see_sky", level.canSeeSky(pos.above()));
+            var samples = new JsonArray();
+            for (int time : new int[] {0, 1500, 6000, 10500, 12000, 12001}) {
+                level.setDayTime(time);
+                long before = energy.getEu();
+                panel.tick();
+                long made = energy.getEu() - before;
+                energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+                var sample = new JsonObject();
+                sample.addProperty("time", time);
+                sample.addProperty("generated_eu", made);
+                sample.addProperty("cell_ticks", cellSlot.toStack().getOrDefault(net.swedz.extended_industrialization.EIComponents.SOLAR_TICKS, 0));
+                samples.add(sample);
+            }
+            record.add("clear_samples", samples);
+            var water = panel.getInventory().getFluidStacks().getFirst();
+            var distilled = BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse("extended_industrialization:distilled_water"));
+            water.setKey(aztech.modern_industrialization.thirdparty.fabrictransfer.api.fluid.FluidVariant.of(distilled));
+            water.setAmount(10);
+            level.setDayTime(6000);
+            panel.tick();
+            record.addProperty("distilled_water_generated_eu", energy.getEu());
+            record.addProperty("distilled_water_remaining_mb", water.getAmount());
+            record.addProperty("distilled_water_cell_ticks", cellSlot.toStack().getOrDefault(net.swedz.extended_industrialization.EIComponents.SOLAR_TICKS, 0));
+            energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+            level.setWeatherParameters(0, 100000, true, false);
+            level.setRainLevel(1.0f);
+            panel.tick();
+            record.addProperty("rain_generated_eu", energy.getEu());
+            energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+            level.setWeatherParameters(100000, 0, false, false);
+            level.setRainLevel(0.0f);
+            level.setBlockAndUpdate(pos.above(2), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+            if (!record.get("can_see_sky").getAsBoolean()) throw new IllegalStateException("The solar fixture needs open sky.");
+            rows.add(record);
+        }
+        Files.writeString(Path.of("planner-extraction", "solar-panels.json"), new GsonBuilder().setPrettyPrinting().create().toJson(rows));
+        System.out.println("Planner solar panel samples captured from three loaded machines.");
+        return 1;
+    }
+
+    private static int checkSolarRoofs(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var path = Path.of("planner-extraction", "solar-panels.json");
+        var rows = com.google.gson.JsonParser.parseString(Files.readString(path)).getAsJsonArray();
+        level.setWeatherParameters(100000, 0, false, false);
+        level.setRainLevel(0.0f);
+        level.setDayTime(6000);
+        for (int index = 0; index < rows.size(); index++) {
+            var pos = new BlockPos(400 + index * 8, 250, 0);
+            var panel = (net.swedz.extended_industrialization.machines.blockentity.SolarPanelMachineBlockEntity) level.getBlockEntity(pos);
+            var energy = (aztech.modern_industrialization.machines.components.EnergyComponent) panel.getEnergyComponent();
+            var record = rows.get(index).getAsJsonObject();
+            record.addProperty("blocked_stone_present", level.getBlockState(pos.above(2)).is(net.minecraft.world.level.block.Blocks.STONE));
+            record.addProperty("blocked_can_see_sky", level.canSeeSky(pos.above()));
+            energy.consumeEu(energy.getEu(), aztech.modern_industrialization.util.Simulation.ACT);
+            panel.tick();
+            record.addProperty("blocked_generated_eu", energy.getEu());
+            level.setBlockAndUpdate(pos.above(2), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        }
+        Files.writeString(path, new GsonBuilder().setPrettyPrinting().create().toJson(rows));
+        System.out.println("Planner solar roof samples captured from three loaded machines.");
         return 1;
     }
 

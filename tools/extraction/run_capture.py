@@ -14,6 +14,7 @@ def main() -> None:
     parser.add_argument("--fixture", action="store_true", help="Create the controlled import fixture in the isolated test world.")
     parser.add_argument("--structure-fixture", action="store_true", help="Create and check the isolated multiblock structure fixture.")
     parser.add_argument("--rotation-fixture", action="store_true", help="Create and check four rotated steam quarries in the isolated test world.")
+    parser.add_argument("--solar-panel", action="store_true", help="Measure the three loaded solar panel tiers in the isolated test world.")
     parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     parser.add_argument("--certus-farm", action="store_true", help="Build and measure both certus farms in the isolated world.")
     args = parser.parse_args()
@@ -31,6 +32,8 @@ def main() -> None:
         )
         deadline = time.monotonic() + args.timeout
         sent = False
+        solar_captured_at = None
+        solar_roof_sent = False
         prepared_at = None
         try:
             while process.poll() is None:
@@ -54,10 +57,20 @@ def main() -> None:
                         commands.extend(["forceload add 48 -16 80 16", "tick freeze", "planner_fixture_structure", "save-all flush"])
                     if args.rotation_fixture:
                         commands.extend(["forceload add 240 -16 368 16", "tick freeze", "planner_fixture_rotation", "save-all flush"])
-                    commands.append("stop")
+                    if args.solar_panel:
+                        commands.extend(["forceload add 384 -16 432 16", "planner_probe_solar", "save-all flush"])
+                    if not args.solar_panel:
+                        commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
                     process.stdin.flush()
                     sent = True
+                if args.solar_panel and sent and not solar_roof_sent and "Planner solar panel samples captured from three loaded machines." in text:
+                    if solar_captured_at is None:
+                        solar_captured_at = time.monotonic()
+                    if time.monotonic() - solar_captured_at >= 2:
+                        process.stdin.write("planner_probe_solar_roof\nsave-all flush\nstop\n")
+                        process.stdin.flush()
+                        solar_roof_sent = True
                 time.sleep(0.25)
             text = log_path.read_text(encoding="utf-8", errors="replace")
             if process.returncode != 0 or "PLANNER_EXPORT_COMPLETE" not in text or "PLANNER_PROBE_COMPLETE" not in text:
@@ -70,6 +83,10 @@ def main() -> None:
                 raise RuntimeError(f"Structure fixture did not match. Inspect {log_path}.")
             if args.rotation_fixture and "Planner rotation fixtures matched all four loaded steam quarries." not in text:
                 raise RuntimeError(f"Rotated structure fixtures did not match. Inspect {log_path}.")
+            if args.solar_panel and "Planner solar panel samples captured from three loaded machines." not in text:
+                raise RuntimeError(f"Solar panel measurement did not finish. Inspect {log_path}.")
+            if args.solar_panel and "Planner solar roof samples captured from three loaded machines." not in text:
+                raise RuntimeError(f"Solar roof measurement did not finish. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:
