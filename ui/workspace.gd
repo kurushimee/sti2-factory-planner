@@ -361,6 +361,11 @@ func _load_dataset(value: Variant) -> bool:
 
 
 func _new_request() -> Dictionary[String, Variant]:
+	if _dataset.get("identity") == "example:1":
+		return {
+			"goals": [], "replication": false, "production_only": true, "exact_production": true,
+			"external": [{"resource": "energy:eu", "cost": 0}],
+		}
 	if _dataset.get("identity") == "statech-industry-2:2.0.1":
 		var request: Dictionary[String, Variant] = {
 			"goals": [], "replication": false, "production_only": true, "exact_production": true,
