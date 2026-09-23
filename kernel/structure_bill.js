@@ -14,9 +14,9 @@ function requiredCopies(part, demand) {
     return Math.ceil(demand.fluids.reduce((sum, fluid) => sum + Math.ceil(fluid.amount / slots[0]), 0) / slots.length);
   }
   if (demand.energy) {
-    if (!(capacity.energy_eu > 0) || !(capacity.cable_eu_per_tick > 0)) return Infinity;
+    if (!(capacity.energy_eu > 0)) return Infinity;
     if (demand.single_buffer && capacity.energy_eu < demand.energy.buffer) return Infinity;
-    return Math.max(1, Math.ceil(demand.energy.buffer / capacity.energy_eu), Math.ceil(demand.energy.rate / capacity.cable_eu_per_tick));
+    return Math.max(1, Math.ceil(demand.energy.buffer / capacity.energy_eu));
   }
   return 0;
 }
@@ -50,10 +50,10 @@ export function structureBill(shape, rules, hatches, demands, options = {}) {
     (options.steel === undefined || part.hatch_type.includes('energy') || Boolean(part.upgrades_steam_to_steel) === options.steel))
     .map(part => ({part, count: requiredCopies(part, demand)}))
     .filter(value => Number.isSafeInteger(value.count) && value.count > 0 && value.count <= cells.length)
-    .sort((a, b) => a.count - b.count || (a.part.hatch_capacity.cable_eu_per_tick ?? 0) - (b.part.hatch_capacity.cable_eu_per_tick ?? 0) ||
+    .sort((a, b) => a.count - b.count || (a.part.hatch_capacity.energy_eu ?? 0) - (b.part.hatch_capacity.energy_eu ?? 0) ||
       (a.part.hatch_capacity.fluid_slots_mb?.[0] ?? 0) - (b.part.hatch_capacity.fluid_slots_mb?.[0] ?? 0) ||
       (a.part.hatch_capacity.item_slots?.length ?? 0) - (b.part.hatch_capacity.item_slots?.length ?? 0) || a.part.id.localeCompare(b.part.id)));
-  if (variants.some(values => !values.length)) throw new StructureCapacityError('Available hatches cannot hold a complete batch or carry the required power.');
+  if (variants.some(values => !values.length)) throw new StructureCapacityError('Available hatches cannot hold a complete batch or its required energy buffer.');
   const cacheKey = options.cache ? JSON.stringify(variants.map(values => values.map(value => [value.part.id, value.count]))) : null;
   const cached = options.cache?.get(shape)?.get(cacheKey);
   if (cached) return cached;
@@ -79,10 +79,9 @@ export function structureBill(shape, rules, hatches, demands, options = {}) {
   });
   const report = {build_requirements: [...quantities].map(([resource, amount]) => ({resource, amount})), placements,
     assumptions: ['The controller is counted separately.', 'Hatch selection minimizes installed hatch count, then prefers lower capacities; it is not a material-cost optimum.',
-      'External transport must keep the selected hatches supplied and drained.', 'Placement coordinates use the captured controller-relative orientation.']};
+      'Items, fluids, and energy are supplied and drained without a transport limit.', 'Placement coordinates use the captured controller-relative orientation.']};
   if (demands.some(demand => demand.energy)) report.assumptions.push(
-    'Each energy hatch is sized for one independently supplied or drained cable network at its loaded transfer limit. Hatches sharing one network share its total limit.',
-    'Multiple isolated input networks or direct machine transfers can change the required hatch count. Cable placement is not verified by this bill.');
+    'Energy hatches provide enough internal storage for one production tick or the required output burst. Cable throughput does not size the build bill.');
   if (options.cache) {
     if (!options.cache.has(shape)) options.cache.set(shape, new Map());
     options.cache.get(shape).set(cacheKey, report);
@@ -156,15 +155,15 @@ export function attachStructureBills(result, dataset, options = {}, context = st
       }
       if (configuration.eu_per_operation > 0 || configuration.idle_eu_per_tick > 0) {
         const type = 'modern_industrialization:energy_input';
-        demands.set(type, {type, energy: {buffer: configuration.capacity.peak_eu_per_tick,
-          rate: configuration.capacity.average_full_load_eu_per_tick}});
+        demands.set(type, {type, energy: {buffer: configuration.capacity.peak_eu_per_tick}});
       }
       const energy = recipe.outputs.filter(value => value.resource === 'energy:eu').reduce((sum, value) => sum + value.amount, 0);
       if (energy) {
         const type = 'modern_industrialization:energy_output';
         const condition = recipe.conditions?.find(value => value.type === 'planner:energy_output_buffer');
-        demands.set(type, {type, energy: {buffer: condition?.capacity_eu ?? (machine.mechanic === 'buffered_fuel_generator' ? machine.max_eu_per_tick : energy * batch),
-          rate: energy * configuration.operations_per_second / 20}, single_buffer: Boolean(condition?.single_output_hatch)});
+        demands.set(type, {type, energy: {
+          buffer: condition?.capacity_eu ?? (machine.mechanic === 'buffered_fuel_generator' ? machine.max_eu_per_tick : energy * batch),
+        }, single_buffer: Boolean(condition?.single_output_hatch)});
       }
       const shape = machine.shapes.find(value => value.index === (setup.shape ?? 0));
       const report = structureBill(shape, dataset.shape_member_rules ?? [], hatches, [...demands.values()],
