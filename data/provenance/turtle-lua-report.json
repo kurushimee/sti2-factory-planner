@@ -1,0 +1,31 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "spectrum": "1.12.7-1.21.1-neo",
+  "cc_tweaked": "1.120.0",
+  "spectrum_jar_sha256": "6b3f8678c580d381a4e681f7640d637d75808ddce2ae3869d28714b3a347025a",
+  "cc_tweaked_jar_sha256": "81a903710d109d129c249c105695a96f4bad5e0acf7068920fb191ba791c14ce",
+  "loaded_runtime_sha256": "36e43eeed96f69e1763380d832fd1fd24ee298d3b1ef80618e087c82b894574b",
+  "trial_capture_sha256": "09bc5814fa52d0bfb921e935688e1d1c08e6a45632b5f7224a077c9e711f0d3e",
+  "private_world_archive_sha256": "1641f9f55528269bd5ca59971161c8ae7058dc0f76af7ec0aea98ed38b32a8a9",
+  "probe_jar_sha256": "fa2913373b9a852ef199e730875998e0cb6c63cc198cebf013cb1237f61462aa",
+  "startup_program_sha256": "0ceff23ca3cec22e58cdb70095796d4a06da2b7163039a9902ec23a6925ee00d",
+  "iron_trial": {
+    "harvest_ticks": [
+      633,
+      1262
+    ],
+    "repeat_interval_ticks": 629,
+    "output_chest_items": 7,
+    "brown_ink_per_growth": 240,
+    "liquid_crystal_initial_fill_mb": 1000,
+    "liquid_crystal_remaining_mb": 1000,
+    "stationary_turtle_fuel_used": 0
+  },
+  "planning_status": "autonomous_iron_trial_verified",
+  "limits": [
+    "One loaded two-cycle iron run establishes autonomous operation, not a guaranteed harvest yield or upper throughput bound.",
+    "Input chests held finite starter, dye, and nugget stocks; their upstream production and full construction bill remain to be planned.",
+    "The 1,000 mB liquid-crystal fill was supplied at startup; its acquisition and loss replacement remain separate requirements.",
+    "The program names iron stages and output. Other loaded Crystallarieum recipes still need matching automation and costs."
+  ]
+}

@@ -21,9 +21,16 @@ def main() -> None:
     parser.add_argument("--crystallarieum-fixture", action="store_true", help="Measure loaded Spectrum growth and harvesting in the isolated test world.")
     parser.add_argument("--spectrum-automation", action="store_true", help="Measure ink transfer, dropped inputs, and AE2 cluster pickup in an isolated world.")
     parser.add_argument("--turtle-growth", action="store_true", help="Test a CC: Tweaked turtle harvesting and replanting Spectrum growth.")
+    parser.add_argument("--turtle-lua", action="store_true", help="Run an autonomous CC: Tweaked turtle in the loaded world.")
     parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     parser.add_argument("--certus-farm", action="store_true", help="Build and measure both certus farms in the isolated world.")
     args = parser.parse_args()
+    if args.turtle_lua and any((args.fixture, args.structure_fixture, args.rotation_fixture,
+                                args.solar_panel, args.storage_fixture, args.blasting_fixture,
+                                args.blasting_save_fixture, args.crystallarieum_fixture,
+                                args.spectrum_automation, args.turtle_growth,
+                                args.structure_bill, args.certus_farm)):
+        parser.error("Run the autonomous turtle in its own unpaused capture.")
     if args.solar_panel and args.storage_fixture:
         parser.error("Run the solar measurement and frozen storage fixture in separate captures.")
     if args.solar_panel and args.blasting_fixture:
@@ -55,6 +62,9 @@ def main() -> None:
         raise SystemExit("Install the pinned NeoForge server before running the capture.")
     if not (instance / "mods/planner-probe.jar").is_file():
         raise SystemExit("Build and install the planner probe before running the capture.")
+    if args.turtle_lua:
+        (instance / "planner-turtle-startup.lua").write_bytes(
+            (Path(__file__).parent / "fixtures/spectrum_turtle.lua").read_bytes())
     log_path = instance / "planner-capture.log"
     with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
@@ -66,6 +76,9 @@ def main() -> None:
         solar_captured_at = None
         solar_roof_sent = False
         prepared_at = None
+        turtle_started_at = None
+        turtle_last_check_at = None
+        turtle_finish_sent = False
         try:
             while process.poll() is None:
                 if time.monotonic() >= deadline:
@@ -102,7 +115,9 @@ def main() -> None:
                         commands.extend(["forceload add 672 -16 688 16", "tick freeze", "planner_probe_spectrum_automation", "save-all flush"])
                     if args.turtle_growth:
                         commands.extend(["forceload add 704 -16 720 16", "tick freeze", "planner_probe_turtle_growth", "save-all flush"])
-                    if not args.solar_panel:
+                    if args.turtle_lua:
+                        commands.extend(["forceload add 736 -16 752 16", "planner_probe_turtle_lua_setup"])
+                    if not args.solar_panel and not args.turtle_lua:
                         commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
                     process.stdin.flush()
@@ -114,6 +129,18 @@ def main() -> None:
                         process.stdin.write("planner_probe_solar_roof\nsave-all flush\nstop\n")
                         process.stdin.flush()
                         solar_roof_sent = True
+                if args.turtle_lua and sent and not turtle_finish_sent:
+                    if "Planner autonomous turtle Lua trial started:" in text and turtle_started_at is None:
+                        turtle_started_at = time.monotonic()
+                    if "Planner autonomous turtle completed two harvests." in text:
+                        process.stdin.write("save-all flush\nstop\n")
+                        process.stdin.flush()
+                        turtle_finish_sent = True
+                    elif (turtle_started_at is not None and time.monotonic() - turtle_started_at >= 25
+                          and (turtle_last_check_at is None or time.monotonic() - turtle_last_check_at >= 5)):
+                        process.stdin.write("planner_probe_turtle_lua_check\n")
+                        process.stdin.flush()
+                        turtle_last_check_at = time.monotonic()
                 time.sleep(0.25)
             text = log_path.read_text(encoding="utf-8", errors="replace")
             if process.returncode != 0 or "PLANNER_EXPORT_COMPLETE" not in text or "PLANNER_PROBE_COMPLETE" not in text:
@@ -142,6 +169,8 @@ def main() -> None:
                 raise RuntimeError(f"Spectrum automation fixture did not finish. Inspect {log_path}.")
             if args.turtle_growth and "Planner turtle harvested and replanted two ink-fed iron clusters." not in text:
                 raise RuntimeError(f"Turtle growth fixture did not finish. Inspect {log_path}.")
+            if args.turtle_lua and "Planner autonomous turtle completed two harvests." not in text:
+                raise RuntimeError(f"Autonomous turtle trial did not finish. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:
