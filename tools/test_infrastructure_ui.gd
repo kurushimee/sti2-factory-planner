@@ -59,7 +59,7 @@ func _run() -> void:
 	assert(workspace._last_result.status == "optimal")
 	assert(workspace._last_result.power.infrastructure.total_eu_per_tick == 133)
 	assert(workspace._last_result.power.external_eu_per_tick == 133)
-	assert(workspace._last_result.power.infrastructure.entries[0].structure.build_requirements.any(func(part: Dictionary) -> bool: return part.resource == "item:modern_industrialization:mv_energy_input_hatch" && part.amount == 2))
+	assert(workspace._last_result.power.infrastructure.entries[0].structure.build_requirements.any(func(part: Dictionary) -> bool: return part.resource == "item:modern_industrialization:mv_energy_input_hatch" && part.amount == 1))
 	workspace._show_power()
 	assert("Copper Tesla tower" in workspace.inspector.text)
 	assert("transfer limit per machine" in workspace.inspector.text)

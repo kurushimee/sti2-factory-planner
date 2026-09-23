@@ -8,17 +8,17 @@ const rules = [{state_only_verified: true, matching_states: [{Name: 'test:casing
 const cell = (x, types) => ({position: [x, 0, 0], member_rule: 0, preview_block: 'test:casing', preview_items: ['test:casing'], allowed_hatches: types});
 const part = (id, type, capacity) => ({id, hatch_type: type, hatch_capacity: capacity});
 
-test('captured hatch sizing uses network transfer instead of nominal voltage', () => {
+test('hatch sizing uses internal energy storage and assumes sufficient transport', () => {
   const capture = JSON.parse(readFileSync(new URL('../data/provenance/runtime-report.json', import.meta.url)));
   const capacity = capture.hatch_capacities['modern_industrialization:lv_energy_input_hatch'];
   assert.equal(capacity.nominal_eu, 32);
   assert.equal(capacity.cable_eu_per_tick, 256);
   const result = structureBill({cells: [cell(0, ['energy'])]}, rules, [part('test:lv', 'energy', capacity)],
-    [{type: 'energy', energy: {buffer: 200, rate: 200}}]);
+    [{type: 'energy', energy: {buffer: 200, rate: 8192}}]);
   assert.deepEqual(result.build_requirements, [{resource: 'item:test:lv', amount: 1}]);
-  assert(result.assumptions.some(value => value.includes('sharing one network')));
+  assert(result.assumptions.some(value => value.includes('Cable throughput does not size')));
   assert.throws(() => structureBill({cells: [cell(0, ['energy'])]}, rules, [part('test:lv', 'energy', capacity)],
-    [{type: 'energy', energy: {buffer: 257, rate: 257}}]), /do not fit|cannot hold/);
+    [{type: 'energy', energy: {buffer: capacity.energy_eu + 1, rate: 1}}]), /do not fit|cannot hold/);
 });
 
 test('structure hatches replace casing cells and respect restricted positions', () => {
