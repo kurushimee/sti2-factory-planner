@@ -130,6 +130,14 @@ layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(225, 180)
 
+[node name="RecipeAvailability" type="Label" parent="Margin/Layout/Body/Library/Column"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.7, 0.49, 1)
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+
 [node name="Pages" type="HBoxContainer" parent="Margin/Layout/Body/Library/Column"]
 layout_mode = 2
 

@@ -1,10 +1,25 @@
-"""Compile loaded Crystallarieum growth variants with explicit farm assumptions."""
+"""Compile loaded Crystallarieum growth facts without inventing farm capacity."""
 
 import math
 
 
 FARM_MACHINE_ID = "spectrum:crystallarieum_turtle_farm"
-TURTLE_OVERHEAD_TICKS = 40
+
+UNSUPPORTED_FARM = (
+    "The loaded growth rule fixes crop timing, inputs, and the exact expected harvest, "
+    "but the autonomous turtle harvest and restart have no source-derived cycle time. "
+    "This route cannot be sized until its complete machine cycle is established."
+)
+
+
+def farm_machine():
+    return {
+        "id": FARM_MACHINE_ID,
+        "status": "unsupported",
+        "mechanic": "fixed_cycle",
+        "recipe_type": "spectrum:crystallarieum_growing",
+        "assumptions": [UNSUPPORTED_FARM],
+    }
 
 
 def operating_rule(seconds_per_stage, stage_count, ink_tier, acceleration, ink_modifier, chance):
@@ -18,7 +33,6 @@ def operating_rule(seconds_per_stage, stage_count, ink_tier, acceleration, ink_m
     growth_ticks = total_steps * 20
     return {
         "growth_ticks": growth_ticks,
-        "cycle_ticks": growth_ticks + TURTLE_OVERHEAD_TICKS,
         "ink_per_operation": ink_tier * ink_tier * acceleration * ink_modifier * total_steps,
         "additive_per_operation": chance * total_steps,
     }
@@ -68,7 +82,6 @@ def growth_variants(runtime, growth_report, resource_ids):
             chance = additive["consume_chance_per_second"]
             rule = operating_rule(seconds, len(stages), tier, acceleration, ink_modifier, chance)
             growth_ticks = rule["growth_ticks"]
-            cycle_ticks = rule["cycle_ticks"]
             additive_flow["amount"] = rule["additive_per_operation"]
             recipe_id = source_id + "|additive:" + str(index)
             output_name = harvest["ordinary_harvest"].split(":", 1)[1].replace("_", " ").title()
@@ -79,7 +92,7 @@ def growth_variants(runtime, growth_report, resource_ids):
                 "name": "Grow " + output_name + " with " + additive_name,
                 "group": "Resources",
                 "source_id": source_id,
-                "origin": "loaded_growth_and_autonomous_turtle_trial",
+                "origin": "loaded_growth_and_harvest_rules",
                 "type": "spectrum:crystallarieum_growing",
                 "primary": output,
                 "inputs": [starter, additive_flow, {
@@ -87,30 +100,12 @@ def growth_variants(runtime, growth_report, resource_ids):
                 "outputs": [{"resource": output, "amount": 4}],
                 "expected_yields": True,
                 "yield_range": [3, 5],
-                "configurations": [{
-                    "id": recipe_id,
-                    "machine": FARM_MACHINE_ID,
-                    "operations_per_second": 20 / cycle_ticks,
-                    "eu_per_operation": 0,
-                    "capacity": {"ticks_per_batch": cycle_ticks,
-                                 "completion_ticks": [cycle_ticks],
-                                 "operations_per_second": 20 / cycle_ticks,
-                                 "warmup_ticks": 0},
-                    "startup_inputs": [{"resource": fluid, "amount": 1000}],
-                    "build_requirements": [
-                        {"resource": "item:spectrum:crystallarieum", "amount": 1},
-                        {"resource": "item:computercraft:turtle_normal", "amount": 1},
-                        {"resource": "item:minecraft:diamond_pickaxe", "amount": 1},
-                        {"resource": "item:spectrum:ink_node", "amount": 1},
-                        {"resource": "item:minecraft:hopper", "amount": 1},
-                        {"resource": "item:minecraft:chest", "amount": 3},
-                    ],
-                    "assumptions": [
-                        "The output and additive amounts are expectations; a crop yields three to five items.",
-                        f"The loaded growth rule takes {growth_ticks} ticks with this additive. The capacity adds {TURTLE_OVERHEAD_TICKS} ticks for a turtle loop; the iron Lua trial observed 29 ticks of overhead. Other variants have not run autonomously.",
-                        "Starter, additive, and ink inputs arrive continuously, and the output chest has room.",
-                        "One thousand millibuckets of the selected fluid fill the machine at startup and are retained in the verified iron trial.",
-                    ],
-                }],
+                "configurations": [],
+                "unsupported": UNSUPPORTED_FARM,
+                "assumptions": [
+                    f"The loaded growth rule takes {growth_ticks} ticks with this additive, excluding harvesting and restart.",
+                    "The harvest expectation is exactly four items because the loaded loot rule draws uniformly from three, four, and five. An individual harvest is not fixed at four.",
+                    f"The machine checks for one thousand millibuckets of {fluid} without draining it; this is retained startup stock.",
+                ],
             })
     return recipes

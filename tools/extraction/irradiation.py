@@ -40,7 +40,7 @@ def irradiation_recipes(capture):
                                         "fuel_resource": resource["id"], "batch": count, "cycle_ticks": ticks, "discovery_delay_ticks": 59},
                     "assumptions": ["Each nuclear hatch runs one fuel rod. Hatches are supplied and emptied continuously.",
                         "Power and neutron-source use continue while the enabled irradiator is idle. Disable it to stop these costs.",
-                        "Source consumption uses long-term averages; probabilistic consumption is an estimate. Keep consumable source stacks refilled.",
+                        "Source consumption is the exact long-run expectation from the loaded chance and cooldown; an individual time window can differ. Keep consumable source stacks refilled.",
                         "A worn-out neutron-source tool has an uncharged final tick. Its average power includes that tick.",
                         "Initial source discovery can take up to 59 extra ticks before irradiation begins."]})
             recipes.append({"id": identity, "name": "Irradiate " + resource.get("name", resource["id"]) + " with " +

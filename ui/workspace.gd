@@ -56,6 +56,7 @@ func _ready() -> void:
 	computation.failed.connect(_failed)
 	computation.progress.connect(func(message: String) -> void: status.text = message)
 	search.text_changed.connect(_filter_recipes)
+	recipes_list.item_selected.connect(_recipe_selected)
 	%PreviousRecipes.pressed.connect(func() -> void: _recipe_page -= 1; _show_recipe_page())
 	%NextRecipes.pressed.connect(func() -> void: _recipe_page += 1; _show_recipe_page())
 	%AddGoal.pressed.connect(_add_goal)
@@ -305,11 +306,25 @@ func _show_recipe_page() -> void:
 		var index := recipes_list.add_item(title)
 		recipes_list.set_item_metadata(index, recipe.id)
 		recipes_list.set_item_tooltip(index, recipe.get("unsupported", recipe.id))
+		if recipe.has("unsupported"):
+			recipes_list.set_item_custom_fg_color(index, Color(0.94, 0.7, 0.49))
 	%RecipePage.text = "%d–%d / %d" % [first + 1 if last > first else 0, last, _recipe_matches.size()]
 	%PreviousRecipes.disabled = first == 0
 	%NextRecipes.disabled = last >= _recipe_matches.size()
 	if recipes_list.item_count:
 		recipes_list.select(0)
+	_recipe_selected(0)
+
+
+func _recipe_selected(index: int) -> void:
+	var availability := %RecipeAvailability as Label
+	availability.visible = false
+	if index < 0 || index >= recipes_list.item_count:
+		return
+	var recipe: Dictionary = _recipes[recipes_list.get_item_metadata(index)]
+	if recipe.has("unsupported"):
+		availability.text = "Capacity unavailable. " + recipe.unsupported
+		availability.visible = true
 
 
 func _add_goal() -> void:

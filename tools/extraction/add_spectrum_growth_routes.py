@@ -1,4 +1,4 @@
-"""Add loaded Spectrum growth and the measured ink-node delivery bill."""
+"""Add loaded Spectrum growth facts and the ink-node delivery bill."""
 
 import argparse
 import gzip
@@ -6,7 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from spectrum_growth import FARM_MACHINE_ID, growth_variants
+from spectrum_growth import FARM_MACHINE_ID, farm_machine, growth_variants
 
 
 def add_growth_routes(base, runtime, growth_report, lua_report, growth_sha256, lua_sha256):
@@ -54,16 +54,7 @@ def add_growth_routes(base, runtime, growth_report, lua_report, growth_sha256, l
         updated_recipes.append({**recipe, "configurations": configurations})
     if ink_routes != 48:
         raise ValueError("The pinned catalog has a different Color Picker route count.")
-    machine = {
-        "id": FARM_MACHINE_ID,
-        "status": "supported",
-        "mechanic": "fixed_cycle",
-        "recipe_type": "spectrum:crystallarieum_growing",
-        "assumptions": [
-            "One Crystallarieum, a stationary diamond-pickaxe turtle, and a nearby ink node form each farm allocation.",
-            "Capacity includes a visible turtle timing allowance beyond the loaded growth rule.",
-        ],
-    }
+    machine = farm_machine()
     machines = []
     for entry in base["machines"]:
         if entry["id"] == "spectrum:color_picker":
@@ -72,19 +63,12 @@ def add_growth_routes(base, runtime, growth_report, lua_report, growth_sha256, l
                 "A placed two-node network transferred stored ink to a Crystallarieum. The configuration includes its source node and feeder.",
             ]}
         machines.append(entry)
-    progression = []
-    for preset in base["progression"]:
-        if preset["id"] == "statech:all":
-            preset = {**preset, "available_machines": sorted([*preset["available_machines"], FARM_MACHINE_ID])}
-        progression.append(preset)
     return {
         **base,
         "machines": [*machines, machine],
         "recipes": [*updated_recipes, *recipes],
         "unsupported_entries": [entry for entry in base["unsupported_entries"]
                                 if entry["source_id"] not in source_ids],
-        "default_machines": [*base["default_machines"], FARM_MACHINE_ID],
-        "progression": progression,
         "source": {**base["source"], "spectrum_growth_report_sha256": growth_sha256,
                    "spectrum_turtle_lua_report_sha256": lua_sha256},
     }
