@@ -322,6 +322,24 @@ try {
     assert.deepEqual(actual.result, expected);
     console.log('The measured Color Picker capacity matches Node in the browser Worker.');
   }
+  if (process.argv.includes('--growth')) {
+    const recipe = worldDataset.recipes.find(value =>
+      value.source_id === 'spectrum:crystallarieum/minecraft/iron' && value.id.endsWith('|additive:0'));
+    assert.ok(recipe);
+    const selection = {goals: [{recipe: recipe.id, resource: recipe.primary, rate: 0.125}],
+      replication: false,
+      available_machines: ['spectrum:crystallarieum_turtle_farm', 'spectrum:color_picker'],
+      external: [{resource: 'item:minecraft:raw_iron'}, {resource: 'item:minecraft:iron_nugget'},
+        {resource: 'item:minecraft:brown_dye'}]};
+    const expected = solveFactory(await loadHighs(), worldDataset, selection);
+    const actual = await solveInBrowser(worldDataset, selection);
+    assert.equal(expected.status, 'optimal');
+    assert.equal(expected.lines.length, 2);
+    delete expected.search?.elapsed_ms;
+    delete actual.result.search?.elapsed_ms;
+    assert.deepEqual(actual.result, expected);
+    console.log('The replicatorless Spectrum turtle farm and ink support match in the embedded browser Worker.');
+  }
   if (process.argv.includes('--solar')) {
     const panel = 'extended_industrialization:lv_solar_panel';
     const storage = 'modern_industrialization:lv_storage_unit';

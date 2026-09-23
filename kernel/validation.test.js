@@ -16,6 +16,9 @@ test('dataset validation rejects malformed references before dependency pruning'
         loss_eu_per_tick: 0, saved_charge_field: 'storedEu'}}], /discharge_eu_per_tick/],
     [data => data.recipes[0].outputs[0].resource = 'missing', /unknown ID/],
     [data => data.recipes[0].primary = 'coal', /primary must/],
+    [data => data.recipes[0].yield_range = [5, 3], /yield range/],
+    [data => data.recipes[0].yield_range = [3, 5], /probabilistic output/],
+    [data => { data.recipes[0].expected_yields = true; data.recipes[0].yield_range = [100, 200]; }, /expected primary output/],
     [data => data.recipes[0].configurations[0].eu_per_operation = -1, /eu_per_operation/],
     [data => data.recipes[0].configurations[0].operating_points = [], /zero and full capacity/],
     [data => data.recipes[0].configurations[0].operating_points = [{operations_per_second: -1, inputs: []}], /operations_per_second/],
@@ -32,6 +35,14 @@ test('dataset validation rejects malformed references before dependency pruning'
     change(data);
     assert.throws(() => validateDataset(data), message);
   }
+});
+
+test('dataset validation accepts an expected output with a source-defined range', () => {
+  const data = example();
+  const amount = data.recipes[0].outputs.find(flow => flow.resource === data.recipes[0].primary).amount;
+  data.recipes[0].expected_yields = true;
+  data.recipes[0].yield_range = [amount, amount + 2];
+  validateDataset(data);
 });
 
 test('dataset validation accepts complete captured world-state rotations', () => {

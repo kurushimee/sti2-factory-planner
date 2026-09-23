@@ -144,6 +144,19 @@ export function validateDataset(dataset) {
       }
     }
     if (recipe.unsupported !== undefined) text(recipe.unsupported, `${at}.unsupported`);
+    if (recipe.yield_range !== undefined) {
+      array(recipe.yield_range, `${at}.yield_range`);
+      if (recipe.yield_range.length !== 2) fail(at, 'yield range needs a minimum and maximum');
+      number(recipe.yield_range[0], `${at}.yield_range[0]`, 1, true);
+      number(recipe.yield_range[1], `${at}.yield_range[1]`, 1, true);
+      if (recipe.yield_range[1] < recipe.yield_range[0] || recipe.expected_yields !== true) {
+        fail(at, 'yield range needs an ordered probabilistic output');
+      }
+      const primaryAmount = recipe.outputs.find(flow => flow.resource === recipe.primary).amount;
+      if (primaryAmount < recipe.yield_range[0] || primaryAmount > recipe.yield_range[1]) {
+        fail(at, 'expected primary output must lie within its yield range');
+      }
+    }
     if (recipe.requires_obtained !== undefined) references(recipe.requires_obtained, resources, `${at}.requires_obtained`);
     if (recipe.catalysts !== undefined) flows(recipe.catalysts, `${at}.catalysts`, true);
     if (recipe.tool_usage !== undefined) {

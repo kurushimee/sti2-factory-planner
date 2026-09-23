@@ -4681,7 +4681,7 @@
     },
     {
       "namespace": "extended_industrialization",
-      "recipes": 1603,
+      "recipes": 1609,
       "declarations": [
         {
           "archive": "extended-industrialization-1.16.2-1.21.1.jar",
@@ -5426,7 +5426,7 @@
     },
     {
       "namespace": "spectrum",
-      "recipes": 552,
+      "recipes": 660,
       "declarations": [
         {
           "archive": "spectrum-1.12.7-1.21.1-neo.jar",

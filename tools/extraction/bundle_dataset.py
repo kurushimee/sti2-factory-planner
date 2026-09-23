@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT_FIELDS = set("format identity name complete description resources recipes machines upgrades shape_member_rules progression default_machines route_preferences unsupported_entries loaded_mods source".split())
 RESOURCE_FIELDS = set("id registry_id kind unit name max_stack_size components".split())
-RECIPE_FIELDS = set("id source_id type origin name primary inputs outputs configurations group conditions catalysts expected_yields process requires_obtained replication crafting_evidence assumptions tool_usage".split())
+RECIPE_FIELDS = set("id source_id type origin name primary inputs outputs configurations group conditions catalysts expected_yields yield_range process requires_obtained replication crafting_evidence assumptions tool_usage".split())
 
 
 def encode_bundle(dataset):
