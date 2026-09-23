@@ -62,6 +62,8 @@ func _run() -> void:
 	assert(workspace._last_result.status == "optimal")
 	assert(workspace._last_result.periodic_power.storage[0].machines == 1)
 	assert(workspace._last_result.startup.energy_storage_initial_charge_eu > 0)
+	var generation_cycle: Dictionary = workspace._last_result.periodic_power.generation[0].cell_cycle
+	assert(generation_cycle.repeating_clear_days == 12000)
 	assert(workspace._nodes.size() == 2)
 	var storage_node: PlannerRecipeNode
 	for node: PlannerRecipeNode in workspace._nodes.values():
@@ -91,9 +93,21 @@ func _run() -> void:
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/solar-storage-node.png")
 	workspace._show_power()
 	assert("Periodic generation and storage" in workspace.inspector.text)
+	assert("Firm clear-day minimum · credited\n336750 EU / 24000 ticks" in workspace.inspector.text)
+	assert("Long-run clear-day average\n4041047218 EU / 288000000 ticks" in workspace.inspector.text)
 	assert("planned initial charge" in workspace.inspector.text)
 	assert("clear weather" in workspace.inspector.text.to_lower())
 	if DisplayServer.get_name() != "headless":
+		var lines := workspace.inspector.text.split("\n")
+		for line_index in lines.size():
+			if "Periodic generation and storage" in lines[line_index]:
+				workspace.inspector.scroll_to_line(maxi(0, line_index - 2))
+				break
+		await process_frame
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png(
+			"res://.plans/artifacts/workspace/solar-cycle-summary.png"
+		)
 		workspace.inspector.scroll_to_line(workspace.inspector.get_line_count() - 1)
 		await process_frame
 		await RenderingServer.frame_post_draw

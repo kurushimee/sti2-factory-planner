@@ -1,10 +1,11 @@
-"""Check the conservative solar adapter against the recorded loaded-world facts."""
+"""Check solar cell wear and the daily output guarantee against source rules."""
 
 import json
 from pathlib import Path
 import unittest
 
 from add_solar_routes import add_solar_routes
+from refresh_solar_routes import refresh_solar_routes
 from verify_solar import TIERS
 
 
@@ -25,7 +26,7 @@ def base():
 
 
 class SolarRoutesTest(unittest.TestCase):
-    def test_six_routes_preserve_clear_day_output_and_conservative_inputs(self):
+    def test_six_routes_keep_exact_cell_use_and_clear_day_minimum(self):
         catalog = add_solar_routes(base(), REPORT, "report-hash")
         self.assertEqual(len(catalog["recipes"]), 6)
         self.assertEqual(len({entry["source_id"] for entry in catalog["recipes"]}), 6)
@@ -38,7 +39,14 @@ class SolarRoutesTest(unittest.TestCase):
             total = sum(row["ticks"] * row["eu_per_tick"] for row in profile["segments"])
             self.assertAlmostEqual(recipe["outputs"][0]["amount"] * 1200,
                                    total - profile["one_event_loss_eu_per_period"])
-            self.assertEqual(recipe["inputs"][0]["amount"], 1 / 1200)
+            cycle = profile["cell_cycle"]
+            self.assertEqual(cycle["active_ticks_per_clear_day"], 11999)
+            self.assertEqual(cycle["energy_eu_without_expiry_per_day"], total)
+            self.assertEqual(recipe["inputs"][0]["amount"],
+                             cycle["cells_used_per_repeating_cycle"] /
+                             (cycle["repeating_clear_days"] * 1200))
+            self.assertEqual(cycle["minimum_energy_eu_in_one_clear_day"],
+                             total - profile["one_event_loss_eu_per_period"])
             self.assertEqual(configuration["build_requirements"][0]["resource"],
                              "item:" + configuration["machine"])
             if recipe["name"].endswith("(water)"):
@@ -55,6 +63,15 @@ class SolarRoutesTest(unittest.TestCase):
             *REPORT["panels"][1:]]}
         self.assertRaisesRegex(ValueError, "curve disagrees", add_solar_routes,
                                original, changed, "hash")
+
+    def test_refresh_keeps_other_catalog_records(self):
+        original = add_solar_routes(base(), REPORT, "hash")
+        original["recipes"].append({"id": "other", "outputs": []})
+        refreshed = refresh_solar_routes(original, REPORT, "hash")
+        self.assertEqual(refreshed, original)
+        wrong = {**original, "source": {"solar_report_sha256": "different"}}
+        self.assertRaisesRegex(ValueError, "pinned", refresh_solar_routes,
+                               wrong, REPORT, "hash")
 
 
 if __name__ == "__main__":

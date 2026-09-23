@@ -5,6 +5,25 @@ import {validateDataset} from './validation.js';
 
 const example = () => JSON.parse(readFileSync(new URL('../data/example.json', import.meta.url)));
 test('dataset validation accepts the portable example', () => validateDataset(example()));
+test('cell expiry totals must match the periodic power profile', () => {
+  const data = example();
+  const profile = {period_ticks: 4, segments: [1, 2, 3, 0].map(eu_per_tick => ({ticks: 1, eu_per_tick})),
+    one_event_loss_eu_per_period: 3,
+    cell_cycle: {kind: 'uniform_cell_expiry', active_ticks_per_clear_day: 3,
+      cell_lifetime_wear_ticks: 4, wear_every_active_ticks: 1, active_ticks_per_cell: 4,
+      repeating_clear_days: 4, cells_used_per_repeating_cycle: 3,
+      energy_eu_per_repeating_cycle: 18, energy_eu_without_expiry_per_day: 6,
+      minimum_energy_eu_in_one_clear_day: 3, maximum_cell_use_in_one_clear_day: 1}};
+  data.recipes[0].configurations[0].periodic_generation = profile;
+  validateDataset(data);
+  profile.cell_cycle.energy_eu_per_repeating_cycle--;
+  assert.throws(() => validateDataset(data), /cell cycle disagrees/);
+  profile.cell_cycle.energy_eu_per_repeating_cycle++;
+  profile.cell_cycle.cell_lifetime_wear_ticks = 0;
+  profile.cell_cycle.active_ticks_per_cell = 0;
+  profile.cell_cycle.repeating_clear_days = 0;
+  assert.throws(() => validateDataset(data), /cell cycle disagrees/);
+});
 test('dataset validation rejects malformed references before dependency pruning', () => {
   for (const [change, message] of [
     [data => data.resources.push(data.resources[0]), /duplicate ID/],

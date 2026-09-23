@@ -9,6 +9,10 @@ function text(value, path) { if (typeof value !== 'string' || !value.length) fai
 function number(value, path, minimum = 0, integer = false) {
   if (!Number.isFinite(value) || value < minimum || value > Number.MAX_SAFE_INTEGER || (integer && !Number.isSafeInteger(value))) fail(path, `expected ${integer ? 'a whole number' : 'a number'} from ${minimum} to ${Number.MAX_SAFE_INTEGER}`);
 }
+function gcd(left, right) {
+  while (right) [left, right] = [right, left % right];
+  return left;
+}
 function records(values, path) {
   array(values, path);
   const ids = new Set();
@@ -114,6 +118,32 @@ export function validateDataset(dataset) {
           if (generation.one_event_loss_eu_per_period > generation.segments.reduce((peak, segment) =>
             Math.max(peak, segment.eu_per_tick), 0)) {
             fail(location, 'a single event cannot lose more than one peak output tick');
+          }
+        }
+        if (generation.cell_cycle !== undefined) {
+          const cycle = generation.cell_cycle;
+          object(cycle, `${location}.periodic_generation.cell_cycle`);
+          if (cycle.kind !== 'uniform_cell_expiry') fail(location, 'unsupported photovoltaic cell cycle');
+          for (const field of ['active_ticks_per_clear_day', 'cell_lifetime_wear_ticks',
+            'wear_every_active_ticks', 'active_ticks_per_cell', 'repeating_clear_days',
+            'cells_used_per_repeating_cycle', 'energy_eu_per_repeating_cycle',
+            'energy_eu_without_expiry_per_day', 'minimum_energy_eu_in_one_clear_day',
+            'maximum_cell_use_in_one_clear_day']) {
+            number(cycle[field], `${location}.periodic_generation.cell_cycle.${field}`, 0, true);
+          }
+          const total = generation.segments.reduce((sum, segment) => sum + segment.ticks * segment.eu_per_tick, 0);
+          if (cycle.active_ticks_per_clear_day < 1 ||
+              cycle.cell_lifetime_wear_ticks < 1 || cycle.wear_every_active_ticks < 1 ||
+              cycle.repeating_clear_days < 1 || cycle.active_ticks_per_clear_day > generation.period_ticks ||
+              gcd(cycle.active_ticks_per_clear_day, cycle.active_ticks_per_cell) !== 1 ||
+              cycle.active_ticks_per_cell !== cycle.cell_lifetime_wear_ticks * cycle.wear_every_active_ticks ||
+              cycle.repeating_clear_days !== cycle.active_ticks_per_cell ||
+              cycle.cells_used_per_repeating_cycle !== cycle.active_ticks_per_clear_day ||
+              cycle.energy_eu_without_expiry_per_day !== total ||
+              cycle.energy_eu_per_repeating_cycle !== total * (cycle.repeating_clear_days - 1) ||
+              cycle.minimum_energy_eu_in_one_clear_day !== total - generation.one_event_loss_eu_per_period ||
+              cycle.maximum_cell_use_in_one_clear_day !== 1) {
+            fail(location, 'photovoltaic cell cycle disagrees with its power profile or wear rule');
           }
         }
         if (generation.assumptions !== undefined) {
