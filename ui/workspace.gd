@@ -796,7 +796,13 @@ func _select_node(node: Node) -> void:
 		var panels: Array = node.get_meta("solar_panels")
 		inspector.text += "\n\n[b]World snapshot[/b]\n%d saved %s with this route. A stored cell or fluid amount does not establish sustained supply." % [panels.size(), "panel" if panels.size() == 1 else "panels"]
 		for panel: Dictionary in panels:
-			inspector.text += "\n%s · %d, %d, %d · %s cell; %s mB fluid" % [PlannerDisplay.markup(str(panel.origin.dimension)), panel.origin.x, panel.origin.y, panel.origin.z, panel.saved_cell.get("amount", "0"), panel.saved_fluid.get("amount_mb", "0") if panel.saved_fluid != null else "0"]
+			var saved_cell: Dictionary = panel.saved_cell if panel.saved_cell != null else {}
+			var saved_fluid: Dictionary = panel.saved_fluid if panel.saved_fluid != null else {}
+			inspector.text += "\n%s · %d, %d, %d · %s cell; %s mB fluid" % [PlannerDisplay.markup(str(panel.origin.dimension)), panel.origin.x, panel.origin.y, panel.origin.z, saved_cell.get("amount", "no saved"), saved_fluid.get("amount_mb", "0")]
+			if panel.get("other_saved_item") != null:
+				inspector.text += " · other saved item: %s × %s" % [panel.other_saved_item.amount, PlannerDisplay.markup(PlannerDisplay.readable_name(panel.other_saved_item.resource))]
+			if panel.get("cell_evidence") == "player_supply_confirmation":
+				inspector.text += " · matching cell supply confirmed by player"
 		inspector.text += "\nClear weather, open sky, a cable path, and continuous replacement supplies remain planning assumptions."
 	for route: Dictionary in _last_result.get("primary_routes", []):
 		if route.recipe == line.recipe:
