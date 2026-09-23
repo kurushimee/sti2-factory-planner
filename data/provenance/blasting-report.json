@@ -1,0 +1,52 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "minecraft": "1.21.1",
+  "neoforge": "21.1.250",
+  "spectrum": "1.12.7-1.21.1-neo",
+  "spectrum_jar_sha256": "6b3f8678c580d381a4e681f7640d637d75808ddce2ae3869d28714b3a347025a",
+  "loaded_runtime_sha256": "9ff25fdabd5a0b07443528cd1146d33e5cea25a42df43748ec65c9f72befa2b7",
+  "initial_pack_runtime_sha256": "521777580a030c3fa2b49b007062243512e4e4299d7854e4969d123b19316d8b",
+  "base_catalog_sha256": "b83556a837cca372e1954fb85d5f2b16bfa97f44931747bcc991e34fbff25530",
+  "normalized_capture_sha256": "a15211782aa5772b3001adb8e96e1b21f1302267d3562ef6477d30444132db70",
+  "fixture_sha256": "3ac78ebfd71cb67d2c6b821d03a71747fd15b9bb6a5736250e494ae1c1961621",
+  "trial_capture_sha256": "996aa6a348a36a4727ded35fb729528a0349c58e52027ef6d20eaf684e129b03",
+  "private_world_archive_sha256": "00c850bca8be9fb4b03caa77f81fd91b7829847ebd40a72e772d2f0b3e7fa03a",
+  "probe_jar_sha256": "742cd4139159de35dbae1da6d813c3bf9318bd3ceb0410d7bee55b1e8c81e34b",
+  "source_method": "The released NeoForge server ticked a placed vanilla blast furnace for each distinct loaded Spectrum recipe, with coal fuel. One iron recipe also used a lava bucket. The fixture checked output, timing, and the returned bucket.",
+  "source_recipes": [
+    "spectrum:blasting/pure_resources/coal",
+    "spectrum:blasting/pure_resources/copper",
+    "spectrum:blasting/pure_resources/diamond",
+    "spectrum:blasting/pure_resources/echo",
+    "spectrum:blasting/pure_resources/emerald",
+    "spectrum:blasting/pure_resources/glowstone",
+    "spectrum:blasting/pure_resources/gold",
+    "spectrum:blasting/pure_resources/iron",
+    "spectrum:blasting/pure_resources/lapis",
+    "spectrum:blasting/pure_resources/netherite_scrap",
+    "spectrum:blasting/pure_resources/prismarine",
+    "spectrum:blasting/pure_resources/quartz",
+    "spectrum:blasting/pure_resources/redstone",
+    "spectrum:mod_integration/ae2/blasting/pure_certus_quartz",
+    "spectrum:mod_integration/ae2/blasting/pure_fluix",
+    "spectrum:mod_integration/create/blasting/pure_zinc"
+  ],
+  "completed_trials": 17,
+  "cooking_ticks": 100,
+  "operations_per_second_per_machine": 0.2,
+  "fuel_burn_ticks": {
+    "minecraft:coal": 800,
+    "minecraft:lava_bucket": 10000
+  },
+  "fuel_per_operation_at_full_load": {
+    "minecraft:coal": 0.125,
+    "minecraft:lava_bucket": 0.01
+  },
+  "lava_bucket_remainder": "minecraft:bucket",
+  "limits": [
+    "Only coal and lava buckets were measured as fuel. Other legal furnace fuels remain unsupported.",
+    "The lava bucket was tick-tested with pure iron. Other lava pairings use the loaded furnace's shared fuel method but were not individually tick-tested.",
+    "Fuel use is amortized over complete burn cycles. A partly loaded furnace must run in buffered bursts to achieve the listed material rate.",
+    "The first output needs one ingredient and one whole fuel item per furnace. The private world and capture are not redistributed."
+  ]
+}

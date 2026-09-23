@@ -17,6 +17,15 @@ export function startupRequirements(lines) {
     const configuration = line.configuration_details;
     for (const flow of configuration.build_requirements ?? []) builds.set(flow.resource, (builds.get(flow.resource) ?? 0) + flow.amount * line.machines);
     for (const catalyst of configuration.startup_inputs ?? []) add(catalyst.resource, 'reusable_stock', catalyst.amount * line.machines, key);
+    if (configuration.startup_profile?.kind === 'vanilla_furnace' && line.operations_per_second > 0) {
+      const profile = configuration.startup_profile;
+      const seconds = profile.first_completion_ticks / 20;
+      for (const flow of line.outputs) add(flow.resource, 'warmup_output_stock', Math.ceil(flow.rate *
+        (flow.resource === profile.fuel_remainder_resource ? 1 / 20 : seconds)), key);
+      add(profile.ingredient_resource, 'first_operation_stock', line.machines, key);
+      add(profile.fuel_resource, 'first_operation_stock', line.machines, key);
+      continue;
+    }
     if (configuration.startup_profile?.kind === 'irradiator' && line.operations_per_second > 0) {
       const profile = configuration.startup_profile;
       const seconds = (profile.cycle_ticks + profile.discovery_delay_ticks) / 20;

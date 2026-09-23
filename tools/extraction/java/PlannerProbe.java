@@ -59,6 +59,12 @@ public final class PlannerProbe {
                     try { return createStorageFixture(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_probe_blasting")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return captureBlasting(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -72,6 +78,63 @@ public final class PlannerProbe {
                         return 0;
                     }
                 }));
+    }
+
+    private static int captureBlasting(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var trials = com.google.gson.JsonParser.parseString(Files.readString(Path.of("planner-blasting.json"))).getAsJsonArray();
+        var report = new JsonObject();
+        var results = new JsonArray();
+        for (int index = 0; index < trials.size(); index++) {
+            var trial = trials.get(index).getAsJsonObject();
+            var position = new BlockPos(480 + index * 4, 160, 0);
+            if (!level.getBlockState(position).isAir()) throw new IllegalStateException("The blasting probe area is occupied.");
+            level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.BLAST_FURNACE.defaultBlockState());
+            var furnace = (net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity) level.getBlockEntity(position);
+            try {
+                var input = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(trial.get("input").getAsString()));
+                var fuel = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(trial.get("fuel").getAsString()));
+                furnace.setItem(0, new net.minecraft.world.item.ItemStack(input));
+                furnace.setItem(1, new net.minecraft.world.item.ItemStack(fuel));
+                int completion = 0;
+                for (int tick = 1; tick <= 400; tick++) {
+                    net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity.serverTick(
+                            level, position, level.getBlockState(position), furnace);
+                    if (!furnace.getItem(2).isEmpty()) { completion = tick; break; }
+                }
+                var output = furnace.getItem(2);
+                var result = new JsonObject();
+                result.addProperty("recipe", trial.get("recipe").getAsString());
+                result.addProperty("input", trial.get("input").getAsString());
+                result.addProperty("fuel", trial.get("fuel").getAsString());
+                result.addProperty("itemstack_burn_ticks", new net.minecraft.world.item.ItemStack(fuel).getBurnTime(null));
+                result.addProperty("completion_tick", completion);
+                result.addProperty("output", BuiltInRegistries.ITEM.getKey(output.getItem()).toString());
+                result.addProperty("output_count", output.getCount());
+                result.addProperty("fuel_slot", BuiltInRegistries.ITEM.getKey(furnace.getItem(1).getItem()).toString());
+                var saved = furnace.saveWithFullMetadata(server.registryAccess());
+                result.addProperty("burn_time_remaining_ticks", saved.getInt("BurnTime"));
+                result.addProperty("cook_time_total_ticks", saved.getInt("CookTimeTotal"));
+                result.addProperty("nbt", saved.toString());
+                results.add(result);
+                if (completion != trial.get("cooking_ticks").getAsInt()
+                        || !result.get("output").getAsString().equals(trial.get("output").getAsString())
+                        || output.getCount() != trial.get("count").getAsInt()) {
+                    throw new IllegalStateException("Loaded blast-furnace output or timing disagrees with " + trial.get("recipe"));
+                }
+                if (trial.has("fuel_remainder") && !result.get("fuel_slot").getAsString().equals(trial.get("fuel_remainder").getAsString())) {
+                    throw new IllegalStateException("Loaded blast-furnace fuel remainder disagrees with " + trial.get("recipe"));
+                }
+            } finally {
+                for (int slot = 0; slot < 3; slot++) furnace.setItem(slot, net.minecraft.world.item.ItemStack.EMPTY);
+                level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            }
+        }
+        report.add("trials", results);
+        Files.createDirectories(Path.of("planner-extraction"));
+        Files.writeString(Path.of("planner-extraction/blasting.json"), new GsonBuilder().setPrettyPrinting().create().toJson(report));
+        System.out.println("Planner blasting trials matched " + results.size() + " loaded recipes and fuel variants.");
+        return 1;
     }
 
     private static int checkStructureBill(MinecraftServer server) throws Exception {
