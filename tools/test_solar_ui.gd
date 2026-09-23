@@ -64,7 +64,7 @@ func _run() -> void:
 	assert(workspace._last_result.startup.energy_storage_initial_charge_eu > 0)
 	var generation_cycle: Dictionary = workspace._last_result.periodic_power.generation[0].cell_cycle
 	assert(generation_cycle.repeating_clear_days == 12000)
-	assert(workspace._nodes.size() == 2)
+	assert(workspace._nodes.values().filter(func(candidate: PlannerRecipeNode) -> bool: return !candidate.has_meta("flow_endpoint")).size() == 2)
 	var storage_node: PlannerRecipeNode
 	for node: PlannerRecipeNode in workspace._nodes.values():
 		if node.has_meta("storage_unit"):

@@ -25,3 +25,12 @@ test('an explicitly requested generator remains available in production-only mod
     available_machines: machines};
   assert.equal(prepareDataset(dataset, request).recipes.some(recipe => recipe.id === 'generate'), true);
 });
+
+test('an explicit EU resource goal admits generator routes in production-only mode', () => {
+  const request = {goals: [{resource: 'energy:eu', rate: 1}], production_only: true,
+    available_machines: machines};
+  assert.equal(prepareDataset(dataset, request).recipes.some(recipe => recipe.id === 'generate'), true);
+  const result = solveFactory(highs, dataset, request);
+  assert.equal(result.status, 'optimal');
+  assert.ok(result.lines.some(line => line.recipe === 'generate'));
+});

@@ -1148,7 +1148,8 @@ func _apply_layout(announce: bool = true) -> void:
 		focus.append(_inspected_key)
 	var goal_recipes: Dictionary[String, bool] = {}
 	for goal: Dictionary in _request.get("goals", []):
-		goal_recipes[goal.recipe] = true
+		if goal.has("recipe"):
+			goal_recipes[str(goal.recipe)] = true
 	for node: PlannerRecipeNode in _nodes.values():
 		if !node.has_meta("flow_endpoint") && goal_recipes.has(node.recipe_id):
 			focus.append(node.get_meta("position_key"))
