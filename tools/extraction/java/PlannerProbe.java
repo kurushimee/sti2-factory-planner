@@ -71,6 +71,12 @@ public final class PlannerProbe {
                     try { return createBlastingSaveFixture(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_probe_crystallarieum")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return captureCrystallarieum(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -84,6 +90,128 @@ public final class PlannerProbe {
                         return 0;
                     }
                 }));
+    }
+
+    private static int captureCrystallarieum(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var position = new BlockPos(640, 160, 0);
+        var above = position.above();
+        if (!level.getBlockState(position).isAir() || !level.getBlockState(above).isAir()) {
+            throw new IllegalStateException("The Crystallarieum probe area is occupied.");
+        }
+        var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("spectrum:crystallarieum"));
+        var liquid = BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse("spectrum:liquid_crystal"));
+        var rawIron = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("minecraft:raw_iron"));
+        var brown = de.dafuqs.spectrum.api.ink.color.InkColor.ofIdString("spectrum:brown").orElseThrow();
+        level.setBlockAndUpdate(position, block.defaultBlockState());
+        var machine = (de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity) level.getBlockEntity(position);
+        var report = new JsonObject();
+        var samples = new JsonArray();
+        try {
+            machine.getFluidTank().setFluid(new net.neoforged.neoforge.fluids.FluidStack(liquid, 1000));
+            machine.getInkStorage().addEnergy(brown, 10000);
+            for (int cycle = 0; cycle < 2; cycle++) {
+                var starter = new net.minecraft.world.item.ItemStack(rawIron);
+                machine.acceptStack(starter, false, null);
+                if (!starter.isEmpty()) throw new IllegalStateException("Raw iron starter was not consumed.");
+                if (cycle == 0) {
+                    for (int tick = 0; tick < 20; tick++) {
+                        de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity.serverTick(
+                                level, position, level.getBlockState(position), machine);
+                    }
+                    report.addProperty("without_additive_nbt", machine.saveWithFullMetadata(server.registryAccess()).toString());
+                    if (!level.getBlockState(above).is(BuiltInRegistries.BLOCK.get(
+                            net.minecraft.resources.ResourceLocation.parse("spectrum:small_iron_bud")))) {
+                        throw new IllegalStateException("The no-additive bud changed unexpectedly.");
+                    }
+                    var nuggets = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_NUGGET, 64);
+                    machine.acceptStack(nuggets, false, null);
+                    if (!nuggets.isEmpty()) throw new IllegalStateException("The additive stack was not accepted.");
+                }
+                int[] ticks = {0, 299, 300, 599, 600};
+                int elapsed = 0;
+                for (int checkpoint : ticks) {
+                    while (elapsed < checkpoint) {
+                        de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity.serverTick(
+                                level, position, level.getBlockState(position), machine);
+                        elapsed++;
+                    }
+                    var sample = new JsonObject();
+                    sample.addProperty("cycle", cycle);
+                    sample.addProperty("tick", elapsed);
+                    sample.addProperty("block", BuiltInRegistries.BLOCK.getKey(level.getBlockState(above).getBlock()).toString());
+                    sample.addProperty("ink_remaining", machine.getInkStorage().getEnergy(brown));
+                    sample.addProperty("additive_remaining", machine.getItem(0).getCount());
+                    sample.addProperty("fluid_remaining_mb", machine.getFluidTank().getFluidAmount());
+                    sample.addProperty("nbt", machine.saveWithFullMetadata(server.registryAccess()).toString());
+                    samples.add(sample);
+                }
+                if (!level.getBlockState(above).is(BuiltInRegistries.BLOCK.get(
+                        net.minecraft.resources.ResourceLocation.parse("spectrum:iron_cluster")))) {
+                    throw new IllegalStateException("The iron cluster did not mature on the loaded server.");
+                }
+                if (!level.getBlockState(above).is(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)) {
+                    throw new IllegalStateException("The mature cluster is not pickaxe mineable.");
+                }
+                var drops = net.minecraft.world.level.block.Block.getDrops(
+                        level.getBlockState(above), level, above, null, null,
+                        new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_PICKAXE));
+                var harvest = new JsonArray();
+                for (var drop : drops) {
+                    var value = new JsonObject();
+                    value.addProperty("item", BuiltInRegistries.ITEM.getKey(drop.getItem()).toString());
+                    value.addProperty("count", drop.getCount());
+                    harvest.add(value);
+                }
+                if (harvest.size() != 1
+                        || !harvest.get(0).getAsJsonObject().get("item").getAsString().equals("spectrum:pure_iron")
+                        || harvest.get(0).getAsJsonObject().get("count").getAsInt() < 3
+                        || harvest.get(0).getAsJsonObject().get("count").getAsInt() > 5) {
+                    throw new IllegalStateException("The mature cluster did not yield the loaded pure-iron loot.");
+                }
+                if (machine.getInkStorage().getEnergy(brown) != 10000 - 240L * (cycle + 1)
+                        || machine.getFluidTank().getFluidAmount() != 1000) {
+                    throw new IllegalStateException("The loaded growth did not match its ink and fluid balance.");
+                }
+                report.add("harvest_" + cycle, harvest);
+                level.setBlockAndUpdate(above, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                machine.onTopBlockChange(level.getBlockState(above), null);
+            }
+            report.add("samples", samples);
+            var pickerPosition = new BlockPos(644, 160, 0);
+            if (!level.getBlockState(pickerPosition).isAir()) {
+                throw new IllegalStateException("The Color Picker probe area is occupied.");
+            }
+            var pickerBlock = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("spectrum:color_picker"));
+            level.setBlockAndUpdate(pickerPosition, pickerBlock.defaultBlockState());
+            try {
+                var picker = (de.dafuqs.spectrum.blocks.ink.gen.ColorPickerBlockEntity) level.getBlockEntity(pickerPosition);
+                picker.setItem(1, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_DYE, 3));
+                var pickerSamples = new JsonArray();
+                for (int operation = 0; operation < 3; operation++) {
+                    if (!picker.tickLogic(level)) throw new IllegalStateException("The loaded Color Picker did not accept brown dye.");
+                    var sample = new JsonObject();
+                    sample.addProperty("operation", operation + 1);
+                    sample.addProperty("brown_ink", picker.getInkStorage().getEnergy(brown));
+                    sample.addProperty("dye_remaining", picker.getItem(1).getCount());
+                    pickerSamples.add(sample);
+                }
+                if (picker.getInkStorage().getEnergy(brown) != 15 || !picker.getItem(1).isEmpty()) {
+                    throw new IllegalStateException("The loaded Color Picker did not convert three dyes into 15 ink.");
+                }
+                report.add("color_picker", pickerSamples);
+            } finally {
+                level.setBlockAndUpdate(pickerPosition, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            }
+            Files.createDirectories(Path.of("planner-extraction"));
+            Files.writeString(Path.of("planner-extraction/crystallarieum.json"),
+                    new GsonBuilder().setPrettyPrinting().create().toJson(report));
+            System.out.println("Planner Crystallarieum measured two complete growth and harvest cycles.");
+            return 1;
+        } finally {
+            level.setBlockAndUpdate(above, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        }
     }
 
     private static int captureBlasting(MinecraftServer server) throws Exception {
