@@ -59,6 +59,54 @@ func _run() -> void:
 	for key: String in positions:
 		assert(workspace._positions.get(key) == positions[key])
 	dialog.open_goal(workspace._recipes.assemble, workspace._dataset, workspace._request)
+	dialog.get_node("%GoalRateRatio").text = "1/3600"
+	dialog.get_node("%GoalQuantity").text = "2"
+	dialog._fraction_rate_changed("1/3600")
+	await workspace.computation.completed
+	await process_frame
+	assert(!dialog.get_ok_button().disabled)
+	assert("7200 seconds" in dialog.get_node("%GoalPreview").text)
+	if DisplayServer.get_name() != "headless":
+		await create_timer(0.2).timeout
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/exact-rate-editor.png")
+	dialog.confirmed.emit()
+	dialog.hide()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace._request.goals[0].rate_ratio == {"numerator": "1", "denominator": "3600"})
+	assert(workspace._last_result.targets[0].steady_production_seconds_exact.numerator == "7200")
+	assert(PlannerDatasetValidation.check_plan(workspace._snapshot()).is_empty())
+	var portable: Dictionary = PlannerJson.parse(JSON.stringify(workspace._snapshot()))
+	assert(PlannerDatasetValidation.check_plan(portable).is_empty())
+	assert(portable.request.goals[0].rate_ratio.denominator == "3600")
+	portable.request.goals[0].rate_ratio.denominator = "0"
+	assert("exact goal rate" in PlannerDatasetValidation.check_plan(portable))
+	assert(workspace._graph_link_errors.is_empty())
+	for key: String in positions:
+		assert(workspace._positions.get(key) == positions[key])
+	for item: int in workspace.recipes_list.item_count:
+		if workspace.recipes_list.get_item_metadata(item) == "assemble":
+			workspace.recipes_list.select(item)
+			break
+	workspace.rate.value = 1
+	workspace._add_goal()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace._request.goals.size() == 2)
+	assert(workspace._request.goals[0].rate_ratio.denominator == "3600")
+	assert(workspace._graph_link_errors.is_empty())
+	workspace._undo_action()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace._request.goals.size() == 1)
+	assert(workspace._request.goals[0].rate_ratio.denominator == "3600")
+	dialog.open_goal(workspace._recipes.assemble, workspace._dataset, workspace._request)
+	assert(dialog.get_node("%GoalRateRatio").text == "1/3600")
+	assert(!dialog.get_node("%GoalRate").visible)
+	dialog.get_node("%GoalRateMode").pressed.emit()
+	dialog.get_node("%GoalRate").value = 2
+	assert(dialog.get_node("%GoalRateRatio").text.is_empty())
 	dialog.get_node("%GoalQuantity").text = "1000000000000000000000000000001"
 	dialog._changed()
 	await workspace.computation.completed
@@ -76,6 +124,10 @@ func _run() -> void:
 	assert(workspace._request.goals[0].quantity == "1000000000000000000000000000001")
 	assert(workspace._last_result.targets[0].completion_ticks_ceil == "10000000000000000000000000000010")
 	assert(PlannerDatasetValidation.check_plan(workspace._snapshot()).is_empty())
+	workspace._undo_action()
+	await workspace.computation.completed
+	await process_frame
+	assert(workspace._request.goals[0].rate_ratio.denominator == "3600")
 	workspace._undo_action()
 	await workspace.computation.completed
 	await process_frame

@@ -69,7 +69,8 @@ function solveSparse(rows, count, deadline) {
 }
 
 function exactGoalRate(model, goal) {
-  if (goal.kind !== 'capacity') return Q.decimal(goal.rate);
+  if (goal.kind !== 'capacity') return goal.rate_ratio ?
+    Q.ratio(BigInt(goal.rate_ratio.numerator), BigInt(goal.rate_ratio.denominator)) : Q.decimal(goal.rate);
   const line = model.lines.find(candidate => candidate.configuration.id === goal.configuration);
   if (!line) throw new Error(`Exact capacity goal configuration is unavailable: ${goal.configuration}.`);
   const installed = exactInstalledCapacity(line.configuration, goal.machines);

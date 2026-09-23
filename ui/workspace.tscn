@@ -275,7 +275,7 @@ text = "Middle-drag to pan · Ctrl + wheel to zoom"
 
 [node name="InspectorPanel" type="PanelContainer" parent="Margin/Layout/Body/WorkspaceSplit"]
 layout_mode = 2
-custom_minimum_size = Vector2(290, 0)
+custom_minimum_size = Vector2(330, 0)
 
 [node name="Column" type="VBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel"]
 layout_mode = 2
@@ -290,6 +290,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
+selection_enabled = true
 focus_mode = 2
 text = "Select a node to inspect its inputs, capacity, and power."
 

@@ -25,11 +25,14 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 	var chance_outputs: bool = recipe.get("expected_yields", false) || recipe.get("outputs", []).any(func(output: Dictionary) -> bool:
 		return output.get("probability", 1) != 1)
 	var operations: String = line.get("operations_per_second_exact", {}).get("display", PlannerDisplay.number(line.operations_per_second))
-	throughput.text = "%s operations/s" % operations
+	throughput.text = "%s operations/s" % PlannerDisplay.graph_exact(operations)
 	if chance_outputs:
-		throughput.text = "%s ops/s · expected yields" % operations
-	power.text = "%s EU/t  ·  %s%% utilized" % [line.get("power_eu_per_tick_exact", {}).get("display", PlannerDisplay.number(line.power_eu_per_tick)),
-		line.get("utilization_percent_exact", {}).get("display", PlannerDisplay.number(line.utilization * 100))]
+		throughput.text = "%s ops/s · expected yields" % PlannerDisplay.graph_exact(operations)
+	throughput.tooltip_text = "%s operations/s%s" % [operations, " · expected yields" if chance_outputs else ""]
+	var exact_power: String = line.get("power_eu_per_tick_exact", {}).get("display", PlannerDisplay.number(line.power_eu_per_tick))
+	var exact_utilization: String = line.get("utilization_percent_exact", {}).get("display", PlannerDisplay.number(line.utilization * 100))
+	power.text = "%s EU/t  ·  %s%% utilized" % [PlannerDisplay.graph_exact(exact_power), PlannerDisplay.graph_exact(exact_utilization)]
+	power.tooltip_text = "%s EU/t · %s%% utilized" % [exact_power, exact_utilization]
 	var inputs: Array = line.inputs.duplicate(true)
 	if line.power_eu_per_tick > 0:
 		inputs.append({"resource": "energy:eu", "rate": line.power_eu_per_tick * 20,
@@ -43,8 +46,9 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 			add_child(row)
 			var label: String = resources.get(flow.resource, flow.resource)
 			row.text = "%s %s  ·  %s" % ["←" if direction == "input" else "→", label,
-				PlannerDisplay.flow_rate(flow.resource, flow.rate, flow.get("rate_exact", {}), flow.get("rate_eu_per_tick_exact", {}))]
-			row.tooltip_text = "%s\n%s per second" % [flow.resource, flow.get("rate_exact", {}).get("display", str(flow.rate))]
+				PlannerDisplay.graph_flow_rate(flow.resource, flow.rate, flow.get("rate_exact", {}), flow.get("rate_eu_per_tick_exact", {}))]
+			row.tooltip_text = "%s\n%s" % [flow.resource, PlannerDisplay.flow_rate(flow.resource, flow.rate,
+				flow.get("rate_exact", {}), flow.get("rate_eu_per_tick_exact", {}))]
 			if direction == "output" && chance_outputs:
 				row.tooltip_text += " expected from the recipe's recorded probability"
 			var tint := Color("d5a36a") if flow.resource == "energy:eu" else Color("7fb9b1")
@@ -78,7 +82,7 @@ func configure_endpoint(endpoint: Dictionary, resources: Dictionary[String, Stri
 			title = "Surplus output"
 			loadout.text = "Available after planned consumption"
 	summary.text = resources.get(resource, PlannerDisplay.readable_name(resource))
-	throughput.text = PlannerDisplay.flow_rate(resource, endpoint.rate,
+	throughput.text = PlannerDisplay.graph_flow_rate(resource, endpoint.rate,
 		endpoint.get("rate_exact", {}), endpoint.get("rate_eu_per_tick_exact", {}))
 	power.text = ""
 	custom_minimum_size.x = 230
@@ -86,7 +90,8 @@ func configure_endpoint(endpoint: Dictionary, resources: Dictionary[String, Stri
 	var slot := get_child_count()
 	add_child(row)
 	row.text = "%s %s" % ["←" if incoming else "→", summary.text]
-	row.tooltip_text = "%s\n%s" % [resource, throughput.text]
+	row.tooltip_text = "%s\n%s" % [resource, PlannerDisplay.flow_rate(resource, endpoint.rate,
+		endpoint.get("rate_exact", {}), endpoint.get("rate_eu_per_tick_exact", {}))]
 	var tint := Color("dc8075") if endpoint.kind == "gap" else (
 		Color("d5a36a") if resource == "energy:eu" else Color("7fb9b1"))
 	set_slot(slot, incoming, 0, tint, !incoming, 0, tint)

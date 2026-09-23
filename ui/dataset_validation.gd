@@ -173,6 +173,13 @@ static func check_plan(value: Variant) -> String:
 				return "A capacity goal needs a recipe, configuration, and whole-machine count."
 		elif !_positive(goal.get("rate")):
 			return "The goal rate must be positive."
+		if kind != "capacity" && goal.has("rate_ratio"):
+			var ratio: Variant = goal.rate_ratio
+			if !(ratio is Dictionary) || !_positive_integer_text(ratio.get("numerator")) || !_positive_integer_text(ratio.get("denominator")):
+				return "An exact goal rate needs positive numerator and denominator text of at most 100 digits."
+			var exact_rate: float = float(ratio.numerator) / float(ratio.denominator)
+			if !_positive(exact_rate) || absf(exact_rate - float(goal.rate)) > maxf(1e-15, absf(exact_rate) * 1e-12):
+				return "The numeric goal rate disagrees with its exact fraction."
 		if kind == "quantity" && !_quantity(goal.get("quantity")):
 			return "The production quantity must be positive."
 		if !value.dataset.resources.any(func(resource: Dictionary) -> bool: return resource.id == goal.resource):
@@ -201,6 +208,15 @@ static func check_view(value: Variant) -> String:
 
 static func _positive(value: Variant) -> bool:
 	return (value is float || value is int) && is_finite(float(value)) && value > 0 && value <= 9007199254740991.0
+
+
+static func _positive_integer_text(value: Variant) -> bool:
+	if !(value is String) || value.is_empty() || value.length() > 100 || value[0] == "0":
+		return false
+	for character: String in value:
+		if character < "0" || character > "9":
+			return false
+	return true
 
 
 static func _quantity(value: Variant) -> bool:

@@ -44,6 +44,18 @@ test('a capacity goal derives its target from whole ticks and the chosen machine
   assert.equal(result.balances.find(balance => balance.resource === 'part').demand_exact.display, '120/53');
 });
 
+test('a fractional goal keeps its stated rational rate through exact recovery', () => {
+  const dataset = {format: 1, resources: [{id: 'part'}], recipes: [{id: 'press', primary: 'part',
+    inputs: [], outputs: [{resource: 'part', amount: 2}], configurations: [{id: 'press:one',
+      machine: 'press', operations_per_second: 1, capacity: {ticks_per_batch: 20}, build_cost: 1}]}]};
+  const result = solveFactory(highs, dataset, {goals: [{resource: 'part', rate: 1 / 3600,
+    rate_ratio: {numerator: '1', denominator: '3600'}}], exact_production: true});
+  assert.equal(result.exact_production.status, 'exact', result.exact_production.reason);
+  assert.equal(result.lines[0].operations_per_second_exact.display, '1/7200');
+  assert.equal(result.exact_production.endpoints.find(endpoint => endpoint.key === 'goal:part').rate.display, '1/3600');
+  assert.equal(result.lines[0].machines, 1);
+});
+
 test('a requested intermediate remains separate from downstream use', () => {
   const configuration = id => ({id, machine: id, operations_per_second: 1,
     capacity: {ticks_per_batch: 20}, build_cost: 1});

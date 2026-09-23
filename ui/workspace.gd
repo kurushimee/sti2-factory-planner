@@ -435,7 +435,7 @@ func _add_goal() -> void:
 	var recipe: Dictionary = _recipes[id]
 	var existing := false
 	for goal: Dictionary in _request.goals:
-		if goal.get("recipe") == id && goal.get("kind", "rate") == "rate":
+		if goal.get("recipe") == id && goal.get("kind", "rate") == "rate" && !goal.has("rate_ratio"):
 			goal.rate += PlannerDisplay.input_value(rate)
 			existing = true
 	if !existing:

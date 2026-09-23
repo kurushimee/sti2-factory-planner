@@ -330,6 +330,15 @@ try {
     assert.deepEqual(actual.result.lines.map(line => [line.recipe, line.configuration, line.machines]),
       expected.lines.map(line => [line.recipe, line.configuration, line.machines]));
     console.log(`The late MI plan matches Node in the embedded browser Worker: ${actual.result.lines.length} allocations.`);
+    const hourlyRequest = {...request, goals: [{recipe: recipe.id, resource: recipe.primary,
+      rate: 1 / 3600, rate_ratio: {numerator: '1', denominator: '3600'}}]};
+    const expectedHourly = solveFactory(await loadHighs(), worldDataset, hourlyRequest);
+    const actualHourly = await solveInBrowser(worldDataset, hourlyRequest);
+    assert.equal(expectedHourly.exact_production.status, 'exact');
+    assert.equal(actualHourly.result.exact_production.status, 'exact');
+    assert.deepEqual(actualHourly.result.exact_production, expectedHourly.exact_production);
+    assert.deepEqual(actualHourly.result.connections, expectedHourly.connections);
+    console.log(`The exact one-per-hour late MI goal matches Node in the browser Worker: ${actualHourly.result.lines.length} allocations.`);
   }
   if (process.argv.includes('--blasting')) {
     const recipe = worldDataset.recipes.find(value => value.source_id === 'spectrum:blasting/pure_resources/iron' &&
