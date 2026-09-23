@@ -114,4 +114,4 @@ layout_mode = 2
 custom_minimum_size = Vector2(940, 0)
 theme_type_variation = &"MutedLabel"
 autowrap_mode = 2
-text = "Select a machine and recipe to correct an assignment. Upstream machines are recalculated around the retained goals. Cancel leaves the current plan unchanged."
+text = "Select a production machine to correct its recipe or end goal. Storage shows saved charge without creating a power supply. Cancel leaves the current plan unchanged."

@@ -4,6 +4,20 @@ from machine_rules import machine_rules
 
 
 class MachineRuleTests(unittest.TestCase):
+    def test_storage_rule_preserves_loaded_capacity_and_transfer(self):
+        probe = {"capacity_eu": 3200000, "nominal_tier_eu": 32,
+                 "cable_limit_eu_per_tick": 256, "charge_eu_over_20_ticks": 5120,
+                 "discharge_eu_over_20_ticks": 5120}
+        [rule] = machine_rules([{"id": "mi:lv_storage_unit", "class": "mi.StorageMachineBlockEntity",
+                                 "storage_probe": probe}], {})
+        self.assertEqual(rule["mechanic"], "energy_storage")
+        self.assertEqual(rule["storage"]["capacity_eu"], 3200000)
+        self.assertEqual(rule["storage"]["discharge_eu_per_tick"], 256)
+        self.assertEqual(rule["status"], "infrastructure")
+        with self.assertRaisesRegex(ValueError, "transfer samples"):
+            machine_rules([{"id": "mi:bad", "class": "mi.StorageMachineBlockEntity",
+                            "storage_probe": {**probe, "discharge_eu_over_20_ticks": 0}}], {})
+
     def test_tesla_infrastructure_preserves_loaded_limits_without_becoming_a_recipe(self):
         [rule] = machine_rules([{"id": "test:tesla", "class": "ei.TeslaTowerBlockEntity",
             "tesla_tower_probe": {"tiers": [{"shape": 0, "passive_eu_per_tick": 64,

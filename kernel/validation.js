@@ -38,6 +38,15 @@ export function validateDataset(dataset) {
       object(machine.availability, `machine ${machine.id}.availability`);
       if (typeof machine.availability.automatic !== 'boolean' || typeof machine.availability.reason !== 'string') fail(`machine ${machine.id}.availability`, 'needs an automatic flag and a reason');
     }
+    if (machine.mechanic === 'energy_storage') {
+      if (machine.status !== 'infrastructure') fail(`machine ${machine.id}`, 'energy storage needs infrastructure status');
+      object(machine.storage, `machine ${machine.id}.storage`);
+      for (const field of ['capacity_eu', 'charge_eu_per_tick', 'discharge_eu_per_tick']) {
+        number(machine.storage[field], `machine ${machine.id}.storage.${field}`, 1, true);
+      }
+      number(machine.storage.loss_eu_per_tick, `machine ${machine.id}.storage.loss_eu_per_tick`, 0, true);
+      text(machine.storage.saved_charge_field, `machine ${machine.id}.storage.saved_charge_field`);
+    }
     if (machine.infrastructure === undefined) continue;
     records(machine.infrastructure, `machine ${machine.id}.infrastructure`);
     for (const variant of machine.infrastructure) {

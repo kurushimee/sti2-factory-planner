@@ -12,6 +12,8 @@ Interface sounds are quiet and opt-in. `tools/build_ui_audio.py` generates the o
 
 The Imported factory dialog shows machine origins, saved upgrades, recipe evidence, and compatible recipe choices. Applying corrections recalculates inferred capacity goals and preserves unresolved entries. The real-catalog browser check also covers undo across dataset changes and removing the final imported goal. The production-goal editor supports rate, finite quantity, and whole-machine capacity targets. It previews supported machines, upgrades, batches, array contents, and structure variants before applying a change. Existing imported goals retain their world origins. Progression presets and large-catalog performance still need work.
 
+Recognized storage units appear in Imported factory with exact saved charge, capacity, and charge/discharge limits. They have no recipe picker or retained-output toggle. Saved charge remains a quantity and is not yet installed in the power plan. Run `tools/test_world_review.gd` to inspect this state in the application and `tools/verify_storage_world.mjs` against the controlled world ZIP. Periodic storage settings and graph integration remain under issues #37 and #41.
+
 Group membership uses node centers. When groups overlap, the smallest enclosing boundary wins; equal areas use the stable group ID. Group movement translates members. Resizing changes the boundary and recalculates membership without translating or resizing recipes. A recipe keeps its saved position and inspected selection when recalculation changes its machine loadout. The application implements group membership explicitly because Godot's automatic frame attachment fits boundaries around attached nodes.
 
 ## Development builds

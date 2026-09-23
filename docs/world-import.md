@@ -64,6 +64,10 @@ Run `node tools/verify_tesla_capture.mjs <world.zip> <player-catalog.json> <repo
 
 The same world contains two zero-byte region files. Minecraft 1.21.1's matching `RegionFile` constructor opens files with CREATE, initializes a zeroed header, and accepts an immediate end-of-file read. The importer likewise treats a zero-byte region as having no chunks. Partial headers and invalid sector lengths still report errors; they are not treated as empty regions.
 
+## Charged storage units
+
+The controlled `--storage-fixture` world places all five MI storage tiers at distinct coordinates and charges each to one-third capacity before saving. `node tools/verify_storage_world.mjs <world.zip> <fixture.json> data/statech-2.0.1.json.gz <report.json>` checks the actual ZIP: all five block entities become dedicated storage results with exact decimal `storedEu`, capacity, transfer limits, and origins. No recipe correction or production goal is invented. The compact result is `data/provenance/storage-world-report.json`. Missing or invalid charge is a focused unresolved entry. Stored charge is an initial quantity and does not prove overnight generation. Issue #41 still covers carrying these results into editable power settings and the graph; #37 covers period-aware dispatch.
+
 ## Formed processing arrays
 
 The fixture includes a formed Extended Industrialization array with eight electric macerators and an Industrialization Overdrive array with eight distillation towers. Both use four advanced upgrades and the smallest structure. Real controller ticks receive continuous hatch inputs and power, with outputs removed after each completion. After warm-up, the macerators produce 48 copper dust in ten ticks using 3,200 EU. The distillation array consumes 8,000 mB of crude oil and produces 8,000 mB of combined fractions in 53 ticks using 57,600 EU. The first recorded completion crosses the warm-up boundary; the following three establish the steady interval.
