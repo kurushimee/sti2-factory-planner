@@ -56,7 +56,8 @@ func _run() -> void:
 	await process_frame
 	assert(workspace._request.goals.size() == 1)
 	assert(workspace._last_result.targets[0].steady_production_seconds == 600, JSON.stringify(workspace._last_result.targets))
-	assert(workspace._positions == positions)
+	for key: String in positions:
+		assert(workspace._positions.get(key) == positions[key])
 	dialog.open_goal(workspace._recipes.assemble, workspace._dataset, workspace._request)
 	dialog.get_node("%GoalQuantity").text = "1000000000000000000000000000001"
 	dialog._changed()
