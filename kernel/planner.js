@@ -15,6 +15,8 @@ import {balanceTolerance, diagnosticNumber, scaleConstraintRows} from './numeric
 import {preferredRecipes, describePreferences} from './recipe_preferences.js';
 import {appendPeriodicDispatch, decodePeriodicDispatch, expandPowerProfile, PeriodicBalanceError} from './periodic_model.js';
 import {exactInstalledCapacity} from './exact_capacity.js';
+import {recoverExactProduction} from './exact_recovery.js';
+import * as Q from './rational.js';
 
 const ENERGY = 'energy:eu';
 
@@ -305,7 +307,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
   }
   const text = ['Minimize', `cost: ${expression(objective)}`, 'Subject To', ...constraints,
     'Bounds', ...bounds, ...(integers.length ? ['Generals', integers.join(' ')] : []), 'End'].join('\n');
-  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers,
+  return {text, lines, supplies, rows, demands, routeCandidates, exclusions, reserve, construction, integers, request,
     infrastructure, periodic: periodic && {...periodic, lines: periodicLines, storage: selectedStorage}};
 }
 
@@ -405,8 +407,63 @@ export function decodeFactory(model, solution) {
     power.periodic = periodic;
     startup.energy_storage_initial_charge_eu = periodic.storage.reduce((sum, unit) => sum + unit.initial_charge_eu, 0);
   }
-  return {lines, balances, power, startup, steady_state_only: true, external,
+  const result = {lines, balances, power, startup, steady_state_only: true, external,
     ...(construction ? {construction} : {}), ...(periodic ? {periodic_power: periodic} : {}), ...flows};
+  if (model.request.exact_production) {
+    try {
+      const exact = recoverExactProduction(model, solution, result);
+      const quantity = record => Q.number(Q.ratio(BigInt(record.numerator), BigInt(record.denominator)));
+      const perTick = record => Q.record(Q.divide(Q.ratio(BigInt(record.numerator), BigInt(record.denominator)), Q.decimal(20)));
+      const matched = new Map(exact.lines.map(line => [line.configuration, line]));
+      for (const line of result.lines) {
+        const source = matched.get(line.configuration);
+        if (!source) continue;
+        line.operations_per_second = quantity(source.operations_per_second);
+        line.operations_per_second_exact = source.operations_per_second;
+        line.inputs = source.inputs.map(flow => ({resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate,
+          ...(flow.resource === ENERGY ? {rate_eu_per_tick_exact: perTick(flow.rate)} : {})}));
+        line.outputs = source.outputs.map(flow => ({resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate,
+          ...(flow.resource === ENERGY ? {rate_eu_per_tick_exact: perTick(flow.rate)} : {})}));
+        line.power_eu_per_tick = quantity(source.power_eu_per_second) / 20;
+        line.power_eu_per_second_exact = source.power_eu_per_second;
+        line.power_eu_per_tick_exact = perTick(source.power_eu_per_second);
+        line.utilization = line.operations_per_second / line.capacity_per_second;
+        if (line.capacity_per_second_exact) {
+          const capacity = line.capacity_per_second_exact;
+          const utilization = Q.divide(Q.ratio(BigInt(source.operations_per_second.numerator), BigInt(source.operations_per_second.denominator)),
+            Q.ratio(BigInt(capacity.numerator), BigInt(capacity.denominator)));
+          line.utilization_exact = Q.record(utilization);
+          line.utilization_percent_exact = Q.record(Q.multiply(utilization, Q.decimal(100)));
+        }
+      }
+      result.balances = exact.balances.map(balance => ({resource: balance.resource,
+        demand: quantity(balance.demand), net: quantity(balance.net), surplus: quantity(balance.surplus),
+        demand_exact: balance.demand, net_exact: balance.net, surplus_exact: balance.surplus}));
+      result.external = exact.external.map(flow => ({resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate}));
+      result.connections = exact.connections.map(flow => ({source: flow.source, destination: flow.destination,
+        resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate,
+        ...(flow.resource === ENERGY ? {rate_eu_per_tick_exact: perTick(flow.rate)} : {})}));
+      result.retained = exact.retained.map(flow => ({resource: flow.resource, source: flow.source,
+        rate: quantity(flow.rate), rate_exact: flow.rate}));
+      result.flow_roundoff = [];
+      result.flow_roundoff_links = [];
+      const attribution = generationSupport(result.lines, result.connections);
+      const gross = result.lines.reduce((sum, line) => sum + line.outputs.filter(flow => flow.resource === ENERGY)
+        .reduce((amount, flow) => amount + flow.rate / 20, 0), 0);
+      const consumption = result.lines.reduce((sum, line) => sum + line.power_eu_per_tick + line.inputs
+        .filter(flow => flow.resource === ENERGY).reduce((amount, flow) => amount + flow.rate / 20, 0), 0);
+      const externalPower = result.external.filter(flow => flow.resource === ENERGY)
+        .reduce((sum, flow) => sum + flow.rate / 20, 0);
+      result.power = {...result.power, ...attribution, gross_generation_eu_per_tick: gross,
+        net_generation_eu_per_tick: gross - attribution.generation_related_consumption_eu_per_tick,
+        consumption_eu_per_tick: consumption, external_eu_per_tick: externalPower,
+        operating_margin_eu_per_tick: gross + externalPower - consumption - demand};
+      result.startup = startupRequirements(result.lines);
+      result.exact_production = {status: 'exact', ...exact};
+    }
+    catch (error) {result.exact_production = {status: 'unavailable', reason: error.message};}
+  }
+  return result;
 }
 
 export function solveFactory(highs, dataset, request, onProgress = () => {}) {

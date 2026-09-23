@@ -9,7 +9,7 @@ const highs = await loadHighs();
 test('installed full-speed capacity uses the batch and whole tick count', () => {
   assert.deepEqual(exactInstalledCapacity({setup: {batch: 3, contained_count: 8},
     capacity: {ticks_per_batch: 53}}, 2),
-  {numerator: '960', denominator: '53', display: '960/53'});
+  {numerator: '120', denominator: '53', display: '120/53'});
   assert.deepEqual(exactInstalledCapacity({capacity: {ticks_per_batch: 100}}, 1),
     {numerator: '1', denominator: '5', display: '1/5'});
 });
@@ -17,12 +17,14 @@ test('installed full-speed capacity uses the batch and whole tick count', () => 
 test('large integer capacities stay exact without floating-point products', () => {
   assert.deepEqual(exactInstalledCapacity({setup: {batch: 1000000000, contained_count: 2},
     capacity: {ticks_per_batch: 20}}, 1000000),
-  {numerator: '2000000000000000', denominator: '1', display: '2,000,000,000,000,000'});
+  {numerator: '1000000000000000', denominator: '1', display: '1,000,000,000,000,000'});
 });
 
 test('missing or fractional tick metadata does not claim an exact capacity', () => {
   assert.equal(exactInstalledCapacity({capacity: {}}, 1), null);
   assert.equal(exactInstalledCapacity({capacity: {ticks_per_batch: 1.5}}, 1), null);
+  assert.equal(exactInstalledCapacity({operations_per_second: 7,
+    capacity: {ticks_per_batch: 20}}, 1), null);
 });
 
 test('decoded plans carry the exact installed capacity beside numeric optimization values', () => {

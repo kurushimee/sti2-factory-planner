@@ -64,7 +64,7 @@ func _run() -> void:
 	await workspace.computation.completed
 	await process_frame
 	assert(!dialog.get_ok_button().disabled)
-	assert("Approximately" in dialog.get_node("%GoalPreview").text)
+	assert("1000000000000000000000000000001/2 seconds" in dialog.get_node("%GoalPreview").text)
 	if DisplayServer.get_name() != "headless":
 		await create_timer(0.2).timeout
 		await RenderingServer.frame_post_draw

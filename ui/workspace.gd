@@ -1097,7 +1097,7 @@ func _focus_recipe() -> void:
 			candidates.append({"rect": Rect2(goal.position_offset, goal.size), "distance": 0.0})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.distance < b.distance)
-	graph.zoom = maxf(graph.zoom, 0.85)
+	graph.zoom = maxf(graph.zoom, 1.0)
 	var chosen := 0
 	for candidate: Dictionary in candidates:
 		var expanded: Rect2 = target.merge(candidate.rect)

@@ -36,9 +36,13 @@ static func number(value: float) -> String:
 	return String.num(value, 3)
 
 
-static func flow_rate(resource: String, rate: float) -> String:
+static func flow_rate(resource: String, rate: float, exact: Dictionary = {}, eu_per_tick_exact: Dictionary = {}) -> String:
 	if resource == "energy:eu":
+		if !eu_per_tick_exact.is_empty():
+			return str(eu_per_tick_exact.display) + " EU/t"
 		return number(rate / 20.0) + " EU/t"
+	if !exact.is_empty():
+		return str(exact.display) + (" mB/s" if resource.begins_with("fluid:") else " /s")
 	return number(rate) + (" mB/s" if resource.begins_with("fluid:") else " /s")
 
 
@@ -187,14 +191,16 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 		if flows.is_empty():
 			text += "None\n"
 		for flow: Dictionary in flows:
-			text += "%s · %s\n" % [markup(resources.get(flow.resource, readable_name(flow.resource))), flow_rate(flow.resource, flow.rate)]
+			text += "%s · %s\n" % [markup(resources.get(flow.resource, readable_name(flow.resource))),
+				flow_rate(flow.resource, flow.rate, flow.get("rate_exact", {}), flow.get("rate_eu_per_tick_exact", {}))]
 	var exact_capacity: Variant = line.get("capacity_per_second_exact")
 	var capacity_text := "Full-speed capacity: %s operations/s" % number(line.capacity_per_second)
 	if exact_capacity is Dictionary:
 		capacity_text = "Full-speed capacity: %s operations/s" % exact_capacity.display
 	text += "\n[b]Capacity and power[/b]\n%s\n" % capacity_text
 	text += "%s%% utilization\nMachine draw: %s EU/t sustained\n" % [
-		number(line.utilization * 100), number(line.power_eu_per_tick)]
+		line.get("utilization_percent_exact", {}).get("display", number(line.utilization * 100)),
+		line.get("power_eu_per_tick_exact", {}).get("display", number(line.power_eu_per_tick))]
 	if capacity.has("ticks_per_batch"):
 		var energy_resource: String = configuration.get("capacity_input", {}).get("machine", {}).get("energy_resource", "energy:eu")
 		var energy_unit: String = "EU" if energy_resource == "energy:eu" else "mB " + resources.get(energy_resource, readable_name(energy_resource))

@@ -15,29 +15,18 @@ function decimal(value, label) {
 
 function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 
-function scientific(numerator, denominator) {
-  const top = numerator.toString(), bottom = denominator.toString();
-  const a = top.slice(0, 15), b = bottom.slice(0, 15);
-  const ratio = Number(a) / Number(b), shift = Math.floor(Math.log10(ratio));
-  const exponent = top.length - a.length - bottom.length + b.length + shift;
-  return `${(ratio / 10 ** shift).toFixed(5)}e${exponent >= 0 ? '+' : ''}${exponent}`;
-}
-
 export function productionTime(quantity, rate) {
   if (!Number.isFinite(rate) || rate <= 0 || rate > Number.MAX_SAFE_INTEGER) throw new Error('Goal rate must be positive and within the supported numeric range.');
   const amount = decimal(quantity, 'Goal quantity'), speed = decimal(rate, 'Goal rate');
   let numerator = amount.numerator * speed.denominator, denominator = amount.denominator * speed.numerator;
   const divisor = gcd(numerator, denominator);
   numerator /= divisor; denominator /= divisor;
-  const ratio = Number(numerator) / Number(denominator);
-  const numeric = Number.isFinite(ratio) ? ratio : Number(scientific(numerator, denominator));
+  const numeric = Number(numerator) / Number(denominator);
   const finite = Number.isFinite(numeric) && numeric > 0;
-  const rounded = !finite || numerator % denominator !== 0n || numeric > 1e12;
-  const display = finite ? (numeric > 1e12 || numeric < 0.001 ? numeric.toExponential(5) : numeric.toLocaleString('en-US', {maximumFractionDigits: 3}))
-    : scientific(numerator, denominator);
+  const display = denominator === 1n ? numerator.toString() : `${numerator}/${denominator}`;
   return {quantity, steady_production_seconds: finite ? numeric : null,
     steady_production_seconds_exact: {numerator: numerator.toString(), denominator: denominator.toString()},
     completion_ticks_ceil: ((numerator * 20n + denominator - 1n) / denominator).toString(),
-    time_display: `${rounded ? 'Approximately ' : ''}${display} seconds`,
+    time_display: `${display} seconds`,
     time_basis: 'After startup, at the requested sustained output rate. Whole-tick completion is rounded upward.'};
 }

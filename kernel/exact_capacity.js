@@ -9,11 +9,13 @@ function grouped(value) {
 
 export function exactInstalledCapacity(configuration, machines) {
   const ticks = configuration.capacity?.ticks_per_batch;
-  const batch = configuration.setup?.batch ?? 1;
-  const contained = configuration.setup?.contained_count ?? 1;
-  if (![ticks, batch, contained, machines].every(Number.isSafeInteger) ||
-      ticks <= 0 || batch <= 0 || contained <= 0 || machines < 0) return null;
-  let numerator = 20n * BigInt(batch) * BigInt(contained) * BigInt(machines);
+  const batch = configuration.setup?.batch ?? configuration.setup?.contained_count ?? 1;
+  if (![ticks, batch, machines].every(Number.isSafeInteger) ||
+      ticks <= 0 || batch <= 0 || machines < 0) return null;
+  const rate = 20 * batch / ticks;
+  if (configuration.operations_per_second !== undefined &&
+      Math.abs(configuration.operations_per_second - rate) > 1e-12 * Math.max(1, rate)) return null;
+  let numerator = 20n * BigInt(batch) * BigInt(machines);
   let denominator = BigInt(ticks);
   const divisor = gcd(numerator, denominator);
   numerator /= divisor;
