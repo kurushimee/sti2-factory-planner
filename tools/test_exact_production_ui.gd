@@ -34,6 +34,10 @@ func _run() -> void:
 	assert(workspace._last_result.flow_roundoff.is_empty())
 	workspace._select_node(plate)
 	assert("25411/24259" in workspace.inspector.text)
+	assert("Warm-up stock requirements are not included" in workspace.inspector.text)
+	workspace._show_power()
+	assert("742082963247/12420608000 EU/t" in workspace.inspector.text)
+	workspace._select_node(plate)
 	if DisplayServer.get_name() != "headless":
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://.plans/artifacts/exact-values"))
 		await RenderingServer.frame_post_draw

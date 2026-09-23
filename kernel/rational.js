@@ -29,6 +29,10 @@ export const divide = (a, b) => ratio(a.n * b.d, a.d * b.n);
 export const compare = (a, b) => a.n * b.d < b.n * a.d ? -1 : a.n * b.d > b.n * a.d ? 1 : 0;
 export function number(value) {
   if (value.n === 0n) return 0;
+  const directNumerator = Number(value.n), directDenominator = Number(value.d);
+  if (Number.isFinite(directNumerator) && Number.isFinite(directDenominator) && directDenominator !== 0) {
+    return directNumerator / directDenominator;
+  }
   const negative = value.n < 0n;
   const numerator = (negative ? -value.n : value.n).toString();
   const denominator = value.d.toString();

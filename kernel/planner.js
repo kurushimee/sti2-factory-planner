@@ -412,7 +412,14 @@ export function decodeFactory(model, solution) {
   if (model.request.exact_production) {
     try {
       const exact = recoverExactProduction(model, solution, result);
-      const quantity = record => Q.number(Q.ratio(BigInt(record.numerator), BigInt(record.denominator)));
+      const quantity = record => {
+        const rate = Q.ratio(BigInt(record.numerator), BigInt(record.denominator));
+        const numeric = Q.number(rate);
+        if (!Number.isFinite(numeric) || rate.n !== 0n && numeric === 0) {
+          throw new Error('An exact positive flow is outside the graph numeric range.');
+        }
+        return numeric;
+      };
       const perTick = record => Q.record(Q.divide(Q.ratio(BigInt(record.numerator), BigInt(record.denominator)), Q.decimal(20)));
       const matched = new Map(exact.lines.map(line => [line.configuration, line]));
       for (const line of result.lines) {
@@ -428,8 +435,12 @@ export function decodeFactory(model, solution) {
         line.power_eu_per_second_exact = source.power_eu_per_second;
         line.power_eu_per_tick_exact = perTick(source.power_eu_per_second);
         line.utilization = line.operations_per_second / line.capacity_per_second;
-        if (line.capacity_per_second_exact) {
-          const capacity = line.capacity_per_second_exact;
+        let capacity = line.capacity_per_second_exact;
+        if (!capacity && Number.isSafeInteger(line.configuration_details.operations_per_second)) {
+          capacity = Q.record(Q.multiply(Q.decimal(line.machines), Q.decimal(line.configuration_details.operations_per_second)));
+          line.capacity_per_second_exact = capacity;
+        }
+        if (capacity) {
           const utilization = Q.divide(Q.ratio(BigInt(source.operations_per_second.numerator), BigInt(source.operations_per_second.denominator)),
             Q.ratio(BigInt(capacity.numerator), BigInt(capacity.denominator)));
           line.utilization_exact = Q.record(utilization);
@@ -438,7 +449,8 @@ export function decodeFactory(model, solution) {
       }
       result.balances = exact.balances.map(balance => ({resource: balance.resource,
         demand: quantity(balance.demand), net: quantity(balance.net), surplus: quantity(balance.surplus),
-        demand_exact: balance.demand, net_exact: balance.net, surplus_exact: balance.surplus}));
+        demand_exact: balance.demand, net_exact: balance.net, surplus_exact: balance.surplus,
+        numerical_tolerance: 0}));
       result.external = exact.external.map(flow => ({resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate}));
       result.connections = exact.connections.map(flow => ({source: flow.source, destination: flow.destination,
         resource: flow.resource, rate: quantity(flow.rate), rate_exact: flow.rate,
@@ -458,7 +470,12 @@ export function decodeFactory(model, solution) {
         net_generation_eu_per_tick: gross - attribution.generation_related_consumption_eu_per_tick,
         consumption_eu_per_tick: consumption, external_eu_per_tick: externalPower,
         operating_margin_eu_per_tick: gross + externalPower - consumption - demand};
-      result.startup = startupRequirements(result.lines);
+      for (const [field, amount] of Object.entries(exact.power)) {
+        result.power[field] = quantity(amount);
+        result.power[`${field}_exact`] = amount;
+      }
+      result.startup = {resources: [], build_requirements: [], incomplete: [],
+        preview_omitted: true, method: 'Warm-up stock requirements are not included in this production preview.'};
       result.exact_production = {status: 'exact', ...exact};
     }
     catch (error) {result.exact_production = {status: 'unavailable', reason: error.message};}
@@ -514,7 +531,7 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
   const finish = (status) => {
     if (!best) return {status, optimal: false, exclusions: lastExclusions, branches: visited};
     attachStructureBills(best, dataset, {allowed_parts: request.available_parts});
-    best.startup = startupRequirements(best.lines);
+    if (best.exact_production?.status !== 'exact') best.startup = startupRequirements(best.lines);
     if (best.periodic_power) best.startup.energy_storage_initial_charge_eu =
       best.periodic_power.storage.reduce((sum, unit) => sum + unit.initial_charge_eu, 0);
     const proven = status === 'optimal' && completeSearch;
@@ -531,7 +548,10 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
     lastExclusions = model.exclusions;
     if (!visited && model.lines.length > 2000 && !request.construction) {
       const seed = findFactorySeed(highs, model, request, deadline, candidate => {
-        try { decodeFactory(model, candidate); return true; }
+        try {
+          const decoded = decodeFactory(model, candidate);
+          return decoded.exact_production?.status !== 'unavailable';
+        }
         catch (error) {
           if (error instanceof FactoryBalanceError || error instanceof PeriodicBalanceError) return false;
           throw error;
@@ -600,6 +620,10 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
       }
       completeSearch = false;
       lowerBound = null;
+    }
+    if (decoded.exact_production?.status === 'unavailable') {
+      return best ? finish('limit') : {status: 'numerical_error', optimal: false,
+        reason: decoded.exact_production.reason};
     }
     const ownership = productionRouteOwnership(decoded, request);
     if (ownership.conflict.length) {

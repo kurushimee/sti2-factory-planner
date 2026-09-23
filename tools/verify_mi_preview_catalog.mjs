@@ -37,8 +37,10 @@ const ironPlate = dataset.recipes.find(recipe => recipe.source_id ===
 const early = solveFactory(highs, dataset, {goals: [{recipe: ironPlate.id, resource: ironPlate.primary, rate: 1}],
   replication: false, available_machines: dataset.progression[2].available_machines,
   available_upgrades: dataset.progression[2].available_upgrades,
-  external: [{resource: 'energy:eu', cost: 0}], time_limit_ms: 30000});
+  external: [{resource: 'energy:eu', cost: 0}], time_limit_ms: 30000, exact_production: true});
 assert.ok(['optimal', 'feasible'].includes(early.status));
+assert.equal(early.exact_production.status, 'exact');
+assert.deepEqual(early.flow_roundoff, []);
 assert.equal(early.targets[0].rate, 1);
 assert.ok(early.lines.some(line => line.recipe === ironPlate.id));
 assert.ok(early.external.every(flow => flow.resource === 'energy:eu'));
@@ -52,8 +54,10 @@ const quantum = dataset.recipes.find(recipe => recipe.source_id ===
 const isolated = withRecipes(dataset, [quantum]);
 const late = solveFactory(highs, isolated, {goals: [{recipe: quantum.id, resource: quantum.primary, rate: 0.02}],
   replication: false, available_machines: ['modern_industrialization:assembler'],
-  external: [...quantum.inputs.map(flow => ({resource: flow.resource})), {resource: 'energy:eu'}]});
+  external: [...quantum.inputs.map(flow => ({resource: flow.resource})), {resource: 'energy:eu'}],
+  exact_production: true});
 assert.equal(late.status, 'optimal');
+assert.equal(late.exact_production.status, 'exact');
 assert.equal(late.lines.length, 1);
 assert.equal(late.lines[0].machines, 1);
 assert.equal(late.lines[0].operations_per_second, 0.02);

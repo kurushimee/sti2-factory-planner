@@ -363,7 +363,7 @@ func _load_dataset(value: Variant) -> bool:
 func _new_request() -> Dictionary[String, Variant]:
 	if _dataset.get("identity") == "statech-industry-2:2.0.1":
 		var request: Dictionary[String, Variant] = {
-			"goals": [], "replication": false, "production_only": true,
+			"goals": [], "replication": false, "production_only": true, "exact_production": true,
 			"external": [{"resource": "energy:eu", "cost": 0}],
 		}
 		for stage: Dictionary in _dataset.get("progression", []):
@@ -372,7 +372,7 @@ func _new_request() -> Dictionary[String, Variant]:
 				request.available_upgrades = stage.available_upgrades.duplicate()
 				break
 		return request
-	return {"goals": [], "replication": false}
+	return {"goals": [], "replication": false, "exact_production": true}
 
 
 func _filter_recipes(query: String) -> void:

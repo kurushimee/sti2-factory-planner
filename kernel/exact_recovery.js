@@ -98,8 +98,14 @@ function exactDemands(model) {
 export function recoverExactProduction(model, solution, decoded, deadline = Date.now() + 3000) {
   const value = name => solution.Columns[name]?.Primal ?? 0;
   if (model.periodic || model.construction) throw new Error('Exact production recovery does not cover periodic generation or construction.');
+  if (model.reserve || model.infrastructure.total_eu_per_tick) {
+    throw new Error('Exact production recovery does not cover generation reserve or infrastructure power.');
+  }
   const demands = exactDemands(model);
   const active = model.lines.filter(line => value(line.operation) > 0);
+  if (active.some(line => line.recipe.outputs.some(flow => flow.resource === 'energy:eu'))) {
+    throw new Error('Generator dispatch is outside the exact production preview.');
+  }
   const variables = [];
   for (const line of active) {
     variables.push(line.operation);
@@ -164,25 +170,41 @@ export function recoverExactProduction(model, solution, decoded, deadline = Date
   for (const [index, variable] of variables.entries()) if (solutionRates[index].n < 0n) {
     throw new Error(`Exact operating rate is negative for ${variable}.`);
   }
+  const recipeRequirements = new Map(), configurationRequirements = new Map();
   for (const goal of model.request.goals ?? []) if (goal.recipe) {
     const recipe = model.lines.find(line => line.recipe.id === goal.recipe)?.recipe;
     if (!recipe) throw new Error(`Exact goal recipe is unavailable: ${goal.recipe}.`);
     const output = recipe.outputs.filter(flow => flow.resource === goal.resource)
       .reduce((sum, flow) => Q.add(sum, Q.decimal(flow.amount)), Q.ZERO);
     const required = Q.divide(exactGoalRate(model, goal), output);
+    if (!recipeRequirements.has(goal.recipe)) recipeRequirements.set(goal.recipe, new Map());
+    addTo(recipeRequirements.get(goal.recipe), goal.resource, required);
+    if (goal.kind === 'capacity') addTo(configurationRequirements, goal.configuration, required);
+  }
+  for (const [recipe, resources] of recipeRequirements) {
+    const required = [...resources.values()].reduce((largest, rate) => Q.compare(rate, largest) > 0 ? rate : largest, Q.ZERO);
     let delivered = Q.ZERO;
-    for (const line of active) if (line.recipe.id === goal.recipe) {
+    for (const line of active) if (line.recipe.id === recipe) {
       delivered = Q.add(delivered, solutionRates[variableIndex.get(line.operation)]);
     }
-    if (Q.compare(delivered, required) < 0) throw new Error(`Exact goal recipe rate is short for ${goal.recipe}.`);
-    if (goal.kind === 'capacity') {
-      const installed = exactInstalledCapacity(model.lines.find(line => line.configuration.id === goal.configuration).configuration, goal.machines);
-      const minimum = installed ? Q.ratio(BigInt(installed.numerator), BigInt(installed.denominator)) :
-        Q.multiply(Q.decimal(model.lines.find(line => line.configuration.id === goal.configuration).configuration.operations_per_second), Q.decimal(goal.machines));
-      const selected = active.find(line => line.configuration.id === goal.configuration);
-      if (!selected || Q.compare(solutionRates[variableIndex.get(selected.operation)], minimum) < 0) {
-        throw new Error(`Exact installed capacity goal is short for ${goal.configuration}.`);
-      }
+    if (Q.compare(delivered, required) < 0) throw new Error(`Exact goal recipe rate is short for ${recipe}.`);
+  }
+  for (const [configuration, minimum] of configurationRequirements) {
+    const selected = active.find(line => line.configuration.id === configuration);
+    if (!selected || Q.compare(solutionRates[variableIndex.get(selected.operation)], minimum) < 0) {
+      throw new Error(`Exact installed capacity goal is short for ${configuration}.`);
+    }
+  }
+  for (const line of active) {
+    const dispatch = model.request.dispatch?.[line.configuration.id];
+    if (!dispatch) continue;
+    const operation = solutionRates[variableIndex.get(line.operation)];
+    if (dispatch.maximum !== undefined && Q.compare(operation, Q.decimal(dispatch.maximum)) > 0) {
+      throw new Error(`Exact dispatch exceeds ${line.configuration.id}'s maximum.`);
+    }
+    if (dispatch.minimum !== undefined && !configurationRequirements.has(line.configuration.id) &&
+        Q.compare(operation, Q.decimal(dispatch.minimum)) < 0) {
+      throw new Error(`Exact dispatch is short of ${line.configuration.id}'s minimum.`);
     }
   }
   const balances = [];
@@ -199,6 +221,11 @@ export function recoverExactProduction(model, solution, decoded, deadline = Date
     const demand = demands.get(resource);
     let external = Q.ZERO;
     if (supplied.has(resource) && Q.compare(net, demand) < 0) external = Q.subtract(demand, net);
+    const allowed = model.supplies.filter(supply => supply.resource === resource);
+    if (allowed.length && allowed.every(supply => supply.limit !== undefined)) {
+      const limit = allowed.reduce((sum, supply) => Q.add(sum, Q.decimal(supply.limit)), Q.ZERO);
+      if (Q.compare(external, limit) > 0) throw new Error(`Exact external supply exceeds the limit for ${resource}.`);
+    }
     exactExternal.set(resource, external);
     net = Q.add(net, external);
     if (Q.compare(net, demand) < 0) throw new Error(`Exact resource balance is short for ${resource}.`);
@@ -252,10 +279,43 @@ export function recoverExactProduction(model, solution, decoded, deadline = Date
   for (const [resource, sources] of available) for (const source of sources) {
     if (source.remaining.n > 0n) retained.push({resource, source: source.source, rate: Q.record(source.remaining)});
   }
+  const endpoints = new Map();
+  for (const [resource, rate] of exactExternal) if (rate.n > 0n) endpoints.set(`external:${resource}`, rate);
+  for (const [resource, rate] of demands) if (rate.n > 0n) endpoints.set(`goal:${resource}`, rate);
+  for (const flow of retained) {
+    addTo(endpoints, `surplus:${flow.resource}`, Q.ratio(BigInt(flow.rate.numerator), BigInt(flow.rate.denominator)));
+  }
+  const fromRecord = record => Q.ratio(BigInt(record.numerator), BigInt(record.denominator));
+  let productionEnergy = Q.ZERO;
+  for (const line of exactLines) {
+    productionEnergy = Q.add(productionEnergy, fromRecord(line.power_eu_per_second));
+    for (const flow of line.inputs) if (flow.resource === 'energy:eu') {
+      productionEnergy = Q.add(productionEnergy, fromRecord(flow.rate));
+    }
+  }
+  const perTick = amount => Q.divide(amount, Q.decimal(20));
+  const externalEnergy = perTick(exactExternal.get('energy:eu') ?? Q.ZERO);
+  const productionUse = perTick(productionEnergy);
+  const goalEnergy = perTick(demands.get('energy:eu') ?? Q.ZERO);
+  const firmExternal = perTick(model.supplies.filter(supply => supply.resource === 'energy:eu')
+    .reduce((sum, supply) => Q.add(sum, Q.decimal(supply.firm_capacity ?? 0)), Q.ZERO));
+  const power = {
+    gross_generation_eu_per_tick: Q.record(Q.ZERO),
+    generation_related_consumption_eu_per_tick: Q.record(Q.ZERO),
+    net_generation_eu_per_tick: Q.record(Q.ZERO),
+    external_eu_per_tick: Q.record(externalEnergy),
+    other_production_consumption_eu_per_tick: Q.record(productionUse),
+    infrastructure_and_goal_eu_per_tick: Q.record(goalEnergy),
+    operating_margin_eu_per_tick: Q.record(Q.subtract(Q.subtract(externalEnergy, productionUse), goalEnergy)),
+    installed_generation_eu_per_tick: Q.record(Q.ZERO),
+    installed_margin_eu_per_tick: Q.record(Q.subtract(Q.subtract(firmExternal, productionUse), goalEnergy)),
+    consumption_eu_per_tick: Q.record(productionUse),
+  };
   return {operations: active.map(line => ({configuration: line.configuration.id,
     rate: Q.record(solutionRates[variableIndex.get(line.operation)])})),
     operating_points: variables.filter(variable => variable.startsWith('p')).map(variable => ({variable,
       allocation: Q.record(solutionRates[variableIndex.get(variable)])})), balances,
     lines: exactLines, external: [...exactExternal].filter(([, rate]) => rate.n > 0n)
-      .map(([resource, rate]) => ({resource, rate: Q.record(rate)})), connections, retained};
+      .map(([resource, rate]) => ({resource, rate: Q.record(rate)})), connections, retained,
+    endpoints: [...endpoints].map(([key, rate]) => ({key, rate: Q.record(rate)})), power};
 }

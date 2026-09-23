@@ -24,6 +24,7 @@ test('an exact byproduct cycle covers its goal and uses only its true external d
   assert.equal(result.lines.find(line => line.recipe === 'press').operations_per_second_exact.display, '1/2');
   assert.equal(result.lines.find(line => line.recipe === 'recycle').operations_per_second_exact.display, '1/2');
   assert.equal(result.external[0].rate_exact.display, '1/4');
+  assert.equal(result.exact_production.endpoints.find(endpoint => endpoint.key === 'external:ore').rate.display, '1/4');
   assert.deepEqual(result.flow_roundoff, []);
   assert.ok(result.connections.some(flow => flow.source.startsWith('recycle|') &&
     flow.destination.startsWith('press|') && flow.rate_exact.display === '1/4'));
@@ -38,8 +39,38 @@ test('a capacity goal derives its target from whole ticks and the chosen machine
     configuration: 'press:batch', machines: 2, resource: 'part'}], exact_production: true});
   assert.equal(result.status, 'optimal');
   assert.equal(result.exact_production.status, 'exact', result.exact_production.reason);
+  assert.equal(result.startup.preview_omitted, true);
   assert.equal(result.lines[0].operations_per_second_exact.display, '40/53');
   assert.equal(result.balances.find(balance => balance.resource === 'part').demand_exact.display, '120/53');
+});
+
+test('a requested intermediate remains separate from downstream use', () => {
+  const configuration = id => ({id, machine: id, operations_per_second: 1,
+    capacity: {ticks_per_batch: 20}, build_cost: 1});
+  const dataset = {format: 1, resources: [{id: 'ore'}, {id: 'plate'}, {id: 'motor'}], recipes: [
+    {id: 'press', primary: 'plate', inputs: [{resource: 'ore', amount: 1}],
+      outputs: [{resource: 'plate', amount: 2}], configurations: [configuration('press')]},
+    {id: 'assemble', primary: 'motor', inputs: [{resource: 'plate', amount: 1}],
+      outputs: [{resource: 'motor', amount: 1}], configurations: [configuration('assemble')]},
+  ]};
+  const result = solveFactory(highs, dataset, {goals: [{resource: 'plate', rate: 1},
+    {resource: 'motor', rate: 1}], external: [{resource: 'ore'}], exact_production: true});
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.exact_production.status, 'exact', result.exact_production.reason);
+  assert.equal(result.lines.find(line => line.recipe === 'press').operations_per_second_exact.display, '1');
+  assert.equal(result.lines.find(line => line.recipe === 'assemble').operations_per_second_exact.display, '1');
+  assert.equal(result.connections.filter(flow => flow.resource === 'plate').length, 2);
+  assert.equal(result.exact_production.endpoints.find(endpoint => endpoint.key === 'goal:plate').rate.display, '1');
+});
+
+test('an unverified machine capacity leaves the prior exact plan recoverable', () => {
+  const dataset = {format: 1, resources: [{id: 'part'}], recipes: [{id: 'press', primary: 'part',
+    inputs: [], outputs: [{resource: 'part', amount: 1}], configurations: [{id: 'press:unknown',
+      machine: 'press', operations_per_second: 0.3, build_cost: 1}]}]};
+  const result = solveFactory(highs, dataset, {goals: [{resource: 'part', rate: 0.1}], exact_production: true});
+  assert.equal(result.status, 'numerical_error');
+  assert.match(result.reason, /Exact installed capacity is unavailable/);
+  assert.equal(result.lines, undefined);
 });
 
 test('the StaTech iron-plate line has source-derived exact rates and no flow gap', {timeout: 60000}, () => {
