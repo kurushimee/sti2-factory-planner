@@ -273,7 +273,15 @@ try {
   }
   if (process.argv.includes('--endgame')) {
     const request = endgameRequest(worldDataset);
+    if (process.env.STI2_ENDGAME_BUDGET_MS) {
+      const budget = Number(process.env.STI2_ENDGAME_BUDGET_MS);
+      if (!Number.isSafeInteger(budget) || budget < 120000 || budget > 600000) {
+        throw new Error('The endgame check budget must be 120–600 seconds.');
+      }
+      request.time_limit_ms = budget;
+    }
     const expected = solveFactory(await loadHighs(), worldDataset, request);
+    console.log(`Node endgame check: ${expected.status}, ${expected.search?.elapsed_ms ?? 'unknown'} ms, ${request.time_limit_ms} ms budget.`);
     verifyEndgame(worldDataset, request, expected);
     const actual = await solveInBrowser(worldDataset, request);
     verifyEndgame(worldDataset, request, actual.result);
