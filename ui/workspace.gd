@@ -956,6 +956,7 @@ func _select_node(node: Node) -> void:
 		%EditGoal.text = "Rename group"
 		_selected = String(node.name)
 		inspector.text = "[font_size=20]%s[/font_size]\n\nDrag the title to move this group and its members. Resize a border to change membership without moving recipes.\n\nA recipe belongs to the smallest group containing its center. Equal-sized overlaps use the group's stable ID.\n\n%d member nodes" % [PlannerDisplay.markup(node.title), _members.values().count(String(node.name))]
+		inspector.get_v_scroll_bar().set_deferred("value", 0.0)
 		%RemoveGoal.text = "Remove group"
 		%RemoveGoal.disabled = false
 		return
@@ -978,6 +979,7 @@ func _select_node(node: Node) -> void:
 			"This input was not allocated to a supply. Its amount is within the recorded numerical tolerance and is not credited as production." if endpoint.kind == "gap" else
 			"This remainder is within the calculation's balance tolerance. It is shown for traceability and is not credited as useful surplus." if endpoint.kind == "remainder" else
 			"This output remains after the factory's planned consumption."]
+		inspector.get_v_scroll_bar().set_deferred("value", 0.0)
 		return
 	if node.has_meta("storage_unit"):
 		var unit: Dictionary = node.get_meta("storage_unit")
@@ -999,6 +1001,7 @@ func _select_node(node: Node) -> void:
 			if unit.has("initial_charge_eu") && float(unit.imported_saved_charge_eu) < float(unit.initial_charge_eu):
 				inspector.text += "\nThe saved charge is below the planned initial charge. Charge the units before relying on continuous operation."
 		inspector.text += "\n\nCable reach and network sharing need to match the player's build."
+		inspector.get_v_scroll_bar().set_deferred("value", 0.0)
 		return
 	var is_goal: bool = _request.goals.any(func(goal: Dictionary) -> bool:
 		return goal.get("recipe") == node.recipe_id)
@@ -1026,6 +1029,7 @@ func _select_node(node: Node) -> void:
 	for route: Dictionary in _last_result.get("primary_routes", []):
 		if route.recipe == line.recipe:
 			inspector.text += "\nPrimary supply: %s. Other useful outputs are credited across the factory.\n" % PlannerDisplay.markup(_resources.get(route.resource, route.resource))
+	inspector.get_v_scroll_bar().set_deferred("value", 0.0)
 	%RemoveGoal.text = "Remove selected goal"
 	%RemoveGoal.disabled = !_request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == _selected)
 

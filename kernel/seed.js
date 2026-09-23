@@ -83,6 +83,18 @@ export function findFactorySeed(highs, model, request, deadline, validate = () =
             candidate = collect();
             if (!validate(candidate)) continue;
           }
+          if (request.remove_unused_seed_machines) {
+            const unused = model.lines.filter(line => !Object.hasOwn(request.installed ?? {}, line.configuration.id) &&
+              values[indices.get(line.machine)] > 0.5 && values[indices.get(line.operation)] === 0);
+            for (const line of unused) native.changeColBounds(indices.get(line.machine), 0, 0);
+            if (unused.length) {
+              if (!run()) return null;
+              values = native.getSolution().colValue;
+              if (productionRouteOwnership(summary(values, disabled), request).conflict.length) return null;
+              candidate = collect();
+              if (!validate(candidate)) return null;
+            }
+          }
           return {...candidate, objective: native.getObjectiveValue(), lower_bound: lowerBound,
             ...(numericalRetries ? {numerical_retries: numericalRetries} : {}),
             excluded_recipes: [...disabled], attempts, elapsed_ms: Date.now() - start};

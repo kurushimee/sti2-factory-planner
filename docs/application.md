@@ -1,5 +1,7 @@
 # Application development
 
+For a late production check, run `node tools/verify_mi_late_preview.mjs data/statech-2.0.1.json.gz .plans/artifacts/mi-late-result.json .plans/artifacts/mi-late-plan.json`, then run the stock engine with `--headless --path . --script tools/test_mi_late_ui.gd -- .plans/artifacts/mi-late-result.json`. A rendered run writes Quantum Upgrade and certus-source captures at 1440×900 and 1280×720. The check opens all 1,300-plus graph flows and confirms their endpoint ports, then focuses the goal and an expected-yield certus farm. `node tools/verify_kernel_browser.mjs - data/statech-2.0.1.json.gz --mi-late` compares the same exact plan in Node and a cross-origin Chromium Worker. The broad route search is feasible but has no proven global cost bound.
+
 The workspace opens the bundled `data/statech-2.0.1.json.gz` catalog. It remains a development application with incomplete process coverage. Issues #3, #5 through #8, and #11 track the remaining data, planning, editing, reconstruction, distribution, and release work. The fictional `data/example.json` remains a small format and regression example.
 
 Open the project with stock Godot 4.7.2 and run `ui/workspace.tscn`. Development desktop calculations use Node 24 and the installed npm dependencies. Released Windows packages include their own Node executable. Browser calculations run in single-threaded Workers; the Godot export also has thread support disabled.

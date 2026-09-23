@@ -27,6 +27,14 @@ test('missing or fractional tick metadata does not claim an exact capacity', () 
     capacity: {ticks_per_batch: 20}}, 1), null);
 });
 
+test('a source-defined chance process keeps its exact expected rate separate from guarantees', () => {
+  const configuration = {operations_per_second: 1 / 12,
+    capacity: {expected_operations_per_second_ratio: {numerator: '1', denominator: '12'}}};
+  assert.deepEqual(exactInstalledCapacity(configuration, 5),
+    {numerator: '5', denominator: '12', display: '5/12'});
+  assert.equal(exactInstalledCapacity({...configuration, operations_per_second: 0.1}, 5), null);
+});
+
 test('decoded plans carry the exact installed capacity beside numeric optimization values', () => {
   const configuration = {id: 'press:batch', machine: 'press', operations_per_second: 20 / 53,
     setup: {batch: 2}, capacity: {ticks_per_batch: 106}};

@@ -59,8 +59,12 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
         try { checkFixedStructure(recipe, value, dataset, request, structures); return true; }
         catch (error) { rejected.add(error.message); return false; }
       });
-    return {...recipe, configurations, configuration_diagnostics: [...rejected],
-      ...(!configurations.length && !recipe.unsupported ? {unsupported: [...rejected].join(' ') || 'No available machine supports this recipe.'} : {})};
+    const seeded = options.seedOnly && !own(request.configurations, recipe.id) &&
+      !request.goals?.some(goal => goal.recipe === recipe.id && goal.configuration) ?
+      configurations.filter((configuration, index) => configurations.findIndex(value => value.machine === configuration.machine) === index) :
+      configurations;
+    return {...recipe, configurations: seeded, configuration_diagnostics: [...rejected],
+      ...(!seeded.length && !recipe.unsupported ? {unsupported: [...rejected].join(' ') || 'No available machine supports this recipe.'} : {})};
   }
   const machines = dataset.machines ?? [];
   const upgrades = (dataset.upgrades ?? []).filter(upgrade => enabled(upgrade.id, request.available_upgrades ?? [], request.disabled_upgrades));
@@ -107,6 +111,7 @@ export function configureRecipe(recipe, dataset, request = {}, explicitOnly = fa
         }
         checkFixedStructure(recipe, configuration, dataset, request, structures);
         configurations.set(configuration.id, configuration);
+        if (options.seedOnly && !fixedIds.size && !explicitSetupIds.size) break;
       } catch (error) { rejected.add(error.message); }
     }
   }
