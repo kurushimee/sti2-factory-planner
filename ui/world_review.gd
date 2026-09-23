@@ -108,6 +108,10 @@ func _select_machine(index: int) -> void:
 	var upgrade: Dictionary = machine.get("upgrades", {})
 	var upgrade_text := "%d × %s" % [upgrade.get("count", 0), str(upgrade.get("id", "")).get_slice(":", 1).replace("_", " ")] if upgrade.has("id") else "None"
 	%WorldDetails.text = "%s · %d, %d, %d\n%s\nRecipe: %s\nEvidence: %s\nUpgrades: %s" % [str(machine.id).get_slice(":", 1).replace("_", " ").capitalize(), machine.origin.x, machine.origin.y, machine.origin.z, machine.origin.dimension, recipe_name, machine.get("assignment_evidence", "unknown").replace("_", " "), upgrade_text]
+	if machine.id == "minecraft:blast_furnace":
+		%WorldDetails.text += "\n" + _blast_furnace_facts(machine)
+		if machine.has("assignment_note"):
+			%WorldDetails.text += "\n" + str(machine.assignment_note)
 	for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
 		if unresolved.get("machine") == key:
 			%WorldDetails.text += "\n" + str(unresolved.reason)
@@ -155,6 +159,12 @@ func _filter_recipes(query: String, reveal_selected: bool = false) -> void:
 			if reveal_selected && (chosen == recipe.id || chosen == recipe.get("source_id")):
 				_recipe_page = _recipe_matches.size() / PAGE_SIZE
 			_recipe_matches.append(recipe)
+		if search.is_empty() && machine.has("recipe_candidates"):
+			var suggested: Dictionary = {}
+			for id: String in machine.recipe_candidates:
+				suggested[id] = true
+			_recipe_matches.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+				return suggested.has(a.id) && !suggested.has(b.id))
 	_show_recipes()
 
 
@@ -166,7 +176,12 @@ func _show_recipes() -> void:
 		chosen = str(_corrections.get(_key(machine), {}).get("recipe", machine.get("recipe_id", "")))
 	for offset: int in range(_recipe_page * PAGE_SIZE, mini((_recipe_page + 1) * PAGE_SIZE, _recipe_matches.size())):
 		var recipe: Dictionary = _recipe_matches[offset]
-		var index: int = %WorldRecipes.add_item("%s  ·  %s" % [PlannerDisplay.recipe_name(recipe), recipe.get("source_id", recipe.id)])
+		var machine: Dictionary = _world.machines[_selected]
+		var suggestion := ("Saved-input match · "
+			if recipe.id in machine.get("recipe_candidates", []) else "")
+		var label: String = "%s%s  ·  %s" % [suggestion, PlannerDisplay.recipe_name(recipe),
+			recipe.get("source_id", recipe.id)]
+		var index: int = %WorldRecipes.add_item(label)
 		%WorldRecipes.set_item_metadata(index, recipe.id)
 		%WorldRecipes.set_item_tooltip(index, recipe.get("unsupported", recipe.id))
 		if chosen == recipe.id || chosen == recipe.get("source_id"):
@@ -211,3 +226,29 @@ func _is_storage() -> bool:
 
 func _is_nonrecipe() -> bool:
 	return _is_infrastructure() || _is_storage()
+
+
+func _blast_furnace_facts(machine: Dictionary) -> String:
+	var facts: Dictionary = machine.get("facts", {})
+	var slots: Dictionary = {}
+	for stack: Dictionary in facts.get("Items", []):
+		slots[int(stack.get("Slot", -1))] = stack
+	var input: Dictionary = slots.get(0, {})
+	var fuel: Dictionary = slots.get(1, {})
+	var output: Dictionary = slots.get(2, {})
+	var history: Dictionary = facts.get("RecipesUsed", {})
+	var past_crafts := 0
+	for count: int in history.values():
+		past_crafts += count
+	var description := ("Saved input: %s · queued fuel: %s · stored output: %s\n"
+		+ "At save: %d/%d cook ticks · %d burn ticks · %d past crafts.\n"
+		+ "The saved setup can set a capacity target. It does not measure a long-term output rate.")
+	return description % [
+		_stack_summary(input), _stack_summary(fuel), _stack_summary(output),
+		facts.get("CookTime", 0), facts.get("CookTimeTotal", 0), facts.get("BurnTime", 0), past_crafts]
+
+
+func _stack_summary(stack: Dictionary) -> String:
+	if stack.is_empty():
+		return "empty"
+	return "%d × %s" % [stack.get("count", 0), str(stack.get("id", "unknown"))]

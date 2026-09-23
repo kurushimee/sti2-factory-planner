@@ -3,6 +3,43 @@ import assert from 'node:assert/strict';
 import {readMachineAssignment, inferIrradiatorAssignments} from './saved-machine.js';
 import {reconstructFactory} from './reconstruct.js';
 
+test('saved blast-furnace input and queued fuel select a capacity route without treating history as demand', () => {
+  const machine = {id: 'minecraft:blast_furnace', recipe_type: 'minecraft:blasting', mechanic: 'utility', status: 'supported'};
+  const makeRecipe = fuel => ({id: `blast:${fuel}`, type: 'minecraft:blasting', primary: 'item:iron',
+    inputs: [{resource: 'item:pure_iron', amount: 1}, {resource: `item:${fuel}`, amount: 0.125}],
+    outputs: [{resource: 'item:iron', amount: 1}], configurations: [{id: `config:${fuel}`, machine: machine.id,
+      operations_per_second: 0.2, capacity: {ticks_per_batch: 100}}]});
+  const dataset = {machines: [machine], recipes: [makeRecipe('coal'), makeRecipe('lava_bucket')]};
+  const block = {id: machine.id, Items: [{Slot: 0, id: 'pure_iron', count: 2},
+    {Slot: 1, id: 'coal', count: 1}, {Slot: 2, id: 'iron', count: 1}],
+    CookTime: 20, CookTimeTotal: 100, BurnTime: 681, RecipesUsed: {'test:iron': 1}};
+  const assignment = readMachineAssignment(block, machine, dataset);
+  assert.equal(assignment.recipe_id, 'blast:coal');
+  assert.equal(assignment.configuration_id, 'config:coal');
+  assert.equal(assignment.assignment_evidence, 'saved_cooking_input_and_queued_fuel');
+  const ambiguous = {...dataset, recipes: [{...dataset.recipes[0], configurations: [
+    ...dataset.recipes[0].configurations, {...dataset.recipes[0].configurations[0], id: 'second-coal'}]},
+  dataset.recipes[1]]};
+  assert.equal(readMachineAssignment(block, machine, ambiguous).assignment_evidence,
+    'ambiguous_saved_furnace_route');
+  const origin = {dimension: 'minecraft:overworld', x: 5, y: 64, z: 0};
+  const imported = {machines: [{...assignment, id: machine.id, origin, facts: block}]};
+  const reconstructed = reconstructFactory(imported, dataset);
+  assert.equal(reconstructed.goals.length, 1);
+  assert.equal(reconstructed.goals[0].machines, 1);
+  assert.equal(reconstructed.goals[0].recipe, 'blast:coal');
+  block.Items = [{Slot: 0, id: 'pure_iron', count: 2}, {Slot: 2, id: 'iron', count: 1}];
+  const missingFuel = readMachineAssignment(block, machine, dataset);
+  assert.equal(missingFuel.recipe_id, undefined);
+  assert.deepEqual(missingFuel.recipe_candidates, ['blast:coal', 'blast:lava_bucket']);
+  imported.machines[0] = {...missingFuel, id: machine.id, origin, facts: block};
+  assert.equal(reconstructFactory(imported, dataset).unresolved[0].recipe_candidates.length, 2);
+  block.Items = [{Slot: 2, id: 'iron', count: 1}];
+  assert.equal(readMachineAssignment(block, machine, dataset).assignment_evidence, 'saved_recipe_history_only');
+  block.Items = [{Slot: 0, id: 'pure_iron', count: 2, components: {'minecraft:custom_name': 'Special'}}];
+  assert.equal(readMachineAssignment(block, machine, dataset).assignment_evidence, 'unsupported_saved_furnace_inventory');
+});
+
 test('replicator templates establish a fixed route and obtained item, never a free supply', () => {
   const machine = {id: 'mi:replicator', replication: true, mechanic: 'replicator', status: 'supported'};
   const recipe = {id: 'replicate|item:iron', type: 'planner:replication', primary: 'item:iron', inputs: [{resource: 'uu', amount: 100}],
