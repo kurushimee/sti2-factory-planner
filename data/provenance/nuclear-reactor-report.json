@@ -1,0 +1,91 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "mod": "Modern Industrialization 2.5.8",
+  "mod_jar_sha256": "95c910c40f6f34dfcf398272303a666e3ccf54dc71650c7d8c5662b10b1b95b1",
+  "machine_capture_sha256": "1a5168e5e23672f99b80be5eb3f3cb4f482aa7b00f5f544f9e693af5c11c5ef7",
+  "component_capture_sha256": "55a4e53df56eeae89131de9ea0f103cf48af1d4a72359f9617845fb18a1474d8",
+  "formed_capture_sha256": "06903b7fb7b370df6d4ba54fc9764449adc159a5c7a94c475d32108c1c083bf6",
+  "private_world_archive_sha256": "4f99d180b6c5da04bce3af27ffc70b3377de291e26328d0d6808b808b9b06d1b",
+  "method": "The loaded MI nuclear grid was run with a central uranium rod and four adjacent water hatches. Three stochastic quad-rod cycles ran to depletion. A separate placed smallest reactor matched the loaded structure and ran 5,000 controller ticks.",
+  "planning_status": "Evidence only. No reactor generation route is enabled by this report.",
+  "limits": [
+    "These measurements apply to this five-hatch layout, supplied water, and outputs emptied each tick. They are not production coefficients.",
+    "The samples are stochastic observations, not a guaranteed minimum steam rate or fixed recipe duration. A single-rod trial can produce some steam without reaching sustained quad-rod output.",
+    "The 5,000-tick placed trial confirms formation and startup, not a complete placed fuel lifetime.",
+    "Steam must be converted by a separate turbine to produce EU. The reactor itself does not generate direct EU."
+  ],
+  "structure_blocks_excluding_controller": {
+    "modern_industrialization:nuclear_alloy_machine_casing_pipe": 27,
+    "modern_industrialization:nuclear_casing": 72,
+    "modern_industrialization:nuclear_fluid_hatch": 4,
+    "modern_industrialization:nuclear_item_hatch": 1
+  },
+  "fuel_definitions": {
+    "modern_industrialization:uranium_fuel_rod": {
+      "disintegrations": 10240000,
+      "product": "modern_industrialization:uranium_fuel_rod_depleted",
+      "product_amount": 1,
+      "size": 1,
+      "direct_eu_per_disintegration": 14,
+      "total_eu_per_disintegration": 62
+    },
+    "modern_industrialization:uranium_fuel_rod_quad": {
+      "disintegrations": 40960000,
+      "product": "modern_industrialization:uranium_fuel_rod_depleted",
+      "product_amount": 4,
+      "size": 4,
+      "direct_eu_per_disintegration": 14,
+      "total_eu_per_disintegration": 62
+    }
+  },
+  "single_rod_20000_ticks": {
+    "peak_temperature": 215.1663789741085,
+    "water_used_mb": 2369,
+    "steam_mb": 19366,
+    "deuterium_mb": 1157,
+    "remaining_disintegrations": 9756855
+  },
+  "quad_rod_cycles": [
+    {
+      "trial": 1,
+      "fuel_lifetime_ticks": 66487,
+      "peak_temperature": 1768.865094029769,
+      "water_used_mb": 25012005,
+      "steam_mb": 399172780,
+      "deuterium_mb": 63704,
+      "depleted_rods": 4,
+      "first_1000_ticks_steam_mb": 1461859
+    },
+    {
+      "trial": 2,
+      "fuel_lifetime_ticks": 66363,
+      "peak_temperature": 1758.8295470944258,
+      "water_used_mb": 24989199,
+      "steam_mb": 398808937,
+      "deuterium_mb": 63638,
+      "depleted_rods": 4,
+      "first_1000_ticks_steam_mb": 1453260
+    },
+    {
+      "trial": 3,
+      "fuel_lifetime_ticks": 66382,
+      "peak_temperature": 1752.477371736024,
+      "water_used_mb": 24978442,
+      "steam_mb": 398645744,
+      "deuterium_mb": 63082,
+      "depleted_rods": 4,
+      "first_1000_ticks_steam_mb": 861083
+    }
+  ],
+  "formed_5000_tick_trial": {
+    "ticks": 5000,
+    "water_used_mb": 1557012,
+    "peak_temperature": 1767.077005467326,
+    "fuel_disintegrations_left": 38411680,
+    "fluid_outputs": {
+      "modern_industrialization:deuterium": 3898,
+      "modern_industrialization:steam": 24849799
+    },
+    "scope": "Placed controller and matched hatches ran with direct water refill and emptied fluid outputs. This records startup behavior for one layout, not a production coefficient."
+  }
+}

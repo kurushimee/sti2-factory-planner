@@ -24,13 +24,28 @@ def main() -> None:
     parser.add_argument("--turtle-lua", action="store_true", help="Run an autonomous CC: Tweaked turtle in the loaded world.")
     parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     parser.add_argument("--certus-farm", action="store_true", help="Build and measure both certus farms in the isolated world.")
+    parser.add_argument("--nuclear-grid", action="store_true", help="Sample a loaded MI nuclear component grid in isolation.")
+    parser.add_argument("--nuclear-structure", action="store_true", help="Form and tick the prepared nuclear reactor in a test world.")
     args = parser.parse_args()
     if args.turtle_lua and any((args.fixture, args.structure_fixture, args.rotation_fixture,
                                 args.solar_panel, args.storage_fixture, args.blasting_fixture,
                                 args.blasting_save_fixture, args.crystallarieum_fixture,
                                 args.spectrum_automation, args.turtle_growth,
-                                args.structure_bill, args.certus_farm)):
+                                args.structure_bill, args.certus_farm, args.nuclear_grid,
+                                args.nuclear_structure)):
         parser.error("Run the autonomous turtle in its own unpaused capture.")
+    if args.nuclear_grid and any((args.fixture, args.structure_fixture, args.rotation_fixture,
+                                  args.solar_panel, args.storage_fixture, args.blasting_fixture,
+                                  args.blasting_save_fixture, args.crystallarieum_fixture,
+                                  args.spectrum_automation, args.turtle_growth,
+                                  args.structure_bill, args.certus_farm, args.nuclear_structure)):
+        parser.error("Run the nuclear component grid in its own capture.")
+    if args.nuclear_structure and any((args.fixture, args.structure_fixture, args.rotation_fixture,
+                                       args.solar_panel, args.storage_fixture, args.blasting_fixture,
+                                       args.blasting_save_fixture, args.crystallarieum_fixture,
+                                       args.spectrum_automation, args.turtle_growth,
+                                       args.structure_bill, args.certus_farm)):
+        parser.error("Run the formed nuclear reactor in its own capture.")
     if args.solar_panel and args.storage_fixture:
         parser.error("Run the solar measurement and frozen storage fixture in separate captures.")
     if args.solar_panel and args.blasting_fixture:
@@ -95,6 +110,8 @@ def main() -> None:
                     commands = ["planner_export", "planner_probe"]
                     if args.structure_bill:
                         commands.append("planner_check_structure_bill")
+                    if args.nuclear_structure:
+                        commands.extend(["forceload add 816 -16 848 16", "planner_check_structure_bill", "save-all flush"])
                     if args.fixture:
                         commands.extend(line.strip() for line in (Path(__file__).parent / "fixture-commands.txt").read_text().splitlines() if line.strip())
                     if args.structure_fixture:
@@ -117,6 +134,8 @@ def main() -> None:
                         commands.extend(["forceload add 704 -16 720 16", "tick freeze", "planner_probe_turtle_growth", "save-all flush"])
                     if args.turtle_lua:
                         commands.extend(["forceload add 736 -16 752 16", "planner_probe_turtle_lua_setup"])
+                    if args.nuclear_grid:
+                        commands.append("planner_probe_nuclear")
                     if not args.solar_panel and not args.turtle_lua:
                         commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
@@ -147,7 +166,7 @@ def main() -> None:
                 raise RuntimeError(f"Capture did not finish successfully. Inspect {log_path}.")
             if args.fixture and "Planner AE2 fixture created." not in text:
                 raise RuntimeError(f"Fixture creation did not finish successfully. Inspect {log_path}.")
-            if args.structure_bill and "Planner structural bill matched the loaded world structure." not in text:
+            if (args.structure_bill or args.nuclear_structure) and "Planner structural bill matched the loaded world structure." not in text:
                 raise RuntimeError(f"The structural bill did not match. Inspect {log_path}.")
             if args.structure_fixture and "Planner structure fixture matched:" not in text:
                 raise RuntimeError(f"Structure fixture did not match. Inspect {log_path}.")
@@ -171,6 +190,8 @@ def main() -> None:
                 raise RuntimeError(f"Turtle growth fixture did not finish. Inspect {log_path}.")
             if args.turtle_lua and "Planner autonomous turtle completed two harvests." not in text:
                 raise RuntimeError(f"Autonomous turtle trial did not finish. Inspect {log_path}.")
+            if args.nuclear_grid and "Planner nuclear component grid captured." not in text:
+                raise RuntimeError(f"Nuclear grid capture did not finish. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:
