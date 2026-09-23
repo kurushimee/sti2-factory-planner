@@ -19,7 +19,7 @@ func _run() -> void:
 	assert(workspace._request.external == [{"resource": "energy:eu", "cost": 0}])
 	var stage: Dictionary = workspace._dataset.progression[2]
 	assert(workspace._request.available_machines == stage.available_machines)
-	workspace._request = {"goals": [], "replication": false,
+	workspace._request = {"goals": [], "replication": false, "exact_production": true,
 		"available_machines": stage.available_machines.duplicate(),
 		"available_upgrades": stage.available_upgrades.duplicate(),
 		"external": [{"resource": "energy:eu", "cost": 0}]}
@@ -29,6 +29,8 @@ func _run() -> void:
 	await workspace.computation.completed
 	await workspace.layout_settled
 	assert(workspace._last_result.get("status") in ["optimal", "feasible"])
+	assert(workspace._last_result.exact_production.status == "exact")
+	assert(workspace._last_result.flow_roundoff.is_empty())
 	assert(workspace._last_result.lines.size() > 60)
 	assert((workspace.get_node("%ConnectionMode") as OptionButton).selected == 2)
 	var goal: PlannerRecipeNode
@@ -67,6 +69,7 @@ func _run() -> void:
 			endpoint_count += 1
 	assert(endpoint_count > 0)
 	assert(nodes_by_key.has("goal:" + str(workspace._request.goals[0].resource)))
+	assert(nodes_by_key["goal:" + str(workspace._request.goals[0].resource)].get_meta("flow_endpoint").rate_exact.display == "1")
 	for flow: Dictionary in workspace._graph_connections:
 		assert(nodes_by_key.has(flow.source) && nodes_by_key.has(flow.destination))
 		var producer: PlannerRecipeNode = nodes_by_key[flow.source]

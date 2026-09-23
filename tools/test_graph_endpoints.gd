@@ -32,5 +32,11 @@ func _initialize() -> void:
 		return node.key == "unallocated:dust" && node.kind == "gap" && node.rate == 1e-15))
 	assert(precise.nodes.any(func(node: Dictionary) -> bool:
 		return node.key == "surplus:ingot" && node.kind == "remainder" && node.rate == 1e-15))
+	var exact := PlannerGraphEndpoints.build({"connections": [
+		{"source": "external:ore", "destination": "press|press", "resource": "ore", "rate": 0.25}],
+		"external": [{"resource": "ore", "rate": 0.25}],
+		"exact_production": {"endpoints": [{"key": "external:ore",
+			"rate": {"numerator": "1", "denominator": "4", "display": "1/4"}}]}})
+	assert(exact.nodes[0].rate_exact.display == "1/4")
 	print("External supplies, requested output, and retained output have graph endpoints.")
 	quit()

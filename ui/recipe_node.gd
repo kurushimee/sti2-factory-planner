@@ -78,7 +78,8 @@ func configure_endpoint(endpoint: Dictionary, resources: Dictionary[String, Stri
 			title = "Surplus output"
 			loadout.text = "Available after planned consumption"
 	summary.text = resources.get(resource, PlannerDisplay.readable_name(resource))
-	throughput.text = PlannerDisplay.flow_rate(resource, endpoint.rate)
+	throughput.text = PlannerDisplay.flow_rate(resource, endpoint.rate,
+		endpoint.get("rate_exact", {}), endpoint.get("rate_eu_per_tick_exact", {}))
 	power.text = ""
 	custom_minimum_size.x = 230
 	var row := flow_scene.instantiate() as Label

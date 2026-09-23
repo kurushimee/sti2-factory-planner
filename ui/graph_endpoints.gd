@@ -51,6 +51,11 @@ static func build(result: Dictionary) -> Dictionary:
 		var key: String = "surplus:" + str(surplus.resource)
 		if endpoints.has(key):
 			endpoints[key].rate += float(surplus.rate)
+	for exact: Dictionary in result.get("exact_production", {}).get("endpoints", []):
+		if endpoints.has(exact.key):
+			endpoints[exact.key].rate_exact = exact.rate
+			if exact.has("rate_eu_per_tick"):
+				endpoints[exact.key].rate_eu_per_tick_exact = exact.rate_eu_per_tick
 	var keys: Array[String] = []
 	keys.assign(endpoints.keys())
 	keys.sort()

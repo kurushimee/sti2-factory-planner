@@ -317,5 +317,6 @@ export function recoverExactProduction(model, solution, decoded, deadline = Date
       allocation: Q.record(solutionRates[variableIndex.get(variable)])})), balances,
     lines: exactLines, external: [...exactExternal].filter(([, rate]) => rate.n > 0n)
       .map(([resource, rate]) => ({resource, rate: Q.record(rate)})), connections, retained,
-    endpoints: [...endpoints].map(([key, rate]) => ({key, rate: Q.record(rate)})), power};
+    endpoints: [...endpoints].map(([key, rate]) => ({key, rate: Q.record(rate),
+      ...(key.endsWith('energy:eu') ? {rate_eu_per_tick: Q.record(Q.divide(rate, Q.decimal(20)))} : {})})), power};
 }
