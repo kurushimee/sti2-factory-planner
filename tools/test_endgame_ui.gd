@@ -43,7 +43,9 @@ func _run() -> void:
 	workspace._calculated(fixture.result)
 	print("Synchronous result application took %d ms." % (Time.get_ticks_msec() - started))
 	await workspace.layout_settled
-	assert(workspace._nodes.size() == fixture.result.lines.size())
+	var production_nodes := workspace._nodes.values().filter(func(node: PlannerRecipeNode) -> bool:
+		return !node.has_meta("flow_endpoint"))
+	assert(production_nodes.size() == fixture.result.lines.size())
 	assert(workspace.get_node("%ConnectionMode").selected == 2)
 	var focused_count := workspace.graph.get_connection_list().size()
 	assert(focused_count > 0 && focused_count < 20)
@@ -56,7 +58,10 @@ func _run() -> void:
 	assert(material_count > focused_count)
 	workspace.get_node("%ConnectionMode").select(2)
 	workspace._refresh_connections()
-	assert("Feasible plan" in workspace.status.text)
+	if fixture.result.get("flow_roundoff_links", []).is_empty():
+		assert("Feasible plan" in workspace.status.text)
+	else:
+		assert("unallocated" in workspace.status.text)
 	var saved: Dictionary = PlannerJson.parse(FileAccess.get_file_as_string("user://autosave.json"))
 	assert(saved.request.goals[0].rate == fixture.request.goals[0].rate)
 	assert(!saved.has("dataset") && saved.dataset_ref.length() == 64)

@@ -175,7 +175,7 @@ export function prepareDataset(dataset, request, checkBudget = () => {}, options
     for (const recipe of producers.get(queue[cursor]) ?? []) {
       if (selected.has(recipe.id) || request.disabled_recipes?.includes(recipe.id) || (recipe.replication && !request.replication)) continue;
       if (request.production_only && recipe.outputs.some(output => output.resource === 'energy:eu') &&
-          !request.goals?.some(goal => goal.recipe === recipe.id)) continue;
+          !request.goals?.some(goal => goal.recipe === recipe.id || goal.resource === 'energy:eu')) continue;
       checkBudget();
       const configured = configureRecipe(recipe, dataset, request, false, checkBudget, capacityCache, structures, options);
       selected.set(recipe.id, configured);

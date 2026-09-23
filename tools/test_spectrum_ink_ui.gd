@@ -19,8 +19,9 @@ func _run() -> void:
 	workspace._request.assign(fixture.request)
 	workspace._calculated(fixture.result)
 	await workspace.layout_settled
-	assert(workspace._nodes.size() == 1)
-	var node: PlannerRecipeNode = workspace._nodes.values()[0]
+	var recipe_nodes := workspace._nodes.values().filter(func(candidate: PlannerRecipeNode) -> bool: return !candidate.has_meta("flow_endpoint"))
+	assert(recipe_nodes.size() == 1)
+	var node: PlannerRecipeNode = recipe_nodes[0]
 	assert(node.title == "Brown ink (dye)")
 	assert("1 ×" in node.summary.text)
 	assert(node.input_ports.has("item:minecraft:brown_dye"))

@@ -14,6 +14,7 @@ test('many small consumers do not erode a large shared source by repeated subtra
   assert.equal(result.connections.at(-1).rate, 1e9 - 1000);
   assert.deepEqual(result.retained, []);
   assert.deepEqual(result.flow_roundoff, []);
+  assert.deepEqual(result.flow_roundoff_links, []);
 });
 
 test('the numerical allowance is shared by a resource rather than renewed for each consumer', () => {
@@ -30,6 +31,9 @@ test('accepted roundoff is recorded and small supplied flows remain connected', 
   assert.equal(result.connections[0].rate, 1);
   assert.equal(result.flow_roundoff.length, 1);
   assert.ok(Math.abs(result.flow_roundoff[0].rate - 1e-8) < 1e-15);
+  assert.equal(result.flow_roundoff_links[0].destination, 'consumerall|fixed');
+  assert.equal(result.flow_roundoff_links[0].source, 'unallocated:energy:eu');
+  assert.ok(Math.abs(result.flow_roundoff_links[0].rate - 1e-8) < 1e-15);
   const small = allocateFlows([consumer('small', 1e-12)], [{resource: 'energy:eu', rate: 1e-12}], new Map());
   assert.equal(small.connections[0].rate, 1e-12);
   assert.deepEqual(small.flow_roundoff, []);

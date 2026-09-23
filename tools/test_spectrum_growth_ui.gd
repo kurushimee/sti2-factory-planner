@@ -19,7 +19,7 @@ func _run() -> void:
 	workspace._request.assign(fixture.request)
 	workspace._calculated(fixture.result)
 	await workspace.layout_settled
-	assert(workspace._nodes.size() == 2)
+	assert(workspace._nodes.values().filter(func(candidate: PlannerRecipeNode) -> bool: return !candidate.has_meta("flow_endpoint")).size() == 2)
 	var farm: PlannerRecipeNode
 	for candidate: PlannerRecipeNode in workspace._nodes.values():
 		if candidate.title == "Grow Pure Iron with Iron Nugget":

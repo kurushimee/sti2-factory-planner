@@ -22,7 +22,7 @@ func _run() -> void:
 	workspace._request.assign(fixture.request)
 	workspace._calculated(fixture.result)
 	await workspace.layout_settled
-	assert(workspace._nodes.size() == 4)
+	assert(workspace._nodes.values().filter(func(candidate: PlannerRecipeNode) -> bool: return !candidate.has_meta("flow_endpoint")).size() == 4)
 	workspace._show_power()
 	assert("Exact periodic capacity needed a bounded solver retry" in workspace.inspector.text)
 	assert("numerical roundoff bound" in workspace.inspector.text)

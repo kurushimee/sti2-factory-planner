@@ -116,10 +116,11 @@ func _run() -> void:
 	workspace._request.time_limit_ms = 30000
 	workspace._recalculate()
 	await workspace.computation.completed
-	await workspace.layout_settled
+	await process_frame
+	await process_frame
 	assert(workspace._last_result.status == "optimal")
 	assert(workspace._last_result.periodic_power.storage[0].machines == 1)
-	assert(workspace._nodes.size() == 2)
+	assert(workspace._nodes.values().filter(func(candidate: PlannerRecipeNode) -> bool: return !candidate.has_meta("flow_endpoint")).size() == 2)
 	for node: PlannerRecipeNode in workspace._nodes.values():
 		if node.get_meta("storage_unit", {}).get("machine") == lv:
 			workspace._select_node(node)
