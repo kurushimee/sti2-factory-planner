@@ -17,6 +17,7 @@ func _run() -> void:
 	assert(workspace._dataset.recipes.size() >= 28981)
 	assert(workspace._dataset.resources.size() >= 12024)
 	assert(workspace._recipes.has("waste_collection|extended_industrialization:electric_waste_collector"))
+	assert(workspace._recipes.has("spectrum:ink_converting|spectrum:ink_converting/dye/brown"))
 	assert(workspace._request.goals.is_empty())
 	assert(workspace._dataset.loaded_mods.any(func(mod: Dictionary) -> bool: return mod.id == "modern_industrialization" && mod.version == "2.5.8"))
 	workspace.search.text = "creative storage unit"
@@ -25,6 +26,12 @@ func _run() -> void:
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/bundled-dataset.png")
+	workspace.search.text = "Brown ink"
+	workspace._filter_recipes(workspace.search.text)
+	assert(workspace.recipes_list.item_count >= 3)
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/spectrum-ink-routes.png")
 	workspace.get_node("%About").pressed.emit()
 	var about := workspace.get_node("%AboutDialog") as PlannerAbout
 	await create_timer(0.2).timeout

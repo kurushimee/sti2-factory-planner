@@ -1,0 +1,40 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "minecraft": "1.21.1",
+  "spectrum": "1.12.7-1.21.1-neo",
+  "spectrum_jar_sha256": "6b3f8678c580d381a4e681f7640d637d75808ddce2ae3869d28714b3a347025a",
+  "loaded_runtime_sha256": "75315ae0c0aab05d8c7b5fc21c3f5aeb55a15d40250f59eba5a376320b31a0ec",
+  "trial_capture_sha256": "733bf06a3996367693e73a86b67cc490b627fa1d99a3502af88f102bafba6816",
+  "private_world_archive_sha256": "fd6c62b7683b914b4292b3b9294a541a77413b5b7dd57f4e0308202b3931c151",
+  "probe_jar_sha256": "e37004b202102ba39bd9142854a321e01d8b4ae9d62cdec22dd1186f183ccaaf",
+  "color_picker_recipes": 48,
+  "ink_colors": 16,
+  "color_picker_cycle_ticks": 5,
+  "brown_dye_ink_per_item": 5,
+  "iron_growth_trial": {
+    "starter": "c:raw_materials/iron",
+    "required_additive": "minecraft:iron_nugget",
+    "growth_ticks_to_cluster": 600,
+    "brown_ink_per_growth": 240,
+    "liquid_crystal_retained_mb": 1000,
+    "additive_consumed_in_trials": [
+      5,
+      9
+    ],
+    "pure_iron_harvested_in_trials": [
+      3,
+      5
+    ],
+    "loaded_loot_range": [
+      3,
+      5
+    ]
+  },
+  "method": "The released server converted three brown dyes in a placed Color Picker. A separate placed Crystallarieum was ticked through two iron growth cycles, harvested with a normal iron pickaxe, and reseeded.",
+  "limits": [
+    "The Color Picker output is ink stored in that machine. Ink-network throughput and transfer losses are not yet measured.",
+    "The growth trial used explicit harvest and reseed calls. It does not prove a passive automatic production line.",
+    "Iron-nugget use and pure-iron harvest are probabilistic. Their measured counts are observations, not fixed operation costs.",
+    "The private world, capture, and game jar are not redistributed."
+  ]
+}

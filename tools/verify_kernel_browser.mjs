@@ -306,6 +306,21 @@ try {
     assert.deepEqual(actual.result, expected);
     console.log('The loaded blast-furnace plan and whole-fuel startup stock match Node in the browser Worker.');
   }
+  if (process.argv.includes('--ink')) {
+    const recipe = worldDataset.recipes.find(value => value.source_id === 'spectrum:ink_converting/dye/brown');
+    assert.ok(recipe);
+    const request = {goals: [{recipe: recipe.id, resource: recipe.primary, rate: 20}],
+      available_machines: ['spectrum:color_picker'],
+      external: [{resource: 'item:minecraft:brown_dye'}]};
+    const expected = solveFactory(await loadHighs(), worldDataset, request);
+    const actual = await solveInBrowser(worldDataset, request);
+    assert.equal(expected.status, 'optimal');
+    assert.equal(expected.lines[0].machines, 1);
+    delete expected.search?.elapsed_ms;
+    delete actual.result.search?.elapsed_ms;
+    assert.deepEqual(actual.result, expected);
+    console.log('The measured Color Picker capacity matches Node in the browser Worker.');
+  }
   if (process.argv.includes('--material')) {
     const request = {...endgameRequest(worldDataset), time_limit_ms: 180000,
       construction: {external: [{resource: 'energy:eu', cost: 0}], work: 0.001}};

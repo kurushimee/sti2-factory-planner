@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 
 const root = resolve(process.env.STI2_WEB_ROOT ?? 'builds/web'), artifacts = resolve('.plans/artifacts/workspace');
 const manifest = JSON.parse(await readFile('data/provenance/distribution-manifest.json', 'utf8'));
+const inkReport = JSON.parse(await readFile('data/provenance/spectrum-ink-report.json', 'utf8'));
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
@@ -67,6 +68,9 @@ try {
   assert.equal(plan.dataset_identity, 'statech-industry-2:2.0.1');
   assert.equal(plan.dataset.recipes.length, manifest.recipes);
   assert.equal(plan.dataset.resources.length, manifest.resources);
+  assert.equal(plan.dataset.source.spectrum_ink_capture_sha256, inkReport.trial_capture_sha256);
+  assert.equal(plan.dataset.recipes.filter(recipe => recipe.type === 'spectrum:ink_converting').length, inkReport.color_picker_recipes);
+  assert.equal(plan.dataset.resources.filter(resource => resource.kind === 'ink').length, inkReport.ink_colors);
   assert.equal(plan.dataset.complete, false);
   assert.equal(plan.request.goals.length, 0);
   assert.equal(plan.dataset.machines.filter(machine => machine.availability?.automatic === false).length, 4);

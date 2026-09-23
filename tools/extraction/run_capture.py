@@ -18,6 +18,7 @@ def main() -> None:
     parser.add_argument("--storage-fixture", action="store_true", help="Place five charged MI storage units in the isolated test world.")
     parser.add_argument("--blasting-fixture", action="store_true", help="Tick the distinct Spectrum blasting recipes in the loaded blast furnace.")
     parser.add_argument("--blasting-save-fixture", action="store_true", help="Save four active and ambiguous blast furnaces for ZIP import checks.")
+    parser.add_argument("--crystallarieum-fixture", action="store_true", help="Measure loaded Spectrum growth and harvesting in the isolated test world.")
     parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     parser.add_argument("--certus-farm", action="store_true", help="Build and measure both certus farms in the isolated world.")
     args = parser.parse_args()
@@ -29,8 +30,12 @@ def main() -> None:
         parser.error("Run the storage and blasting fixtures in separate captures.")
     if args.blasting_save_fixture and any((args.solar_panel, args.blasting_fixture, args.fixture,
                                            args.structure_fixture, args.rotation_fixture,
-                                           args.structure_bill, args.certus_farm)):
+                                           args.structure_bill, args.certus_farm, args.crystallarieum_fixture)):
         parser.error("Run the blasting save fixture in its own capture.")
+    if args.crystallarieum_fixture and any((args.solar_panel, args.storage_fixture, args.blasting_fixture,
+                                            args.fixture, args.structure_fixture, args.rotation_fixture,
+                                            args.structure_bill, args.certus_farm)):
+        parser.error("Run the Crystallarieum fixture in a separate capture.")
     instance = args.instance.resolve()
     argument_file = instance / "libraries/net/neoforged/neoforge/21.1.250/win_args.txt"
     if not argument_file.is_file():
@@ -78,6 +83,8 @@ def main() -> None:
                         commands.extend(["forceload add 480 -16 560 16", "tick freeze", "planner_probe_blasting", "save-all flush"])
                     if args.blasting_save_fixture:
                         commands.extend(["forceload add 592 -16 624 16", "tick freeze", "planner_fixture_blasting_save", "save-all flush"])
+                    if args.crystallarieum_fixture:
+                        commands.extend(["forceload add 624 -16 656 16", "tick freeze", "planner_probe_crystallarieum", "save-all flush"])
                     if not args.solar_panel:
                         commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
@@ -112,6 +119,8 @@ def main() -> None:
                 raise RuntimeError(f"Blasting trials did not finish. Inspect {log_path}.")
             if args.blasting_save_fixture and "Planner blasting save fixture placed four furnaces." not in text:
                 raise RuntimeError(f"Blasting save fixture did not finish. Inspect {log_path}.")
+            if args.crystallarieum_fixture and "Planner Crystallarieum measured two complete growth and harvest cycles." not in text:
+                raise RuntimeError(f"Crystallarieum fixture did not finish. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:
