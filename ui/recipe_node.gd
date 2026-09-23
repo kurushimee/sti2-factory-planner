@@ -22,7 +22,7 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 		title = title.left(41) + "…"
 	summary.text = "%d × %s" % [int(line.machines), PlannerDisplay.machine_name(line.machine, resources)]
 	loadout.text = PlannerDisplay.loadout(line.get("configuration_details", {}), resources)
-	var chance_outputs: bool = recipe.get("outputs", []).any(func(output: Dictionary) -> bool:
+	var chance_outputs: bool = recipe.get("expected_yields", false) || recipe.get("outputs", []).any(func(output: Dictionary) -> bool:
 		return output.get("probability", 1) != 1)
 	var operations: String = line.get("operations_per_second_exact", {}).get("display", PlannerDisplay.number(line.operations_per_second))
 	throughput.text = "%s operations/s" % operations

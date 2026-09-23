@@ -14,8 +14,11 @@ for (const [suffix, amount, energy] of [['crystals', 4, 2.1], ['clusters', 1, 5.
   assert.ok(recipe);
   const configuration = recipe.configurations[0];
   assert.equal(configuration.operations_per_second, 1 / 12);
+  assert.deepEqual(configuration.capacity.expected_operations_per_second_ratio,
+    {numerator: '1', denominator: '12'});
   assert.equal(configuration.idle_eu_per_tick, 3.109375);
-  assert.ok(Math.abs(configuration.eu_per_operation - energy) < 1e-12);
+  assert.equal(configuration.eu_per_operation, energy);
+  assert.ok(configuration.capacity.average_full_load_eu_per_tick_ratio);
   const request = {goals: [{recipe: recipe.id, resource: recipe.primary, rate: amount / 12}],
     available_machines: ['planner:certus_farm'], external: [{resource: 'energy:eu'}], replication: false};
   assert.throws(() => solveFactory(highs, dataset, request), /requires an item the player has already obtained/);

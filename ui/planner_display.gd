@@ -79,6 +79,12 @@ static func optimization_report(result: Dictionary) -> String:
 	text += "Costs use your resource, machine, upgrade, and energy priorities. They are not item counts.\n"
 	if result.get("search", {}).get("method") == "relaxed_route_repair":
 		text += "This large plan uses a continuous-flow estimate, resolves route conflicts, and rechecks whole-machine capacity and every resource balance. Its route search is a heuristic.\n"
+	elif result.get("search", {}).get("method") == "catalog_seed_refinement":
+		text += "This plan checks complete machine choices for recipes selected from the catalog. Its output and material balances are exact; other routes may use fewer resources or machines.\n"
+	elif result.get("search", {}).get("method") == "catalog_seed_plan":
+		text += "This plan uses one available setup per machine for recipes selected from the catalog. Its output and material balances are exact; other setups and routes may cost less.\n"
+	elif result.get("search", {}).get("method") == "catalog_progression_fallback":
+		text += "This plan uses the %s machine set after the wider search did not establish a route. Its output and material balances are exact; other enabled machines may cost less.\n" % PlannerDisplay.markup(str(result.search.get("progression", "earlier")))
 	elif result.get("search", {}).get("method") == "material_cost_refinement":
 		text += "Production routes, machines, and upgrades use complete construction recipes. A change is accepted only after checking its production and construction balances and total cost.\n"
 		for comparison: Dictionary in result.get("search", {}).get("material_comparisons", []):
@@ -198,12 +204,15 @@ static func inspection(line: Dictionary, recipe: Dictionary, resources: Dictiona
 			text += "%s · %s\n" % [markup(resources.get(flow.resource, readable_name(flow.resource))),
 				flow_rate(flow.resource, flow.rate, flow.get("rate_exact", {}), flow.get("rate_eu_per_tick_exact", {}))]
 	var exact_capacity: Variant = line.get("capacity_per_second_exact")
-	var capacity_text := "Full-speed capacity: %s operations/s" % number(line.capacity_per_second)
+	var expected_capacity: bool = capacity.has("expected_operations_per_second_ratio")
+	var capacity_label: String = "Exact expected capacity" if expected_capacity else "Full-speed capacity"
+	var capacity_text := "%s: %s operations/s" % [capacity_label, number(line.capacity_per_second)]
 	if exact_capacity is Dictionary:
-		capacity_text = "Full-speed capacity: %s operations/s" % exact_capacity.display
+		capacity_text = "%s: %s operations/s" % [capacity_label, exact_capacity.display]
 	text += "\n[b]Capacity and power[/b]\n%s\n" % capacity_text
-	text += "%s%% utilization\nMachine draw: %s EU/t sustained\n" % [
+	text += "%s%% %sutilization\nMachine draw: %s EU/t sustained\n" % [
 		line.get("utilization_percent_exact", {}).get("display", number(line.utilization * 100)),
+		"expected " if expected_capacity else "",
 		line.get("power_eu_per_tick_exact", {}).get("display", number(line.power_eu_per_tick))]
 	if capacity.has("ticks_per_batch"):
 		var energy_resource: String = configuration.get("capacity_input", {}).get("machine", {}).get("energy_resource", "energy:eu")

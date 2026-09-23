@@ -308,6 +308,29 @@ try {
     assert.deepEqual(actual.result, expected);
     console.log(`The replicatorless creative-storage plan matches Node in the browser Worker: ${expected.lines.length} allocations, ${expected.status}.`);
   }
+  if (process.argv.includes('--mi-late')) {
+    const recipe = worldDataset.recipes.find(value => value.source_id ===
+      'modern_industrialization:electric_age/upgrades/quantum');
+    const stage = worldDataset.progression.find(value => value.id === 'statech:stage_8');
+    assert.ok(recipe && stage);
+    const request = {goals: [{recipe: recipe.id, resource: recipe.primary, rate: 0.02}],
+      replication: false, production_only: true, exact_production: true,
+      available_machines: stage.available_machines, available_upgrades: stage.available_upgrades,
+      obtained_resources: [...new Set(worldDataset.recipes.filter(value => value.type === 'planner:certus_growth')
+        .flatMap(value => value.requires_obtained ?? []))],
+      external: [{resource: 'energy:eu', cost: 0}], time_limit_ms: 60000};
+    const expected = solveFactory(await loadHighs(), worldDataset, request);
+    const actual = await solveInBrowser(worldDataset, request);
+    assert.equal(expected.status, 'feasible');
+    assert.equal(actual.result.status, 'feasible');
+    assert.equal(actual.result.exact_production.status, 'exact');
+    assert.ok(actual.result.lines.length > 400);
+    assert.deepEqual(actual.result.exact_production, expected.exact_production);
+    assert.deepEqual(actual.result.connections, expected.connections);
+    assert.deepEqual(actual.result.lines.map(line => [line.recipe, line.configuration, line.machines]),
+      expected.lines.map(line => [line.recipe, line.configuration, line.machines]));
+    console.log(`The late MI plan matches Node in the embedded browser Worker: ${actual.result.lines.length} allocations.`);
+  }
   if (process.argv.includes('--blasting')) {
     const recipe = worldDataset.recipes.find(value => value.source_id === 'spectrum:blasting/pure_resources/iron' &&
       value.inputs[1]?.resource === 'item:minecraft:lava_bucket');

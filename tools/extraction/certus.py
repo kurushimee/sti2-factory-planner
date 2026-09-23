@@ -1,5 +1,7 @@
 """Describe the placed, measured AE2 certus farm without treating found sites as supplies."""
 
+from fractions import Fraction
+
 from normalize import resource_identity
 from verify_certus import verify_certus, verify_farms
 
@@ -9,7 +11,8 @@ def certus_catalog(capture):
         return [], [], []
     rules = verify_certus(capture["certus_growth"])
     farms = verify_farms(capture["certus_farms"])
-    conversion = capture["power_units"]["fe_per_ae"] / capture["power_units"]["fe_per_eu"]
+    conversion = Fraction(str(capture["power_units"]["fe_per_ae"])) / Fraction(
+        str(capture["power_units"]["fe_per_eu"]))
     usage = capture["power_units"]["ae_usage_multiplier"]
     if usage != 1:
         raise ValueError("Repeat the whole-network certus power measurements for the changed AE2 multiplier.")
@@ -24,7 +27,8 @@ def certus_catalog(capture):
     machines = [{"id": machine, "name": "Five-face certus farm", "status": "supported", "mechanic": "fixed_configurations",
                  "availability_items": ["ae2:growth_accelerator", "ae2:annihilation_plane", "ae2:storage_bus", "ae2:fluix_glass_cable"]}]
     # Each face needs four successes. One of six directions succeeds with probability 1/5 every ten ticks.
-    rate = 5 * 20 / (4 * 6 * rules["growth_chance_denominator"] * rules["accelerator_interval_ticks"])
+    exact_rate = Fraction(5 * 20, 4 * 6 * rules["growth_chance_denominator"] * rules["accelerator_interval_ticks"])
+    rate = float(exact_rate)
     recipes = []
     for farm in farms:
         silk = farm["silk_touch"]
@@ -41,16 +45,25 @@ def certus_catalog(capture):
             required.append(enchanted)
         else:
             bill.append({"resource": "item:ae2:annihilation_plane", "amount": 5})
+        idle = Fraction(str(farm["network_idle_ae_per_tick"])) * conversion
+        operation_energy = Fraction(29 if silk else 21, 1 if silk else 2) * conversion
+        peak = (Fraction(str(farm["network_idle_ae_per_tick"])) +
+                5 * Fraction(29 if silk else 21, 1 if silk else 2)) * conversion
+        average = idle + exact_rate * operation_energy / 20
         recipes.append({"id": identity, "name": "Grow certus " + ("clusters" if silk else "crystals"),
             "source_id": "ae2:flawless_budding_quartz", "origin": "loaded_certus_farm", "type": "planner:certus_growth",
             "primary": output, "group": "Extraction", "expected_yields": True, "requires_obtained": required,
             "inputs": [], "outputs": [{"resource": output, "amount": 1 if silk else 4}],
             "configurations": [{"id": identity, "machine": machine, "name": "Five planes with " + ("Silk Touch I" if silk else "no enchantments"),
-                "operations_per_second": rate, "idle_eu_per_tick": farm["network_idle_ae_per_tick"] * conversion,
-                "eu_per_operation": (29 if silk else 10.5) * conversion, "build_requirements": bill,
+                "operations_per_second": rate, "idle_eu_per_tick": float(idle),
+                "eu_per_operation": float(operation_energy), "build_requirements": bill,
                 "capacity": {"operations_per_second": rate,
-                    "average_full_load_eu_per_tick": (farm["network_idle_ae_per_tick"] + rate / 20 * (29 if silk else 10.5)) * conversion,
-                    "peak_eu_per_tick": (farm["network_idle_ae_per_tick"] + 5 * (29 if silk else 10.5)) * conversion},
+                    "expected_operations_per_second_ratio": {"numerator": str(exact_rate.numerator),
+                        "denominator": str(exact_rate.denominator)},
+                    "average_full_load_eu_per_tick": float(average),
+                    "average_full_load_eu_per_tick_ratio": {"numerator": str(average.numerator),
+                        "denominator": str(average.denominator)},
+                    "peak_eu_per_tick": float(peak)},
                 "startup_inputs": retained,
                 "assumptions": [
                     "Build around one existing flawless budding quartz block per farm. Breaking that block degrades it; do not move it.",

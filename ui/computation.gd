@@ -113,6 +113,10 @@ func _accept(response: Variant) -> void:
 			progress.emit("Balancing production routes · attempt %d…" % int(response.get("attempt", 0)))
 			return
 		var messages := {
+			"catalog_support": "Finding the recipes that can support this goal…",
+			"catalog_refinement": "Checking full machine and upgrade choices…",
+			"catalog_seed_plan": "Checking a buildable production plan…",
+			"progression_fallback": "Checking an earlier machine set for a buildable plan…",
 			"production_baseline": "Sizing the initial production plan…",
 			"construction_baseline": "Calculating its construction materials…",
 			"machine_choices": "Comparing machine and upgrade costs…",

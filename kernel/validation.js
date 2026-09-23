@@ -96,6 +96,16 @@ export function validateDataset(dataset) {
       text(configuration.machine, `${location}.machine`);
       machines.add(configuration.machine);
       number(configuration.operations_per_second, `${location}.operations_per_second`, Number.MIN_VALUE);
+      if (configuration.capacity?.expected_operations_per_second_ratio !== undefined) {
+        const ratio = configuration.capacity.expected_operations_per_second_ratio;
+        object(ratio, `${location}.capacity.expected_operations_per_second_ratio`);
+        if (!/^[1-9]\d*$/.test(String(ratio.numerator)) || !/^[1-9]\d*$/.test(String(ratio.denominator)) ||
+            !recipe.expected_yields ||
+            Math.abs(Number(ratio.numerator) / Number(ratio.denominator) - configuration.operations_per_second) >
+              1e-12 * Math.max(1, configuration.operations_per_second)) {
+          fail(location, 'expected capacity must be a positive source-derived ratio matching the displayed rate');
+        }
+      }
       for (const field of ['eu_per_operation', 'idle_eu_per_tick']) if (configuration[field] !== undefined) number(configuration[field], `${location}.${field}`);
       if (configuration.build_cost !== undefined) number(configuration.build_cost, `${location}.build_cost`, Number.MIN_VALUE);
       for (const field of ['inputs', 'startup_inputs', 'build_requirements']) if (configuration[field] !== undefined) flows(configuration[field], `${location}.${field}`, field === 'inputs');

@@ -12,7 +12,7 @@ import {runSolver} from './solver.js';
 import {findFactorySeed} from './seed.js';
 import {refineMaterialPlan} from './material_refinement.js';
 import {balanceTolerance, diagnosticNumber, scaleConstraintRows} from './numerics.js';
-import {preferredRecipes, describePreferences} from './recipe_preferences.js';
+import {preferredRecipes, describePreferences, withRecipes} from './recipe_preferences.js';
 import {appendPeriodicDispatch, decodePeriodicDispatch, expandPowerProfile, PeriodicBalanceError} from './periodic_model.js';
 import {exactInstalledCapacity} from './exact_capacity.js';
 import {recoverExactProduction} from './exact_recovery.js';
@@ -491,6 +491,11 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
   const exhausted = new Error('The configuration search reached its time limit.');
   const refine = new Error('Compare large construction orders separately.');
   const source = dataset;
+  if (source.recipes.length > 2000 && (request.available_machines?.length ?? 0) > 70 &&
+      request.production_only && request.exact_production &&
+      !request.full_catalog_search && !request.construction) {
+    return solveStagedProduction(highs, source, request, deadline, exhausted, onProgress);
+  }
   let configurations = 0;
   try {
     dataset = prepareDataset(dataset, request, () => { if (Date.now() >= deadline) throw exhausted; },
@@ -502,6 +507,10 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
     if (error !== exhausted) throw error;
     return {status: 'limit', phase: 'configuration', optimal: false, incumbent: null, branches: 0};
   }
+  return solveWithPreferences(highs, dataset, request, deadline, onProgress);
+}
+
+function solveWithPreferences(highs, dataset, request, deadline, onProgress) {
   const preferred = preferredRecipes(dataset, request);
   if (preferred.applied.length) {
     const firstDeadline = Date.now() + Math.max(0, deadline - Date.now()) * 0.9;
@@ -518,6 +527,120 @@ export function solveFactory(highs, dataset, request, onProgress = () => {}) {
     return describePreferences(fallback, preferred.applied, true);
   }
   return solvePreparedFactory(highs, dataset, request, deadline, onProgress);
+}
+
+function solveStagedProduction(highs, source, request, deadline, exhausted, onProgress) {
+  let seedDataset;
+  try {
+    seedDataset = prepareDataset(source, request, () => {if (Date.now() >= deadline) throw exhausted;},
+      {seedOnly: true});
+  } catch (error) {
+    if (error !== exhausted) throw error;
+    return {status: 'limit', phase: 'configuration', optimal: false, incumbent: null, branches: 0};
+  }
+  onProgress({phase: 'catalog_support', recipes: seedDataset.recipes.length});
+  const seedModel = compileFactory(seedDataset, request);
+  const relaxed = highs.createModel({format: 'lp', data: seedModel.text.replace(/\nGenerals\n[^]*?\nEnd$/, '\nEnd')});
+  let selectedIds;
+  const ingredientScores = new Map();
+  try {
+    relaxed.options.set({output_flag: false, time_limit: Math.max(0.001, (deadline - Date.now()) / 1000)});
+    relaxed.run();
+    const status = relaxed.getModelStatus();
+    if (status !== highs.constants.modelStatus.optimal) {
+      if (status !== highs.constants.modelStatus.infeasible) {
+        return {status: 'limit', optimal: false, phase: 'catalog_support',
+          reason: 'The catalog support search did not finish within its calculation limit.'};
+      }
+      const unavailable = new Set(seedModel.exclusions.map(entry => entry.recipe));
+      const blocked = seedDataset.recipes.filter(recipe => unavailable.has(recipe.id));
+      const siteRoutes = blocked.filter(recipe => (recipe.requires_obtained ?? [])
+        .some(resource => resource.startsWith('site:')));
+      const missing = [...new Set((siteRoutes.length ? siteRoutes : blocked)
+        .flatMap(recipe => recipe.requires_obtained ?? [])
+        .filter(resource => !request.obtained_resources?.includes(resource)))].sort((a, b) =>
+        Number(b.startsWith('site:')) - Number(a.startsWith('site:')) || a.localeCompare(b));
+      const names = new Map(source.resources.map(resource => [resource.id, resource.name ?? resource.id]));
+      return {status: 'unresolved', optimal: false, phase: 'catalog_support',
+        reason: 'The available configurations did not establish a production route.' + (missing.length ?
+          ` Unavailable source routes require previously obtained resources, including ${missing.slice(0, 3)
+            .map(resource => names.get(resource)).join(', ')}. Mark only resources you own as obtained in Factory settings.` : ''),
+        exclusions: seedModel.exclusions};
+    }
+    const values = relaxed.getSolution().colValue;
+    const activeLines = seedModel.lines.filter(line => values[relaxed.getColByName(line.operation)] > 0);
+    selectedIds = new Set(activeLines.map(line => line.recipe.id));
+    for (const line of seedModel.lines) {
+      if (values[relaxed.getColByName(line.operation)] <= 0) continue;
+      for (const check of line.inputChecks) for (const term of line.inputTerms.filter(value => value.slot === check.slot)) {
+        const key = `${line.recipe.id}#${check.slot}`;
+        if (!ingredientScores.has(key)) ingredientScores.set(key, new Map());
+        const score = values[relaxed.getColByName(term.variable)];
+        ingredientScores.get(key).set(term.resource, (ingredientScores.get(key).get(term.resource) ?? 0) + score);
+      }
+    }
+  } finally { relaxed.dispose(); }
+  const chosenIngredients = {};
+  for (const [key, scores] of ingredientScores) if (!Object.hasOwn(request.ingredients ?? {}, key)) {
+    chosenIngredients[key] = [...scores].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+  }
+  const selectedRequest = {...request, ingredients: {...request.ingredients, ...chosenIngredients},
+    remove_unused_seed_machines: true};
+  for (const goal of request.goals ?? []) if (goal.recipe) selectedIds.add(goal.recipe);
+  for (const recipe of Object.values(request.routes ?? {})) selectedIds.add(recipe);
+  const seedSelected = withRecipes(seedDataset, seedDataset.recipes.filter(recipe => selectedIds.has(recipe.id)));
+  const selected = withRecipes(source, source.recipes.filter(recipe => selectedIds.has(recipe.id)));
+  const scoped = (result, seedOnly = false) => ({...result, status: 'feasible', optimal: false,
+    search: {...result.search, method: seedOnly ? 'catalog_seed_plan' : 'catalog_seed_refinement', selected_recipes: selectedIds.size,
+      automatic_ingredients: chosenIngredients},
+    optimization: {...result.optimization, lower_bound: null, relative_gap: null,
+      explanation: 'The production rates and material balances are exact. The preview searched recipes selected by a catalog-wide relaxation; it has not proved the lowest route or machine cost.'}});
+  if (Date.now() >= deadline) return {status: 'limit', phase: 'catalog_support', optimal: false};
+  onProgress({phase: 'catalog_refinement', recipes: selectedIds.size});
+  let refined;
+  try {
+    const refinedDataset = prepareDataset(selected, selectedRequest, () => {if (Date.now() >= deadline) throw exhausted;});
+    const refinedDeadline = Date.now() + Math.max(0, deadline - Date.now()) * 0.7;
+    refined = solveWithPreferences(highs, refinedDataset, selectedRequest, refinedDeadline, onProgress);
+    if (refined.lines) return scoped(refined);
+  } catch (error) {
+    if (error !== exhausted) throw error;
+    refined = {status: 'limit', phase: 'catalog_refinement', optimal: false};
+  }
+  if (Date.now() >= deadline) return refined;
+  onProgress({phase: 'catalog_seed_plan', recipes: selectedIds.size});
+  const baseline = solveWithPreferences(highs, seedSelected,
+    {...selectedRequest, honor_route_preferences: false}, deadline, onProgress);
+  if (baseline.lines) return scoped(baseline, true);
+  const fallback = solveProgressionFallback(highs, source, request, deadline, exhausted, onProgress);
+  return fallback?.lines ? fallback : refined;
+}
+
+function solveProgressionFallback(highs, source, request, deadline, exhausted, onProgress) {
+  if (Object.keys(request.configurations ?? {}).length || Object.keys(request.installed ?? {}).length) return null;
+  const preset = (source.progression ?? []).filter(stage => stage.available_machines?.length >= 20 &&
+    stage.available_machines.length <= 50).map(stage => ({...stage,
+      allowed: stage.available_machines.filter(machine => request.available_machines.includes(machine))}))
+    .filter(stage => stage.allowed.length >= 20)
+    .sort((a, b) => b.allowed.length - a.allowed.length)[0];
+  if (!preset) return null;
+  onProgress({phase: 'progression_fallback', preset: preset.name ?? preset.id});
+  const reduced = {...request, available_machines: preset.allowed, full_catalog_search: true};
+  let prepared;
+  try {
+    prepared = prepareDataset(source, reduced, () => {if (Date.now() >= deadline) throw exhausted;});
+  } catch (error) {
+    if (error !== exhausted) throw error;
+    return null;
+  }
+  if (request.goals?.some(goal => goal.recipe && !prepared.recipes.some(recipe =>
+    recipe.id === goal.recipe && recipe.configurations.length))) return null;
+  const result = solveWithPreferences(highs, prepared, reduced, deadline, onProgress);
+  if (!result.lines) return null;
+  return {...result, status: 'feasible', optimal: false,
+    search: {...result.search, method: 'catalog_progression_fallback', progression: preset.id},
+    optimization: {...result.optimization, lower_bound: null, relative_gap: null,
+      explanation: 'The production rates and balances are exact. A smaller available-machine set established this plan; other enabled machines may yield a lower cost.'}};
 }
 
 function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {

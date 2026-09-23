@@ -52,6 +52,8 @@ A configuration needs an `id`, a `machine` ID, and positive `operations_per_seco
 
 Represent generation as a recipe whose output includes `energy:eu`. Fuel and coolant are ordinary inputs, so their production and power demands join the same factory. Returned coolant is a returned material or output; only actual losses belong in the sustained replacement demand. Initial loop fill belongs in startup stock. Fixed capacities without a verified completion schedule receive an explicit missing-startup warning.
 
+For a source-defined stochastic process, `capacity.expected_operations_per_second_ratio` may give positive decimal-string `numerator` and `denominator` fields. The ratio must match `operations_per_second`, and the recipe must have `expected_yields: true`. The planner uses the ratio for exact rational expected-rate arithmetic and labels it as an expectation. It does not promise that a finite run will deliver that output. StaTech's five-face certus farm uses `{"numerator":"1","denominator":"12"}` from the loaded growth probability and accelerator interval.
+
 ## Machine rules
 
 A process-based recipe leaves `configurations` empty and supplies `process`. Industrial processes specify `type`, whole `duration_ticks`, and whole `eu_per_tick`. Ordinary crafting uses `type: "planner:crafting"`; its timing comes from the assembler. `machines` contains unique machine IDs, `status` (`supported`, `unsupported`, or `structural`), and a `mechanic` for supported entries. Structural parts are not independent production machines.
