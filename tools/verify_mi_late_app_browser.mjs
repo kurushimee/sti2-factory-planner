@@ -6,6 +6,11 @@ import {chromium} from '@playwright/test';
 
 const planPath = process.argv[2];
 if (!planPath) throw new Error('Supply the verified portable late MI plan.');
+const hourly = process.argv.includes('--hourly');
+const importedPlan = JSON.parse(await readFile(planPath, 'utf8'));
+if (hourly) importedPlan.request.goals[0] = {...importedPlan.request.goals[0], rate: 1 / 3600,
+  rate_ratio: {numerator: '1', denominator: '3600'}};
+const expectedGoal = importedPlan.request.goals[0];
 const root = resolve(process.env.STI2_WEB_ROOT ?? 'builds/web');
 const artifacts = resolve('.plans/artifacts/mi-late');
 await mkdir(artifacts, {recursive: true});
@@ -52,7 +57,8 @@ try {
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
   const chooser = page.waitForEvent('filechooser');
   await page.mouse.click(1126, 40, {delay: 100});
-  await (await chooser).setFiles(planPath);
+  await (await chooser).setFiles({name: 'mi-goal-plan.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(importedPlan))});
   await frame.waitForFunction(() => window.testResult?.lines?.length > 400, null, {timeout: 120000});
   const result = await frame.evaluate(() => window.testResult);
   assert.equal(result.status, 'feasible');
@@ -61,6 +67,8 @@ try {
   assert.equal(result.search.method, 'catalog_seed_refinement');
   assert.ok(result.connections.length > 1300);
   assert.ok(result.lines.every(line => line.operations_per_second_exact && line.capacity_per_second_exact));
+  if (hourly) assert.equal(result.exact_production.endpoints.find(endpoint =>
+    endpoint.key === `goal:${expectedGoal.resource}`).rate.display, '1/3600');
   const savedPlan = () => frame.evaluate(() => new Promise((done, reject) => {
     const opened = indexedDB.open('factory-planner', 1);
     opened.onerror = () => reject(opened.error);
@@ -76,7 +84,7 @@ try {
     if (saved?.request?.goals?.length === 1 && Object.keys(saved.positions ?? {}).length > 400) break;
     await new Promise(done => setTimeout(done, 100));
   }
-  assert.equal(saved?.request?.goals?.[0]?.rate, 0.02);
+  assert.deepEqual(saved?.request?.goals?.[0], expectedGoal);
   assert.ok(Object.keys(saved.positions).length > 400);
   await page.screenshot({path: `${artifacts}/browser-quantum-1440.png`});
   await page.setViewportSize({width: 1280, height: 720});
@@ -86,13 +94,13 @@ try {
   const download = await pending;
   const stream = await download.createReadStream();
   const portable = JSON.parse(Buffer.concat(await stream.toArray()).toString('utf8'));
-  assert.equal(portable.request.goals[0].rate, 0.02);
+  assert.deepEqual(portable.request.goals[0], expectedGoal);
   assert.ok(Object.keys(portable.positions).length > 400);
   await page.reload();
   frame = page.frames().find(candidate => candidate !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
   saved = await savedPlan();
-  assert.equal(saved.request.goals[0].rate, 0.02);
+  assert.deepEqual(saved.request.goals[0], expectedGoal);
   assert.equal(await frame.evaluate(() => crossOriginIsolated), false);
   assert.deepEqual(errors, []);
   console.log(`The embedded application planned, exported, and restored ${result.lines.length} exact late MI lines.`);
