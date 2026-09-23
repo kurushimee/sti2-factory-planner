@@ -35,6 +35,12 @@ public final class PlannerProbe {
         event.getDispatcher().register(Commands.literal("planner_fixture_structure")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createStructureFixture(context.getSource().getServer())));
+        event.getDispatcher().register(Commands.literal("planner_fixture_rotation")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return createRotationFixture(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -305,6 +311,50 @@ public final class PlannerProbe {
         matcher.rematch(level);
         if (!matcher.isMatchSuccessful()) throw new IllegalStateException("The actual MI shape matcher rejected the fixture.");
         System.out.println("Planner structure fixture matched: controller=" + controllerPos + ", hatch=" + hatchPos + ", provider=" + providerPos);
+        return 1;
+    }
+
+    private static int createRotationFixture(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse("modern_industrialization:steam_quarry"));
+        var records = new JsonArray();
+        int index = 0;
+        for (var facing : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            var origin = new BlockPos(256 + index++ * 32, 100, 0);
+            level.setBlockAndUpdate(origin, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            level.setBlockAndUpdate(origin, block.defaultBlockState());
+            var controller = (aztech.modern_industrialization.machines.multiblocks.MultiblockMachineBlockEntity) level.getBlockEntity(origin);
+            controller.getOrientation().facingDirection = facing;
+            var shape = controller.getActiveShape();
+            int chains = 0;
+            for (var entry : shape.simpleMembers.entrySet()) {
+                var pos = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldPos(origin, facing, entry.getKey());
+                var state = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldState(level, pos, entry.getValue().getPreviewState(), facing);
+                level.setBlockAndUpdate(pos, state);
+                if (state.is(net.minecraft.world.level.block.Blocks.CHAIN)) {
+                    chains++;
+                    if (state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.AXIS) != net.minecraft.core.Direction.Axis.Y)
+                        throw new IllegalStateException("The steam quarry chain rotated away from the vertical axis.");
+                }
+            }
+            var matcher = controller.createShapeMatcher();
+            matcher.rematch(level);
+            if (!matcher.isMatchSuccessful() || chains == 0)
+                throw new IllegalStateException("The loaded matcher rejected the " + facing + " steam quarry or it had no chains.");
+            controller.setChanged();
+            var record = new JsonObject();
+            record.addProperty("machine", "modern_industrialization:steam_quarry");
+            record.addProperty("facing", facing.name());
+            record.addProperty("facing_direction", facing.get3DDataValue());
+            record.addProperty("x", origin.getX());
+            record.addProperty("y", origin.getY());
+            record.addProperty("z", origin.getZ());
+            record.addProperty("vertical_chains", chains);
+            record.addProperty("loaded_matcher_accepted", true);
+            records.add(record);
+        }
+        Files.writeString(Path.of("planner-extraction", "rotation-fixture.json"), new GsonBuilder().setPrettyPrinting().create().toJson(records));
+        System.out.println("Planner rotation fixtures matched all four loaded steam quarries.");
         return 1;
     }
 
@@ -1003,7 +1053,7 @@ public final class PlannerProbe {
         return result;
     }
 
-    private static int memberRule(aztech.modern_industrialization.machines.multiblocks.SimpleMember member) {
+    private static int memberRule(aztech.modern_industrialization.machines.multiblocks.SimpleMember member, MinecraftServer server) {
         return memberRules.computeIfAbsent(member, value -> {
             var rule = new JsonObject();
             String name = value.getClass().getName();
@@ -1014,19 +1064,56 @@ public final class PlannerProbe {
             rule.addProperty("state_only_verified", stateOnly);
             if (stateOnly) {
                 var states = new JsonArray();
+                var acceptedStates = new java.util.ArrayList<net.minecraft.world.level.block.state.BlockState>();
+                boolean directional = false;
                 long matchingCount = 0, checkedCount = 0;
                 for (var block : BuiltInRegistries.BLOCK) {
                     var possible = block.getStateDefinition().getPossibleStates();
                     var matching = possible.stream().filter(state -> value.matchesState(state, null)).toList();
                     if (matching.isEmpty()) continue;
+                    acceptedStates.addAll(matching);
                     matchingCount += matching.size();
                     checkedCount += possible.size();
-                    states.addAll(compactStates(block, matching));
+                    var projected = compactStates(block, matching);
+                    states.addAll(projected);
+                    for (var entry : projected) {
+                        var properties = entry.getAsJsonObject().getAsJsonObject("Properties");
+                        if (properties.keySet().stream().anyMatch(key -> java.util.Set.of("facing", "axis", "rotation", "north", "east", "south", "west", "shape").contains(key)))
+                            directional = true;
+                    }
                 }
                 rule.add("matching_states", states);
                 rule.addProperty("matching_state_count", matchingCount);
                 rule.addProperty("projection_checked_state_count", checkedCount);
                 rule.addProperty("projection_verified", true);
+                if (directional) {
+                    var worldStates = new JsonObject();
+                    var level = server.overworld();
+                    var first = new BlockPos(0, 100, 0);
+                    var second = new BlockPos(127, 100, -43);
+                    boolean reliable = true;
+                    for (var facing : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                        var byBlock = new java.util.TreeMap<String, java.util.LinkedHashSet<net.minecraft.world.level.block.state.BlockState>>();
+                        for (var template : acceptedStates) {
+                            var world = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldState(level, first, template, facing);
+                            var repeated = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toWorldState(level, second, template, facing);
+                            var restored = aztech.modern_industrialization.machines.multiblocks.ShapeMatcher.toTemplateState(level, first, world, facing);
+                            if (!world.equals(repeated) || !template.equals(restored)) { reliable = false; break; }
+                            byBlock.computeIfAbsent(BuiltInRegistries.BLOCK.getKey(world.getBlock()).toString(), key -> new java.util.LinkedHashSet<>()).add(world);
+                        }
+                        if (!reliable) break;
+                        var projected = new JsonArray();
+                        for (var entry : byBlock.entrySet()) {
+                            var block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(entry.getKey()));
+                            projected.addAll(compactStates(block, java.util.List.copyOf(entry.getValue())));
+                        }
+                        worldStates.add(Integer.toString(facing.get3DDataValue()), projected);
+                    }
+                    if (reliable) {
+                        rule.add("matching_world_states", worldStates);
+                        rule.addProperty("rotation_verified", true);
+                    } else rule.addProperty("rotation_unverified_reason", "The loaded block rotation changed with position or did not reverse to its template state.");
+                }
             }
             return memberRuleIds.computeIfAbsent(rule.toString(), key -> {
                 int index = shapeMemberRules.size(); shapeMemberRules.add(rule); return index;
@@ -1058,7 +1145,7 @@ public final class PlannerProbe {
                         var position = new JsonArray();
                         position.add(entry.getKey().getX()); position.add(entry.getKey().getY()); position.add(entry.getKey().getZ());
                         cell.add("position", position);
-                        cell.addProperty("member_rule", memberRule(entry.getValue()));
+                        cell.addProperty("member_rule", memberRule(entry.getValue(), server));
                         cell.addProperty("preview_block", BuiltInRegistries.BLOCK.getKey(entry.getValue().getPreviewState().getBlock()).toString());
                         var options = new JsonArray();
                         for (var stack : entry.getValue().getItemPreviewState(server.registryAccess()).getItems()) options.add(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());

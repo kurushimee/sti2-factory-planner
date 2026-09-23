@@ -428,71 +428,71 @@
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 19200,
-      "cable_eu_per_tick": 256,
-      "nominal_eu": 32
+      "nominal_eu": 32,
+      "cable_eu_per_tick": 256
     },
     "modern_industrialization:lv_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 19200,
-      "cable_eu_per_tick": 256,
-      "nominal_eu": 32
+      "nominal_eu": 32,
+      "cable_eu_per_tick": 256
     },
     "modern_industrialization:mv_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800,
-      "cable_eu_per_tick": 1024,
-      "nominal_eu": 128
+      "nominal_eu": 128,
+      "cable_eu_per_tick": 1024
     },
     "modern_industrialization:mv_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800,
-      "cable_eu_per_tick": 1024,
-      "nominal_eu": 128
+      "nominal_eu": 128,
+      "cable_eu_per_tick": 1024
     },
     "modern_industrialization:hv_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 614400,
-      "cable_eu_per_tick": 8192,
-      "nominal_eu": 1024
+      "nominal_eu": 1024,
+      "cable_eu_per_tick": 8192
     },
     "modern_industrialization:hv_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 614400,
-      "cable_eu_per_tick": 8192,
-      "nominal_eu": 1024
+      "nominal_eu": 1024,
+      "cable_eu_per_tick": 8192
     },
     "modern_industrialization:ev_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 4915200,
-      "cable_eu_per_tick": 65536,
-      "nominal_eu": 8192
+      "nominal_eu": 8192,
+      "cable_eu_per_tick": 65536
     },
     "modern_industrialization:ev_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 4915200,
-      "cable_eu_per_tick": 65536,
-      "nominal_eu": 8192
+      "nominal_eu": 8192,
+      "cable_eu_per_tick": 65536
     },
     "modern_industrialization:superconductor_energy_input_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800000000,
-      "cable_eu_per_tick": 1024000000,
-      "nominal_eu": 128000000
+      "nominal_eu": 128000000,
+      "cable_eu_per_tick": 1024000000
     },
     "modern_industrialization:superconductor_energy_output_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800000000,
-      "cable_eu_per_tick": 1024000000,
-      "nominal_eu": 128000000
+      "nominal_eu": 128000000,
+      "cable_eu_per_tick": 1024000000
     },
     "modern_industrialization:nuclear_item_hatch": {
       "item_slots": [
@@ -671,36 +671,188 @@
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 19200,
-      "cable_eu_per_tick": 256,
-      "nominal_eu": 32
+      "nominal_eu": 32,
+      "cable_eu_per_tick": 256
     },
     "extended_industrialization:mv_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800,
-      "cable_eu_per_tick": 1024,
-      "nominal_eu": 128
+      "nominal_eu": 128,
+      "cable_eu_per_tick": 1024
     },
     "extended_industrialization:hv_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 614400,
-      "cable_eu_per_tick": 8192,
-      "nominal_eu": 1024
+      "nominal_eu": 1024,
+      "cable_eu_per_tick": 8192
     },
     "extended_industrialization:ev_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 4915200,
-      "cable_eu_per_tick": 65536,
-      "nominal_eu": 8192
+      "nominal_eu": 8192,
+      "cable_eu_per_tick": 65536
     },
     "extended_industrialization:superconductor_tesla_receiver_hatch": {
       "item_slots": [],
       "fluid_slots_mb": [],
       "energy_eu": 76800000000,
-      "cable_eu_per_tick": 1024000000,
-      "nominal_eu": 128000000
+      "nominal_eu": 128000000,
+      "cable_eu_per_tick": 1024000000
+    }
+  },
+  "energy_hatch_transfers": {
+    "modern_industrialization:lv_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 5120
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 5120
+        }
+      ]
+    },
+    "modern_industrialization:lv_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 5120
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 5120
+        }
+      ]
+    },
+    "modern_industrialization:mv_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480
+        }
+      ]
+    },
+    "modern_industrialization:mv_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480
+        }
+      ]
+    },
+    "modern_industrialization:hv_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 163840
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 163840
+        }
+      ]
+    },
+    "modern_industrialization:hv_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 163840
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 163840
+        }
+      ]
+    },
+    "modern_industrialization:ev_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        }
+      ]
+    },
+    "modern_industrialization:ev_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 1310720
+        }
+      ]
+    },
+    "modern_industrialization:superconductor_energy_input_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        }
+      ]
+    },
+    "modern_industrialization:superconductor_energy_output_hatch": {
+      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
+      "samples": [
+        {
+          "network_nodes": 1,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        },
+        {
+          "network_nodes": 2,
+          "ticks": 20,
+          "transferred_eu": 20480000000
+        }
+      ]
     }
   },
   "boiler_shape_blocks": {
@@ -1150,14 +1302,18 @@
   },
   "integration_data_maps": {
     "extended_industrialization:farmer_simple_tall_crop_size": {
-      "minecraft:sugar_cane": {
+      "minecraft:cactus": {
         "max_height": 3
       },
-      "minecraft:cactus": {
+      "minecraft:sugar_cane": {
         "max_height": 3
       }
     },
     "extended_industrialization:fertilizer_potency": {
+      "extended_industrialization:composted_manure": {
+        "tick_rate": 25,
+        "mb_to_consume_per_fertilizer_tick": 150
+      },
       "extended_industrialization:npk_fertilizer": {
         "tick_rate": 10,
         "mb_to_consume_per_fertilizer_tick": 30
@@ -1165,10 +1321,6 @@
       "extended_industrialization:manure": {
         "tick_rate": 25,
         "mb_to_consume_per_fertilizer_tick": 300
-      },
-      "extended_industrialization:composted_manure": {
-        "tick_rate": 25,
-        "mb_to_consume_per_fertilizer_tick": 150
       }
     },
     "extended_industrialization:large_electric_furnace_tier": {
@@ -1176,16 +1328,21 @@
         "batch_size": 32,
         "eu_cost_multiplier": 0.75
       },
-      "modern_industrialization:cupronickel_coil": {
-        "batch_size": 16,
-        "eu_cost_multiplier": 0.75
-      },
       "modern_industrialization:tungstensteel_coil": {
         "batch_size": 64,
+        "eu_cost_multiplier": 0.75
+      },
+      "modern_industrialization:cupronickel_coil": {
+        "batch_size": 16,
         "eu_cost_multiplier": 0.75
       }
     },
     "extended_industrialization:tesla_tower_tier": {
+      "extended_industrialization:copper_tesla_winding": {
+        "transfer": 1536,
+        "distance": 32,
+        "drain": 64
+      },
       "extended_industrialization:electrum_tesla_winding": {
         "transfer": 6144,
         "distance": 64,
@@ -1205,11 +1362,6 @@
         "transfer": 49152,
         "distance": 128,
         "drain": 1024
-      },
-      "extended_industrialization:copper_tesla_winding": {
-        "transfer": 1536,
-        "distance": 32,
-        "drain": 64
       }
     },
     "extended_industrialization:enchantment_module": {
@@ -1248,7 +1400,301 @@
       }
     },
     "yet_another_industrialization:arboreous_greenhouse_tier": {
-      "spectrum:rotten_ground": {
+      "spectrum:overgrown_blackslag": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:end_stone": {
+        "fluid": {
+          "fluid": "yet_another_industrialization:dragon_breath",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_dragon_breath",
+          "amount": 1000
+        },
+        "sort_order": 40,
+        "id": "yet_another_industrialization:end_stone",
+        "icon": "minecraft:end_stone",
+        "translation_key": "block.minecraft.end_stone"
+      },
+      "minecraft:coarse_dirt": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:moss_block": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:muddy_mangrove_roots": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:crimson_nylium": {
+        "fluid": {
+          "fluid": "minecraft:lava",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_lava",
+          "amount": 1000
+        },
+        "sort_order": 30,
+        "id": "yet_another_industrialization:netherrack",
+        "icon": "minecraft:netherrack",
+        "translation_key": "block.minecraft.netherrack"
+      },
+      "spectrum:sawblade_grass": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "decorative_blocks:rocky_dirt": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:rooted_dirt": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:mud": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "nomansland:coarse_silt": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "spectrum:redstone_sand": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 500
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 500
+        },
+        "sort_order": 5,
+        "id": "yet_another_industrialization:sand",
+        "icon": "minecraft:sand",
+        "translation_key": "block.minecraft.sand"
+      },
+      "minecraft:netherrack": {
+        "fluid": {
+          "fluid": "minecraft:lava",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_lava",
+          "amount": 1000
+        },
+        "sort_order": 30,
+        "id": "yet_another_industrialization:netherrack",
+        "icon": "minecraft:netherrack",
+        "translation_key": "block.minecraft.netherrack"
+      },
+      "farmingforblockheads:fertilized_farmland_healthy": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:warped_nylium": {
+        "fluid": {
+          "fluid": "minecraft:lava",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_lava",
+          "amount": 1000
+        },
+        "sort_order": 30,
+        "id": "yet_another_industrialization:netherrack",
+        "icon": "minecraft:netherrack",
+        "translation_key": "block.minecraft.netherrack"
+      },
+      "spectrum:shimmel": {
+        "fluid": {
+          "fluid": "minecraft:lava",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_lava",
+          "amount": 1000
+        },
+        "sort_order": 30,
+        "id": "yet_another_industrialization:netherrack",
+        "icon": "minecraft:netherrack",
+        "translation_key": "block.minecraft.netherrack"
+      },
+      "minecraft:dirt": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:grass_block": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "farmingforblockheads:fertilized_farmland_rich_stable": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "spectrum:overgrown_slush": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "minecraft:podzol": {
+        "fluid": {
+          "fluid": "minecraft:water",
+          "amount": 1000
+        },
+        "nutrient_fluid": {
+          "fluid": "yet_another_industrialization:nutrient_rich_water",
+          "amount": 1000
+        },
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
+      },
+      "spectrum:ashen_blackslag": {
         "fluid": {
           "fluid": "minecraft:water",
           "amount": 1000
@@ -1290,203 +1736,7 @@
         "icon": "minecraft:grass_block",
         "translation_key": "block.minecraft.grass_block"
       },
-      "spectrum:redstone_sand": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 500
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 500
-        },
-        "sort_order": 5,
-        "id": "yet_another_industrialization:sand",
-        "icon": "minecraft:sand",
-        "translation_key": "block.minecraft.sand"
-      },
-      "minecraft:dirt": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:red_sand": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 500
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 500
-        },
-        "sort_order": 5,
-        "id": "yet_another_industrialization:sand",
-        "icon": "minecraft:sand",
-        "translation_key": "block.minecraft.sand"
-      },
-      "minecraft:netherrack": {
-        "fluid": {
-          "fluid": "minecraft:lava",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_lava",
-          "amount": 1000
-        },
-        "sort_order": 30,
-        "id": "yet_another_industrialization:netherrack",
-        "icon": "minecraft:netherrack",
-        "translation_key": "block.minecraft.netherrack"
-      },
-      "minecraft:muddy_mangrove_roots": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:end_stone": {
-        "fluid": {
-          "fluid": "yet_another_industrialization:dragon_breath",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_dragon_breath",
-          "amount": 1000
-        },
-        "sort_order": 40,
-        "id": "yet_another_industrialization:end_stone",
-        "icon": "minecraft:end_stone",
-        "translation_key": "block.minecraft.end_stone"
-      },
-      "decorative_blocks:rocky_dirt": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "farmingforblockheads:fertilized_farmland_healthy": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:rooted_dirt": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:warped_nylium": {
-        "fluid": {
-          "fluid": "minecraft:lava",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_lava",
-          "amount": 1000
-        },
-        "sort_order": 30,
-        "id": "yet_another_industrialization:netherrack",
-        "icon": "minecraft:netherrack",
-        "translation_key": "block.minecraft.netherrack"
-      },
-      "minecraft:moss_block": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:grass_block": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:mud": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:crimson_nylium": {
-        "fluid": {
-          "fluid": "minecraft:lava",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_lava",
-          "amount": 1000
-        },
-        "sort_order": 30,
-        "id": "yet_another_industrialization:netherrack",
-        "icon": "minecraft:netherrack",
-        "translation_key": "block.minecraft.netherrack"
-      },
-      "minecraft:coarse_dirt": {
+      "spectrum:rotten_ground": {
         "fluid": {
           "fluid": "minecraft:water",
           "amount": 1000
@@ -1514,7 +1764,7 @@
         "icon": "minecraft:sand",
         "translation_key": "block.minecraft.sand"
       },
-      "spectrum:slush": {
+      "farmersdelight:rich_soil": {
         "fluid": {
           "fluid": "minecraft:water",
           "amount": 1000
@@ -1542,19 +1792,19 @@
         "icon": "minecraft:grass_block",
         "translation_key": "block.minecraft.grass_block"
       },
-      "minecraft:sand": {
+      "farmingforblockheads:fertilized_farmland_rich": {
         "fluid": {
           "fluid": "minecraft:water",
-          "amount": 500
+          "amount": 1000
         },
         "nutrient_fluid": {
           "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 500
+          "amount": 1000
         },
-        "sort_order": 5,
-        "id": "yet_another_industrialization:sand",
-        "icon": "minecraft:sand",
-        "translation_key": "block.minecraft.sand"
+        "sort_order": 0,
+        "id": "yet_another_industrialization:grass_block",
+        "icon": "minecraft:grass_block",
+        "translation_key": "block.minecraft.grass_block"
       },
       "farmingforblockheads:fertilized_farmland_stable": {
         "fluid": {
@@ -1570,133 +1820,35 @@
         "icon": "minecraft:grass_block",
         "translation_key": "block.minecraft.grass_block"
       },
-      "spectrum:shimmel": {
-        "fluid": {
-          "fluid": "minecraft:lava",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_lava",
-          "amount": 1000
-        },
-        "sort_order": 30,
-        "id": "yet_another_industrialization:netherrack",
-        "icon": "minecraft:netherrack",
-        "translation_key": "block.minecraft.netherrack"
-      },
-      "spectrum:overgrown_blackslag": {
+      "minecraft:red_sand": {
         "fluid": {
           "fluid": "minecraft:water",
-          "amount": 1000
+          "amount": 500
         },
         "nutrient_fluid": {
           "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
+          "amount": 500
         },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
+        "sort_order": 5,
+        "id": "yet_another_industrialization:sand",
+        "icon": "minecraft:sand",
+        "translation_key": "block.minecraft.sand"
       },
-      "farmingforblockheads:fertilized_farmland_rich": {
+      "minecraft:sand": {
         "fluid": {
           "fluid": "minecraft:water",
-          "amount": 1000
+          "amount": 500
         },
         "nutrient_fluid": {
           "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
+          "amount": 500
         },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
+        "sort_order": 5,
+        "id": "yet_another_industrialization:sand",
+        "icon": "minecraft:sand",
+        "translation_key": "block.minecraft.sand"
       },
-      "spectrum:sawblade_grass": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "spectrum:ashen_blackslag": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "spectrum:overgrown_slush": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "farmersdelight:rich_soil": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "nomansland:coarse_silt": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "minecraft:podzol": {
-        "fluid": {
-          "fluid": "minecraft:water",
-          "amount": 1000
-        },
-        "nutrient_fluid": {
-          "fluid": "yet_another_industrialization:nutrient_rich_water",
-          "amount": 1000
-        },
-        "sort_order": 0,
-        "id": "yet_another_industrialization:grass_block",
-        "icon": "minecraft:grass_block",
-        "translation_key": "block.minecraft.grass_block"
-      },
-      "farmingforblockheads:fertilized_farmland_rich_stable": {
+      "spectrum:slush": {
         "fluid": {
           "fluid": "minecraft:water",
           "amount": 1000
@@ -1712,23 +1864,11 @@
       }
     },
     "yet_another_industrialization:flight_pylon_tier": {
-      "modern_industrialization:highly_advanced_machine_casing": {
-        "range": 96.0,
-        "eu": 4096,
-        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_large",
-        "beacon_color": "#DCA0F0"
-      },
-      "modern_industrialization:quantum_machine_casing": {
-        "range": 128.0,
-        "eu": 16384,
-        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_huge",
-        "beacon_color": "#E1E6F5"
-      },
-      "modern_industrialization:steel_machine_casing": {
-        "range": 36.0,
-        "eu": 64,
-        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_tiny",
-        "beacon_color": "#3F3F3F"
+      "modern_industrialization:advanced_machine_casing": {
+        "range": 64.0,
+        "eu": 256,
+        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_small",
+        "beacon_color": "#3FCAFF"
       },
       "modern_industrialization:turbo_machine_casing": {
         "range": 80.0,
@@ -1736,11 +1876,23 @@
         "translation_key": "text.yet_another_industrialization.flight_pylon_tier_medium",
         "beacon_color": "#C8C8DC"
       },
-      "modern_industrialization:advanced_machine_casing": {
-        "range": 64.0,
-        "eu": 256,
-        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_small",
-        "beacon_color": "#3FCAFF"
+      "modern_industrialization:steel_machine_casing": {
+        "range": 36.0,
+        "eu": 64,
+        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_tiny",
+        "beacon_color": "#3F3F3F"
+      },
+      "modern_industrialization:quantum_machine_casing": {
+        "range": 128.0,
+        "eu": 16384,
+        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_huge",
+        "beacon_color": "#E1E6F5"
+      },
+      "modern_industrialization:highly_advanced_machine_casing": {
+        "range": 96.0,
+        "eu": 4096,
+        "translation_key": "text.yet_another_industrialization.flight_pylon_tier_large",
+        "beacon_color": "#DCA0F0"
       }
     },
     "yet_another_industrialization:large_storage_unit_tier": {
@@ -1754,25 +1906,25 @@
         "cable_tier": "hv",
         "translation_key": "cable_tier_short.modern_industrialization.hv"
       },
+      "yet_another_industrialization:singularity_block": {
+        "capacity": 9223372036854775807,
+        "cable_tier": "*",
+        "translation_key": "text.yet_another_industrialization.large_storage_unit_ultimate_tier"
+      },
       "minecraft:redstone_block": {
         "capacity": 204800000,
         "cable_tier": "lv",
         "translation_key": "cable_tier_short.modern_industrialization.lv"
-      },
-      "yet_another_industrialization:cadmium_block": {
-        "capacity": 52428800000,
-        "cable_tier": "ev",
-        "translation_key": "cable_tier_short.modern_industrialization.ev"
       },
       "modern_industrialization:silicon_block": {
         "capacity": 819200000,
         "cable_tier": "mv",
         "translation_key": "cable_tier_short.modern_industrialization.mv"
       },
-      "yet_another_industrialization:singularity_block": {
-        "capacity": 9223372036854775807,
-        "cable_tier": "*",
-        "translation_key": "text.yet_another_industrialization.large_storage_unit_ultimate_tier"
+      "yet_another_industrialization:cadmium_block": {
+        "capacity": 52428800000,
+        "cable_tier": "ev",
+        "translation_key": "cable_tier_short.modern_industrialization.ev"
       }
     },
     "yet_another_industrialization:irradiator_neutron_source": {
@@ -1792,41 +1944,41 @@
       }
     },
     "yet_another_industrialization:numismatic_generator_currency": {
+      "minecraft:diamond": {
+        "eu_per_item": 8192
+      },
       "modern_industrialization:sapphire": {
         "eu_per_item": 2048
       },
       "extendedae:entro_crystal": {
         "eu_per_item": 3072
       },
-      "minecraft:quartz": {
-        "eu_per_item": 512
-      },
-      "ae2:fluix_crystal": {
-        "eu_per_item": 2048
-      },
-      "ae2:certus_quartz_crystal": {
-        "eu_per_item": 1024
-      },
       "modern_industrialization:ruby": {
         "eu_per_item": 4096
-      },
-      "minecraft:prismarine_crystals": {
-        "eu_per_item": 512
       },
       "minecraft:emerald": {
         "eu_per_item": 6144
       },
-      "modern_industrialization:peridot": {
-        "eu_per_item": 2048
-      },
       "minecraft:amethyst_shard": {
         "eu_per_item": 1024
       },
-      "minecraft:diamond": {
-        "eu_per_item": 8192
+      "minecraft:quartz": {
+        "eu_per_item": 512
+      },
+      "modern_industrialization:peridot": {
+        "eu_per_item": 2048
+      },
+      "minecraft:prismarine_crystals": {
+        "eu_per_item": 512
+      },
+      "ae2:certus_quartz_crystal": {
+        "eu_per_item": 1024
       },
       "minecraft:lapis_lazuli": {
         "eu_per_item": 512
+      },
+      "ae2:fluix_crystal": {
+        "eu_per_item": 2048
       }
     }
   },
@@ -1978,9 +2130,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod",
       "hatches": 1,
       "completion_tick": 8000,
-      "energy_consumed": 8189952,
+      "energy_consumed": 8187904,
       "output_amount": 1,
-      "source_items_consumed_sample": 2,
+      "source_items_consumed_sample": 4,
       "source_damage_sample": 0
     },
     {
@@ -1988,9 +2140,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod",
       "hatches": 8,
       "completion_tick": 8000,
-      "energy_consumed": 8189952,
+      "energy_consumed": 8190976,
       "output_amount": 8,
-      "source_items_consumed_sample": 2,
+      "source_items_consumed_sample": 1,
       "source_damage_sample": 0
     },
     {
@@ -1998,9 +2150,9 @@
       "fuel": "modern_industrialization:uranium_fuel_rod_double",
       "hatches": 1,
       "completion_tick": 16000,
-      "energy_consumed": 16380928,
+      "energy_consumed": 16377856,
       "output_amount": 2,
-      "source_items_consumed_sample": 3,
+      "source_items_consumed_sample": 6,
       "source_damage_sample": 0
     },
     {
@@ -2008,29 +2160,29 @@
       "fuel": "modern_industrialization:uranium_fuel_rod_double",
       "hatches": 8,
       "completion_tick": 16000,
-      "energy_consumed": 16380928,
+      "energy_consumed": 16378880,
       "output_amount": 16,
-      "source_items_consumed_sample": 3,
+      "source_items_consumed_sample": 5,
       "source_damage_sample": 0
     },
     {
       "source": "modern_industrialization:beryllium_block",
       "fuel": "modern_industrialization:uranium_fuel_rod_quad",
       "hatches": 1,
-      "completion_tick": 32000,
-      "energy_consumed": 32760832,
-      "output_amount": 4,
-      "source_items_consumed_sample": 7,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:uranium_fuel_rod_quad",
-      "hatches": 8,
       "completion_tick": 32000,
       "energy_consumed": 32757760,
-      "output_amount": 32,
+      "output_amount": 4,
       "source_items_consumed_sample": 10,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:uranium_fuel_rod_quad",
+      "hatches": 8,
+      "completion_tick": 32000,
+      "energy_consumed": 32762880,
+      "output_amount": 32,
+      "source_items_consumed_sample": 5,
       "source_damage_sample": 0
     },
     {
@@ -2038,9 +2190,9 @@
       "fuel": "modern_industrialization:le_uranium_fuel_rod",
       "hatches": 1,
       "completion_tick": 8000,
-      "energy_consumed": 8192000,
+      "energy_consumed": 8189952,
       "output_amount": 1,
-      "source_items_consumed_sample": 0,
+      "source_items_consumed_sample": 2,
       "source_damage_sample": 0
     },
     {
@@ -2058,9 +2210,9 @@
       "fuel": "modern_industrialization:le_uranium_fuel_rod_double",
       "hatches": 1,
       "completion_tick": 16000,
-      "energy_consumed": 16380928,
+      "energy_consumed": 16378880,
       "output_amount": 2,
-      "source_items_consumed_sample": 3,
+      "source_items_consumed_sample": 5,
       "source_damage_sample": 0
     },
     {
@@ -2068,9 +2220,9 @@
       "fuel": "modern_industrialization:le_uranium_fuel_rod_double",
       "hatches": 8,
       "completion_tick": 16000,
-      "energy_consumed": 16381952,
+      "energy_consumed": 16380928,
       "output_amount": 16,
-      "source_items_consumed_sample": 2,
+      "source_items_consumed_sample": 3,
       "source_damage_sample": 0
     },
     {
@@ -2088,9 +2240,9 @@
       "fuel": "modern_industrialization:le_uranium_fuel_rod_quad",
       "hatches": 8,
       "completion_tick": 32000,
-      "energy_consumed": 32753664,
+      "energy_consumed": 32759808,
       "output_amount": 32,
-      "source_items_consumed_sample": 14,
+      "source_items_consumed_sample": 8,
       "source_damage_sample": 0
     },
     {
@@ -2098,9 +2250,9 @@
       "fuel": "modern_industrialization:he_uranium_fuel_rod",
       "hatches": 1,
       "completion_tick": 8000,
-      "energy_consumed": 8189952,
+      "energy_consumed": 8186880,
       "output_amount": 1,
-      "source_items_consumed_sample": 2,
+      "source_items_consumed_sample": 5,
       "source_damage_sample": 0
     },
     {
@@ -2108,9 +2260,9 @@
       "fuel": "modern_industrialization:he_uranium_fuel_rod",
       "hatches": 8,
       "completion_tick": 8000,
-      "energy_consumed": 8187904,
+      "energy_consumed": 8192000,
       "output_amount": 8,
-      "source_items_consumed_sample": 4,
+      "source_items_consumed_sample": 0,
       "source_damage_sample": 0
     },
     {
@@ -2148,9 +2300,9 @@
       "fuel": "modern_industrialization:he_uranium_fuel_rod_quad",
       "hatches": 8,
       "completion_tick": 32000,
-      "energy_consumed": 32757760,
+      "energy_consumed": 32753664,
       "output_amount": 32,
-      "source_items_consumed_sample": 10,
+      "source_items_consumed_sample": 14,
       "source_damage_sample": 0
     },
     {
@@ -2178,9 +2330,9 @@
       "fuel": "modern_industrialization:le_mox_fuel_rod_double",
       "hatches": 1,
       "completion_tick": 16000,
-      "energy_consumed": 16379904,
+      "energy_consumed": 16377856,
       "output_amount": 2,
-      "source_items_consumed_sample": 4,
+      "source_items_consumed_sample": 6,
       "source_damage_sample": 0
     },
     {
@@ -2188,9 +2340,9 @@
       "fuel": "modern_industrialization:le_mox_fuel_rod_double",
       "hatches": 8,
       "completion_tick": 16000,
-      "energy_consumed": 16379904,
+      "energy_consumed": 16378880,
       "output_amount": 16,
-      "source_items_consumed_sample": 4,
+      "source_items_consumed_sample": 5,
       "source_damage_sample": 0
     },
     {
@@ -2198,9 +2350,9 @@
       "fuel": "modern_industrialization:le_mox_fuel_rod_quad",
       "hatches": 1,
       "completion_tick": 32000,
-      "energy_consumed": 32760832,
+      "energy_consumed": 32757760,
       "output_amount": 4,
-      "source_items_consumed_sample": 7,
+      "source_items_consumed_sample": 10,
       "source_damage_sample": 0
     },
     {
@@ -2208,9 +2360,9 @@
       "fuel": "modern_industrialization:le_mox_fuel_rod_quad",
       "hatches": 8,
       "completion_tick": 32000,
-      "energy_consumed": 32762880,
+      "energy_consumed": 32760832,
       "output_amount": 32,
-      "source_items_consumed_sample": 5,
+      "source_items_consumed_sample": 7,
       "source_damage_sample": 0
     },
     {
@@ -2228,39 +2380,39 @@
       "fuel": "modern_industrialization:he_mox_fuel_rod",
       "hatches": 8,
       "completion_tick": 8000,
-      "energy_consumed": 8188928,
+      "energy_consumed": 8189952,
       "output_amount": 8,
-      "source_items_consumed_sample": 3,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
-      "hatches": 1,
-      "completion_tick": 16000,
-      "energy_consumed": 16384000,
-      "output_amount": 2,
-      "source_items_consumed_sample": 0,
-      "source_damage_sample": 0
-    },
-    {
-      "source": "modern_industrialization:beryllium_block",
-      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
-      "hatches": 8,
-      "completion_tick": 16000,
-      "energy_consumed": 16381952,
-      "output_amount": 16,
       "source_items_consumed_sample": 2,
       "source_damage_sample": 0
     },
     {
       "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
+      "hatches": 1,
+      "completion_tick": 16000,
+      "energy_consumed": 16376832,
+      "output_amount": 2,
+      "source_items_consumed_sample": 7,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
+      "fuel": "modern_industrialization:he_mox_fuel_rod_double",
+      "hatches": 8,
+      "completion_tick": 16000,
+      "energy_consumed": 16376832,
+      "output_amount": 16,
+      "source_items_consumed_sample": 7,
+      "source_damage_sample": 0
+    },
+    {
+      "source": "modern_industrialization:beryllium_block",
       "fuel": "modern_industrialization:he_mox_fuel_rod_quad",
       "hatches": 1,
       "completion_tick": 32000,
-      "energy_consumed": 32761856,
+      "energy_consumed": 32759808,
       "output_amount": 4,
-      "source_items_consumed_sample": 6,
+      "source_items_consumed_sample": 8,
       "source_damage_sample": 0
     },
     {
@@ -2268,9 +2420,9 @@
       "fuel": "modern_industrialization:he_mox_fuel_rod_quad",
       "hatches": 8,
       "completion_tick": 32000,
-      "energy_consumed": 32754688,
+      "energy_consumed": 32759808,
       "output_amount": 32,
-      "source_items_consumed_sample": 13,
+      "source_items_consumed_sample": 8,
       "source_damage_sample": 0
     },
     {
@@ -40553,157 +40705,5 @@
     }
   ],
   "extraction_failures": 0,
-  "normalized_dataset_complete": false,
-  "energy_hatch_transfers": {
-    "modern_industrialization:lv_energy_input_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 5120
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 5120
-        }
-      ]
-    },
-    "modern_industrialization:lv_energy_output_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 5120
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 5120
-        }
-      ]
-    },
-    "modern_industrialization:mv_energy_input_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 20480
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 20480
-        }
-      ]
-    },
-    "modern_industrialization:mv_energy_output_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 20480
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 20480
-        }
-      ]
-    },
-    "modern_industrialization:hv_energy_input_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 163840
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 163840
-        }
-      ]
-    },
-    "modern_industrialization:hv_energy_output_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 163840
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 163840
-        }
-      ]
-    },
-    "modern_industrialization:ev_energy_input_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 1310720
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 1310720
-        }
-      ]
-    },
-    "modern_industrialization:ev_energy_output_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 1310720
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 1310720
-        }
-      ]
-    },
-    "modern_industrialization:superconductor_energy_input_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 20480000000
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 20480000000
-        }
-      ]
-    },
-    "modern_industrialization:superconductor_energy_output_hatch": {
-      "scope": "Actual cable-network ticks with injected adjacent storage adapters; no placed cable topology claim.",
-      "samples": [
-        {
-          "network_nodes": 1,
-          "ticks": 20,
-          "transferred_eu": 20480000000
-        },
-        {
-          "network_nodes": 2,
-          "ticks": 20,
-          "transferred_eu": 20480000000
-        }
-      ]
-    }
-  }
+  "normalized_dataset_complete": false
 }

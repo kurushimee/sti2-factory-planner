@@ -41,6 +41,7 @@ jobs:
           node tools/verify_availability_catalog.mjs data/statech-2.0.1.json.gz
           node tools/verify_recipe_preferences.mjs data/statech-2.0.1.json.gz
           node tools/verify_construction_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_rotation_catalog.mjs data/statech-2.0.1.json.gz
       - name: Install the test browser
         run: npx playwright install --with-deps chromium
       - name: Check the embedded browser calculation

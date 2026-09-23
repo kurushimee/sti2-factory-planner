@@ -17,6 +17,26 @@ test('captured shape coordinates follow each MI horizontal orientation', () => {
   assert.throws(() => structurePosition(origin, 1, [0, 0, 0]), /horizontal/);
 });
 
+test('captured world-state projections match rotated controllers without guessing block properties', () => {
+  const states = {2: 'north', 3: 'south', 4: 'west', 5: 'east'};
+  const matching = facing => [{Name: 'test:rotated_casing', Properties: {facing}}];
+  const rule = {state_only_verified: true, matching_states: matching('south'), rotation_verified: true,
+    matching_world_states: Object.fromEntries(Object.entries(states).map(([direction, facing]) => [direction, matching(facing)]))};
+  const rotatedDefinition = {id: 'test:controller', shapes: [{index: 0, cells: [{...cell([0, 1, 0]), member_rule: rule}]}]};
+  for (const [direction, facing] of Object.entries(states)) {
+    const imported = {machines: [{id: 'test:controller', origin, facts: {facingDirection: Number(direction)}, shape: 0}], parts: []};
+    associateStructures(imported, {machines: [rotatedDefinition]}, () => matching(facing)[0]);
+    assert.equal(imported.machines[0].structure.status, 'matching_saved_geometry');
+    const wrong = structuredClone(imported);
+    associateStructures(wrong, {machines: [rotatedDefinition]}, () => matching('up')[0]);
+    assert.equal(wrong.machines[0].structure.status, 'unresolved');
+  }
+  const missing = {machines: [{id: 'test:controller', origin, facts: {facingDirection: 4}, shape: 0}], parts: []};
+  associateStructures(missing, {machines: [{...rotatedDefinition, shapes: [{index: 0, cells: [{...cell([0, 1, 0]), member_rule: {...rule, matching_world_states: undefined}}]}]}]},
+    () => matching('west')[0]);
+  assert.match(missing.machines[0].structure.problems[0].reason, /no verified world-state rotation/);
+});
+
 test('a provider at an input hatch can assign its uniquely matching controller', () => {
   const result = make();
   associateStructures(result, {machines: [definition]}, () => ({Name: 'test:casing'}));

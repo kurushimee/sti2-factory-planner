@@ -19,3 +19,13 @@ class StateProjectionTests(unittest.TestCase):
         for update in ({"projection_verified": False}, {"matching_states": []}):
             with self.assertRaises(ValueError):
                 verify({"failures": [], "shape_member_rules": [{**self.rule, **update}]}, [self.old])
+
+    def test_rotated_world_states_require_four_verified_orientations(self):
+        states = [{"Name": "test:chain", "Properties": {"axis": "y"}}]
+        rotated = {str(facing): states for facing in (2, 3, 4, 5)}
+        rule = {**self.rule, "rotation_verified": True, "matching_world_states": rotated}
+        report = verify({"failures": [], "shape_member_rules": [rule]}, [self.old])
+        self.assertEqual(set(report["rules"][0]["world_rotations"]), set(rotated))
+        for bad in ({**rule, "rotation_verified": False}, {**rule, "matching_world_states": {"2": states}}):
+            with self.assertRaisesRegex(ValueError, "four verified horizontal rotations"):
+                verify({"failures": [], "shape_member_rules": [bad]}, [self.old])

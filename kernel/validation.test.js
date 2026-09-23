@@ -20,6 +20,8 @@ test('dataset validation rejects malformed references before dependency pruning'
     [data => data.recipes[0].process = {type: 'press', duration_ticks: 1.5, eu_per_tick: 2}, /whole number/],
     [data => data.machines = [{id: 'test:controller', status: 'unsupported', shapes: [{index: 0, cells: [{position: [0, 0, 1], allowed_hatches: [], member_rule: 7}]}]}], /unknown shape member/],
     [data => data.shape_member_rules = [{state_only_verified: true, matching_states: [{Name: 'test:casing', Properties: {axis: 2}}]}], /nonempty text/],
+    [data => data.shape_member_rules = [{state_only_verified: true, matching_states: [], matching_world_states: {'2': []}}], /verified capture evidence/],
+    [data => data.shape_member_rules = [{state_only_verified: true, matching_states: [], rotation_verified: true, matching_world_states: {'2': []}}], /matching_world_states.3/],
     [data => data.progression[0].available_machines = ['missing'], /unknown ID/],
     [data => data.progression[0].available_parts = ['missing'], /unknown ID/],
   ]) {
@@ -27,4 +29,12 @@ test('dataset validation rejects malformed references before dependency pruning'
     change(data);
     assert.throws(() => validateDataset(data), message);
   }
+});
+
+test('dataset validation accepts complete captured world-state rotations', () => {
+  const data = example();
+  const state = {Name: 'test:chain', Properties: {axis: 'y'}};
+  data.shape_member_rules = [{state_only_verified: true, matching_states: [state], rotation_verified: true,
+    matching_world_states: {'2': [state], '3': [state], '4': [state], '5': [state]}}];
+  validateDataset(data);
 });

@@ -1,5 +1,5 @@
 {
-  "scope": "The Java probe checks membership for every loaded state of each matching block before and after projection. This comparison also checks every previously captured accepted pattern.",
+  "scope": "The Java probe checks membership for every loaded state of each matching block before and after projection. Rotated projections also use the loaded block rotation methods at two positions and reverse back to the template state. This comparison checks every previously captured accepted pattern.",
   "rules": [
     {
       "rule": 0,
@@ -112,11 +112,29 @@
     {
       "rule": 12,
       "source_class": "aztech.modern_industrialization.machines.multiblocks.SimpleMember$4",
-      "old_patterns": 2,
+      "old_patterns": 1,
       "patterns": 1,
       "matching_loaded_states": 2,
       "checked_loaded_states": 6,
-      "sha256": "bbef3e5b9b6e544a99b07be3fbbd56723aa06aeab87ac5dc7a75682f65cecab4"
+      "sha256": "bbef3e5b9b6e544a99b07be3fbbd56723aa06aeab87ac5dc7a75682f65cecab4",
+      "world_rotations": {
+        "2": {
+          "patterns": 1,
+          "sha256": "bbef3e5b9b6e544a99b07be3fbbd56723aa06aeab87ac5dc7a75682f65cecab4"
+        },
+        "3": {
+          "patterns": 1,
+          "sha256": "bbef3e5b9b6e544a99b07be3fbbd56723aa06aeab87ac5dc7a75682f65cecab4"
+        },
+        "4": {
+          "patterns": 1,
+          "sha256": "bbef3e5b9b6e544a99b07be3fbbd56723aa06aeab87ac5dc7a75682f65cecab4"
+        },
+        "5": {
+          "patterns": 1,
+          "sha256": "bbef3e5b9b6e544a99b07be3fbbd56723aa06aeab87ac5dc7a75682f65cecab4"
+        }
+      }
     },
     {
       "rule": 13,
@@ -769,11 +787,11 @@
     {
       "rule": 88,
       "source_class": "net.swedz.tesseract.neoforge.compat.mi.machine.multiblock.member.PredicateSimpleMember",
-      "old_patterns": 120824,
+      "old_patterns": 2685,
       "patterns": 2685,
       "matching_loaded_states": 120960,
       "checked_loaded_states": 241853,
-      "sha256": "44e50ebc992e63ecf006cc8f7e29d14562c4598663d0798d8b86123702316f28"
+      "sha256": "a4682e806085debf3c29a93ea307a965743b4ddafecebe8c7d0d7b2a09da2e66"
     },
     {
       "rule": 89,
