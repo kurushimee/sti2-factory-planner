@@ -1,6 +1,6 @@
 # STI2 Factory Planner
 
-This project is under development. The desktop and browser workspace loads the bundled StaTech Industry 2.0.1 catalog. It currently contains 29,069 planning routes and 12,042 resources, including generated utility routes. Required process adapters and planning features are still in progress, so the catalog remains marked incomplete and development exports are not a finished release. [Issue #2](https://github.com/kurushimee/sti2-factory-planner/issues/2) tracks the complete delivery.
+This project is under development. The desktop and browser workspace loads the bundled StaTech Industry 2.0.1 catalog. It currently contains 29,129 planning routes and 12,042 resources, including generated utility routes. Spectrum growth now has 60 additive choices derived from the loaded recipes and an autonomous iron-turtle trial; their yields and turtle timing remain labeled estimates. Other required process adapters and planning features are still in progress, so the catalog remains marked incomplete and development exports are not a finished release. [Issue #2](https://github.com/kurushimee/sti2-factory-planner/issues/2) tracks the complete delivery.
 
 The reference pack is StaTech Industry 2.0.1 for Minecraft 1.21.1 and NeoForge 21.1.250. Runtime extraction tools capture effective recipes, tags, upgrade and fuel values, and machine evidence from an isolated copy of the released server. The recorded capture includes 26,481 recipe/type pairs and 211 machine probes. This evidence is not yet a complete normalized planner dataset.
 
