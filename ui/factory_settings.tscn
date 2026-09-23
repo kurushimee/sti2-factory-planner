@@ -176,6 +176,27 @@ step = 1.0
 value = 1.0
 suffix = "units maximum"
 
+[node name="PowerSourceDetails" type="VBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+
+[node name="PowerSourceImported" type="Label" parent="Content/Availability/PowerSourceDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+text = "Select a generator to set an installed count."
+
+[node name="PowerSourceCount" type="SpinBox" parent="Content/Availability/PowerSourceDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 1000000.0
+step = 1.0
+value = 1.0
+suffix = "installed generators"
+tooltip_text = "Fix the number of this generator configuration in the plan. The planner will still size its fuel, water, and other support."
+
 [node name="Supply" type="VBoxContainer" parent="Content/Availability"]
 unique_name_in_owner = true
 layout_mode = 2

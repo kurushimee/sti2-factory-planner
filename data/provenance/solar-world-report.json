@@ -1,0 +1,48 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "world_archive_sha256": "f648fff7aa03279f480d178aa9e33ff87e91368247585b59ce59f0e47d90b585",
+  "capture_sha256": "4ddb3e1f5916eb3f4f520c640782e399898748b2513bbc72d7e555cea53d10e0",
+  "dataset_sha256": "8c59e872eb7b31b06b68414d726098db3ba02937c6796196cb12a093b863b4d8",
+  "panels": [
+    {
+      "machine": "extended_industrialization:lv_solar_panel",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 400,
+        "y": 250,
+        "z": 0
+      },
+      "recipe": "planner:solar|extended_industrialization:lv_solar_panel|water",
+      "cell": "extended_industrialization:lv_photovoltaic_cell",
+      "saved_cell_count": "1",
+      "saved_water_mb": "9"
+    },
+    {
+      "machine": "extended_industrialization:mv_solar_panel",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 408,
+        "y": 250,
+        "z": 0
+      },
+      "recipe": "planner:solar|extended_industrialization:mv_solar_panel|water",
+      "cell": "extended_industrialization:mv_photovoltaic_cell",
+      "saved_cell_count": "1",
+      "saved_water_mb": "9"
+    },
+    {
+      "machine": "extended_industrialization:hv_solar_panel",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 416,
+        "y": 250,
+        "z": 0
+      },
+      "recipe": "planner:solar|extended_industrialization:hv_solar_panel|water",
+      "cell": "extended_industrialization:hv_photovoltaic_cell",
+      "saved_cell_count": "1",
+      "saved_water_mb": "9"
+    }
+  ],
+  "limitation": "The saved cell and 9 mB of water establish a configuration snapshot. Open sky, clear weather, replacement cells, continuous water delivery, cable transfer, and any planned storage remain separate assumptions."
+}

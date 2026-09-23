@@ -152,6 +152,16 @@ test('the connected factory installs whole storage and pays for solar cell repla
   assert.equal(reserved.periodic_power.storage[0].machines, 2);
 });
 
+test('installed periodic generators remain in a plan without an output demand', () => {
+  const result = solveFactory(highs, factory(), {goals: [], installed: {'solar:fixed': 2},
+    available_machines: ['solar', 'storage'], periodic_storage: ['storage'],
+    external: [{resource: 'item:cell'}]});
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.lines.find(line => line.recipe === 'solar').machines, 2);
+  assert.equal(result.external.find(flow => flow.resource === 'item:cell').rate, 0.2);
+  assert.deepEqual(result.targets, []);
+});
+
 test('storage build item enters the connected construction balance', () => {
   const request = {goals: [{resource: 'item:product', rate: 1}], external: [{resource: 'item:cell'}],
     periodic_storage: ['storage'], construction: {external: [{resource: 'item:storage'},
