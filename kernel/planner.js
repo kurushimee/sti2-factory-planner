@@ -449,7 +449,7 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
   const branches = [{}];
   const recipes = new Map(dataset.recipes.map(recipe => [recipe.id, recipe]));
   let best = null, lowerBound = null, completeSearch = true;
-  let visited = 0, numericalRetries = 0;
+  let visited = 0, numericalRetries = 0, periodicRetries = 0;
   let lastExclusions = [];
   const finish = (status) => {
     if (!best) return {status, optimal: false, exclusions: lastExclusions, branches: visited};
@@ -495,6 +495,28 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
     let solution = runSolver(highs, model.text, {time_limit: Math.max(0.001, (deadline - Date.now()) / 1000)});
     visited++;
     if (visited === 1) lowerBound = solution.optimal ? solution.objective : solution.lower_bound;
+    let periodicRecovery = false;
+    if (solution.status === 'infeasible' && model.periodic && request.goals.some(goal =>
+      goal.kind === 'capacity' && model.periodic.lines.some(line => line.recipe === goal.recipe)) && Date.now() < deadline) {
+      onProgress({phase: 'periodic_precision'});
+      const retry = runSolver(highs, model.text, {time_limit: Math.max(0.001, (deadline - Date.now()) / 1000),
+        mip_feasibility_tolerance: 1e-8});
+      if (retry.feasible) {
+        for (const line of model.lines) {
+          const count = retry.columns[line.machine];
+          if (Math.abs(count) > 1e-8) continue;
+          if (Math.abs(retry.columns[line.operation]) > 1e-8 * Math.max(1, line.configuration.operations_per_second)) continue;
+          retry.columns[line.machine] = 0;
+          retry.columns[line.operation] = 0;
+        }
+        solution = retry;
+        periodicRecovery = true;
+        numericalRetries++;
+        periodicRetries++;
+        completeSearch = false;
+        lowerBound = null;
+      }
+    }
     if (solution.status === 'infeasible') continue;
     if (!solution.feasible) return finish('limit');
     if (best && solution.objective >= best.objective - 1e-9 && solution.optimal) continue;
@@ -504,6 +526,7 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
     catch (error) {
       if (!(error instanceof FactoryBalanceError) && !(error instanceof ConstructionBalanceError) &&
           !(error instanceof PeriodicBalanceError)) throw error;
+      if (periodicRecovery) return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: error.message};
       onProgress({phase: 'production_precision', resource: error.balance.resource});
       numericalRetries++;
       if (Date.now() >= deadline) return best ? finish('limit') : {status: 'numerical_error', optimal: false, reason: error.message};
@@ -534,7 +557,8 @@ function solvePreparedFactory(highs, dataset, request, deadline, onProgress) {
     } else if (!best || solution.objective < best.objective) {
       best = {...decoded, primary_routes: ownership.assignments, targets: resolved.targets,
         objective: solution.objective, exclusions: model.exclusions,
-        ...(numericalRetries ? {search: {method: 'precision_recovery', numerical_retries: numericalRetries}} : {})};
+        ...(numericalRetries ? {search: {method: periodicRetries ? 'periodic_precision_recovery' : 'precision_recovery',
+          numerical_retries: numericalRetries}} : {})};
     }
     if (!solution.optimal) return finish('limit');
   }

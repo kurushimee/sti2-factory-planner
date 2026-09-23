@@ -334,6 +334,20 @@ try {
     assert.deepEqual(actualSolar.result, expectedSolar);
     assert.equal(actualSolar.result.periodic_power.storage[0].machines, 1);
     console.log('The measured solar and storage dispatch matches Node in the embedded browser Worker.');
+    const waterRoutes = worldDataset.recipes.filter(recipe => recipe.id.startsWith('planner:solar|') && recipe.id.endsWith('|water'));
+    const capacities = {goals: waterRoutes.map(recipe => ({kind: 'capacity', resource: 'energy:eu',
+      recipe: recipe.id, configuration: recipe.configurations[0].id, machines: 1})),
+      installed: Object.fromEntries(waterRoutes.map(recipe => [recipe.configurations[0].id, 1])),
+      available_machines: waterRoutes.map(recipe => recipe.configurations[0].machine).concat('modern_industrialization:hv_storage_unit'),
+      periodic_storage: ['modern_industrialization:hv_storage_unit'],
+      external: waterRoutes.map(recipe => ({resource: recipe.inputs[0].resource})).concat({resource: 'fluid:extended_industrialization:distilled_water'}),
+      time_limit_ms: 30000};
+    const expectedCapacities = solveFactory(await loadHighs(), worldDataset, capacities);
+    const actualCapacities = await solveInBrowser(worldDataset, capacities);
+    assert.equal(expectedCapacities.status, 'feasible');
+    assert.deepEqual(actualCapacities.result, expectedCapacities);
+    assert.equal(actualCapacities.result.lines.length, 3);
+    console.log('Three exact solar capacity goals and periodic precision recovery match Node in the browser Worker.');
   }
   if (process.argv.includes('--material')) {
     const request = {...endgameRequest(worldDataset), time_limit_ms: 180000,

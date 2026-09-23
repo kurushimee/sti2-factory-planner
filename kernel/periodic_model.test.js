@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import loadHighs from 'highs';
-import {appendPeriodicDispatch, constantPowerSegments} from './periodic_model.js';
+import {appendPeriodicDispatch, constantPowerSegments, decodePeriodicDispatch} from './periodic_model.js';
 import {balancePeriodicPower} from './periodic_power.js';
 import {clearSolarProfile} from './solar_profile.js';
 import {runSolver} from './solver.js';
@@ -160,6 +160,24 @@ test('installed periodic generators remain in a plan without an output demand', 
   assert.equal(result.lines.find(line => line.recipe === 'solar').machines, 2);
   assert.equal(result.external.find(flow => flow.resource === 'item:cell').rate, 0.2);
   assert.deepEqual(result.targets, []);
+});
+
+test('a small capacity goal preserves its machine and rejects a real period deficit', () => {
+  const request = {goals: [{kind: 'capacity', resource: 'energy:eu', recipe: 'solar',
+    configuration: 'solar:fixed', machines: 1}], installed: {'solar:fixed': 1},
+    available_machines: ['solar', 'storage'], periodic_storage: ['storage'],
+    external: [{resource: 'item:cell'}]};
+  const result = solveFactory(highs, factory(), request);
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.targets[0].rate, 20);
+  assert.equal(result.lines.find(line => line.recipe === 'solar').machines, 1);
+  assert.equal(solveFactory(highs, factory(), {...request,
+    goals: [...request.goals, {resource: 'energy:eu', rate: 0.01}]}).status, 'infeasible');
+
+  const model = {firm_terms: new Map(), demand_eu_per_tick: 1 / 3 + 1e-8,
+    period_ticks: 3, lines: [{variable: 'panel', values: [1, 0, 0]}], gaps: [0], storage: []};
+  assert.throws(() => decodePeriodicDispatch(model, name =>
+    name === 'panel' ? 1 : -model.demand_eu_per_tick), /whole-period energy/);
 });
 
 test('storage build item enters the connected construction balance', () => {
