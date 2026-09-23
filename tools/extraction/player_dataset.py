@@ -12,6 +12,7 @@ from irradiation import irradiation_recipes
 from certus import certus_catalog
 from availability import annotate_availability
 from recipe_preferences import crafting_preferences
+from blasting import blasting_catalog
 
 
 def boiler_operating_points(samples):
@@ -231,7 +232,7 @@ def default_output(source_id, outputs, inputs=()):
     return next(iter(matches)) if len(matches) == 1 else outputs[0]["resource"]
 
 
-def build_dataset(capture):
+def build_dataset(capture, blasting_report=None):
     resource_index = {entry["id"]: entry for entry in capture["resources"]}
     variants = {}
     resources = [{**{key: value for key, value in entry.items() if key != "item_rules"},
@@ -243,7 +244,14 @@ def build_dataset(capture):
     names = {entry["id"]: entry.get("name", entry["id"].split(":", 1)[-1].replace("_", " ")) for entry in resources}
     recipes = []
     unsupported = []
+    blasting_machine = None
+    blasting_recipes = []
+    blasting_sources = set()
+    if blasting_report is not None:
+        blasting_machine, blasting_recipes, blasting_sources = blasting_catalog(capture, blasting_report, names)
     for entry in capture["recipes"]:
+        if entry["source_id"] in blasting_sources and entry["type"] == "minecraft:blasting":
+            continue
         record = {key: entry[key] for key in ("id", "source_id", "type", "origin")}
         if entry["status"] != "normalized":
             unsupported.append({**record, "reason": entry["reason"]})
@@ -320,6 +328,9 @@ def build_dataset(capture):
                 "recipe_type": "planner:crafting", "upgrades": ["ae2:speed_card"], "upgrade_limit": 5,
                 "eu_per_ae": capture["power_units"]["fe_per_ae"] / capture["power_units"]["fe_per_eu"],
                 "usage_multiplier": capture["power_units"]["ae_usage_multiplier"]}]
+    if blasting_machine is not None:
+        machines.append(blasting_machine)
+        recipes.extend(blasting_recipes)
     resources.extend(value for key, value in variants.items() if key not in resource_index)
     recipes.extend(utility_recipes(capture))
     recipes.extend(irradiation_recipes(capture))
@@ -349,8 +360,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--blasting-report", type=Path)
     args = parser.parse_args()
-    dataset = build_dataset(json.loads(args.input.read_text(encoding="utf-8")))
+    blasting_report = json.loads(args.blasting_report.read_text(encoding="utf-8")) if args.blasting_report else None
+    dataset = build_dataset(json.loads(args.input.read_text(encoding="utf-8")), blasting_report)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(dataset, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(json.dumps({"recipes": len(dataset["recipes"]), "unsupported_entries": len(dataset["unsupported_entries"]),

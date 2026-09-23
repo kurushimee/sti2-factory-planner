@@ -16,11 +16,16 @@ def main() -> None:
     parser.add_argument("--rotation-fixture", action="store_true", help="Create and check four rotated steam quarries in the isolated test world.")
     parser.add_argument("--solar-panel", action="store_true", help="Measure the three loaded solar panel tiers in the isolated test world.")
     parser.add_argument("--storage-fixture", action="store_true", help="Place five charged MI storage units in the isolated test world.")
+    parser.add_argument("--blasting-fixture", action="store_true", help="Tick the distinct Spectrum blasting recipes in the loaded blast furnace.")
     parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     parser.add_argument("--certus-farm", action="store_true", help="Build and measure both certus farms in the isolated world.")
     args = parser.parse_args()
     if args.solar_panel and args.storage_fixture:
         parser.error("Run the solar measurement and frozen storage fixture in separate captures.")
+    if args.solar_panel and args.blasting_fixture:
+        parser.error("Run the solar measurement and frozen blasting trial in separate captures.")
+    if args.storage_fixture and args.blasting_fixture:
+        parser.error("Run the storage and blasting fixtures in separate captures.")
     instance = args.instance.resolve()
     argument_file = instance / "libraries/net/neoforged/neoforge/21.1.250/win_args.txt"
     if not argument_file.is_file():
@@ -64,6 +69,8 @@ def main() -> None:
                         commands.extend(["forceload add 400 -16 432 16", "tick freeze", "planner_fixture_storage", "save-all flush"])
                     if args.solar_panel:
                         commands.extend(["forceload add 384 -16 432 16", "planner_probe_solar", "save-all flush"])
+                    if args.blasting_fixture:
+                        commands.extend(["forceload add 480 -16 560 16", "tick freeze", "planner_probe_blasting", "save-all flush"])
                     if not args.solar_panel:
                         commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
@@ -94,6 +101,8 @@ def main() -> None:
                 raise RuntimeError(f"Solar roof measurement did not finish. Inspect {log_path}.")
             if args.storage_fixture and "Planner storage fixture placed five charged MI storage units." not in text:
                 raise RuntimeError(f"Storage fixture did not finish successfully. Inspect {log_path}.")
+            if args.blasting_fixture and "Planner blasting trials matched 17 loaded recipes and fuel variants." not in text:
+                raise RuntimeError(f"Blasting trials did not finish. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:

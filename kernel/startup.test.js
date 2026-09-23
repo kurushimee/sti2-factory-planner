@@ -68,6 +68,20 @@ test('missing warm-up behavior is visible instead of becoming a zero stock claim
   assert.equal(result.incomplete.length, 1);
 });
 
+test('a blast furnace needs whole initial fuel and an input at each machine', () => {
+  const result = startupRequirements([{recipe: 'blast', configuration: 'lava', machines: 3,
+    operations_per_second: 0.3, inputs: [{resource: 'pure_iron', rate: 0.3}, {resource: 'lava_bucket', rate: 0.003}],
+    outputs: [{resource: 'iron', rate: 0.3}, {resource: 'bucket', rate: 0.003}],
+    configuration_details: {build_requirements: [{resource: 'blast_furnace', amount: 1}],
+      startup_profile: {kind: 'vanilla_furnace', ingredient_resource: 'pure_iron',
+        fuel_resource: 'lava_bucket', first_completion_ticks: 100}}}]);
+  assert.equal(result.resources.find(value => value.resource === 'lava_bucket').first_operation_stock, 3);
+  assert.equal(result.resources.find(value => value.resource === 'pure_iron').first_operation_stock, 3);
+  assert.equal(result.resources.find(value => value.resource === 'iron').warmup_output_stock, 1.5);
+  assert.deepEqual(result.build_requirements, [{resource: 'blast_furnace', amount: 3}]);
+  assert.deepEqual(result.incomplete, []);
+});
+
 test('retained inputs survive unknown timing and specialized startup profiles', () => {
   for (const profile of [undefined, {kind: 'irradiator', cycle_ticks: 100, discovery_delay_ticks: 20,
     fuel_resource: 'fuel', batch: 1, source_resource: 'source', source_per_second: 0.1}]) {

@@ -70,3 +70,5 @@ Read world archives through bounded ranges on desktop and web. Do not turn a sel
 Build desktop and web exports in clean ignored `builds/windows` and `builds/web` directories. Run `python tools/test_package_exports.py` and `python tools/package_exports.py` to check their file lists, runtime hash, notices, and archive checksums. The packages remain labeled development exports until #8 and the delivery requirements are complete; verify the extracted application before publishing.
 
 Solar panels have verified daylight, water, cell-wear, rain, and roof behavior in `data/provenance/solar-panel-report.json`. Their daily average is not a continuous power source. Keep them unsupported until a plan includes the real storage and initial charge needed through night; use `tools/extraction/verify_solar.py` with the private capture when changing solar rules.
+
+Distinct Spectrum blasting routes use the loaded blast-furnace trials in `data/provenance/blasting-report.json`. Regenerate them from the private capture with `player_dataset.py --blasting-report`, then run `node tools/verify_blasting_catalog.mjs <catalog.json>`. Keep other furnace fuels unsupported until measured.
