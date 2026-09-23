@@ -23,7 +23,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     const recipeId = correction.recipe ?? saved.recipe_id;
     const possible = (candidates.get(recipeId) ?? []).filter(recipe => !saved.recipe_type || recipe.type === saved.recipe_type || recipe.process?.type === saved.recipe_type);
     const pending = reason => unresolved.push({machine: key, origin: saved.origin, machine_id: saved.id, recipe_id: recipeId, reason,
-      recipe_candidates: saved.provider_candidates ?? [], facts: saved});
+      recipe_candidates: saved.recipe_candidates ?? saved.provider_candidates ?? [], facts: saved});
     const definition = machines.get(saved.id);
     if (definition?.mechanic === 'energy_storage') {
       const rule = definition.storage;

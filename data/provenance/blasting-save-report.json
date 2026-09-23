@@ -1,0 +1,43 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "world_archive_sha256": "c19eb5e15f60ebea5df4590833d02f64509ee02abe5da6ec5fe5eee754409b59",
+  "fixture_sha256": "d86e9a17e2746df07734f3e85a703659780acc750a8c7aff4833212d7c419069",
+  "dataset_sha256": "136f5c50a14a32850fe4010b71c47498220fe5dd4ac1071d07664c3d5b154afd",
+  "machines": [
+    {
+      "role": "coal_active",
+      "x": 600,
+      "cook_time_ticks": 20,
+      "burn_time_remaining_ticks": 681,
+      "recipes_used": 1,
+      "assignment_evidence": "saved_cooking_input_and_queued_fuel"
+    },
+    {
+      "role": "lava_active",
+      "x": 604,
+      "cook_time_ticks": 20,
+      "burn_time_remaining_ticks": 9881,
+      "recipes_used": 1,
+      "assignment_evidence": "saved_cooking_input_and_queued_fuel"
+    },
+    {
+      "role": "history_only",
+      "x": 608,
+      "cook_time_ticks": 0,
+      "burn_time_remaining_ticks": 701,
+      "recipes_used": 1,
+      "assignment_evidence": "saved_recipe_history_only"
+    },
+    {
+      "role": "fuel_unknown",
+      "x": 612,
+      "cook_time_ticks": 20,
+      "burn_time_remaining_ticks": 681,
+      "recipes_used": 1,
+      "assignment_evidence": "saved_cooking_without_queued_fuel"
+    }
+  ],
+  "inferred_capacity_goals": 2,
+  "focused_corrections": 2,
+  "limitation": "Cooking input and queued fuel establish a configured capacity, not an observed long-term output rate. Recipe history and output inventory are past quantities, not goals."
+}

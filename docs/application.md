@@ -14,6 +14,8 @@ The Imported factory dialog shows machine origins, saved upgrades, recipe eviden
 
 Recognized storage units appear in Imported factory with exact saved charge, capacity, and charge/discharge limits. They have no recipe picker or retained-output toggle. Saved charge remains a quantity and is not yet installed in the power plan. Run `tools/test_world_review.gd` to inspect this state in the application and `tools/verify_storage_world.mjs` against the controlled world ZIP. Periodic storage settings and graph integration remain under issues #37 and #41.
 
+Saved blast furnaces show their input, queued fuel, stored output, progress, and past craft count separately. The dialog puts routes matching a saved input first and leaves an empty fuel slot unresolved until the player chooses a route. Run `tools/test_blasting_world_ui.gd -- <private-world-result.json>` after the real ZIP check in the world import guide; render it to inspect active and ambiguous entries. The exported checks are `node tools/verify_blasting_desktop.mjs <world.zip>` and `node tools/verify_blasting_app_browser.mjs <world.zip>`.
+
 Group membership uses node centers. When groups overlap, the smallest enclosing boundary wins; equal areas use the stable group ID. Group movement translates members. Resizing changes the boundary and recalculates membership without translating or resizing recipes. A recipe keeps its saved position and inspected selection when recalculation changes its machine loadout. The application implements group membership explicitly because Godot's automatic frame attachment fits boundaries around attached nodes.
 
 ## Development builds

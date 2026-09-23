@@ -1,6 +1,59 @@
 import {decodePatterns} from './ae2.js';
 
 const locationKey = origin => `${origin.dimension}|${origin.x}|${origin.y}|${origin.z}`;
+const furnaceRoutes = new WeakMap();
+
+function blastFurnaceRoutes(dataset) {
+  if (furnaceRoutes.has(dataset)) return furnaceRoutes.get(dataset);
+  const byInput = new Map();
+  for (const recipe of dataset.recipes ?? []) {
+    if (recipe.type !== 'minecraft:blasting' || recipe.inputs?.length !== 2) continue;
+    if (recipe.unsupported) continue;
+    for (const input of recipe.inputs[0].choices ?? [recipe.inputs[0].resource]) {
+      if (!byInput.has(input)) byInput.set(input, []);
+      for (const configuration of recipe.configurations ?? []) {
+        if (configuration.machine === 'minecraft:blast_furnace') byInput.get(input).push({recipe, configuration});
+      }
+    }
+  }
+  furnaceRoutes.set(dataset, byInput);
+  return byInput;
+}
+
+function readBlastFurnaceAssignment(block, dataset) {
+  const slots = new Map((block.Items ?? []).map(stack => [stack.Slot, stack]));
+  const input = slots.get(0), fuel = slots.get(1);
+  const history = Object.keys(block.RecipesUsed ?? {});
+  const stock = stack => stack?.id && Number.isSafeInteger(stack.count) && stack.count > 0;
+  if (slots.size !== (block.Items ?? []).length || (input?.components && Object.keys(input.components).length)
+    || (fuel?.components && Object.keys(fuel.components).length)) {
+    return {assignment_evidence: 'unsupported_saved_furnace_inventory',
+      assignment_error: 'The saved blast-furnace inventory has duplicate slots or item components that need a matching recipe rule.'};
+  }
+  if (!stock(input)) return {assignment_evidence: history.length ? 'saved_recipe_history_only' : 'unassigned',
+    assignment_error: 'No active input is saved. Recipe history and stored output do not establish an installed production route.'};
+  const options = blastFurnaceRoutes(dataset).get(`item:${input.id}`) ?? [];
+  const recipe_candidates = [...new Set(options.map(value => value.recipe.id))];
+  const progress = block.CookTime, burning = block.BurnTime, total = block.CookTimeTotal;
+  if (!Number.isSafeInteger(progress) || !Number.isSafeInteger(burning) || !Number.isSafeInteger(total)
+    || progress < 0 || burning < 0 || total <= 0 || progress >= total) {
+    return {assignment_evidence: 'invalid_saved_furnace_progress', recipe_candidates,
+      assignment_error: 'The saved blast-furnace progress is invalid or unsupported.'};
+  }
+  if (progress === 0 || burning === 0) return {assignment_evidence: 'saved_input_without_active_cooking', recipe_candidates,
+    assignment_error: 'The saved input is not actively cooking. Confirm an intended recipe and fuel before adding a capacity goal.'};
+  if (!stock(fuel)) return {assignment_evidence: 'saved_cooking_without_queued_fuel', recipe_candidates,
+    assignment_error: 'The furnace is cooking, but its fuel slot does not identify the next fuel. Choose a supported fuel route.'};
+  const matches = options.filter(value => (value.recipe.inputs[1].choices ?? [value.recipe.inputs[1].resource])
+    .includes(`item:${fuel.id}`)
+    && value.configuration.capacity?.ticks_per_batch === total);
+  if (matches.length !== 1) return {assignment_evidence: 'ambiguous_saved_furnace_route', recipe_candidates,
+    assignment_error: 'The saved input, queued fuel, and cook time do not identify one supported blast-furnace route.'};
+  return {recipe_id: matches[0].recipe.id, recipe_type: 'minecraft:blasting',
+    configuration_id: matches[0].configuration.id, recipe_candidates,
+    assignment_evidence: 'saved_cooking_input_and_queued_fuel',
+    assignment_note: 'The input and cooking progress are saved facts. The queued fuel selects future full-burn operation; recipe history and stored output are not sustained rates.'};
+}
 
 export function inferIrradiatorAssignments(imported, dataset) {
   const definitions = new Map((dataset.machines ?? []).map(machine => [machine.id, machine]));
@@ -49,6 +102,9 @@ export function inferIrradiatorAssignments(imported, dataset) {
 }
 
 export function readMachineAssignment(block, machine, dataset) {
+  if (block.id === 'minecraft:blast_furnace' && machine.recipe_type === 'minecraft:blasting') {
+    return readBlastFurnaceAssignment(block, dataset);
+  }
   if (machine.replication) {
     const template = block.items?.[0];
     if (!template?.key?.id || BigInt(template.amount ?? 0) <= 0n) return {assignment_evidence: 'missing_replication_template'};

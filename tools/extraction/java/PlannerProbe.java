@@ -65,6 +65,12 @@ public final class PlannerProbe {
                     try { return captureBlasting(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_fixture_blasting_save")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return createBlastingSaveFixture(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -134,6 +140,60 @@ public final class PlannerProbe {
         Files.createDirectories(Path.of("planner-extraction"));
         Files.writeString(Path.of("planner-extraction/blasting.json"), new GsonBuilder().setPrettyPrinting().create().toJson(report));
         System.out.println("Planner blasting trials matched " + results.size() + " loaded recipes and fuel variants.");
+        return 1;
+    }
+
+    private static int createBlastingSaveFixture(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var pureIron = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("spectrum:pure_iron"));
+        var coal = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("minecraft:coal"));
+        var lava = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("minecraft:lava_bucket"));
+        var iron = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("minecraft:iron_ingot"));
+        var rows = new JsonArray();
+        var roles = new String[]{"coal_active", "lava_active", "history_only", "fuel_unknown"};
+        for (int index = 0; index < roles.length; index++) {
+            var position = new BlockPos(600 + index * 4, 160, 0);
+            if (!level.getBlockState(position).isAir()) throw new IllegalStateException("The blasting save fixture area is occupied.");
+            level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.BLAST_FURNACE.defaultBlockState());
+            var furnace = (net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity) level.getBlockEntity(position);
+            var role = roles[index];
+            furnace.setItem(0, new net.minecraft.world.item.ItemStack(pureIron, role.equals("history_only") ? 1 : 3));
+            furnace.setItem(1, new net.minecraft.world.item.ItemStack(role.equals("lava_active") ? lava : coal,
+                    role.equals("coal_active") ? 2 : 1));
+            for (int tick = 0; tick < (role.equals("history_only") ? 100 : 120); tick++) {
+                net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity.serverTick(
+                        level, position, level.getBlockState(position), furnace);
+                if (role.equals("lava_active") && tick == 99) {
+                    if (!furnace.getItem(1).is(net.minecraft.world.item.Items.BUCKET))
+                        throw new IllegalStateException("The lava fixture did not return its empty bucket.");
+                    furnace.setItem(1, new net.minecraft.world.item.ItemStack(lava));
+                }
+            }
+            if (!furnace.getItem(2).is(iron) || furnace.getItem(2).getCount() != 1)
+                throw new IllegalStateException("A saved blast furnace did not complete its verified iron recipe.");
+            var saved = furnace.saveWithFullMetadata(server.registryAccess());
+            int cooking = saved.getInt("CookTime");
+            int history = saved.getCompound("RecipesUsed").getInt("spectrum:blasting/pure_resources/iron");
+            if (cooking != (role.equals("history_only") ? 0 : 20) || history != 1)
+                throw new IllegalStateException("The saved furnace progress or recipe history changed.");
+            var row = new JsonObject();
+            row.addProperty("role", role);
+            row.addProperty("x", position.getX());
+            row.addProperty("y", position.getY());
+            row.addProperty("z", position.getZ());
+            row.addProperty("input_count", furnace.getItem(0).getCount());
+            row.addProperty("fuel_slot", BuiltInRegistries.ITEM.getKey(furnace.getItem(1).getItem()).toString());
+            row.addProperty("output_count", furnace.getItem(2).getCount());
+            row.addProperty("burn_time_remaining_ticks", saved.getInt("BurnTime"));
+            row.addProperty("cook_time_ticks", cooking);
+            row.addProperty("recipes_used", history);
+            row.addProperty("nbt", saved.toString());
+            rows.add(row);
+        }
+        Files.createDirectories(Path.of("planner-extraction"));
+        Files.writeString(Path.of("planner-extraction/blasting-save-fixture.json"),
+                new GsonBuilder().setPrettyPrinting().create().toJson(rows));
+        System.out.println("Planner blasting save fixture placed four furnaces.");
         return 1;
     }
 
