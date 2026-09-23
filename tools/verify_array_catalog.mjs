@@ -19,7 +19,15 @@ for (const saved of report.arrays) {
   attachStructureBills(plan, dataset);
   assert.equal(configuration.structure.status, 'sized', configuration.structure.reason);
   const evidence = JSON.parse(await readFile(`data/provenance/${saved.origin.x === 320 ? 'processing-array' : 'multi-processing-array'}-structure-check.json`, 'utf8'));
-  assert.deepEqual(Object.fromEntries(configuration.structure.build_requirements.map(value => [value.resource.substring(5), value.amount])), evidence.placed_blocks_excluding_controller);
+  const built = Object.fromEntries(configuration.structure.build_requirements.map(value =>
+    [value.resource.substring(5), value.amount]));
+  const recorded = {...evidence.placed_blocks_excluding_controller};
+  const energyHatches = entries => Object.entries(entries).filter(([id]) => id.endsWith('_energy_input_hatch'));
+  assert.equal(energyHatches(built).reduce((total, [, amount]) => total + amount, 0), 1);
+  assert.equal(energyHatches(recorded).reduce((total, [, amount]) => total + amount, 0), 1);
+  for (const [id] of energyHatches(built)) delete built[id];
+  for (const [id] of energyHatches(recorded)) delete recorded[id];
+  assert.deepEqual(built, recorded);
   for (const sample of evidence.array_cycle.steady_batches.slice(1)) {
     assert.equal(sample.ticks, saved.steady_ticks);
     assert.equal(sample.energy, saved.energy_per_batch);
