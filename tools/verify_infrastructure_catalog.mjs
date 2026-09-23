@@ -17,7 +17,7 @@ for (const [index, [drain, transfer, distance]] of expected.entries()) {
   assert.equal(entry.transfer_eu_per_tick_per_machine, transfer);
   assert.equal(entry.max_axis_distance, distance);
   assert.equal(entry.structure.status, 'sized');
-  assert.equal(entry.structure.build_requirements.find(value => value.resource === `item:${hatch}`).amount, 7);
+  assert.equal(entry.structure.build_requirements.find(value => value.resource === `item:${hatch}`).amount, 1);
   assert.equal(entry.structure.build_requirements.reduce((sum, value) => sum + value.amount, 0), 213);
   const built = solveFactory(highs, dataset, {goals: [], available_machines: [], external: [{resource: 'energy:eu'}],
     infrastructure: [{machine: entry.machine, variant: entry.variant, count: 2, energy_hatch: hatch, transmit_eu_per_tick: transfer}],
@@ -25,4 +25,4 @@ for (const [index, [drain, transfer, distance]] of expected.entries()) {
   assert.equal(built.status, 'optimal');
   assert.equal(built.construction.material_cost, 426);
 }
-console.log('All five Tesla tiers preserve measured drain, transfer limits, receiver tiers, full-load structures, and finite construction bills.');
+console.log('All five Tesla tiers preserve drain, tower transmission, receiver tiers, structures, and construction bills.');
