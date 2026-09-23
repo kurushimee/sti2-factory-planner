@@ -4,7 +4,7 @@ import {resolve, extname, sep} from 'node:path';
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
-const root = resolve('builds/web');
+const root = resolve(process.env.STI2_WEB_ROOT ?? 'builds/web');
 const [worldPath, machineCapturePath, catalogPath, fixtureKind] = process.argv.slice(2);
 const arrayFixture = fixtureKind === 'arrays';
 const teslaFixture = fixtureKind === 'tesla' || arrayFixture;

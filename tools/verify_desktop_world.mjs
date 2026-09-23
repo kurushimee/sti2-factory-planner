@@ -24,7 +24,7 @@ await writeFile(join(user, 'autosave.json'), JSON.stringify({format: 'factory-pl
 const capture = resolve('.plans/artifacts/workspace/standalone-world.png'), log = join(appdata, 'application.log');
 const started = Date.now(), before = await stat(archive);
 await new Promise((resolveRun, reject) => {
-  const child = spawn(resolve('builds/windows/FactoryPlanner.exe'), ['--audio-driver', 'Dummy', '--log-file', log, '--',
+  const child = spawn(resolve(process.env.STI2_WINDOWS_EXE ?? 'builds/windows/FactoryPlanner.exe'), ['--audio-driver', 'Dummy', '--log-file', log, '--',
     '--capture-existing', `--capture-path=${capture}`, `--world=${resolve(archive)}`],
   {env: {...process.env, PATH: '', APPDATA: appdata}, windowsHide: true, stdio: 'pipe'});
   let output = '';

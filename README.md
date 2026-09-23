@@ -20,4 +20,4 @@ New-Item -ItemType File -Force node_modules/.gdignore
 npm test
 ```
 
-See [application development](docs/application.md) for current build and exported-application checks, and [world import evidence](docs/world-import.md) for the controlled save fixture. Browser checks require Playwright's Chromium installation. Keep development builds and worlds out of Git.
+See [application development](docs/application.md) for current build, development archive, and exported-application checks, and [world import evidence](docs/world-import.md) for the controlled save fixture. Browser checks require Playwright's Chromium installation. Keep development builds and worlds out of Git.

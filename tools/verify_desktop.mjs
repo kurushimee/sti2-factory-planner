@@ -19,6 +19,7 @@ const plan = process.argv[4] ? JSON.parse(await readFile(process.argv[4], 'utf8'
 const recipe = plan.request.goals[0].recipe;
 await writeFile(join(user, 'autosave.json'), JSON.stringify(plan));
 const capture = resolve('.plans/artifacts/workspace/standalone-bundled-plan.png');
+await mkdir(resolve('.plans/artifacts/workspace'), {recursive: true});
 const log = join(appdata, 'application.log');
 const resultPath = join(appdata, 'calculation-result.json');
 const started = Date.now();
