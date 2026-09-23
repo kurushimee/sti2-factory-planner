@@ -4,7 +4,7 @@ import {resolve, extname, sep} from 'node:path';
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
-const root = resolve('builds/web'), artifacts = resolve('.plans/artifacts/workspace');
+const root = resolve(process.env.STI2_WEB_ROOT ?? 'builds/web'), artifacts = resolve('.plans/artifacts/workspace');
 const manifest = JSON.parse(await readFile('data/provenance/distribution-manifest.json', 'utf8'));
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
@@ -25,6 +25,15 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 let browser;
 try {
   browser = await chromium.launch({headless: true, args: ['--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']});
+  const hosted = await browser.newPage({viewport: {width: 1440, height: 900}});
+  const hostedErrors = [];
+  hosted.on('pageerror', error => hostedErrors.push(String(error)));
+  await hosted.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await hosted.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
+  assert.ok(await hosted.locator('canvas').isVisible());
+  assert.deepEqual(hostedErrors, []);
+  await hosted.screenshot({path: `${artifacts}/browser-hosted.png`});
+  await hosted.close();
   const page = await browser.newPage({viewport: {width: 1440, height: 900}, acceptDownloads: true});
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));

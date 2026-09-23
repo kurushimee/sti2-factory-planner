@@ -32,6 +32,8 @@ jobs:
           touch node_modules/.gdignore
       - name: Check calculation regressions
         run: npm test
+      - name: Check export packaging rules
+        run: python tools/test_package_exports.py
       - name: Check the bundled StaTech dataset
         run: |
           python tools/verify_distribution.py

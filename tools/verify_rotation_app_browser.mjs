@@ -7,7 +7,7 @@ import {chromium} from '@playwright/test';
 const [archive, fixturePath] = process.argv.slice(2);
 if (!archive || !fixturePath) throw new Error('Supply the controlled world ZIP and runtime rotation fixture report.');
 const fixtures = JSON.parse(await readFile(fixturePath, 'utf8'));
-const root = resolve('builds/web');
+const root = resolve(process.env.STI2_WEB_ROOT ?? 'builds/web');
 const artifacts = resolve('.plans/artifacts/world-import');
 await mkdir(artifacts, {recursive: true});
 const server = createServer(async (request, response) => {
