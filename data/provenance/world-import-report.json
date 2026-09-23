@@ -1,0 +1,269 @@
+{
+  "archive_sha256": "091a485552d148c2860cb534cddd596db86903bff05d286d3ed45169e3476e25",
+  "data_version": 3955,
+  "machines": [
+    {
+      "id": "modern_industrialization:electric_macerator",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 0,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "recipe_id": "statech:modern_industrialization/macerator/copper_dust_from_copper_cluster",
+      "recipe_type": "modern_industrialization:macerator",
+      "upgrades": {
+        "count": 8,
+        "id": "modern_industrialization:advanced_upgrade"
+      },
+      "contained_machine": null,
+      "shape": null,
+      "casing": {},
+      "assignment_evidence": "saved_active_recipe",
+      "provider_candidates": [
+        "statech:modern_industrialization/macerator/copper_dust_from_copper_cluster"
+      ]
+    },
+    {
+      "id": "modern_industrialization:assembler",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 2,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "recipe_id": null,
+      "recipe_type": "modern_industrialization:assembler",
+      "upgrades": {},
+      "contained_machine": null,
+      "shape": null,
+      "casing": {},
+      "assignment_evidence": "unassigned"
+    },
+    {
+      "id": "extended_industrialization:processing_array",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 4,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "recipe_id": null,
+      "recipe_type": "modern_industrialization:macerator",
+      "upgrades": {
+        "count": 4,
+        "id": "modern_industrialization:turbo_upgrade"
+      },
+      "contained_machine": {
+        "count": 16,
+        "id": "modern_industrialization:electric_macerator"
+      },
+      "shape": 1,
+      "casing": {},
+      "assignment_evidence": "unassigned"
+    },
+    {
+      "id": "industrialization_overdrive:multi_processing_array",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 6,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "recipe_id": null,
+      "recipe_type": "modern_industrialization:distillation_tower",
+      "upgrades": {},
+      "contained_machine": {
+        "count": 8,
+        "id": "modern_industrialization:distillation_tower"
+      },
+      "shape": 0,
+      "casing": {},
+      "assignment_evidence": "unassigned"
+    },
+    {
+      "id": "modern_industrialization:replicator",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 12,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "recipe_id": "replicate|item:minecraft:iron_ingot",
+      "recipe_type": "planner:replication",
+      "upgrades": {},
+      "contained_machine": null,
+      "shape": null,
+      "casing": {},
+      "assignment_evidence": "saved_replication_template",
+      "obtained_resources": [
+        "item:minecraft:iron_ingot"
+      ]
+    },
+    {
+      "id": "ae2:molecular_assembler",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 14,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "recipe_id": "minecraft:stick",
+      "recipe_type": "planner:crafting",
+      "upgrades": {
+        "id": "ae2:speed_card",
+        "count": 2
+      },
+      "contained_machine": null,
+      "shape": null,
+      "casing": {},
+      "assignment_evidence": "saved_dedicated_crafting_pattern",
+      "crafting_pattern": {
+        "result": {
+          "id": "minecraft:stick",
+          "count": 4
+        },
+        "canSubstitute": 0,
+        "inputs": [
+          {
+            "id": "minecraft:oak_planks",
+            "count": 1
+          },
+          {},
+          {},
+          {
+            "id": "minecraft:oak_planks",
+            "count": 1
+          },
+          {},
+          {},
+          {},
+          {},
+          {}
+        ],
+        "canSubstituteFluids": 0,
+        "recipeId": "minecraft:stick"
+      }
+    }
+  ],
+  "providers": [
+    {
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": -1,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.-1.0.mca",
+        "part": null
+      },
+      "directions": [
+        "east"
+      ],
+      "patterns": [
+        {
+          "slot": 0,
+          "item": "ae2:processing_pattern",
+          "kind": "processing",
+          "inputs": [
+            {
+              "resource": "item:spectrum:copper_cluster",
+              "amount": 1,
+              "components": {}
+            }
+          ],
+          "outputs": [
+            {
+              "resource": "item:modern_industrialization:copper_dust",
+              "amount": 6,
+              "components": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 1,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca",
+        "part": "west"
+      },
+      "directions": [
+        "west"
+      ],
+      "patterns": [
+        {
+          "slot": 0,
+          "item": "ae2:processing_pattern",
+          "kind": "processing",
+          "inputs": [
+            {
+              "resource": "item:spectrum:copper_cluster",
+              "amount": 1,
+              "components": {}
+            }
+          ],
+          "outputs": [
+            {
+              "resource": "item:modern_industrialization:copper_dust",
+              "amount": 6,
+              "components": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "parts": [
+    {
+      "id": "modern_industrialization:steel_item_input_hatch",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 8,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "hatch_type": "modern_industrialization:item_input"
+    }
+  ],
+  "requesters": [
+    {
+      "id": "merequester:requester",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 10,
+        "y": 100,
+        "z": 0,
+        "region": "planner-test-world/region/r.0.0.mca"
+      },
+      "evidence": "Saved stock targets and crafting batch sizes. No refill interval or production rate is recorded.",
+      "requests": [
+        {
+          "slot": 0,
+          "enabled": true,
+          "resource": "item:modern_industrialization:copper_dust",
+          "components": {},
+          "stock_target": "4096",
+          "crafting_batch": "64",
+          "interpretation": "quantity",
+          "rate": null
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "evidence": "Saved configuration; no observed production rate.",
+  "limitations": [
+    "The multiblock controllers are unformed.",
+    "Saved loadouts establish configured capacity, not observed long-term output."
+  ]
+}

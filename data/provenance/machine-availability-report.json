@@ -1,0 +1,42 @@
+{
+  "archive_sha256": "7c39a9cd56b52e320fdfdb72300bc3317f51bf02feaec0a358a46f3123deaa4d",
+  "source": {
+    "file": "kubejs/server_scripts/hidefromEMI.js",
+    "sha256": "be2b31bbffcb165dd7df0223f8c98c729f0d636417570f46df9b78322a8f8026"
+  },
+  "machines": [
+    {
+      "machine": "extended_industrialization:bronze_bending_machine",
+      "script_group": "UNUSED_EI",
+      "normal_production_recipes": 0,
+      "replication_recipes": [
+        "replicate|item:extended_industrialization:bronze_bending_machine"
+      ]
+    },
+    {
+      "machine": "extended_industrialization:steel_bending_machine",
+      "script_group": "UNUSED_EI",
+      "normal_production_recipes": 0,
+      "replication_recipes": [
+        "replicate|item:extended_industrialization:steel_bending_machine"
+      ]
+    },
+    {
+      "machine": "modern_industrialization:supercomputer",
+      "script_group": "UNUSED_DEV",
+      "normal_production_recipes": 0,
+      "replication_recipes": [
+        "replicate|item:modern_industrialization:supercomputer"
+      ]
+    },
+    {
+      "machine": "modern_industrialization:telescope",
+      "script_group": "UNUSED_DEV",
+      "normal_production_recipes": 0,
+      "replication_recipes": [
+        "replicate|item:modern_industrialization:telescope"
+      ]
+    }
+  ],
+  "scope": "The released script marks these machines unused or development-only. The loaded catalog has no ordinary production recipe. Explicit owned-machine overrides remain available."
+}

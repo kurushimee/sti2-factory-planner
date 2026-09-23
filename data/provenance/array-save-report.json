@@ -1,0 +1,77 @@
+{
+  "archive_sha256": "4efa7aaf2be6cc784b70482e1f70eb0dc3519c567570bcc6467db0b0eb6063d2",
+  "arrays": [
+    {
+      "machine": "extended_industrialization:processing_array",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 320,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "contained_machine": {
+        "count": 8,
+        "id": "modern_industrialization:electric_macerator"
+      },
+      "upgrades": {
+        "count": 4,
+        "id": "modern_industrialization:advanced_upgrade"
+      },
+      "recipe": "modern_industrialization:macerator|statech:modern_industrialization/macerator/copper_dust_from_copper_cluster",
+      "configuration": "modern_industrialization:macerator|statech:modern_industrialization/macerator/copper_dust_from_copper_cluster|extended_industrialization:processing_array|modern_industrialization:advanced_upgrade:4|batch:8|modern_industrialization:electric_macerator:8|shape:0|steel:false|",
+      "setup": {
+        "shape": 0,
+        "upgrade_count": 4,
+        "contained_machine": "modern_industrialization:electric_macerator",
+        "contained_count": 8,
+        "upgrade": {
+          "id": "modern_industrialization:advanced_upgrade",
+          "extra_max_eu": 16
+        }
+      },
+      "assignment_evidence": "saved_active_recipe",
+      "steady_ticks": 10,
+      "energy_per_batch": 3200,
+      "operations_per_batch": 8,
+      "total_output_per_batch": 48
+    },
+    {
+      "machine": "industrialization_overdrive:multi_processing_array",
+      "origin": {
+        "dimension": "minecraft:overworld",
+        "x": 384,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      },
+      "contained_machine": {
+        "count": 8,
+        "id": "modern_industrialization:distillation_tower"
+      },
+      "upgrades": {
+        "count": 4,
+        "id": "modern_industrialization:advanced_upgrade"
+      },
+      "recipe": "modern_industrialization:distillation_tower|modern_industrialization:petrochem/distillation/crude_oil_full",
+      "configuration": "modern_industrialization:distillation_tower|modern_industrialization:petrochem/distillation/crude_oil_full|industrialization_overdrive:multi_processing_array|modern_industrialization:advanced_upgrade:4|batch:8|modern_industrialization:distillation_tower:8|shape:0|steel:false|",
+      "setup": {
+        "shape": 0,
+        "upgrade_count": 4,
+        "contained_machine": "modern_industrialization:distillation_tower",
+        "contained_count": 8,
+        "upgrade": {
+          "id": "modern_industrialization:advanced_upgrade",
+          "extra_max_eu": 16
+        }
+      },
+      "assignment_evidence": "saved_active_recipe",
+      "steady_ticks": 53,
+      "energy_per_batch": 57600,
+      "operations_per_batch": 8,
+      "total_output_per_batch": 8000
+    }
+  ],
+  "evidence": "Both structures matched in the loaded pack and ran real batches with continuous direct hatch supply. Saved controllers retain their machines, upgrades, and active recipe assignments.",
+  "limits": "The first recorded completion crosses the warm-up boundary and is excluded from steady interval comparison. Direct supply does not verify external cable or transport capacity. Saved configuration is not an observed long-term rate."
+}

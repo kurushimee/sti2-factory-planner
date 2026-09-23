@@ -1,0 +1,246 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/factory_settings.gd" id="1"]
+
+[node name="FactorySettings" type="ConfirmationDialog"]
+title = "Factory settings"
+size = Vector2i(1040, 710)
+ok_button_text = "Apply and recalculate"
+script = ExtResource("1")
+
+[node name="Content" type="HBoxContainer" parent="."]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 1024.0
+offset_bottom = 650.0
+theme_override_constants/separation = 24
+
+[node name="Availability" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(620, 0)
+size_flags_horizontal = 3
+
+[node name="Progression" type="HBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ProgressionPreset" type="OptionButton" parent="Content/Availability/Progression"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Choose a progression stage, then use its machine and upgrade selections. Individual overrides remain available."
+
+[node name="UsePreset" type="Button" parent="Content/Availability/Progression"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Use preset"
+disabled = true
+
+[node name="SettingsCategory" type="OptionButton" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SettingsSearch" type="LineEdit" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Search by name or ID…"
+
+[node name="ConstructionOptions" type="HBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_constants/separation = 12
+
+[node name="ConstructionEnabled" type="CheckButton" parent="Content/Availability/ConstructionOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Estimate construction costs"
+tooltip_text = "Compare installed machine materials through their recipes. This assumes enabled workstations are already available for construction. Quantities are unrounded estimates."
+
+[node name="ConstructionWeight" type="SpinBox" parent="Content/Availability/ConstructionOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(175, 0)
+min_value = 0.001
+max_value = 1000000.0
+step = 0.001
+value = 1.0
+suffix = "priority"
+tooltip_text = "Weight of one-time construction costs alongside sustained factory costs."
+
+[node name="ConstructionRounding" type="CheckButton" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+text = "Use whole recipe batches and tools"
+tooltip_text = "Round recipe batches, purchased items, and verified consumable tools. Probabilistic yields still use expected values. Startup catalysts and loop fills remain separate."
+
+[node name="SettingsHint" type="Label" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(600, 55)
+autowrap_mode = 2
+theme_type_variation = &"MutedLabel"
+
+[node name="SettingsEntries" type="Tree" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(600, 275)
+size_flags_vertical = 3
+hide_root = true
+
+[node name="Pages" type="HBoxContainer" parent="Content/Availability"]
+layout_mode = 2
+
+[node name="SettingsPrevious" type="Button" parent="Content/Availability/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Previous"
+
+[node name="SettingsPage" type="Label" parent="Content/Availability/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
+
+[node name="SettingsNext" type="Button" parent="Content/Availability/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Next"
+
+[node name="InfrastructureDetails" type="VBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+
+[node name="InfrastructureCount" type="SpinBox" parent="Content/Availability/InfrastructureDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 1000000.0
+step = 1.0
+suffix = "enabled machines"
+tooltip_text = "Select an enabled infrastructure entry to change its count. Uncheck the entry to remove it."
+
+[node name="InfrastructureHatch" type="OptionButton" parent="Content/Availability/InfrastructureDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "All tower input hatches must have the same cable tier. Receivers must match that tier exactly."
+
+[node name="InfrastructureTransfer" type="SpinBox" parent="Content/Availability/InfrastructureDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000000000.0
+step = 0.001
+suffix = "EU/t planned transfer per tower"
+tooltip_text = "Sizes the input hatches for this transfer plus the tower drain. Transmitted power is already charged to consumers. This does not establish receiver coverage."
+
+[node name="Supply" type="VBoxContainer" parent="Content/Availability"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SupplyUnlimited" type="CheckButton" parent="Content/Availability/Supply"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "No external supply rate limit"
+
+[node name="SupplyFields" type="HBoxContainer" parent="Content/Availability/Supply"]
+layout_mode = 2
+
+[node name="SupplyLimit" type="SpinBox" parent="Content/Availability/Supply/SupplyFields"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1000000000000.0
+step = 0.001
+suffix = "/s maximum"
+
+[node name="SupplyCost" type="SpinBox" parent="Content/Availability/Supply/SupplyFields"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1000000.0
+step = 0.01
+value = 1.0
+suffix = "cost / unit"
+
+[node name="Priorities" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(340, 0)
+
+[node name="PowerHeading" type="Label" parent="Content/Priorities"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Power and priorities"
+
+[node name="ReserveLabel" type="Label" parent="Content/Priorities"]
+layout_mode = 2
+text = "Installed power reserve (%)"
+
+[node name="Reserve" type="SpinBox" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000.0
+step = 0.1
+
+[node name="OverheadLabel" type="Label" parent="Content/Priorities"]
+layout_mode = 2
+text = "Other infrastructure overhead (EU/t)"
+
+[node name="Overhead" type="SpinBox" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000000.0
+step = 0.01
+
+[node name="ResourceWeightLabel" type="Label" parent="Content/Priorities"]
+layout_mode = 2
+text = "External resource priority"
+
+[node name="ResourceWeight" type="SpinBox" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000000.0
+step = 0.001
+
+[node name="MachineWeightLabel" type="Label" parent="Content/Priorities"]
+layout_mode = 2
+text = "Machine and upgrade priority"
+
+[node name="MachineWeight" type="SpinBox" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000000.0
+step = 0.001
+
+[node name="EnergyWeightLabel" type="Label" parent="Content/Priorities"]
+layout_mode = 2
+text = "Energy priority"
+
+[node name="EnergyWeight" type="SpinBox" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1000000.0
+step = 1e-06
+
+[node name="RoutePreferences" type="CheckButton" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Prefer equal-material routes"
+tooltip_text = "Use the dataset's route preferences when material quantities match. Explicit recipe choices and constrained machines remain available."
+
+[node name="PriorityHelp" type="Label" parent="Content/Priorities"]
+layout_mode = 2
+custom_minimum_size = Vector2(340, 0)
+autowrap_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Larger weights give a cost more influence. The current objective combines external resource use, machine and upgrade build weights, and operating energy. Reserve is installed generation capacity; it does not burn standby fuel."
+
+[node name="SettingsError" type="Label" parent="Content/Priorities"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(340, 0)
+autowrap_mode = 2

@@ -1,6 +1,6 @@
 # STI2 Factory Planner
 
-This repository starts as a stock Godot 4.7.2 GDScript project using the GL Compatibility renderer. There is no main scene, application architecture, or test framework yet. Check the current files before relying on that starting state; update these facts as the application grows.
+This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The workspace loads the compressed StaTech Industry 2.0.1 planning catalog from `data/statech-2.0.1.json.gz`. Its completeness flag remains false while process adapters and delivery requirements are unfinished. The fictional example remains available for regression checks and custom-dataset examples. World import reconstructs supported capacity goals with editable assignments. Do not present development exports as the finished product.
 
 ## Automatic project plans
 
@@ -25,6 +25,10 @@ Use [project-plans](.agents/skills/project-plans/SKILL.md) for every request in 
 | GDScript, resources, scenes, or class naming | [GDScript conventions](docs/gdscript_conventions.md) |
 | Engine commands, MCP, or verification | [Godot tooling](docs/godot_tooling.md) |
 | Pack inputs, runtime extraction, or machine rules | [Extraction evidence](docs/extraction.md) |
+| Calculation kernel, objectives, or numerical checks | [Planning kernel](docs/planning-kernel.md) |
+| Portable datasets, plans, or validation | [Dataset format](docs/dataset-format.md) |
+| World ZIP, NBT, or AE2 import | [World import evidence](docs/world-import.md) |
+| Workspace, exports, or application checks | [Application development](docs/application.md) |
 | Visible UI, scenes, animation, materials, or effects | [visual-verify](.agents/skills/visual-verify/SKILL.md), alongside the relevant UI or shader skill |
 
 Keep reusable calculations and planning rules independent of scene nodes when practical, so they can be tested without rendering. Choose concrete folders and state boundaries when implementing the relevant feature; record durable decisions in project docs.
@@ -34,3 +38,27 @@ Keep reusable calculations and planning rules independent of scene nodes when pr
 Use the configured Godot MCP when its inspection, runtime, or engine-documentation tools fit the task. Pass `F:/sti2-factory-planner` as the absolute project path. Use the stock engine documented in the tooling guide; `NG_Godot.exe` belongs to `F:/3-souls` only.
 
 After adding or renaming a `class_name`, refresh the editor cache with a headless import. Run checks that cover the changed behavior and broaden them when failures or wider scope justify it. Do not claim a test framework exists before it is installed. Render and inspect every visual edit, fix visible defects, and distinguish static checks, isolated rendering, and confirmation in the actual application in the final report.
+
+Core checks are `npm test`, `python -m unittest discover -s tools/extraction -p 'test_*.py'`, and the documented engine with `--headless --path . --script tools/test_data.gd` or `tools/test_ui.gd`. Exported browser checks and private capture commands are in the linked guides. Keep dataset objects immutable when saving undo snapshots; loading a dataset must replace the dictionary rather than mutate snapshots that share it.
+
+Run `node tools/validate_dataset.mjs data/statech-2.0.1.json.gz` and the engine with `--headless --path . --script tools/test_bundled_data.gd` when changing the bundled catalog. Generate it with the documented extraction and distribution tools; do not hand-edit compressed data. Preserve its manifest, input hashes, attribution, and explicit unsupported entries.
+
+Persist logical graph positions and group bounds, including when a recipe changes machine configuration. Do not replace saved group dimensions with rendered sizes during autosave; zoom can introduce rounding drift. Group, loadout-position, and layout regression commands are in the application guide. Keep shape reconstruction in `kernel/structure.js` separate from build-bill sizing in `kernel/structure_bill.js`.
+
+Keep construction quantities separate from sustained flow rates. Construction costs can use continuous material equivalents or whole recipe batches and tools. Both assume reusable construction workstations; expected yields, initial catalysts, and bootstrap remain separate. Preserve those visible limits. Check it with `node tools/verify_construction_catalog.mjs`, `tools/test_construction_ui.gd`, and the exported `node tools/verify_construction_browser.mjs` interaction check.
+
+Keep recipe display defaults separate from primary-route ownership. A feasible heuristic result must retain its unproven status and cost bound. Never infer feasibility from solver buffers alone. Check endgame calculations with `node tools/verify_endgame.mjs data/statech-2.0.1.json.gz <result.json>`, render that result with `tools/test_endgame_ui.gd -- <result.json>`, and use `--endgame` with the browser Worker parity check. Large construction optimization and graph responsiveness remain open work; do not treat these checks as full delivery.
+
+Large construction requests compare complete fixed construction orders around a feasible production plan. Accept a route or loadout change only after its actual total cost and both balances pass; marginal prices alone are not evidence of an improvement. Retain verified loadout improvements before spending the remaining budget on alternative routes. This restricted search has no global cost bound. Use `node tools/verify_material_endgame.mjs data/statech-2.0.1.json.gz <result.json>` and add `--material` to the browser Worker check. Keep workstation and bootstrap assumptions visible. Progress files are temporary job files and must be cleaned up after completion, cancellation, or failure.
+
+Keep every positive flow in decoded plans. An absolute solver tolerance must not erase a tiny goal, ingredient, or construction quantity. Numerical recovery must pass the original-unit balances and whole-machine checks; report an explicit failure if it cannot. Row scaling changes dual units, so convert marginal costs back before using them. `kernel/tiny_rates.test.js` covers these boundaries and exact finite-goal time.
+
+Use `PlannerJson.parse` at Godot data boundaries and full-precision `JSON.stringify` for calculation requests and saved plans. Native decimal conversion can change values even in scientific notation. Preserve exact midpoint rounding, ties, and signed zero; compare bits against the Python references from `tools/make_decimal_cases.py` with `tools/test_json.gd`. `tools/verify_dataset_roundtrip.mjs` checks the complete dataset after Godot serialization. Read stepped goal controls through `PlannerDisplay.input_value` to preserve their displayed decimal value.
+
+Autosave keeps immutable datasets separately by content hash; portable exports still embed them. Keep the prior plan recoverable if a dataset write fails. Verify storage changes with `tools/test_ui.gd`, `node tools/verify_storage_browser.mjs`, and the exported application checks.
+
+Registered machines are not necessarily obtainable in the released pack. Preserve the recorded automatic exclusions when generating defaults and progression presets, while allowing explicit owned-machine overrides. Check them with `node tools/verify_availability_catalog.mjs` and `tools/test_availability_ui.gd`; the archive comparison is documented in the extraction guide.
+
+Equal-material route preferences must preserve exact normalized input and output quantities, explicit player choices, and feasibility. Keep metadata references valid when making a dataset subset with `withRecipes`. Check the released crafting/assembly pairs with `node tools/verify_recipe_preferences.mjs`; do not infer equal upstream costs from different immediate ingredients.
+
+Read world archives through bounded ranges on desktop and web. Do not turn a selected browser File into a whole-archive ArrayBuffer. Preserve checksum and size checks and consume region chunks separately. Reader parity, large-archive fixtures, and exported import recovery commands are in the world import guide. Optional desktop progress updates must tolerate Windows file-sharing conflicts without failing the calculation.

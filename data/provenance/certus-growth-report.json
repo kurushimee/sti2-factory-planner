@@ -1,0 +1,280 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "ae2_version": "19.2.17",
+  "certus_growth": {
+    "accelerator_interval_ticks": 10,
+    "growth_chance_denominator": 5,
+    "decay_chance_denominator": 12,
+    "accelerator_local_ae_per_call": 80.0,
+    "accelerator_network_idle_ae_per_tick": 8.0,
+    "storage_insertion": [
+      {
+        "items": 1,
+        "energy_ae": 1.0
+      },
+      {
+        "items": 4,
+        "energy_ae": 4.0
+      }
+    ],
+    "forced_success_and_decay_transitions": [
+      {
+        "parent": "ae2:flawless_budding_quartz",
+        "stage": 0,
+        "grown": "ae2:small_quartz_bud",
+        "decayed_parent": "ae2:flawless_budding_quartz"
+      },
+      {
+        "parent": "ae2:flawless_budding_quartz",
+        "stage": 1,
+        "grown": "ae2:medium_quartz_bud",
+        "decayed_parent": "ae2:flawless_budding_quartz"
+      },
+      {
+        "parent": "ae2:flawless_budding_quartz",
+        "stage": 2,
+        "grown": "ae2:large_quartz_bud",
+        "decayed_parent": "ae2:flawless_budding_quartz"
+      },
+      {
+        "parent": "ae2:flawless_budding_quartz",
+        "stage": 3,
+        "grown": "ae2:quartz_cluster",
+        "decayed_parent": "ae2:flawless_budding_quartz"
+      },
+      {
+        "parent": "ae2:flawed_budding_quartz",
+        "stage": 0,
+        "grown": "ae2:small_quartz_bud",
+        "decayed_parent": "ae2:chipped_budding_quartz"
+      },
+      {
+        "parent": "ae2:flawed_budding_quartz",
+        "stage": 1,
+        "grown": "ae2:medium_quartz_bud",
+        "decayed_parent": "ae2:chipped_budding_quartz"
+      },
+      {
+        "parent": "ae2:flawed_budding_quartz",
+        "stage": 2,
+        "grown": "ae2:large_quartz_bud",
+        "decayed_parent": "ae2:chipped_budding_quartz"
+      },
+      {
+        "parent": "ae2:flawed_budding_quartz",
+        "stage": 3,
+        "grown": "ae2:quartz_cluster",
+        "decayed_parent": "ae2:chipped_budding_quartz"
+      },
+      {
+        "parent": "ae2:chipped_budding_quartz",
+        "stage": 0,
+        "grown": "ae2:small_quartz_bud",
+        "decayed_parent": "ae2:damaged_budding_quartz"
+      },
+      {
+        "parent": "ae2:chipped_budding_quartz",
+        "stage": 1,
+        "grown": "ae2:medium_quartz_bud",
+        "decayed_parent": "ae2:damaged_budding_quartz"
+      },
+      {
+        "parent": "ae2:chipped_budding_quartz",
+        "stage": 2,
+        "grown": "ae2:large_quartz_bud",
+        "decayed_parent": "ae2:damaged_budding_quartz"
+      },
+      {
+        "parent": "ae2:chipped_budding_quartz",
+        "stage": 3,
+        "grown": "ae2:quartz_cluster",
+        "decayed_parent": "ae2:damaged_budding_quartz"
+      },
+      {
+        "parent": "ae2:damaged_budding_quartz",
+        "stage": 0,
+        "grown": "ae2:small_quartz_bud",
+        "decayed_parent": "ae2:quartz_block"
+      },
+      {
+        "parent": "ae2:damaged_budding_quartz",
+        "stage": 1,
+        "grown": "ae2:medium_quartz_bud",
+        "decayed_parent": "ae2:quartz_block"
+      },
+      {
+        "parent": "ae2:damaged_budding_quartz",
+        "stage": 2,
+        "grown": "ae2:large_quartz_bud",
+        "decayed_parent": "ae2:quartz_block"
+      },
+      {
+        "parent": "ae2:damaged_budding_quartz",
+        "stage": 3,
+        "grown": "ae2:quartz_cluster",
+        "decayed_parent": "ae2:quartz_block"
+      }
+    ],
+    "filtered_plane_harvesting": [
+      {
+        "silk_touch": false,
+        "stage": 1,
+        "outcome": "CANT_STORE",
+        "energy_ae": 0.0,
+        "block_removed": false,
+        "accepted": []
+      },
+      {
+        "silk_touch": false,
+        "stage": 2,
+        "outcome": "CANT_STORE",
+        "energy_ae": 0.0,
+        "block_removed": false,
+        "accepted": []
+      },
+      {
+        "silk_touch": false,
+        "stage": 3,
+        "outcome": "CANT_STORE",
+        "energy_ae": 0.0,
+        "block_removed": false,
+        "accepted": []
+      },
+      {
+        "silk_touch": false,
+        "stage": 4,
+        "outcome": "PICKED_UP",
+        "energy_ae": 6.5,
+        "block_removed": true,
+        "accepted": [
+          {
+            "item": "ae2:certus_quartz_crystal",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "silk_touch": true,
+        "stage": 1,
+        "outcome": "CANT_STORE",
+        "energy_ae": 0.0,
+        "block_removed": false,
+        "accepted": []
+      },
+      {
+        "silk_touch": true,
+        "stage": 2,
+        "outcome": "CANT_STORE",
+        "energy_ae": 0.0,
+        "block_removed": false,
+        "accepted": []
+      },
+      {
+        "silk_touch": true,
+        "stage": 3,
+        "outcome": "CANT_STORE",
+        "energy_ae": 0.0,
+        "block_removed": false,
+        "accepted": []
+      },
+      {
+        "silk_touch": true,
+        "stage": 4,
+        "outcome": "PICKED_UP",
+        "energy_ae": 28.0,
+        "block_removed": true,
+        "accepted": [
+          {
+            "item": "ae2:quartz_cluster",
+            "amount": 1
+          }
+        ]
+      }
+    ],
+    "scope": "Loaded growth branches with controlled random choices and actual plane pickup strategies. This does not measure a complete farm's stochastic throughput or network power."
+  },
+  "certus_farms": [
+    {
+      "ticks": 600000,
+      "output_items": 10024,
+      "silk_touch": false,
+      "energy_ae": 9354438.0,
+      "network_idle_ae_per_tick": 15.546875,
+      "accelerator_remaining_local_ae": 0.0,
+      "cables": 24,
+      "planes": 5,
+      "nodes": 33,
+      "accelerator_powered": true,
+      "growth_tag": true,
+      "final_neighbors": [
+        {
+          "side": "down",
+          "block": "minecraft:air"
+        },
+        {
+          "side": "up",
+          "block": "minecraft:air"
+        },
+        {
+          "side": "north",
+          "block": "minecraft:air"
+        },
+        {
+          "side": "south",
+          "block": "ae2:growth_accelerator"
+        },
+        {
+          "side": "west",
+          "block": "ae2:medium_quartz_bud"
+        },
+        {
+          "side": "east",
+          "block": "ae2:medium_quartz_bud"
+        }
+      ],
+      "active_planes": 5,
+      "scope": "Placed cable network, five filtered planes, chest storage bus, one accelerator, energy cell, and FE-fed energy acceptor. Real grid services run for 600000 ticks; natural random ticks and player distance are excluded. Output chest is emptied each tick."
+    },
+    {
+      "ticks": 600000,
+      "output_items": 2530,
+      "silk_touch": true,
+      "energy_ae": 9401495.0,
+      "network_idle_ae_per_tick": 15.546875,
+      "accelerator_remaining_local_ae": 0.0,
+      "cables": 24,
+      "planes": 5,
+      "nodes": 33,
+      "accelerator_powered": true,
+      "growth_tag": true,
+      "final_neighbors": [
+        {
+          "side": "down",
+          "block": "ae2:medium_quartz_bud"
+        },
+        {
+          "side": "up",
+          "block": "ae2:small_quartz_bud"
+        },
+        {
+          "side": "north",
+          "block": "ae2:large_quartz_bud"
+        },
+        {
+          "side": "south",
+          "block": "ae2:growth_accelerator"
+        },
+        {
+          "side": "west",
+          "block": "ae2:large_quartz_bud"
+        },
+        {
+          "side": "east",
+          "block": "ae2:small_quartz_bud"
+        }
+      ],
+      "active_planes": 5,
+      "scope": "Placed cable network, five filtered planes, chest storage bus, one accelerator, energy cell, and FE-fed energy acceptor. Real grid services run for 600000 ticks; natural random ticks and player distance are excluded. Output chest is emptied each tick."
+    }
+  ]
+}

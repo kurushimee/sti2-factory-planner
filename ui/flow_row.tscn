@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[node name="Flow" type="Label"]
+theme_type_variation = &"MutedLabel"
+mouse_filter = 1
+autowrap_mode = 3

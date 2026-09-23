@@ -53,6 +53,18 @@
       "name": "mi-tweaks",
       "url": "https://github.com/Swedz/MI-Tweaks.git",
       "commit": "058464541cda78ac5513124644f2b9fc4ef71224"
+    },
+    {
+      "name": "ae2",
+      "url": "https://github.com/AppliedEnergistics/Applied-Energistics-2.git",
+      "commit": "79ee2c704ad62941a426c26b1cb1f76ef5b2ee5a",
+      "tag": "neoforge/v19.2.17"
+    },
+    {
+      "name": "merequester",
+      "url": "https://github.com/AlmostReliable/merequester.git",
+      "commit": "57554ba7e126b38e4a38f19c37cf9916dfef48bc",
+      "tag": "v1.21.1-neoforge-1.5.0"
     }
   ]
 }

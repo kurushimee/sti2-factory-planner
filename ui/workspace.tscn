@@ -1,0 +1,368 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://ui/workspace.gd" id="1"]
+[ext_resource type="Theme" path="res://ui/theme.tres" id="2"]
+[ext_resource type="PackedScene" path="res://ui/recipe_node.tscn" id="3"]
+[ext_resource type="Script" path="res://ui/computation.gd" id="4"]
+[ext_resource type="PackedScene" path="res://ui/group.tscn" id="5"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="6"]
+[ext_resource type="PackedScene" path="res://ui/world_review.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://ui/feedback.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://ui/goal_editor.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://ui/factory_settings.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://ui/about.tscn" id="11"]
+
+[node name="Workspace" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+script = ExtResource("1")
+recipe_scene = ExtResource("3")
+group_scene = ExtResource("5")
+
+[node name="Computation" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.055, 0.085, 0.1, 1)
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+
+[node name="Mark" type="TextureRect" parent="Margin/Layout/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(42, 42)
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Identity" type="VBoxContainer" parent="Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Title" type="Label" parent="Margin/Layout/Header/Identity"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Factory planner"
+
+[node name="DatasetName" type="Label" parent="Margin/Layout/Header/Identity"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Dataset"
+text_overrun_behavior = 3
+
+[node name="ReviewWorld" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Imported factory"
+disabled = true
+
+[node name="Import" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Import"
+
+[node name="Save" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Export plan"
+
+[node name="Undo" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Undo"
+
+[node name="Redo" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Redo"
+
+[node name="Body" type="HSplitContainer" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 260
+
+[node name="Library" type="PanelContainer" parent="Margin/Layout/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(245, 0)
+
+[node name="Column" type="VBoxContainer" parent="Margin/Layout/Body/Library"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Margin/Layout/Body/Library/Column"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Production goals"
+
+[node name="Search" type="LineEdit" parent="Margin/Layout/Body/Library/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Search recipes…"
+
+[node name="Recipes" type="ItemList" parent="Margin/Layout/Body/Library/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(225, 180)
+
+[node name="Pages" type="HBoxContainer" parent="Margin/Layout/Body/Library/Column"]
+layout_mode = 2
+
+[node name="PreviousRecipes" type="Button" parent="Margin/Layout/Body/Library/Column/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "‹"
+tooltip_text = "Previous recipe page"
+
+[node name="RecipePage" type="Label" parent="Margin/Layout/Body/Library/Column/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
+theme_type_variation = &"MutedLabel"
+
+[node name="NextRecipes" type="Button" parent="Margin/Layout/Body/Library/Column/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "›"
+tooltip_text = "Next recipe page"
+
+[node name="RateLabel" type="Label" parent="Margin/Layout/Body/Library/Column"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Requested output per second"
+
+[node name="Rate" type="SpinBox" parent="Margin/Layout/Body/Library/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.001
+max_value = 1000000000000.0
+step = 0.001
+value = 1.0
+allow_greater = false
+
+[node name="AddGoal" type="Button" parent="Margin/Layout/Body/Library/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add goal"
+
+[node name="Replication" type="CheckButton" parent="Margin/Layout/Body/Library/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Allow replication"
+
+[node name="ReducedMotion" type="CheckButton" parent="Margin/Layout/Body/Library/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reduced motion"
+
+[node name="WorkspaceSplit" type="HSplitContainer" parent="Margin/Layout/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+split_offset = -310
+
+[node name="GraphColumn" type="VBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Tools" type="HBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn"]
+layout_mode = 2
+
+[node name="Arrange" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Arrange"
+tooltip_text = "Rearrange all recipes into production groups. Undo restores your layout."
+
+[node name="AddGroup" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "New group"
+
+[node name="Settings" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Settings"
+
+[node name="Summary" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Inspect the optimization result, factory power, fuel-chain consumption, and reserve capacity."
+alignment = 2
+text = "No goals yet"
+
+[node name="Graph" type="GraphEdit" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(400, 300)
+show_arrange_button = false
+show_grid_buttons = false
+show_zoom_label = true
+minimap_enabled = false
+connection_lines_thickness = 2.0
+snapping_distance = 20
+panning_scheme = 1
+
+[node name="Navigation" type="HBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn"]
+layout_mode = 2
+
+[node name="ConnectionMode" type="OptionButton" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Choose which connections to draw. All production and power remain in the plan."
+item_count = 3
+selected = 0
+popup/item_0/text = "All flows"
+popup/item_0/id = 0
+popup/item_1/text = "Materials"
+popup/item_1/id = 1
+popup/item_2/text = "Selected recipe"
+popup/item_2/id = 2
+
+[node name="FocusRecipe" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Focus recipe"
+tooltip_text = "Center the inspected recipe at a readable zoom."
+
+[node name="Hint" type="Label" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
+layout_mode = 2
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+theme_type_variation = &"MutedLabel"
+text = "Middle-drag to pan · Ctrl + wheel to zoom"
+
+[node name="InspectorPanel" type="PanelContainer" parent="Margin/Layout/Body/WorkspaceSplit"]
+layout_mode = 2
+custom_minimum_size = Vector2(290, 0)
+
+[node name="Column" type="VBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "Recipe inspector"
+
+[node name="Inspector" type="RichTextLabel" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+focus_mode = 2
+text = "Select a node to inspect its inputs, capacity, and power."
+
+[node name="EditGoal" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Edit production goal"
+disabled = true
+
+[node name="RemoveGoal" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Remove selected goal"
+disabled = true
+
+[node name="StatusRow" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+
+[node name="Status" type="Label" parent="Margin/Layout/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Ready"
+text_overrun_behavior = 3
+
+[node name="About" type="Button" parent="Margin/Layout/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "About · Unofficial Minecraft companion"
+tooltip_text = "Not approved by or associated with Mojang or Microsoft. Read attribution and licenses."
+
+[node name="Sounds" type="CheckButton" parent="Margin/Layout/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Sound"
+tooltip_text = "Enable quiet interface sounds."
+
+[node name="Cancel" type="Button" parent="Margin/Layout/StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel calculation"
+disabled = true
+
+[node name="Files" type="FileDialog" parent="."]
+unique_name_in_owner = true
+size = Vector2i(850, 550)
+access = 2
+file_mode = 0
+filters = PackedStringArray("*.json ; Dataset or plan", "*.zip ; Minecraft world")
+
+[node name="Notice" type="AcceptDialog" parent="."]
+unique_name_in_owner = true
+title = "Import result"
+size = Vector2i(700, 350)
+
+[node name="WorldReview" parent="." instance=ExtResource("7")]
+unique_name_in_owner = true
+
+[node name="Feedback" parent="." instance=ExtResource("8")]
+unique_name_in_owner = true
+
+[node name="GoalEditor" parent="." instance=ExtResource("9")]
+unique_name_in_owner = true
+
+[node name="FactorySettings" parent="." instance=ExtResource("10")]
+unique_name_in_owner = true
+
+[node name="AboutDialog" parent="." instance=ExtResource("11")]
+unique_name_in_owner = true
+
+[node name="ViewSaveDelay" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.5
+one_shot = true
+
+[node name="GroupNameDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Rename production group"
+size = Vector2i(460, 150)
+ok_button_text = "Rename"
+
+[node name="GroupName" type="LineEdit" parent="GroupNameDialog"]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 18.0
+offset_right = 444.0
+offset_bottom = 62.0
+placeholder_text = "Group name"
+max_length = 120

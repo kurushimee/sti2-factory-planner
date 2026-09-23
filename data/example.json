@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "identity": "example:1",
+  "name": "Example factory",
+  "description": "A small fictional dataset for learning the format. These are not StaTech recipes.",
+  "resources": [
+    {"id": "ore", "name": "Iron ore", "unit": "item"},
+    {"id": "coal", "name": "Coal", "unit": "item"},
+    {"id": "ingot", "name": "Iron ingot", "unit": "item"},
+    {"id": "plate", "name": "Iron plate", "unit": "item"},
+    {"id": "gear", "name": "Iron gear", "unit": "item"},
+    {"id": "motor", "name": "Motor", "unit": "item"},
+    {"id": "energy:eu", "name": "Electricity", "unit": "EU"}
+  ],
+  "progression": [
+    {"id": "example:extraction", "name": "Extraction and power", "available_machines": ["Ore drill", "Coal drill", "Coal generator"], "available_upgrades": []},
+    {"id": "example:all", "name": "All example machines", "available_machines": ["Ore drill", "Coal drill", "Electric furnace", "Plate press", "Gear cutter", "Assembler", "Coal generator"], "available_upgrades": []}
+  ],
+  "recipes": [
+    {"id": "mine_ore", "name": "Mine iron ore", "group": "Extraction", "primary": "ore", "inputs": [], "outputs": [{"resource": "ore", "amount": 1}], "configurations": [{"id": "drill", "machine": "Ore drill", "operations_per_second": 2, "eu_per_operation": 20}]},
+    {"id": "mine_coal", "name": "Mine coal", "group": "Extraction", "primary": "coal", "inputs": [], "outputs": [{"resource": "coal", "amount": 1}], "configurations": [{"id": "coal_drill", "machine": "Coal drill", "operations_per_second": 2, "eu_per_operation": 10}]},
+    {"id": "smelt", "name": "Smelt iron", "group": "Metals", "primary": "ingot", "inputs": [{"resource": "ore", "amount": 1}], "outputs": [{"resource": "ingot", "amount": 1}], "configurations": [{"id": "furnace", "machine": "Electric furnace", "operations_per_second": 2, "eu_per_operation": 40}]},
+    {"id": "press", "name": "Press iron plates", "group": "Metals", "primary": "plate", "inputs": [{"resource": "ingot", "amount": 1}], "outputs": [{"resource": "plate", "amount": 1}], "configurations": [{"id": "press", "machine": "Plate press", "operations_per_second": 3, "eu_per_operation": 20}]},
+    {"id": "gear", "name": "Cut iron gears", "group": "Components", "primary": "gear", "inputs": [{"resource": "plate", "amount": 2}], "outputs": [{"resource": "gear", "amount": 1}], "configurations": [{"id": "cutter", "machine": "Gear cutter", "operations_per_second": 2, "eu_per_operation": 30}]},
+    {"id": "assemble", "name": "Assemble motors", "group": "Components", "primary": "motor", "inputs": [{"resource": "gear", "amount": 2}, {"resource": "plate", "amount": 1}], "outputs": [{"resource": "motor", "amount": 1}], "configurations": [{"id": "assembler", "machine": "Assembler", "operations_per_second": 1, "eu_per_operation": 60}]},
+    {"id": "generate", "name": "Generate electricity", "group": "Power", "primary": "energy:eu", "inputs": [{"resource": "coal", "amount": 1}], "outputs": [{"resource": "energy:eu", "amount": 1000}], "configurations": [{"id": "generator", "machine": "Coal generator", "operations_per_second": 2}]}
+  ]
+}

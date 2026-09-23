@@ -1,0 +1,1 @@
+{"name":"sti2-planning-kernel","private":true,"type":"module","scripts":{"test":"node --test kernel/*.test.js"},"dependencies":{"fflate":"0.8.3","highs":"1.15.3"},"devDependencies":{"@playwright/test":"1.63.0","esbuild":"0.28.2"}}

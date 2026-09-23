@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/recipe_node.gd" id="1"]
+[ext_resource type="PackedScene" path="res://ui/flow_row.tscn" id="2"]
+
+[node name="Recipe" type="GraphNode"]
+custom_minimum_size = Vector2(275, 0)
+script = ExtResource("1")
+flow_scene = ExtResource("2")
+
+[node name="Summary" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Throughput" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+
+[node name="Loadout" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+
+[node name="Power" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"

@@ -1,0 +1,41 @@
+{
+  "machine": "extended_industrialization:processing_array",
+  "shape_match": true,
+  "placed_blocks_excluding_controller": {
+    "minecraft:glass": 6,
+    "modern_industrialization:bronze_item_input_hatch": 1,
+    "modern_industrialization:bronze_item_output_hatch": 1,
+    "modern_industrialization:clean_stainless_steel_machine_casing": 15,
+    "modern_industrialization:mv_energy_input_hatch": 1,
+    "modern_industrialization:stainless_steel_machine_casing_pipe": 2
+  },
+  "array_cycle": {
+    "steady_batches": [
+      {
+        "ticks": 11,
+        "energy": 3200,
+        "output_quantity": 48,
+        "batch": 8
+      },
+      {
+        "ticks": 10,
+        "energy": 3200,
+        "output_quantity": 48,
+        "batch": 8
+      },
+      {
+        "ticks": 10,
+        "energy": 3200,
+        "output_quantity": 48,
+        "batch": 8
+      },
+      {
+        "ticks": 10,
+        "energy": 3200,
+        "output_quantity": 48,
+        "batch": 8
+      }
+    ],
+    "scope": "Real formed controller ticks with continuous direct hatch supply and cleared outputs; no cable-network throughput claim."
+  }
+}

@@ -22,6 +22,31 @@ jobs:
         run: python tools/check.py
       - name: Check extraction evidence handling
         run: python -m unittest discover -s tools/extraction -p 'test_*.py'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install the calculation dependencies
+        run: |
+          npm ci --ignore-scripts
+          touch node_modules/.gdignore
+      - name: Check calculation regressions
+        run: npm test
+      - name: Check the bundled StaTech dataset
+        run: |
+          python tools/verify_distribution.py
+          node tools/validate_dataset.mjs data/statech-2.0.1.json.gz
+          node tools/verify_real_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_certus_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_availability_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_recipe_preferences.mjs data/statech-2.0.1.json.gz
+          node tools/verify_construction_catalog.mjs data/statech-2.0.1.json.gz
+      - name: Install the test browser
+        run: npx playwright install --with-deps chromium
+      - name: Check the embedded browser calculation
+        run: node tools/verify_kernel_browser.mjs - data/statech-2.0.1.json.gz --endgame
+      - name: Check browser dataset persistence and recovery
+        run: node tools/verify_storage_browser.mjs
       - name: Check whitespace
         run: git diff --check HEAD^ HEAD
       - name: Install Godot 4.7.2
@@ -31,5 +56,91 @@ jobs:
           chmod +x /tmp/godot/Godot_v4.7.2-stable_linux.x86_64
       - name: Import the project
         run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --editor --import --path . > /tmp/first-import.log 2>&1
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --editor --import --path . 2>&1 | tee /tmp/import.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/import.log
+      - name: Check dataset and plan validation
+        run: |
+          python tools/make_decimal_cases.py data/statech-2.0.1.json.gz /tmp/decimal-cases.json
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_json.gd -- /tmp/decimal-cases.json 2>&1 | tee /tmp/json-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/json-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_data.gd 2>&1 | tee /tmp/data-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/data-check.log
+      - name: Check the default StaTech catalog in Godot
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_bundled_data.gd -- /tmp/godot-dataset.json 2>&1 | tee /tmp/bundled-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/bundled-check.log
+          node tools/verify_dataset_roundtrip.mjs data/statech-2.0.1.json.gz /tmp/godot-dataset.json
+          node tools/verify_recipe_preferences.mjs data/statech-2.0.1.json.gz /tmp/preferences.json
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_recipe_preferences.gd -- /tmp/preferences.json 2>&1 | tee /tmp/preference-ui-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/preference-ui-check.log
+      - name: Check keyboard focus and interface audio
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_ui.gd 2>&1 | tee /tmp/ui-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/ui-check.log
+      - name: Check goal editing and undo
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_goal_editor.gd 2>&1 | tee /tmp/goal-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/goal-check.log
+      - name: Check graph positions across machine changes
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_position_migration.gd 2>&1 | tee /tmp/position-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/position-check.log
+      - name: Check calculation file cleanup
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_computation.gd 2>&1 | tee /tmp/computation-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/computation-check.log
+      - name: Check factory settings and undo
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_availability_ui.gd 2>&1 | tee /tmp/availability-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/availability-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_factory_settings.gd 2>&1 | tee /tmp/settings-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/settings-check.log
+      - name: Check large world correction lists
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_world_review.gd 2>&1 | tee /tmp/world-review-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/world-review-check.log
+      - name: Check construction settings and persistence
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_construction_ui.gd 2>&1 | tee /tmp/construction-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/construction-check.log
+      - name: Check power details and keyboard activation
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_power_ui.gd 2>&1 | tee /tmp/power-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/power-check.log
+      - name: Check the complete endgame graph and feasible-result reporting
+        run: |
+          node tools/verify_endgame.mjs data/statech-2.0.1.json.gz /tmp/endgame.json
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_endgame_ui.gd -- /tmp/endgame.json 2>&1 | tee /tmp/endgame-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/endgame-check.log
+      - name: Check creative-barrel numerical recovery
+        run: node tools/verify_endgame.mjs data/statech-2.0.1.json.gz /tmp/creative-barrel.json creative_barrel
+      - name: Check complete endgame construction costs
+        env:
+          STI2_MATERIAL_BUDGET_MS: '360000'
+        run: |
+          node tools/verify_material_endgame.mjs data/statech-2.0.1.json.gz /tmp/material-endgame.json
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_endgame_ui.gd -- /tmp/material-endgame.json 2>&1 | tee /tmp/material-ui-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/material-ui-check.log
+      - name: Check loaded infrastructure controls and power
+        run: |
+          node tools/verify_infrastructure_catalog.mjs
+          node tools/verify_array_catalog.mjs
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_certus_ui.gd 2>&1 | tee /tmp/certus-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/certus-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_infrastructure_ui.gd 2>&1 | tee /tmp/infrastructure-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/infrastructure-check.log
+      - name: Check infrastructure import and per-tower configuration
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_infrastructure_import.gd 2>&1 | tee /tmp/infrastructure-import-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/infrastructure-import-check.log
+      - name: Check saved array goal recalculation
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_array_import.gd 2>&1 | tee /tmp/array-import-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/array-import-check.log
+      - name: Check graph layout and group editing
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_graph_layout.gd 2>&1 | tee /tmp/layout-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/layout-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_groups.gd 2>&1 | tee /tmp/groups-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/groups-check.log

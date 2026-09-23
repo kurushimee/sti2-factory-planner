@@ -1,0 +1,122 @@
+{
+  "archive_sha256": "b09568c8e3f079f58b366cf5c9f93a38e8a95e32a2f4f455cb814e6b6ebddb0e",
+  "completed_archive_sha256": "5e0a7993e6eaf3950a2381c71f7199b1e99225145ae16ff27ed80a5a1339bb3b",
+  "controller": {
+    "id": "yet_another_industrialization:nuclear_rod_irradiator",
+    "origin": {
+      "dimension": "minecraft:overworld",
+      "x": 192,
+      "y": 100,
+      "z": 0,
+      "region": "example/region/r.0.0.mca"
+    },
+    "recipe_id": "irradiate|item:modern_industrialization:uranium_fuel_rod|modern_industrialization:beryllium_block",
+    "recipe_type": "planner:irradiation",
+    "upgrades": {},
+    "contained_machine": null,
+    "shape": 0,
+    "casing": {},
+    "assignment_evidence": "saved_nuclear_fuel_and_source_with_unique_hatches",
+    "structure": {
+      "status": "matching_saved_geometry",
+      "evidence": "Deduced from saved block states and captured shape rules.",
+      "hatches": [
+        {
+          "dimension": "minecraft:overworld",
+          "x": 191,
+          "y": 102,
+          "z": 1,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 193,
+          "y": 98,
+          "z": 0,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 193,
+          "y": 102,
+          "z": 3,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 192,
+          "y": 102,
+          "z": 3,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 191,
+          "y": 102,
+          "z": 3,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 193,
+          "y": 102,
+          "z": 2,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 192,
+          "y": 102,
+          "z": 2,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 191,
+          "y": 102,
+          "z": 2,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 193,
+          "y": 102,
+          "z": 1,
+          "region": "example/region/r.0.0.mca"
+        },
+        {
+          "dimension": "minecraft:overworld",
+          "x": 192,
+          "y": 102,
+          "z": 1,
+          "region": "example/region/r.0.0.mca"
+        }
+      ],
+      "problems": []
+    },
+    "saved_setup": {
+      "batch": 8
+    },
+    "configuration_id": "irradiate|item:modern_industrialization:uranium_fuel_rod|modern_industrialization:beryllium_block|hatches:8"
+  },
+  "goal": {
+    "kind": "capacity",
+    "recipe": "irradiate|item:modern_industrialization:uranium_fuel_rod|modern_industrialization:beryllium_block",
+    "resource": "item:modern_industrialization:uranium_fuel_rod_depleted",
+    "configuration": "irradiate|item:modern_industrialization:uranium_fuel_rod|modern_industrialization:beryllium_block|hatches:8",
+    "machines": 1,
+    "origins": [
+      {
+        "dimension": "minecraft:overworld",
+        "x": 192,
+        "y": 100,
+        "z": 0,
+        "region": "example/region/r.0.0.mca"
+      }
+    ],
+    "inferred": true
+  },
+  "configured_operations_per_second": 0.02,
+  "evidence": "The loaded pack saved a matched structure with eight installed uranium rods and a beryllium source. The completed-cycle save has only depleted outputs and remains unresolved.",
+  "limits": "Configured capacity assumes continuous inputs, power, and accepted outputs. Saved inventory is not an observed production rate."
+}
