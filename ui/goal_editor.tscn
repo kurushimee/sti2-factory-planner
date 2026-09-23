@@ -75,13 +75,38 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Sustained output per second"
 
-[node name="GoalRate" type="SpinBox" parent="Content/Columns/Target"]
+[node name="GoalRateRow" type="HBoxContainer" parent="Content/Columns/Target"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GoalRate" type="SpinBox" parent="Content/Columns/Target/GoalRateRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
 min_value = 0.000001
 max_value = 1000000000000.0
 step = 0.000001
 value = 1.0
+
+[node name="GoalRateOr" type="Label" parent="Content/Columns/Target/GoalRateRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "or exact"
+
+[node name="GoalRateRatio" type="LineEdit" parent="Content/Columns/Target/GoalRateRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Exact, e.g. 1/3600"
+tooltip_text = "Optional exact output per second. Enter a positive numerator/denominator. Editing the decimal rate clears this fraction."
+
+[node name="GoalRateMode" type="Button" parent="Content/Columns/Target/GoalRateRow"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Use decimal"
+tooltip_text = "Clear the exact fraction and enter a decimal output rate."
 
 [node name="GoalQuantityLabel" type="Label" parent="Content/Columns/Target"]
 unique_name_in_owner = true

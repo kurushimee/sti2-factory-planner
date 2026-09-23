@@ -46,8 +46,35 @@ static func flow_rate(resource: String, rate: float, exact: Dictionary = {}, eu_
 	return number(rate) + (" mB/s" if resource.begins_with("fluid:") else " /s")
 
 
+static func graph_flow_rate(resource: String, rate: float, exact: Dictionary = {}, eu_per_tick_exact: Dictionary = {}) -> String:
+	var value: Dictionary = eu_per_tick_exact if resource == "energy:eu" else exact
+	if !value.is_empty() && str(value.get("display", "")).length() > 26:
+		return "Exact EU/t · details" if resource == "energy:eu" else (
+			"Exact mB/s · details" if resource.begins_with("fluid:") else "Exact /s · details")
+	return flow_rate(resource, rate, exact, eu_per_tick_exact)
+
+
+static func graph_exact(value: String) -> String:
+	return "Exact · details" if value.length() > 26 else value
+
+
 static func power_number(power: Dictionary, field: String) -> String:
 	return str(power.get(field + "_exact", {}).get("display", number(power.get(field, 0))))
+
+
+static func power_amount(power: Dictionary, field: String) -> String:
+	var exact: Dictionary = power.get(field + "_exact", {})
+	if exact.is_empty() || str(exact.get("display", "")).length() <= 32:
+		return "[b]%s EU/t[/b]" % power_number(power, field)
+	return "[b]Exact EU/t[/b]\nNumerator · join digit lines\n%s\nDenominator · join digit lines\n%s" % [
+		_digit_lines(str(exact.numerator)), _digit_lines(str(exact.denominator))]
+
+
+static func _digit_lines(digits: String) -> String:
+	var lines: Array[String] = []
+	for offset: int in range(0, digits.length(), 22):
+		lines.append(digits.substr(offset, 22))
+	return "\n".join(lines)
 
 
 static func loadout(configuration: Dictionary, resources: Dictionary[String, String]) -> String:
@@ -113,11 +140,11 @@ static func power_report(power: Dictionary, resources: Dictionary = {}, construc
 		return "Add a goal to calculate factory power."
 	var text := "[font_size=20]Factory power[/font_size]\n\n[b]Running generation[/b]\n"
 	for entry: Array in [["Gross generation", "gross_generation_eu_per_tick"], ["Generation and fuel-chain use", "generation_related_consumption_eu_per_tick"], ["Net generation", "net_generation_eu_per_tick"], ["External supply", "external_eu_per_tick"]]:
-		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], power_number(power, entry[1])]
+		text += "%s\n%s\n" % [entry[0], power_amount(power, entry[1])]
 	text += "\n[b]Factory demand[/b]\n"
 	for entry: Array in [["Other production", "other_production_consumption_eu_per_tick"], ["Infrastructure and power goals", "infrastructure_and_goal_eu_per_tick"], ["Remaining running margin", "operating_margin_eu_per_tick"]]:
-		text += "%s\n[b]%s EU/t[/b]\n" % [entry[0], power_number(power, entry[1])]
-	text += "\n[b]Installed capacity[/b]\n%s EU/t generation\n%s EU/t available margin\n%s%% requested reserve\n" % [power_number(power, "installed_generation_eu_per_tick"), power_number(power, "installed_margin_eu_per_tick"), number(float(power.reserve_fraction) * 100)]
+		text += "%s\n%s\n" % [entry[0], power_amount(power, entry[1])]
+	text += "\n[b]Installed capacity[/b]\nGeneration\n%s\nAvailable margin\n%s\n%s%% requested reserve\n" % [power_amount(power, "installed_generation_eu_per_tick"), power_amount(power, "installed_margin_eu_per_tick"), number(float(power.reserve_fraction) * 100)]
 	var infrastructure: Dictionary = power.get("infrastructure", {})
 	if !infrastructure.get("entries", []).is_empty():
 		text += "\n[b]Configured infrastructure[/b]\n%s EU/t manual overhead\n" % number(infrastructure.manual_eu_per_tick)

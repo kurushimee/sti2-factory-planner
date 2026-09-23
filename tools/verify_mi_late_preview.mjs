@@ -72,6 +72,14 @@ assert.equal(simpleAtLateStage.search.method, 'catalog_progression_fallback');
 assert.equal(simpleAtLateStage.exact_production.status, 'exact');
 assert.deepEqual(simpleAtLateStage.flow_roundoff, []);
 assert.ok(simpleAtLateStage.lines.some(line => line.recipe === plate.id));
+const hourly = solveFactory(highs, dataset, {...request,
+  goals: [{recipe: recipe.id, resource: recipe.primary, rate: 1 / 3600,
+    rate_ratio: {numerator: '1', denominator: '3600'}}]});
+assert.equal(hourly.status, 'feasible', JSON.stringify({status: hourly.status, reason: hourly.reason}));
+assert.equal(hourly.exact_production.status, 'exact', hourly.exact_production.reason);
+assert.deepEqual(hourly.flow_roundoff, []);
+assert.equal(hourly.exact_production.endpoints.find(endpoint => endpoint.key === `goal:${recipe.primary}`).rate.display,
+  '1/3600');
 console.log(JSON.stringify({elapsed_ms: Math.round(performance.now() - start), lines: result.lines.length,
   connections: result.connections.length, certus_lines: certus.length, without_site: withoutSite.status,
-  early_goal_at_late_stage: simpleAtLateStage.lines.length}));
+  early_goal_at_late_stage: simpleAtLateStage.lines.length, hourly_goal_lines: hourly.lines.length}));

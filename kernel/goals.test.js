@@ -21,6 +21,17 @@ test('finite quantities retain their rate and label the time assumption', () => 
   assert.match(result.targets[0].time_basis, /After startup/);
 });
 
+test('an exact fraction goal keeps one item per hour through finite production time', () => {
+  const ratio = {numerator: '1', denominator: '3600'};
+  const result = resolveGoals(dataset, {goals: [{kind: 'quantity', resource: 'plate', rate: 1 / 3600,
+    rate_ratio: ratio, quantity: '1000'}]});
+  assert.deepEqual(result.request.goals[0].rate_ratio, ratio);
+  assert.equal(result.targets[0].steady_production_seconds_exact.numerator, '3600000');
+  assert.equal(result.targets[0].steady_production_seconds_exact.denominator, '1');
+  assert.throws(() => resolveGoals(dataset, {goals: [{resource: 'plate', rate: 1, rate_ratio: ratio}]}),
+    /disagrees/);
+});
+
 test('conflicting goal routes and unavailable capacity setups fail explicitly', () => {
   assert.throws(() => resolveGoals(dataset, {routes: {plate: 'other'}, goals: [{recipe: 'cut', resource: 'plate', rate: 1}]}), /Conflicting/);
   assert.throws(() => resolveGoals(dataset, {goals: [{kind: 'capacity', recipe: 'cut', resource: 'plate', configuration: 'absent', machines: 1}]}), /unavailable/);

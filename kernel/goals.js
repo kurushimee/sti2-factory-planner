@@ -1,8 +1,26 @@
 import {productionTime} from './quantity.js';
+import * as Q from './rational.js';
 
 function positive(value, name) {
   if (!Number.isFinite(value) || value <= 0 || value > Number.MAX_SAFE_INTEGER) throw new Error(`${name} must be positive and within the supported numeric range.`);
   return value;
+}
+
+function goalRate(goal) {
+  if (!goal.rate_ratio) return goal.rate;
+  const ratio = goal.rate_ratio;
+  if (typeof ratio !== 'object' || ratio === null ||
+      !/^[1-9]\d{0,99}$/.test(String(ratio.numerator)) ||
+      !/^[1-9]\d{0,99}$/.test(String(ratio.denominator))) {
+    throw new Error('An exact goal rate needs positive numerator and denominator text of at most 100 digits.');
+  }
+  const rate = Q.number(Q.ratio(BigInt(ratio.numerator), BigInt(ratio.denominator)));
+  positive(rate, 'Exact goal rate');
+  if (goal.rate !== undefined && (!Number.isFinite(goal.rate) ||
+      Math.abs(goal.rate - rate) > Math.max(1e-15, Math.abs(rate) * 1e-12))) {
+    throw new Error('The numeric goal rate disagrees with its exact fraction.');
+  }
+  return rate;
 }
 
 export function resolveGoals(dataset, request) {
@@ -17,7 +35,7 @@ export function resolveGoals(dataset, request) {
   const goals = (request.goals ?? []).map((goal, index) => {
     const kind = goal.kind ?? 'rate';
     if (!['rate', 'capacity', 'quantity'].includes(kind)) throw new Error(`Unknown goal type: ${kind}.`);
-    let rate = goal.rate;
+    let rate = goalRate(goal);
     let recipe;
     if (goal.recipe) {
       recipe = recipes.get(goal.recipe);
@@ -47,7 +65,7 @@ export function resolveGoals(dataset, request) {
     }
     const target = {index, resource: goal.resource, kind, rate};
     if (kind === 'quantity') {
-      Object.assign(target, productionTime(goal.quantity, rate));
+      Object.assign(target, productionTime(goal.quantity, rate, goal.rate_ratio));
     }
     targets.push(target);
     return {...goal, rate};

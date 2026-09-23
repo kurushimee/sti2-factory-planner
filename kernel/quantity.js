@@ -15,9 +15,12 @@ function decimal(value, label) {
 
 function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
 
-export function productionTime(quantity, rate) {
+export function productionTime(quantity, rate, rateRatio = null) {
   if (!Number.isFinite(rate) || rate <= 0 || rate > Number.MAX_SAFE_INTEGER) throw new Error('Goal rate must be positive and within the supported numeric range.');
-  const amount = decimal(quantity, 'Goal quantity'), speed = decimal(rate, 'Goal rate');
+  const amount = decimal(quantity, 'Goal quantity');
+  const speed = rateRatio ? {numerator: BigInt(rateRatio.numerator), denominator: BigInt(rateRatio.denominator)} :
+    decimal(rate, 'Goal rate');
+  if (speed.numerator <= 0n || speed.denominator <= 0n) throw new Error('An exact goal rate must be positive.');
   let numerator = amount.numerator * speed.denominator, denominator = amount.denominator * speed.numerator;
   const divisor = gcd(numerator, denominator);
   numerator /= divisor; denominator /= divisor;

@@ -24,15 +24,18 @@ func _ready() -> void:
 	%GoalMachine.item_selected.connect(_machine_changed)
 	for control: OptionButton in [%GoalKind, %GoalResource, %GoalUpgrade, %GoalContained]:
 		control.item_selected.connect(func(_index: int) -> void: _changed())
-	for control: SpinBox in [%GoalRate, %GoalMachines, %GoalUpgradeCount, %GoalContainedCount, %GoalBatch, %GoalShape]:
+	for control: SpinBox in [%GoalMachines, %GoalUpgradeCount, %GoalContainedCount, %GoalBatch, %GoalShape]:
 		control.value_changed.connect(func(_value: float) -> void: _changed())
+	%GoalRate.value_changed.connect(_decimal_rate_changed)
+	%GoalRateRatio.text_changed.connect(_fraction_rate_changed)
+	%GoalRateMode.pressed.connect(_use_decimal_rate)
 	%GoalQuantity.text_changed.connect(func(_text: String) -> void: _changed())
 	%GoalPin.toggled.connect(func(_value: bool) -> void: _changed())
 	%GoalSteel.toggled.connect(func(_value: bool) -> void: _changed())
 	%PreviewDelay.timeout.connect(_request_preview)
 	confirmed.connect(_apply)
 	canceled.connect(func() -> void: %PreviewDelay.stop())
-	var controls: Array[Control] = [%ExistingGoal, %GoalKind, %GoalResource, %GoalRate.get_line_edit(), %GoalQuantity,
+	var controls: Array[Control] = [%ExistingGoal, %GoalKind, %GoalResource, %GoalRate.get_line_edit(), %GoalRateRatio, %GoalRateMode, %GoalQuantity,
 		%GoalMachines.get_line_edit(), %GoalPin, %GoalMachine, %GoalUpgrade, %GoalUpgradeCount.get_line_edit(),
 		%GoalContained, %GoalContainedCount.get_line_edit(), %GoalBatch.get_line_edit(), %GoalShape.get_line_edit(),
 		%GoalSteel, get_ok_button(), get_cancel_button()]
@@ -52,7 +55,7 @@ func open_goal(recipe: Dictionary, dataset: Dictionary, request: Dictionary,
 	%ExistingGoal.visible = true
 	%GoalResourceLabel.text = "Retained output"
 	%GoalPin.text = "Keep this machine configuration"
-	for control: Control in [%GoalKindLabel, %GoalKind, %GoalRateLabel, %GoalRate,
+	for control: Control in [%GoalKindLabel, %GoalKind, %GoalRateLabel, %GoalRateRow,
 			%GoalQuantityLabel, %GoalQuantity, %GoalMachinesLabel, %GoalMachines]:
 		control.visible = true
 	_recipe = recipe
@@ -105,7 +108,7 @@ func open_line(recipe: Dictionary, dataset: Dictionary, request: Dictionary,
 	%GoalResourceLabel.text = "Resource supplied by this route"
 	%GoalPin.text = "Keep this route and machine"
 	%GoalPin.set_pressed_no_signal(true)
-	for control: Control in [%GoalKindLabel, %GoalKind, %GoalRateLabel, %GoalRate,
+	for control: Control in [%GoalKindLabel, %GoalKind, %GoalRateLabel, %GoalRateRow,
 			%GoalQuantityLabel, %GoalQuantity, %GoalMachinesLabel, %GoalMachines]:
 		control.visible = false
 	for index: int in %GoalResource.item_count:
@@ -147,6 +150,8 @@ func _select_goal(index: int) -> void:
 	var goal: Dictionary = _request.goals[_goal_index] if _goal_index >= 0 else {}
 	%GoalKind.select(["rate", "capacity", "quantity"].find(goal.get("kind", "rate")))
 	%GoalRate.value = goal.get("rate", 1)
+	var ratio: Dictionary = goal.get("rate_ratio", {})
+	%GoalRateRatio.text = "%s/%s" % [ratio.numerator, ratio.denominator] if !ratio.is_empty() else ""
 	%GoalQuantity.text = str(goal.get("quantity", 1000))
 	%GoalMachines.value = goal.get("machines", 1)
 	%GoalPin.set_pressed_no_signal(_request.get("configurations", {}).has(_recipe.id))
@@ -221,11 +226,58 @@ func _changed() -> void:
 	var capacity: bool = %GoalKind.selected == 1
 	%GoalMachines.editable = capacity
 	%GoalRate.editable = !capacity
+	%GoalRateRatio.editable = !capacity
+	%GoalRateMode.disabled = capacity
+	_update_rate_mode()
 	%GoalQuantity.editable = %GoalKind.selected == 2
 	%GoalPin.disabled = capacity && !_line_only
 	get_ok_button().disabled = true
 	%GoalPreview.text = "Calculating this configuration…"
 	%PreviewDelay.start()
+
+
+func _decimal_rate_changed(_value: float) -> void:
+	if _loading:
+		return
+	if !%GoalRateRatio.text.is_empty():
+		%GoalRateRatio.clear()
+	_changed()
+
+
+func _fraction_rate_changed(_text: String) -> void:
+	if _loading:
+		return
+	_changed()
+
+
+func _use_decimal_rate() -> void:
+	%GoalRateRatio.clear()
+	_update_rate_mode()
+	%GoalRate.get_line_edit().grab_focus.call_deferred()
+
+
+func _update_rate_mode() -> void:
+	var fraction_active: bool = !%GoalRateRatio.text.is_empty()
+	%GoalRate.visible = !fraction_active
+	%GoalRateOr.text = "Exact" if fraction_active else "or exact"
+	%GoalRateMode.visible = fraction_active
+
+
+func _goal_rate() -> Dictionary:
+	var fraction: String = %GoalRateRatio.text.strip_edges()
+	if fraction.is_empty():
+		return {"rate": PlannerDisplay.input_value(%GoalRate)}
+	var pattern := RegEx.new()
+	pattern.compile("^([1-9][0-9]{0,99})/([1-9][0-9]{0,99})$")
+	var matched := pattern.search(fraction)
+	if matched == null:
+		return {"error": "Enter the exact rate as a positive fraction, such as 1/3600."}
+	var numerator := matched.get_string(1)
+	var denominator := matched.get_string(2)
+	var value := float(numerator) / float(denominator)
+	if !is_finite(value) || value <= 0.0 || value > 9007199254740991.0:
+		return {"error": "The exact rate is outside the supported calculation range."}
+	return {"rate": value, "rate_ratio": {"numerator": numerator, "denominator": denominator}}
 
 
 func _request_preview() -> void:
@@ -234,11 +286,17 @@ func _request_preview() -> void:
 	if %GoalMachine.selected < 0:
 		show_error("No machine configuration is available for this recipe.")
 		return
+	var rate_choice := _goal_rate()
+	if !_line_only && %GoalKind.selected != 1 && rate_choice.has("error"):
+		show_error(rate_choice.error)
+		return
 	var machine: Dictionary = %GoalMachine.get_item_metadata(%GoalMachine.selected)
 	_selection = {"recipe": _recipe.id, "revision": _revision}
 	if %GoalKind.selected == 2:
 		_selection.quantity = %GoalQuantity.text.strip_edges()
-		_selection.rate = PlannerDisplay.input_value(%GoalRate)
+		_selection.rate = rate_choice.rate
+		if rate_choice.has("rate_ratio"):
+			_selection.rate_ratio = rate_choice.rate_ratio
 	if _recipe.has("process"):
 		var upgrade: Dictionary = %GoalUpgrade.get_item_metadata(%GoalUpgrade.selected)
 		var setup: Dictionary = {"upgrade_count": int(%GoalUpgradeCount.value) if !upgrade.is_empty() else 0,
@@ -293,7 +351,10 @@ func _apply() -> void:
 		goal.configuration = _preview.configuration.id
 		goal.machines = int(%GoalMachines.value)
 	else:
-		goal.rate = PlannerDisplay.input_value(%GoalRate)
+		var rate_choice := _goal_rate()
+		goal.rate = rate_choice.rate
+		if rate_choice.has("rate_ratio"):
+			goal.rate_ratio = rate_choice.rate_ratio
 		if kind == "quantity":
 			goal.quantity = %GoalQuantity.text.strip_edges()
 	goal_changed.emit(_goal_index, goal, _selection, %GoalPin.button_pressed || kind == "capacity")

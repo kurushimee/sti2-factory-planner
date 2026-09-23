@@ -23,7 +23,8 @@ export function previewConfiguration(dataset, request, selection) {
   }
   if (!configuration) throw new Error('This configuration is not available with the current unlocks.');
   return {recipe: recipe.id, revision: selection.revision ?? 0, configuration,
-    ...(selection.quantity !== undefined ? {production_time: productionTime(selection.quantity, selection.rate)} : {}),
+    ...(selection.quantity !== undefined ? {production_time: productionTime(selection.quantity, selection.rate,
+      selection.rate_ratio)} : {}),
     outputs: recipe.outputs.map(flow => ({resource: flow.resource,
     rate_per_machine: flow.amount * configuration.operations_per_second}))};
 }
