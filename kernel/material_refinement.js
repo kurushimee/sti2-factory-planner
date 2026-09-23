@@ -85,8 +85,7 @@ function priceOrder(highs, dataset, request, plan, deadline, checkBudget, progre
   return fallback;
 }
 
-function pricedConfigurations(dataset, request, plan, prices, checkBudget) {
-  const byRecipe = new Map(dataset.recipes.map(recipe => [recipe.id, recipe]));
+function pricedConfigurations(dataset, request, plan, prices, checkBudget, broaden = false) {
   const active = new Map(), cache = new Map(), structures = structureContext(dataset);
   const ingredients = resolvedIngredients(request, plan);
   for (const line of plan.lines) {
@@ -95,10 +94,15 @@ function pricedConfigurations(dataset, request, plan, prices, checkBudget) {
   }
   const machineWeight = request.weights?.machines ?? 1, energyWeight = request.weights?.energy ?? 0.000001;
   const recipes = [];
-  for (const [id, installed] of active) {
+  const reachable = broaden ? prepareDataset(dataset, {...request, construction: undefined}, checkBudget) :
+    {recipes: dataset.recipes.filter(recipe => active.has(recipe.id))};
+  for (const recipe of reachable.recipes) {
     checkBudget();
-    const recipe = byRecipe.get(id);
-    const configured = configureRecipe(recipe, dataset, {...request, ingredients}, false, checkBudget, cache, structures);
+    if (recipe.unsupported) continue;
+    const installed = active.get(recipe.id) ?? [];
+    // The first pass expands material-sensitive loadouts. The broader pass keeps its
+    // incumbent plus the ordinary capacity frontier instead of repeating that work.
+    const configured = installed.length && !broaden ? configureRecipe(recipe, dataset, {...request, ingredients}, false, checkBudget, cache, structures) : recipe;
     const candidates = new Map(configured.configurations.map(configuration => [configuration.id, configuration]));
     for (const line of installed) candidates.set(line.configuration, {...line.configuration_details});
     const priced = [];
@@ -120,13 +124,16 @@ function pricedConfigurations(dataset, request, plan, prices, checkBudget) {
       operations * (configuration.eu_per_operation ?? 0) * energyWeight;
     const keep = configurations => {for (const configuration of configurations) kept.set(configuration.id, configuration);};
     keep([...priced].sort((a, b) => score(a) - score(b)).slice(0, 4));
+    if (broaden) keep([...priced].sort((a, b) => a.build_cost - b.build_cost).slice(0, 2));
     keep([...priced].sort((a, b) => a.build_cost / a.operations_per_second - b.build_cost / b.operations_per_second).slice(0, 2));
     keep(priced.filter(configuration => installed.some(line => line.configuration === configuration.id)));
     const selected = {...configured, configurations: [...kept.values()]};
     delete selected.process;
     recipes.push(selected);
   }
-  return {dataset: withRecipes(dataset, recipes), ingredients};
+  return {dataset: withRecipes(dataset, recipes), ingredients,
+    compared: {recipes: recipes.filter(recipe => recipe.configurations.length).length,
+      configurations: recipes.reduce((sum, recipe) => sum + recipe.configurations.length, 0)}};
 }
 
 function attachCost(plan, order, estimated = false) {
@@ -141,7 +148,7 @@ function attachCost(plan, order, estimated = false) {
   const objective = operatingObjective + order.construction.objective;
   return {...plan, construction: order.construction, primary_routes: order.primary_routes, objective, status: 'feasible', optimal: false,
     optimization: {objective, lower_bound: null, relative_gap: null,
-      explanation: 'Production and construction balances are verified. Machine choices were compared within the current production routes; the lowest total cost has not been proved.'},
+      explanation: 'Production and construction balances are verified. Reachable routes and selected machine loadouts were compared using construction material costs; the lowest total cost has not been proved.'},
     search: {...plan.search, method: 'material_cost_refinement',
       construction_attempts: order.search?.attempts ?? 1}};
 }
@@ -163,20 +170,34 @@ export function refineMaterialPlan(highs, dataset, request, solveOrdinary, deadl
       reason: order.reason ?? 'No complete construction order was established with the available workstation candidates.'};
     best = attachCost(baseline, order);
     if (!order.marginal_costs) return best;
-    progress({phase: 'machine_choices'});
-    const candidates = pricedConfigurations(dataset, request, baseline, order.marginal_costs, checkBudget);
-    checkBudget();
-    progress({phase: 'production_refinement'});
-    let candidate = solveOrdinary(candidates.dataset, {...ordinaryRequest, ingredients: candidates.ingredients,
-      time_limit_ms: Math.max(1, (deadline - Date.now()) / 2)}, true);
-    if (!candidate.lines) return best;
-    if (baseline.recipe_preferences) candidate = describePreferences(candidate, baseline.recipe_preferences.applied, baseline.recipe_preferences.fallback);
-    checkBudget();
-    progress({phase: 'construction_verification'});
-    const candidateOrder = priceOrder(highs, dataset, request, candidate, deadline, checkBudget, progress);
-    if (!candidateOrder.construction) return best;
-    const verified = attachCost(candidate, candidateOrder, true);
-    return verified.objective < best.objective ? verified : best;
+    let prices = order.marginal_costs;
+    const comparisons = [];
+    for (const broaden of [false, true]) {
+      progress({phase: broaden ? 'route_choices' : 'machine_choices'});
+      const candidates = pricedConfigurations(dataset, request, best, prices, checkBudget, broaden);
+      const comparison = {scope: broaden ? 'alternative_routes' : 'current_routes', ...candidates.compared, verified: false, selected: false};
+      comparisons.push(comparison);
+      best.search.material_comparisons = comparisons;
+      checkBudget();
+      progress({phase: 'production_refinement'});
+      let candidate = solveOrdinary(candidates.dataset, {...ordinaryRequest, ingredients: candidates.ingredients,
+        time_limit_ms: Math.max(1, (deadline - Date.now()) / 2)}, true);
+      if (!candidate.lines) continue;
+      if (best.recipe_preferences && !candidate.recipe_preferences) candidate = describePreferences(candidate, best.recipe_preferences.applied, best.recipe_preferences.fallback);
+      checkBudget();
+      progress({phase: 'construction_verification'});
+      const candidateOrder = priceOrder(highs, dataset, request, candidate, deadline, checkBudget, progress);
+      if (!candidateOrder.construction) continue;
+      const verified = attachCost(candidate, candidateOrder, true);
+      comparison.verified = true;
+      comparison.selected = verified.objective < best.objective;
+      if (comparison.selected) {
+        best = verified;
+        best.search.material_comparisons = comparisons;
+        prices = candidateOrder.marginal_costs ?? prices;
+      }
+    }
+    return best;
   } catch (error) {
     if (!(error instanceof RefinementDeadline)) throw error;
     return best ?? {status: 'limit', optimal: false, phase: 'construction'};

@@ -82,6 +82,10 @@ jobs:
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_goal_editor.gd 2>&1 | tee /tmp/goal-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/goal-check.log
+      - name: Check graph positions across machine changes
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_position_migration.gd 2>&1 | tee /tmp/position-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/position-check.log
       - name: Check calculation file cleanup
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_computation.gd 2>&1 | tee /tmp/computation-check.log
@@ -112,6 +116,8 @@ jobs:
       - name: Check creative-barrel numerical recovery
         run: node tools/verify_endgame.mjs data/statech-2.0.1.json.gz /tmp/creative-barrel.json creative_barrel
       - name: Check complete endgame construction costs
+        env:
+          STI2_MATERIAL_BUDGET_MS: '360000'
         run: |
           node tools/verify_material_endgame.mjs data/statech-2.0.1.json.gz /tmp/material-endgame.json
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_endgame_ui.gd -- /tmp/material-endgame.json 2>&1 | tee /tmp/material-ui-check.log

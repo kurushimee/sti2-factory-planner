@@ -6,7 +6,9 @@ import {endgameRequest, verifyEndgame} from './endgame_case.mjs';
 import {solveFactory} from '../kernel/planner.js';
 
 const dataset = await readDataset(process.argv[2] ?? 'data/statech-2.0.1.json.gz');
-const request = {...endgameRequest(dataset), time_limit_ms: 180000,
+const budget = Number(process.env.STI2_MATERIAL_BUDGET_MS ?? 180000);
+assert.ok(Number.isSafeInteger(budget) && budget >= 180000, 'The material check needs at least 180 seconds.');
+const request = {...endgameRequest(dataset), time_limit_ms: budget,
   construction: {external: [{resource: 'energy:eu', cost: 0}], work: 0.001}};
 const start = performance.now();
 const result = solveFactory(await loadHighs(), dataset, request,

@@ -33,6 +33,11 @@ func _run() -> void:
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/certus/endgame-progress.png")
+	workspace.computation._accept({"phase": "route_choices"})
+	assert(workspace.status.text == "Comparing alternative production routes…")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/certus/alternative-route-progress.png")
 	workspace._request.assign(fixture.request)
 	var started := Time.get_ticks_msec()
 	workspace._calculated(fixture.result)

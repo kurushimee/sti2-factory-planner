@@ -116,6 +116,7 @@ func _accept(response: Variant) -> void:
 			"production_baseline": "Sizing the initial production plan…",
 			"construction_baseline": "Calculating its construction materials…",
 			"machine_choices": "Comparing machine and upgrade costs…",
+			"route_choices": "Comparing alternative production routes…",
 			"production_refinement": "Recalculating production with those choices…",
 			"construction_verification": "Checking the new plan's full construction cost…",
 			"construction_routes": "Balancing shared construction routes…",

@@ -72,8 +72,16 @@ static func optimization_report(result: Dictionary) -> String:
 	if result.get("search", {}).get("method") == "relaxed_route_repair":
 		text += "This large plan uses a continuous-flow estimate, resolves route conflicts, and rechecks whole-machine capacity and every resource balance. Its route search is a heuristic.\n"
 	elif result.get("search", {}).get("method") == "material_cost_refinement":
-		text += "Machine and upgrade choices were compared using complete construction recipes. A change was accepted only after checking its production and construction balances and total cost.\n"
-		text += "This search compares loadouts within the initial production routes. Other routes or loadouts may cost less; no global cost bound is available.\n"
+		text += "Production routes, machines, and upgrades use complete construction recipes. A change is accepted only after checking its production and construction balances and total cost.\n"
+		for comparison: Dictionary in result.get("search", {}).get("material_comparisons", []):
+			text += "%s: %d routes and %d loadouts. " % ["Alternative search" if comparison.scope == "alternative_routes" else "Initial route search", int(comparison.recipes), int(comparison.configurations)]
+			if comparison.get("selected", false):
+				text += "It found a cheaper verified plan.\n"
+			elif comparison.get("verified", false):
+				text += "The candidate did not improve the complete cost.\n"
+			else:
+				text += "It did not establish a replacement; the earlier verified plan is retained.\n"
+		text += "Alternative routes use a limited set of loadouts. Other choices may cost less; no global cost bound is available.\n"
 	elif result.get("search", {}).get("method") == "precision_recovery":
 		text += "Small flows were rechecked with rescaled equations. Whole-machine capacity and resource balances pass, but this numerical retry does not establish the lowest cost.\n"
 	var preferences: Dictionary = result.get("recipe_preferences", {})

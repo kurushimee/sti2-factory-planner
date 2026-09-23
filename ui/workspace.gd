@@ -490,6 +490,7 @@ func _calculated(result: Dictionary) -> void:
 
 
 func _render_plan(result: Dictionary) -> void:
+	_reuse_allocation_positions(result.lines)
 	_initial_layout = _positions.is_empty() && _groups.is_empty()
 	if _initial_layout && _pending_view.is_empty():
 		%ConnectionMode.select(2 if result.lines.size() > 80 else 0)
@@ -538,6 +539,40 @@ func _render_plan(result: Dictionary) -> void:
 		inspector.text = "Select a recipe and add a goal to start planning."
 		%RemoveGoal.disabled = true
 		%EditGoal.disabled = true
+
+
+func _reuse_allocation_positions(lines: Array) -> void:
+	var next_keys: Dictionary[String, bool] = {}
+	var replacements: Array[Dictionary] = []
+	for line: Dictionary in lines:
+		var key := String(line.recipe) + "|" + String(line.configuration)
+		next_keys[key] = true
+		if !_positions.has(key):
+			replacements.append({"key": key, "recipe": line.recipe, "machine": line.machine})
+	replacements.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.key < b.key)
+	var previous: Array = _nodes.values()
+	previous.sort_custom(func(a: PlannerRecipeNode, b: PlannerRecipeNode) -> bool: return String(a.get_meta("position_key")) < String(b.get_meta("position_key")))
+	for node: PlannerRecipeNode in previous:
+		var old_key: String = node.get_meta("position_key")
+		if next_keys.has(old_key) || !_positions.has(old_key):
+			continue
+		var chosen := -1
+		for index: int in replacements.size():
+			var candidate: Dictionary = replacements[index]
+			if candidate.recipe != node.recipe_id:
+				continue
+			if chosen == -1 || candidate.machine == node.allocation.machine:
+				chosen = index
+			if candidate.machine == node.allocation.machine:
+				break
+		if chosen == -1:
+			continue
+		var replacement: String = replacements[chosen].key
+		_positions[replacement] = _positions[old_key]
+		_positions.erase(old_key)
+		if _inspected_key == old_key:
+			_inspected_key = replacement
+		replacements.remove_at(chosen)
 
 
 func _settle_node_sizes() -> void:

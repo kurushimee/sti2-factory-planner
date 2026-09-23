@@ -90,3 +90,36 @@ test('fixed construction orders honor an available equal-material route preferen
   assert.ok(!result.construction.routes.some(route => route.recipe === 'assembly_build'));
   assert.ok(result.construction.recipe_preferences.applied.length);
 });
+
+test('material refinement can replace an entire route and its upstream support', () => {
+  const data = {format: 1, resources: ['ore', 'part', 'intermediate', 'cheap', 'expensive', 'bench'].map(id => ({id})), recipes: [
+    recipe('direct', [flow('ore')], [flow('part')], [configuration('fast', 2, [flow('expensive')])]),
+    recipe('support', [flow('ore', 0.5)], [flow('intermediate')], [configuration('slow', 1, [flow('cheap')])]),
+    recipe('finish', [flow('intermediate')], [flow('part')], [configuration('slow', 1, [flow('cheap')])]),
+    ...dataset.recipes.slice(1),
+  ]};
+  const baseline = solveFactory(highs, data, {...request, construction: undefined});
+  assert.deepEqual(baseline.lines.map(line => line.recipe), ['direct']);
+  const result = refine(data);
+  assert.ok(result.lines.some(line => line.recipe === 'support'));
+  assert.ok(result.lines.some(line => line.recipe === 'finish'));
+  assert.ok(!result.lines.some(line => line.recipe === 'direct'));
+  assert.equal(result.construction.external.find(supply => supply.resource === 'ore').amount, 4);
+  assert.equal(result.external.find(supply => supply.resource === 'ore').rate, 1);
+  assert.equal(result.search.material_comparisons.at(-1).verified, true);
+  assert.equal(result.search.material_comparisons.at(-1).selected, true);
+  assert.equal(result.search.material_comparisons.at(-1).recipes, 5);
+  const pinned = refine(data, {...request, routes: {part: 'direct'}});
+  assert.ok(pinned.lines.some(line => line.recipe === 'direct'));
+});
+
+test('an unfinished alternative-route search retains the verified loadout improvement', () => {
+  let calls = 0;
+  const result = refineMaterialPlan(highs, dataset, request, (source, settings) => {
+    if (++calls === 3) return {status: 'limit', optimal: false};
+    return solveFactory(highs, source, settings);
+  }, Date.now() + 10000);
+  assert.equal(result.lines[0].configuration, 'slow');
+  assert.equal(result.construction.external.find(supply => supply.resource === 'ore').amount, 2);
+  assert.deepEqual(result.search.material_comparisons.map(value => [value.verified, value.selected]), [[true, true], [false, false]]);
+});
