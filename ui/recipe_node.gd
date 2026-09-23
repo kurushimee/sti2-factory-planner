@@ -22,7 +22,12 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 		title = title.left(41) + "…"
 	summary.text = "%d × %s" % [int(line.machines), PlannerDisplay.machine_name(line.machine, resources)]
 	loadout.text = PlannerDisplay.loadout(line.get("configuration_details", {}), resources)
-	throughput.text = "%s operations/s" % PlannerDisplay.number(line.operations_per_second)
+	var chance_outputs: bool = recipe.get("outputs", []).any(func(output: Dictionary) -> bool:
+		return output.get("probability", 1) != 1)
+	var operations := PlannerDisplay.number(line.operations_per_second)
+	throughput.text = "%s operations/s" % operations
+	if chance_outputs:
+		throughput.text = "%s ops/s · expected yields" % operations
 	power.text = "%s EU/t  ·  %s%% utilized" % [PlannerDisplay.number(line.power_eu_per_tick), PlannerDisplay.number(line.utilization * 100)]
 	var inputs: Array = line.inputs.duplicate(true)
 	if line.power_eu_per_tick > 0:
@@ -36,6 +41,8 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 			var label: String = resources.get(flow.resource, flow.resource)
 			row.text = "%s %s  ·  %s" % ["←" if direction == "input" else "→", label, PlannerDisplay.flow_rate(flow.resource, flow.rate)]
 			row.tooltip_text = "%s\n%s per second" % [flow.resource, str(flow.rate)]
+			if direction == "output" && chance_outputs:
+				row.tooltip_text += " expected from the recipe's recorded probability"
 			var tint := Color("d5a36a") if flow.resource == "energy:eu" else Color("7fb9b1")
 			set_slot(slot, direction == "input", 0, tint, direction == "output", 0, tint)
 			if direction == "input":
