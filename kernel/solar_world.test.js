@@ -44,6 +44,24 @@ test('unverified cell and route state stay visible for correction', () => {
   const result = reconstructFactory({machines: [missing]}, dataset);
   assert.deepEqual(result.solar_panels, []);
   assert.match(result.unresolved[0].reason, /matching photovoltaic cell/);
+  assert.equal(result.solar_candidates[0].expected_cell, `item:${cell}`);
+  const confirmed = reconstructFactory({machines: [missing]}, dataset,
+    {[key]: {solar_cell_confirmed: true}});
+  assert.deepEqual(confirmed.unresolved, []);
+  assert.equal(confirmed.solar_panels[0].recipe, `planner:solar|${machine}|water`);
+  assert.equal(confirmed.solar_panels[0].saved_cell, null);
+  assert.equal(confirmed.solar_panels[0].cell_evidence, 'player_supply_confirmation');
+  assert.deepEqual(confirmed.solar_panels[0].origin, origin);
+  const mismatched = saved('9');
+  mismatched.facts.items = [{key: {id: 'pack:other_cell'}, amount: '2'}];
+  const mismatchedPlan = reconstructFactory({machines: [mismatched]}, dataset,
+    {[key]: {solar_cell_confirmed: true}});
+  assert.equal(mismatchedPlan.solar_panels[0].saved_cell, null);
+  assert.deepEqual(mismatchedPlan.solar_panels[0].other_saved_item,
+    {resource: 'item:pack:other_cell', amount: '2'});
+  const revoked = reconstructFactory({machines: [missing]}, dataset,
+    {[key]: {solar_cell_confirmed: false}});
+  assert.deepEqual(revoked.solar_panels, []);
   const invalid = reconstructFactory({machines: [saved('9')]}, dataset,
     {[key]: {solar_recipe: 'pack:unknown'}});
   assert.deepEqual(invalid.solar_panels, []);

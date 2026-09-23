@@ -30,6 +30,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
         recipe.configurations?.some(configuration => configuration.machine === saved.id && configuration.periodic_generation));
       const cell = routes[0]?.inputs.find(flow => flow.resource?.startsWith('item:'))?.resource?.slice(5);
       const savedCell = (saved.facts?.items ?? []).find(stack => stack.key?.id === cell && Number(stack.amount) > 0);
+      const otherSavedItem = !savedCell && (saved.facts?.items ?? []).find(stack => stack.key?.id && Number(stack.amount) > 0);
       const savedFluid = (saved.facts?.fluids ?? []).find(stack => Number(stack.amount) > 0 && stack.key?.id);
       const wet = routes.filter(recipe => recipe.inputs.some(flow => flow.resource === `fluid:${savedFluid?.key?.id}`));
       const dry = routes.filter(recipe => !recipe.inputs.some(flow => flow.resource?.startsWith('fluid:')));
@@ -38,16 +39,21 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
       const enabled = correction.solar_enabled ?? true;
       const candidate = {machine: key, machine_id: saved.id, origin: saved.origin, enabled,
         route_candidates: routes.map(recipe => recipe.id),
+        expected_cell: cell ? `item:${cell}` : null,
         saved_cell: savedCell ? {resource: `item:${cell}`, amount: String(savedCell.amount)} : null,
+        other_saved_item: otherSavedItem ? {resource: `item:${otherSavedItem.key.id}`, amount: String(otherSavedItem.amount)} : null,
         saved_fluid: savedFluid ? {resource: `fluid:${savedFluid.key.id}`, amount_mb: String(savedFluid.amount)} : null,
         assumption: 'Continuous clear weather, open sky, a supplied replacement cell, and a free power output are planning assumptions. Saved cell and water are stocks, not recurring supplies.'};
       solarCandidates.push(candidate);
       if (!enabled) continue;
       if (!routes.length) { pending('This panel needs a verified periodic generation route.'); continue; }
-      if (!savedCell) { pending('No matching photovoltaic cell is saved in this panel. Confirm its supply before planning continuous generation.'); continue; }
+      if (!savedCell && correction.solar_cell_confirmed !== true) {
+        pending('No matching photovoltaic cell is saved in this panel. Confirm that you can fit and keep supplying one before planning continuous generation.'); continue;
+      }
       if (selected.length !== 1) { pending('Choose one supported dry or water-assisted route for this panel.'); continue; }
       const configuration = selected[0].configurations.find(value => value.machine === saved.id && value.periodic_generation);
       solarPanels.push({...candidate, recipe: selected[0].id, configuration: configuration.id,
+        cell_evidence: savedCell ? 'saved_matching_cell' : 'player_supply_confirmation',
         route_evidence: correction.solar_recipe ? 'player_correction' : savedFluid ? 'saved_water_stock' : 'no_saved_water'});
       continue;
     }

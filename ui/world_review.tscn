@@ -109,6 +109,12 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Keep this machine's output as an end goal"
 
+[node name="ConfirmSolarCell" type="CheckButton" parent="Content/Columns/Details"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "I can fit and keep supplying the matching cell"
+
 [node name="Help" type="Label" parent="Content"]
 layout_mode = 2
 custom_minimum_size = Vector2(940, 0)

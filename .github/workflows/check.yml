@@ -114,6 +114,8 @@ jobs:
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/storage-import-check.log
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_solar_world_ui.gd 2>&1 | tee /tmp/solar-world-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/solar-world-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_solar_cell_ui.gd 2>&1 | tee /tmp/solar-cell-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/solar-cell-check.log
       - name: Check construction settings and persistence
         run: |
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_construction_ui.gd 2>&1 | tee /tmp/construction-check.log

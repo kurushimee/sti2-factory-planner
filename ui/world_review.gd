@@ -26,8 +26,9 @@ func _ready() -> void:
 	%WorldRecipeSearch.text_changed.connect(_filter_recipes)
 	%WorldRecipes.item_selected.connect(_select_recipe)
 	%RetainOutput.toggled.connect(_retain_changed)
+	%ConfirmSolarCell.toggled.connect(_solar_cell_changed)
 	confirmed.connect(func() -> void: corrections_requested.emit(_corrections.duplicate(true)))
-	var controls: Array[Control] = [%WorldMachineSearch, %WorldMachines, %MachinePrevious, %MachineNext, %WorldRecipeSearch, %WorldRecipes, %RecipePrevious, %RecipeNext, %RetainOutput, get_ok_button(), get_cancel_button()]
+	var controls: Array[Control] = [%WorldMachineSearch, %WorldMachines, %MachinePrevious, %MachineNext, %WorldRecipeSearch, %WorldRecipes, %RecipePrevious, %RecipeNext, %RetainOutput, %ConfirmSolarCell, get_ok_button(), get_cancel_button()]
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
 		controls[index].focus_previous = controls[index].get_path_to(controls[(index + controls.size() - 1) % controls.size()])
@@ -95,6 +96,7 @@ func _key(machine: Dictionary) -> String:
 
 func _select_machine(index: int) -> void:
 	_selected = index
+	%ConfirmSolarCell.hide()
 	%RetainOutput.disabled = false
 	%RetainOutput.text = "Retain this output as a goal"
 	var machine: Dictionary = _world.machines[index]
@@ -147,8 +149,16 @@ func _select_machine(index: int) -> void:
 			if candidate.machine != key:
 				continue
 			var cell: Dictionary = candidate.get("saved_cell", {}) if candidate.get("saved_cell") != null else {}
+			var other_item: Dictionary = candidate.get("other_saved_item", {}) if candidate.get("other_saved_item") != null else {}
 			var fluid: Dictionary = candidate.get("saved_fluid", {}) if candidate.get("saved_fluid") != null else {}
-			%WorldDetails.text = "%s · %d, %d, %d\n%s\nSaved cell: %s × %s\nSaved fluid: %s mB %s\n%s" % [str(machine.id).get_slice(":", 1).replace("_", " ").capitalize(), machine.origin.x, machine.origin.y, machine.origin.z, machine.origin.dimension, cell.get("amount", "0"), PlannerDisplay.readable_name(cell.get("resource", "none")), fluid.get("amount_mb", "0"), PlannerDisplay.readable_name(fluid.get("resource", "none")), candidate.assumption]
+			var cell_text: String = "%s × %s" % [cell.amount, PlannerDisplay.readable_name(cell.resource)] if !cell.is_empty() else "none"
+			%WorldDetails.text = "%s · %d, %d, %d\n%s\nSaved matching cell: %s\nSaved fluid: %s mB %s\n%s" % [str(machine.id).get_slice(":", 1).replace("_", " ").capitalize(), machine.origin.x, machine.origin.y, machine.origin.z, machine.origin.dimension, cell_text, fluid.get("amount_mb", "0"), PlannerDisplay.readable_name(fluid.get("resource", "none")), candidate.assumption]
+			if !other_item.is_empty():
+				%WorldDetails.text += "\nOther saved item: %s × %s" % [other_item.amount, PlannerDisplay.readable_name(other_item.resource)]
+			if cell.is_empty() && candidate.get("expected_cell") != null:
+				%ConfirmSolarCell.show()
+				%ConfirmSolarCell.set_pressed_no_signal(_corrections.get(key, {}).get("solar_cell_confirmed", false))
+				%WorldDetails.text += "\nMatching cell needed: %s. The save does not show one." % PlannerDisplay.readable_name(candidate.expected_cell)
 			break
 		for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
 			if unresolved.get("machine") == key:
@@ -225,6 +235,15 @@ func _retain_changed(enabled: bool) -> void:
 	if !_corrections.has(key):
 		_corrections[key] = {}
 	_corrections[key]["solar_enabled" if _is_solar() else ("storage_enabled" if _is_storage() else ("infrastructure_enabled" if _is_infrastructure() else "goal"))] = enabled
+
+
+func _solar_cell_changed(confirmed: bool) -> void:
+	if _selected < 0 || !_is_solar():
+		return
+	var key := _key(_world.machines[_selected])
+	if !_corrections.has(key):
+		_corrections[key] = {}
+	_corrections[key]["solar_cell_confirmed"] = confirmed
 
 
 func _is_infrastructure() -> bool:
