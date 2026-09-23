@@ -1,0 +1,223 @@
+{
+  "pack": "StaTech Industry 2.0.1",
+  "minecraft": "1.21.1",
+  "spectrum": "1.12.7-1.21.1-neo",
+  "spectrum_jar_sha256": "6b3f8678c580d381a4e681f7640d637d75808ddce2ae3869d28714b3a347025a",
+  "loaded_runtime_sha256": "a8b1b05beacbb52230b50a5f9c9fd30997b54231d617a56e37c61101a5f53d8a",
+  "trial_capture_sha256": "4f688191fa37f874995f061ab7f7c19184b3661873222db20ca141997212d04b",
+  "private_world_archive_sha256": "851cda7b89c6c78f69a3cd1d8b1bc36b726de8a3f6045ba4eaf006020b7408fa",
+  "probe_jar_sha256": "08e54f0e59bb7a7c0005832e127ceb9e979ead816a433f6b3510f6d4a17f799e",
+  "growth_recipes": [
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/coal",
+      "cluster": "spectrum:coal_cluster",
+      "ordinary_harvest": "spectrum:pure_coal",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/copper",
+      "cluster": "spectrum:copper_cluster",
+      "ordinary_harvest": "spectrum:pure_copper",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/diamond",
+      "cluster": "spectrum:diamond_cluster",
+      "ordinary_harvest": "spectrum:pure_diamond",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/echo",
+      "cluster": "spectrum:echo_cluster",
+      "ordinary_harvest": "spectrum:pure_echo",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/emerald",
+      "cluster": "spectrum:emerald_cluster",
+      "ordinary_harvest": "spectrum:pure_emerald",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/glowstone",
+      "cluster": "spectrum:glowstone_cluster",
+      "ordinary_harvest": "spectrum:pure_glowstone",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/gold",
+      "cluster": "spectrum:gold_cluster",
+      "ordinary_harvest": "spectrum:pure_gold",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/iron",
+      "cluster": "spectrum:iron_cluster",
+      "ordinary_harvest": "spectrum:pure_iron",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/lapis",
+      "cluster": "spectrum:lapis_cluster",
+      "ordinary_harvest": "spectrum:pure_lapis",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/netherite_scrap",
+      "cluster": "spectrum:netherite_scrap_cluster",
+      "ordinary_harvest": "spectrum:pure_netherite_scrap",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/prismarine_crystal",
+      "cluster": "spectrum:prismarine_cluster",
+      "ordinary_harvest": "spectrum:pure_prismarine",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/quartz",
+      "cluster": "spectrum:quartz_cluster",
+      "ordinary_harvest": "spectrum:pure_quartz",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/minecraft/redstone",
+      "cluster": "spectrum:redstone_cluster",
+      "ordinary_harvest": "spectrum:pure_redstone",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/spectrum/azurite",
+      "cluster": "spectrum:azurite_cluster",
+      "ordinary_harvest": "spectrum:pure_azurite",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/spectrum/bismuth",
+      "cluster": "spectrum:bismuth_cluster",
+      "ordinary_harvest": "spectrum:bismuth_crystal",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/spectrum/bloodstone",
+      "cluster": "spectrum:bloodstone_cluster",
+      "ordinary_harvest": "spectrum:pure_bloodstone",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:crystallarieum/spectrum/malachite",
+      "cluster": "spectrum:malachite_cluster",
+      "ordinary_harvest": "spectrum:pure_malachite",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:mod_integration/ae2/crystallarieum/certus_quartz",
+      "cluster": "spectrum:certus_quartz_cluster",
+      "ordinary_harvest": "spectrum:pure_certus_quartz",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:mod_integration/ae2/crystallarieum/fluix",
+      "cluster": "spectrum:fluix_cluster",
+      "ordinary_harvest": "spectrum:pure_fluix",
+      "yield_range": [
+        3,
+        5
+      ]
+    },
+    {
+      "recipe": "spectrum:mod_integration/create/crystallarieum/zinc",
+      "cluster": "spectrum:zinc_cluster",
+      "ordinary_harvest": "spectrum:pure_zinc",
+      "yield_range": [
+        3,
+        5
+      ]
+    }
+  ],
+  "iron_trial": {
+    "always_on_bud_removed_after_ticks": 2,
+    "grid_idle_ae_per_tick": 2.09375,
+    "mature_ticks": [
+      600,
+      600
+    ],
+    "collected_ticks": [
+      720,
+      600
+    ],
+    "harvested_items": [
+      4,
+      3
+    ],
+    "brown_ink_per_growth": 240,
+    "liquid_crystal_initial_fill_mb": 1000,
+    "liquid_crystal_remaining_mb": 1000,
+    "nuggets_consumed": [
+      8,
+      2
+    ]
+  },
+  "planning_status": "unsupported_passive_route",
+  "limits": [
+    "The controlled fixture triggers the placed AE2 grid only when the cluster is mature. A player-buildable automatic detector and gate were not verified.",
+    "A continuously active Annihilation Plane breaks immature buds. The filtered storage bus does not prevent that loss.",
+    "The Color Picker's five-tick conversion step is called directly while the isolated world is frozen; the placed ink network runs its transfer logic.",
+    "Growth and harvest quantities are random. The loot range is 3\u20135; observed counts are not fixed guarantees.",
+    "The private world, raw capture, jar, and probe are not redistributed."
+  ]
+}
