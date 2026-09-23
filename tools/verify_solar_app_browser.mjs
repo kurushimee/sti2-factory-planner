@@ -66,7 +66,25 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/embed`);
   let frame = page.frames().find(candidate => candidate !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
-  const chooser = page.waitForEvent('filechooser');
+  await frame.evaluate(() => {
+    const read = window.plannerBridge.readFileChunk;
+    window.plannerBridge.readFileChunk = function () {
+      const response = read.call(this);
+      if (response) window.testImportedCharacters = JSON.parse(response).characters;
+      return response;
+    };
+  });
+  let chooser = page.waitForEvent('filechooser');
+  await page.mouse.click(1126, 40, {delay: 100});
+  await (await chooser).setFiles({name: 'solar-plan.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(plan))});
+  await frame.waitForFunction(() => window.testImportedCharacters > 0, null, {timeout: 60000});
+  await page.screenshot({path: `${artifacts}/browser-solar-import-progress.png`});
+  await page.mouse.click(1340, 870, {delay: 100});
+  await page.waitForTimeout(500);
+  assert.equal(await frame.evaluate(() => window.testResult), undefined);
+  await page.screenshot({path: `${artifacts}/browser-solar-import-cancelled.png`});
+  chooser = page.waitForEvent('filechooser');
   await page.mouse.click(1126, 40, {delay: 100});
   await (await chooser).setFiles({name: 'solar-plan.json', mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(plan))});
@@ -105,9 +123,54 @@ try {
   result = await frame.evaluate(() => window.testResult);
   assert.equal(result.status, 'optimal');
   assert.equal(result.periodic_power.event_buffer_eu, 64);
+  const example = JSON.parse(await readFile('data/example.json', 'utf8'));
+  const examplePlan = {format: 'factory-plan', version: 1, dataset_identity: example.identity,
+    dataset: example, request: {goals: []}, positions: {}, groups: {}};
+  chooser = page.waitForEvent('filechooser');
+  await page.mouse.click(1126, 40, {delay: 100});
+  await (await chooser).setFiles({name: 'example-plan.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(examplePlan))});
+  await frame.waitForFunction(() => new Promise(done => {
+    const opened = indexedDB.open('factory-planner', 1);
+    opened.onsuccess = () => {
+      const saved = opened.result.transaction('plans').objectStore('plans').get('autosave');
+      saved.onsuccess = () => {
+        done(saved.result?.dataset_identity === 'example:1');
+        opened.result.close();
+      };
+    };
+  }), null, {timeout: 60000});
+  const exampleDownload = page.waitForEvent('download');
+  await page.mouse.click(1225, 40, {delay: 100});
+  const exampleStream = await (await exampleDownload).createReadStream();
+  const changed = JSON.parse(Buffer.concat(await exampleStream.toArray()).toString('utf8'));
+  assert.equal(changed.dataset_identity, example.identity);
+  assert.deepEqual(changed.dataset, example);
+  const hosted = await browser.newPage({viewport: {width: 1440, height: 900}});
+  await hosted.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    window.Worker = class extends NativeWorker {
+      constructor(...args) {
+        super(...args);
+        this.addEventListener('message', event => {
+          if (event.data.result) window.testResult = event.data.result;
+        });
+      }
+    };
+  });
+  await hosted.goto(`http://localhost:${server.address().port}/index.html`);
+  await hosted.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
+  const hostedChooser = hosted.waitForEvent('filechooser');
+  await hosted.mouse.click(1126, 40, {delay: 100});
+  await (await hostedChooser).setFiles({name: 'solar-plan.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(plan))});
+  await hosted.waitForFunction(() => window.testResult?.periodic_power?.storage?.[0]?.machines === 1,
+    null, {timeout: 120000});
+  await hosted.screenshot({path: `${artifacts}/browser-solar-hosted.png`});
+  await hosted.close();
   assert.equal(await frame.evaluate(() => crossOriginIsolated), false);
   assert.deepEqual(errors, []);
-  console.log('The embedded export planned solar storage, exported it, and restored it from browser storage.');
+  console.log('Hosted and embedded exports imported a full catalog; cancellation, restoration, and another dataset passed.');
 } catch (error) {
   await page?.screenshot({path: `${artifacts}/browser-solar-failure.png`});
   throw error;

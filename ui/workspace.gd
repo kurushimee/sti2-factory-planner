@@ -43,12 +43,18 @@ var _frames: Dictionary[String, GraphFrame] = {}
 var _resizing_group := ""
 var _members: Dictionary[String, String] = {}
 var _world_import: Dictionary[String, Variant] = {}
+var _json_import: FileAccess
+var _json_import_characters := 0
+var _json_import_total := 0
+const JSON_IMPORT_PATH := "user://portable-import.pending"
 var _recipe_matches: Array[String] = []
 var _recipe_page := 0
 const RECIPE_PAGE_SIZE := 150
 
 
 func _ready() -> void:
+	if FileAccess.file_exists(JSON_IMPORT_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(JSON_IMPORT_PATH))
 	OS.low_processor_usage_mode = true
 	if "--capture" in OS.get_cmdline_user_args() || "--capture-existing" in OS.get_cmdline_user_args():
 		OS.low_processor_usage_mode = false
@@ -231,6 +237,9 @@ func _process(_delta: float) -> void:
 		%ViewSaveDelay.start()
 	if !OS.has_feature("web"):
 		return
+	if _json_import:
+		_read_json_import_chunk()
+		return
 	var response: Variant = JavaScriptBridge.eval("window.plannerBridge.pollFile()")
 	if !(response is String) || response.is_empty():
 		return
@@ -238,10 +247,70 @@ func _process(_delta: float) -> void:
 	match event.kind:
 		"json":
 			_import_json(event.value)
+		"json_stream":
+			_begin_json_import(int(event.characters))
 		"world":
 			_import_world("")
 		"error":
 			_failed(event.message)
+
+
+func _begin_json_import(characters: int) -> void:
+	if characters <= 0:
+		_failed("The selected plan is empty.")
+		return
+	computation.cancel()
+	_json_import = FileAccess.open(JSON_IMPORT_PATH, FileAccess.WRITE)
+	if _json_import == null:
+		JavaScriptBridge.eval("window.plannerBridge.cancelFileImport()")
+		_failed("The portable plan could not be read. Check available browser storage.")
+		return
+	_json_import_characters = 0
+	_json_import_total = characters
+	status.text = "Reading portable plan…"
+	%Cancel.text = "Cancel import"
+	%Cancel.disabled = false
+
+
+func _read_json_import_chunk() -> void:
+	var response: Variant = JavaScriptBridge.eval("window.plannerBridge.readFileChunk()")
+	if !(response is String) || response.is_empty():
+		_stop_json_import()
+		_failed("The portable plan ended before it was fully read.")
+		return
+	var piece: Variant = PlannerJson.parse(response)
+	if !(piece is Dictionary) || !(piece.get("chunk") is String):
+		_stop_json_import()
+		_failed("The portable plan contains an unreadable part.")
+		return
+	_json_import.store_string(piece.chunk)
+	_json_import_characters = int(piece.get("characters", 0))
+	status.text = "Reading portable plan · %d%%…" % (
+		100 * _json_import_characters / _json_import_total
+	)
+	if !piece.get("done", false):
+		return
+	_json_import.close()
+	_json_import = null
+	%Cancel.text = "Cancel calculation"
+	%Cancel.disabled = true
+	if _json_import_characters != _json_import_total:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(JSON_IMPORT_PATH))
+		_failed("The portable plan ended before it was fully read.")
+		return
+	var parsed: Variant = PlannerJson.parse(FileAccess.get_file_as_string(JSON_IMPORT_PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(JSON_IMPORT_PATH))
+	_import_json(parsed)
+
+
+func _stop_json_import() -> void:
+	if _json_import:
+		_json_import.close()
+		_json_import = null
+	JavaScriptBridge.eval("window.plannerBridge.cancelFileImport()")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(JSON_IMPORT_PATH))
+	%Cancel.text = "Cancel calculation"
+	%Cancel.disabled = true
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -1133,6 +1202,9 @@ func _save_view() -> void:
 
 func _choose_import() -> void:
 	if OS.has_feature("web"):
+		if _json_import:
+			_stop_json_import()
+			status.text = "Plan import cancelled. The current graph is preserved."
 		JavaScriptBridge.eval("window.plannerBridge.chooseFile()")
 		return
 	_file_action = "import"
@@ -1190,6 +1262,10 @@ func _import_json(parsed: Variant) -> void:
 
 
 func _cancel() -> void:
+	if _json_import:
+		_stop_json_import()
+		status.text = "Plan import cancelled. The current graph is preserved."
+		return
 	computation.cancel()
 	%Cancel.disabled = true
 	status.text = "Calculation cancelled. The current graph is preserved."

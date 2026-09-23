@@ -2,6 +2,8 @@
   let worker;
   const messages = [], files = [];
   let selectedArchive;
+  let jsonImport;
+  let importGeneration = 0;
   const database = new Promise((resolve, reject) => {
     const request = indexedDB.open('factory-planner', 1);
     request.onupgradeneeded = () => request.result.createObjectStore('plans');
@@ -23,7 +25,21 @@
     cancel() { worker?.terminate(); worker = null; messages.length = 0; },
     poll() { return messages.length ? JSON.stringify(messages.shift()) : ''; },
     pollFile() { return files.length ? JSON.stringify(files.shift()) : ''; },
+    readFileChunk() {
+      if (!jsonImport) return '';
+      const start = jsonImport.offset;
+      let end = Math.min(start + 262144, jsonImport.text.length);
+      if (end < jsonImport.text.length && /[\uD800-\uDBFF]/.test(jsonImport.text[end - 1])) end++;
+      const chunk = jsonImport.text.slice(start, end);
+      jsonImport.offset = end;
+      const done = end === jsonImport.text.length;
+      if (done) jsonImport = null;
+      return JSON.stringify({chunk, done, characters: end});
+    },
+    cancelFileImport() { importGeneration++; jsonImport = null; files.length = 0; },
     chooseFile() {
+      this.cancelFileImport();
+      const generation = importGeneration;
       const input = document.createElement('input');
       input.type = 'file'; input.accept = '.json,.zip';
       input.onchange = async () => {
@@ -33,8 +49,15 @@
           if (file.name.toLowerCase().endsWith('.zip')) {
             selectedArchive = file;
             files.push({kind: 'world', name: file.name});
-          } else files.push({kind: 'json', value: JSON.parse(await file.text())});
-        } catch (error) { files.push({kind: 'error', message: error.message}); }
+          } else {
+            const content = await file.text();
+            if (generation !== importGeneration) return;
+            jsonImport = {text: content, offset: 0};
+            files.push({kind: 'json_stream', characters: content.length});
+          }
+        } catch (error) {
+          if (generation === importGeneration) files.push({kind: 'error', message: error.message});
+        }
       };
       input.click();
     },
