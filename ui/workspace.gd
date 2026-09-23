@@ -785,7 +785,7 @@ func _render_plan(result: Dictionary) -> void:
 	_reuse_allocation_positions(layout_lines)
 	_initial_layout = _positions.is_empty() && _groups.is_empty()
 	if _initial_layout && _pending_view.is_empty():
-		%ConnectionMode.select(2 if result.lines.size() > 80 else 0)
+		%ConnectionMode.select(2 if result.lines.size() > 30 else 0)
 	_unplaced.clear()
 	_rendering = true
 	graph.clear_connections()
@@ -1006,12 +1006,35 @@ func _refresh_connections() -> void:
 
 
 func _focus_recipe() -> void:
+	var by_key: Dictionary[String, PlannerRecipeNode] = {}
 	for node: PlannerRecipeNode in _nodes.values():
-		if node.get_meta("position_key") == _inspected_key:
-			graph.zoom = maxf(graph.zoom, 0.85)
-			graph.scroll_offset = (node.position_offset + node.size / 2.0) * graph.zoom - graph.size / 2.0
-			_save_view()
-			return
+		by_key[node.get_meta("position_key")] = node
+	if !by_key.has(_inspected_key):
+		return
+	var selected: PlannerRecipeNode = by_key[_inspected_key]
+	var target := Rect2(selected.position_offset, selected.size)
+	var candidates: Array[Dictionary] = []
+	for connection: Dictionary in _last_result.get("connections", []):
+		if connection.destination != _inspected_key || connection.resource == "energy:eu":
+			continue
+		if by_key.has(connection.source):
+			var source: PlannerRecipeNode = by_key[connection.source]
+			candidates.append({"rect": Rect2(source.position_offset, source.size),
+				"distance": selected.position_offset.distance_squared_to(source.position_offset)})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a.distance < b.distance)
+	graph.zoom = maxf(graph.zoom, 0.85)
+	var chosen := 0
+	for candidate: Dictionary in candidates:
+		var expanded: Rect2 = target.merge(candidate.rect)
+		if (expanded.size.x * graph.zoom <= graph.size.x - 40 &&
+				expanded.size.y * graph.zoom <= graph.size.y - 40):
+			target = expanded
+			chosen += 1
+		if chosen == 2:
+			break
+	graph.scroll_offset = target.get_center() * graph.zoom - graph.size / 2.0
+	_save_view()
 
 
 func _show_power() -> void:
@@ -1044,7 +1067,16 @@ func _apply_layout(announce: bool = true) -> void:
 			if source.machines > 0:
 				layout_connections.append({"source": str(source.recipe) + "|" + str(source.configuration),
 					"destination": storage_key, "resource": "dispatch_buffer"})
-	var layout := PlannerGraphLayout.arrange(entries, layout_connections)
+	var focus: Array[String] = []
+	if !_inspected_key.is_empty():
+		focus.append(_inspected_key)
+	var goal_recipes: Dictionary[String, bool] = {}
+	for goal: Dictionary in _request.get("goals", []):
+		goal_recipes[goal.recipe] = true
+	for node: PlannerRecipeNode in _nodes.values():
+		if goal_recipes.has(node.recipe_id):
+			focus.append(node.get_meta("position_key"))
+	var layout := PlannerGraphLayout.arrange(entries, layout_connections, focus)
 	if _last_result.get("lines", []).is_empty() && _nodes.size() > 1 && _nodes.values().all(func(node: PlannerRecipeNode) -> bool: return node.has_meta("storage_unit")):
 		var storage_bounds := Rect2(Vector2(20, 40), Vector2.ZERO)
 		var storage_index := 0

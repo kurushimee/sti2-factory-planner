@@ -91,7 +91,7 @@ try {
   await page.screenshot({path: `${artifacts}/browser-group.png`});
   await page.mouse.move(...titlePoint);
   await page.mouse.down();
-  await page.mouse.move(titlePoint[0] + 40, titlePoint[1] + 40, {steps: 8});
+  await page.mouse.move(titlePoint[0] + 40, titlePoint[1] - 40, {steps: 8});
   await page.mouse.up();
   await new Promise(resolve => setTimeout(resolve, 200));
   plan = await savedPlan();

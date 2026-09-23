@@ -7,12 +7,14 @@ const GROUP_ORDER: Array[String] = [
 ]
 
 
-static func arrange(entries: Array[Entry], connections: Array) -> Result:
+static func arrange(entries: Array[Entry], connections: Array,
+		focus: Array[String] = []) -> Result:
 	var result := Result.new()
 	var by_key: Dictionary[String, Entry] = {}
 	var groups: Dictionary[String, Array] = {}
 	var outgoing: Dictionary[String, Array] = {}
 	var incoming: Dictionary[String, Array] = {}
+	var upstream: Dictionary[String, Array] = {}
 	for entry: Entry in entries:
 		by_key[entry.key] = entry
 		if !groups.has(entry.group):
@@ -20,11 +22,14 @@ static func arrange(entries: Array[Entry], connections: Array) -> Result:
 		groups[entry.group].append(entry.key)
 		outgoing[entry.key] = []
 		incoming[entry.key] = []
+		upstream[entry.key] = []
 	for connection: Dictionary in connections:
 		var source: String = connection.source
 		var destination: String = connection.destination
 		if connection.resource == "energy:eu" || !by_key.has(source) || !by_key.has(destination):
 			continue
+		if !source in upstream[destination]:
+			upstream[destination].append(source)
 		if by_key[source].group != by_key[destination].group || destination in outgoing[source]:
 			continue
 		outgoing[source].append(destination)
@@ -94,6 +99,20 @@ static func arrange(entries: Array[Entry], connections: Array) -> Result:
 			indegree[destination] -= 1
 			if indegree[destination] == 0:
 				ready.append(destination)
+	var distance: Dictionary[String, int] = {}
+	var queue: Array[String] = []
+	for key: String in focus:
+		if by_key.has(key) && !distance.has(key):
+			distance[key] = 0
+			queue.append(key)
+	var head := 0
+	while head < queue.size():
+		var current: String = queue[head]
+		head += 1
+		for previous: String in upstream[current]:
+			if !distance.has(previous):
+				distance[previous] = distance[current] + 1
+				queue.append(previous)
 	var names: Array[String] = []
 	names.assign(groups.keys())
 	names.sort_custom(func(a: String, b: String) -> bool:
@@ -118,6 +137,11 @@ static func arrange(entries: Array[Entry], connections: Array) -> Result:
 		var x := origin.x + 24
 		var height := 0.0
 		for column: int in column_ids:
+			columns[column].sort_custom(func(a: String, b: String) -> bool:
+				var da: int = distance.get(a, 1000000000)
+				var db: int = distance.get(b, 1000000000)
+				return da < db if da != db else a < b
+			)
 			var y := origin.y + 54
 			var width := 0.0
 			for key: String in columns[column]:
