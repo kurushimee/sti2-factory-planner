@@ -4,7 +4,6 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-from statistics import mean
 
 from prepare_nuclear_fixture import fixture
 
@@ -113,9 +112,7 @@ def check_capture(capture, machines, formed):
                                         "deuterium_mb": single_fluids.get(DEUTERIUM, 0),
                                         "remaining_disintegrations": single["samples"][-1]["fuel_disintegrations_left"]},
             "quad_rod_cycles": measurements,
-            "quad_measured_means": {key: mean(sample[key] for sample in measurements)
-                                    for key in ("fuel_lifetime_ticks", "water_used_mb", "steam_mb", "deuterium_mb")},
-            "formed_5000_tick_trial": cycle}
+            "formed_5000_tick_trial": {**cycle, "scope": "Placed controller and matched hatches ran with direct water refill and emptied fluid outputs. This records startup behavior for one layout, not a production coefficient."}}
 
 
 def verify(capture_path, machines_path, formed_path, jar_path, world_path):
@@ -132,9 +129,9 @@ def verify(capture_path, machines_path, formed_path, jar_path, world_path):
             "private_world_archive_sha256": sha256(world_path),
             "method": "The loaded MI nuclear grid was run with a central uranium rod and four adjacent water hatches. Three stochastic quad-rod cycles ran to depletion. A separate placed smallest reactor matched the loaded structure and ran 5,000 controller ticks.",
             "planning_status": "Evidence only. No reactor generation route is enabled by this report.",
-            "limits": ["These measurements apply to this five-hatch layout, supplied water, and outputs emptied each tick. External fluid-pipe throughput was not tested.",
+            "limits": ["These measurements apply to this five-hatch layout, supplied water, and outputs emptied each tick. They are not production coefficients.",
                        "The samples are stochastic observations, not a guaranteed minimum steam rate or fixed recipe duration. A single-rod trial can produce some steam without reaching sustained quad-rod output.",
-                       "The 5,000-tick placed trial confirms formation and startup, not a complete placed fuel lifetime or automatic fuel replacement.",
+                       "The 5,000-tick placed trial confirms formation and startup, not a complete placed fuel lifetime.",
                        "Steam must be converted by a separate turbine to produce EU. The reactor itself does not generate direct EU."],
             **evidence}
 

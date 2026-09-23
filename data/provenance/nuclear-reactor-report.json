@@ -9,9 +9,9 @@
   "method": "The loaded MI nuclear grid was run with a central uranium rod and four adjacent water hatches. Three stochastic quad-rod cycles ran to depletion. A separate placed smallest reactor matched the loaded structure and ran 5,000 controller ticks.",
   "planning_status": "Evidence only. No reactor generation route is enabled by this report.",
   "limits": [
-    "These measurements apply to this five-hatch layout, supplied water, and outputs emptied each tick. External fluid-pipe throughput was not tested.",
+    "These measurements apply to this five-hatch layout, supplied water, and outputs emptied each tick. They are not production coefficients.",
     "The samples are stochastic observations, not a guaranteed minimum steam rate or fixed recipe duration. A single-rod trial can produce some steam without reaching sustained quad-rod output.",
-    "The 5,000-tick placed trial confirms formation and startup, not a complete placed fuel lifetime or automatic fuel replacement.",
+    "The 5,000-tick placed trial confirms formation and startup, not a complete placed fuel lifetime.",
     "Steam must be converted by a separate turbine to produce EU. The reactor itself does not generate direct EU."
   ],
   "structure_blocks_excluding_controller": {
@@ -77,12 +77,6 @@
       "first_1000_ticks_steam_mb": 861083
     }
   ],
-  "quad_measured_means": {
-    "fuel_lifetime_ticks": 66410.66666666667,
-    "water_used_mb": 24993215.333333332,
-    "steam_mb": 398875820.3333333,
-    "deuterium_mb": 63474.666666666664
-  },
   "formed_5000_tick_trial": {
     "ticks": 5000,
     "water_used_mb": 1557012,
@@ -92,6 +86,6 @@
       "modern_industrialization:deuterium": 3898,
       "modern_industrialization:steam": 24849799
     },
-    "scope": "Placed controller and matched hatches ticked with direct water refill and emptied fluid outputs. External pipe throughput and whole fuel lifetime remain separate checks."
+    "scope": "Placed controller and matched hatches ran with direct water refill and emptied fluid outputs. This records startup behavior for one layout, not a production coefficient."
   }
 }
