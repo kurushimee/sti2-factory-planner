@@ -14,6 +14,7 @@ import {refineMaterialPlan} from './material_refinement.js';
 import {balanceTolerance, diagnosticNumber, scaleConstraintRows} from './numerics.js';
 import {preferredRecipes, describePreferences} from './recipe_preferences.js';
 import {appendPeriodicDispatch, decodePeriodicDispatch, expandPowerProfile, PeriodicBalanceError} from './periodic_model.js';
+import {exactInstalledCapacity} from './exact_capacity.js';
 
 const ENERGY = 'energy:eu';
 
@@ -355,6 +356,7 @@ export function decodeFactory(model, solution) {
     machines: Math.round(value(line.machine)),
     operations_per_second: value(line.operation),
     capacity_per_second: Math.round(value(line.machine)) * line.configuration.operations_per_second,
+    capacity_per_second_exact: exactInstalledCapacity(line.configuration, Math.round(value(line.machine))),
     utilization: value(line.operation) / (Math.round(value(line.machine)) * line.configuration.operations_per_second),
     inputs: combineFlows(line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable)}))),
     ingredient_choices: line.inputTerms.map(term => ({resource: term.resource, rate: term.coefficient * value(term.variable), slot: term.slot})).filter(flow => flow.rate > 0),

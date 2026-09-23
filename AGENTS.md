@@ -66,6 +66,8 @@ The charged-world ZIP check is `node tools/verify_storage_world.mjs <world.zip> 
 
 Keep every positive flow in decoded plans. An absolute solver tolerance must not erase a tiny goal, ingredient, or construction quantity. Numerical recovery must pass the original-unit balances and whole-machine checks; report an explicit failure if it cannot. Row scaling changes dual units, so convert marginal costs back before using them. `kernel/tiny_rates.test.js` covers these boundaries and exact finite-goal time.
 
+Display whole-tick installed machine capacity from the reduced `capacity_per_second_exact` ratio when available; a formatted solver float is not that source-derived ratio. Check `kernel/exact_capacity.test.js` and `tools/test_exact_capacity_ui.gd`. Issue #73 tracks exact operating flows and other remaining numeric fields.
+
 Use `PlannerJson.parse` at Godot data boundaries and full-precision `JSON.stringify` for calculation requests and saved plans. Native decimal conversion can change values even in scientific notation. Preserve exact midpoint rounding, ties, and signed zero; compare bits against the Python references from `tools/make_decimal_cases.py` with `tools/test_json.gd`. `tools/verify_dataset_roundtrip.mjs` checks the complete dataset after Godot serialization. Read stepped goal controls through `PlannerDisplay.input_value` to preserve their displayed decimal value.
 
 Autosave keeps immutable datasets separately by content hash; portable exports still embed them. Keep the prior plan recoverable if a dataset write fails. Verify storage changes with `tools/test_ui.gd`, `node tools/verify_storage_browser.mjs`, and the exported application checks.
