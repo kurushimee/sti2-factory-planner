@@ -3,6 +3,7 @@ extends ConfirmationDialog
 
 signal preview_requested(selection: Dictionary)
 signal goal_changed(index: int, goal: Dictionary, selection: Dictionary, pin: bool)
+signal line_changed(recipe: String, resource: String, selection: Dictionary, pin: bool)
 
 var _dataset: Dictionary = {}
 var _request: Dictionary = {}
@@ -12,6 +13,7 @@ var _selection: Dictionary = {}
 var _loading := false
 var _goal_index := -1
 var _revision := 0
+var _line_only := false
 
 
 func _ready() -> void:
@@ -39,8 +41,20 @@ func _ready() -> void:
 		controls[index].focus_previous = controls[index].get_path_to(controls[(index + controls.size() - 1) % controls.size()])
 
 
-func open_goal(recipe: Dictionary, dataset: Dictionary, request: Dictionary) -> void:
+func open_goal(recipe: Dictionary, dataset: Dictionary, request: Dictionary,
+		show_dialog: bool = true) -> void:
 	_loading = true
+	_line_only = false
+	$Content.offset_bottom = 625
+	title = "Production goal"
+	ok_button_text = "Apply goal"
+	%LineExplanation.visible = false
+	%ExistingGoal.visible = true
+	%GoalResourceLabel.text = "Retained output"
+	%GoalPin.text = "Keep this machine configuration"
+	for control: Control in [%GoalKindLabel, %GoalKind, %GoalRateLabel, %GoalRate,
+			%GoalQuantityLabel, %GoalQuantity, %GoalMachinesLabel, %GoalMachines]:
+		control.visible = true
 	_recipe = recipe
 	_dataset = dataset
 	_request = request
@@ -73,8 +87,51 @@ func open_goal(recipe: Dictionary, dataset: Dictionary, request: Dictionary) -> 
 	_loading = false
 	%ExistingGoal.select(1 if %ExistingGoal.item_count > 1 else 0)
 	_select_goal(%ExistingGoal.selected)
-	popup_centered(Vector2i(900, 680))
-	%ExistingGoal.grab_focus.call_deferred()
+	if show_dialog:
+		popup_centered(Vector2i(900, 680))
+		%ExistingGoal.grab_focus.call_deferred()
+
+
+func open_line(recipe: Dictionary, dataset: Dictionary, request: Dictionary,
+		line: Dictionary) -> void:
+	open_goal(recipe, dataset, request, false)
+	_loading = true
+	_line_only = true
+	$Content.offset_bottom = 485
+	title = "Supporting production line"
+	ok_button_text = "Apply line choice"
+	%ExistingGoal.visible = false
+	%LineExplanation.visible = true
+	%GoalResourceLabel.text = "Resource supplied by this route"
+	%GoalPin.text = "Keep this route and machine"
+	%GoalPin.set_pressed_no_signal(true)
+	for control: Control in [%GoalKindLabel, %GoalKind, %GoalRateLabel, %GoalRate,
+			%GoalQuantityLabel, %GoalQuantity, %GoalMachinesLabel, %GoalMachines]:
+		control.visible = false
+	for index: int in %GoalResource.item_count:
+		if %GoalResource.get_item_metadata(index) == line.primary:
+			%GoalResource.select(index)
+	for index: int in %GoalMachine.item_count:
+		if %GoalMachine.get_item_metadata(index).id == line.machine:
+			%GoalMachine.select(index)
+			_machine_changed(index)
+			break
+	var setup: Dictionary = line.get("configuration_details", {}).get("setup", {})
+	%GoalUpgradeCount.value = setup.get("upgrade_count", 0)
+	%GoalContainedCount.value = setup.get("contained_count", 1)
+	%GoalBatch.value = setup.get("batch", setup.get("contained_count", 1))
+	%GoalShape.value = setup.get("shape", 0) + 1
+	%GoalSteel.set_pressed_no_signal(setup.get("steel_hatches", false))
+	for index: int in %GoalUpgrade.item_count:
+		if %GoalUpgrade.get_item_metadata(index).get("id") == setup.get("upgrade", {}).get("id"):
+			%GoalUpgrade.select(index)
+	for index: int in %GoalContained.item_count:
+		if %GoalContained.get_item_metadata(index) == setup.get("contained_machine"):
+			%GoalContained.select(index)
+	_loading = false
+	_changed()
+	popup_centered(Vector2i(900, 540))
+	%GoalMachine.grab_focus.call_deferred()
 
 
 func _resource_name(id: String) -> String:
@@ -165,7 +222,7 @@ func _changed() -> void:
 	%GoalMachines.editable = capacity
 	%GoalRate.editable = !capacity
 	%GoalQuantity.editable = %GoalKind.selected == 2
-	%GoalPin.disabled = capacity
+	%GoalPin.disabled = capacity && !_line_only
 	get_ok_button().disabled = true
 	%GoalPreview.text = "Calculating this configuration…"
 	%PreviewDelay.start()
@@ -203,13 +260,14 @@ func show_preview(result: Dictionary) -> void:
 		return
 	_preview = result
 	var configuration: Dictionary = result.configuration
-	var count: float = %GoalMachines.value if %GoalKind.selected == 1 else 1
+	var count: float = %GoalMachines.value if %GoalKind.selected == 1 && !_line_only else 1
 	var text := "[b]Configured capacity[/b]\n"
 	for output: Dictionary in result.outputs:
 		text += "%s: %s /s%s\n" % [_resource_name(output.resource), String.num(output.rate_per_machine * count, 4), " per machine" if %GoalKind.selected != 1 else ""]
 	text += "%s operations/s per machine · %s EU per operation\n" % [String.num(configuration.operations_per_second, 4), String.num(configuration.get("eu_per_operation", 0), 3)]
-	if %GoalKind.selected == 2:
+	if %GoalKind.selected == 2 && !_line_only:
 		text += "Production time after startup: %s.\n" % result.production_time.time_display
+	text += "This choice changes supporting production without adding a goal. " if _line_only else ""
 	text += "Capacity assumes continuous ingredients. The connected plan supplies the remaining demand."
 	%GoalPreview.text = text
 	get_ok_button().disabled = false
@@ -224,6 +282,11 @@ func show_error(message: String) -> void:
 func _apply() -> void:
 	if _preview.is_empty():
 		return
+	_selection.configuration = _preview.configuration.id
+	if _line_only:
+		line_changed.emit(_recipe.id, %GoalResource.get_item_metadata(%GoalResource.selected),
+			_selection, %GoalPin.button_pressed)
+		return
 	var kind: String = ["rate", "capacity", "quantity"][%GoalKind.selected]
 	var goal: Dictionary = {"recipe": _recipe.id, "resource": %GoalResource.get_item_metadata(%GoalResource.selected), "kind": kind}
 	if kind == "capacity":
@@ -233,5 +296,4 @@ func _apply() -> void:
 		goal.rate = PlannerDisplay.input_value(%GoalRate)
 		if kind == "quantity":
 			goal.quantity = %GoalQuantity.text.strip_edges()
-	_selection.configuration = _preview.configuration.id
 	goal_changed.emit(_goal_index, goal, _selection, %GoalPin.button_pressed || kind == "capacity")

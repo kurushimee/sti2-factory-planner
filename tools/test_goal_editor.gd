@@ -17,6 +17,9 @@ func _run() -> void:
 	assert(workspace._load_dataset(JSON.parse_string(FileAccess.get_file_as_string("res://data/example.json"))))
 	workspace._request = {"goals": []}
 	var dialog := workspace.get_node("%GoalEditor") as PlannerGoalEditor
+	if DisplayServer.get_name() != "headless":
+		root.size = Vector2i(1280, 720)
+		await process_frame
 	dialog.open_goal(workspace._recipes.assemble, workspace._dataset, workspace._request)
 	dialog.get_node("%GoalKind").select(1)
 	dialog.get_node("%GoalMachines").value = 3
@@ -29,6 +32,7 @@ func _run() -> void:
 		OS.low_processor_usage_mode = false
 		await create_timer(0.2).timeout
 		await RenderingServer.frame_post_draw
+		assert(dialog.get_ok_button().get_global_rect().end.y <= dialog.size.y)
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/goal-editor.png")
 	dialog.confirmed.emit()
 	dialog.hide()

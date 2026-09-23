@@ -62,9 +62,11 @@ func _ready() -> void:
 	computation.failed.connect(_failed)
 	computation.progress.connect(func(message: String) -> void: status.text = message)
 	search.text_changed.connect(_filter_recipes)
+	recipes_list.item_selected.connect(func(_index: int) -> void: _refresh_route_action())
 	%PreviousRecipes.pressed.connect(func() -> void: _recipe_page -= 1; _show_recipe_page())
 	%NextRecipes.pressed.connect(func() -> void: _recipe_page += 1; _show_recipe_page())
 	%AddGoal.pressed.connect(_add_goal)
+	%PinRoute.pressed.connect(_pin_route)
 	%RemoveGoal.pressed.connect(_remove_goal)
 	%EditGoal.pressed.connect(_edit_goal)
 	%GroupNameDialog.confirmed.connect(_rename_group)
@@ -89,6 +91,7 @@ func _ready() -> void:
 	)
 	%GoalEditor.preview_requested.connect(_preview_goal)
 	%GoalEditor.goal_changed.connect(_apply_goal)
+	%GoalEditor.line_changed.connect(_apply_line_choice)
 	%Arrange.pressed.connect(_arrange)
 	%AddGroup.pressed.connect(_add_group)
 	%Import.pressed.connect(_choose_import)
@@ -171,7 +174,7 @@ func _capture_stage(message: String) -> void:
 
 
 func _setup_focus() -> void:
-	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %Replication, %ReducedMotion,
+	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %PinRoute, %Replication, %ReducedMotion,
 		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, %Summary, %ConnectionMode, %FocusRecipe, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
@@ -379,6 +382,28 @@ func _show_recipe_page() -> void:
 	%NextRecipes.disabled = last >= _recipe_matches.size()
 	if recipes_list.item_count:
 		recipes_list.select(0)
+	_refresh_route_action()
+
+
+func _refresh_route_action() -> void:
+	var routes: Dictionary = _request.get("routes", {})
+	for index: int in recipes_list.item_count:
+		var id: String = recipes_list.get_item_metadata(index)
+		var recipe: Dictionary = _recipes[id]
+		var pinned: bool = routes.get(recipe.primary) == id
+		recipes_list.set_item_text(index, ("✓ " if pinned else "") + PlannerDisplay.recipe_name(recipe))
+	var selected := recipes_list.get_selected_items()
+	if selected.is_empty():
+		%PinRoute.disabled = true
+		%PinRoute.text = "Pin route"
+		return
+	var id: String = recipes_list.get_item_metadata(selected[0])
+	var recipe: Dictionary = _recipes[id]
+	var pinned: bool = routes.get(recipe.primary) == id
+	%PinRoute.text = "Clear route" if pinned else "Pin route"
+	%PinRoute.disabled = recipe.has("unsupported") && !pinned
+	%PinRoute.tooltip_text = ("Let the planner choose the route for this resource." if pinned else
+		"Use this recipe to supply its main output. This does not add a goal.")
 
 
 func _add_goal() -> void:
@@ -396,6 +421,32 @@ func _add_goal() -> void:
 	if !existing:
 		_request.goals.append({"resource": recipe.primary, "rate": PlannerDisplay.input_value(rate), "recipe": id})
 	_recalculate()
+
+
+func _pin_route() -> void:
+	var indices := recipes_list.get_selected_items()
+	if indices.is_empty():
+		return
+	var id: String = recipes_list.get_item_metadata(indices[0])
+	var recipe: Dictionary = _recipes[id]
+	var pinned: bool = _request.get("routes", {}).get(recipe.primary) == id
+	if recipe.has("unsupported") && !pinned:
+		_failed("This route is unavailable: " + str(recipe.unsupported))
+		return
+	_remember()
+	if !_request.has("routes"):
+		_request.routes = {}
+	if pinned:
+		_request.routes.erase(recipe.primary)
+	else:
+		_request.routes[recipe.primary] = id
+	_refresh_route_action()
+	_recalculate()
+	if pinned:
+		status.text = "Cleared the route choice for %s." % _resources.get(recipe.primary, recipe.primary)
+	else:
+		status.text = "Pinned %s as the route for %s without adding a goal." % [
+			PlannerDisplay.recipe_name(recipe), _resources.get(recipe.primary, recipe.primary)]
 
 
 func _remove_goal() -> void:
@@ -426,7 +477,16 @@ func _edit_goal() -> void:
 			%FactorySettings._category_changed(9)
 			%FactorySettings._filter(_selected)
 		else:
-			%GoalEditor.open_goal(_recipes[_selected], _dataset, _request)
+			var selected_line: Dictionary = {}
+			for node: PlannerRecipeNode in _nodes.values():
+				if node.get_meta("position_key") == _inspected_key:
+					selected_line = node.allocation
+					break
+			if selected_line.is_empty() || _request.goals.any(func(goal: Dictionary) -> bool:
+				return goal.get("recipe") == _selected):
+				%GoalEditor.open_goal(_recipes[_selected], _dataset, _request)
+			else:
+				%GoalEditor.open_line(_recipes[_selected], _dataset, _request, selected_line)
 
 
 func _rename_group() -> void:
@@ -471,6 +531,31 @@ func _apply_goal(index: int, goal: Dictionary, selection: Dictionary, pin: bool)
 	_recalculate()
 
 
+func _apply_line_choice(recipe: String, resource: String, selection: Dictionary, pin: bool) -> void:
+	_remember()
+	if !_request.has("routes"):
+		_request.routes = {}
+	if !_request.has("configurations"):
+		_request.configurations = {}
+	if pin:
+		_request.routes[resource] = recipe
+		_request.configurations[recipe] = selection.configuration
+		if selection.has("setup"):
+			if !_request.has("machine_setups"):
+				_request.machine_setups = {}
+			if !_request.machine_setups.has(recipe):
+				_request.machine_setups[recipe] = []
+			var setup: Dictionary = {"machine": selection.machine, "setup": selection.setup,
+				"configuration": selection.configuration}
+			if !setup in _request.machine_setups[recipe]:
+				_request.machine_setups[recipe].append(setup)
+	else:
+		if _request.routes.get(resource) == recipe:
+			_request.routes.erase(resource)
+		_request.configurations.erase(recipe)
+	_recalculate()
+
+
 func _replication_changed(enabled: bool) -> void:
 	_remember()
 	_request.replication = enabled
@@ -479,6 +564,7 @@ func _replication_changed(enabled: bool) -> void:
 
 func _recalculate() -> void:
 	_job_kind = "solve"
+	_refresh_route_action()
 	%Cancel.disabled = false
 	var request := _request.duplicate(true)
 	computation.submit({"dataset": _dataset, "request": request})
@@ -498,7 +584,9 @@ func _calculated(result: Dictionary) -> void:
 	%Cancel.disabled = true
 	if _job_kind == "preview_configuration":
 		%GoalEditor.show_preview(result)
-		status.text = "Configuration preview updated. Apply the goal to recalculate its support."
+		status.text = ("Configuration preview updated. Apply the line choice to recalculate support."
+			if %GoalEditor._line_only else
+			"Configuration preview updated. Apply the goal to recalculate its support.")
 		return
 	if _job_kind in ["import_world", "correct_world"]:
 		var previous_solar: Array = _world_import.get("reconstruction", {}).get("solar_panels", []).duplicate(true)
@@ -809,7 +897,7 @@ func _settle_node_sizes() -> void:
 	if _initial_layout && !_nodes.is_empty():
 		_initial_layout = false
 		_apply_layout(false)
-		if _nodes.size() > 80:
+		if !_inspected_key.is_empty():
 			_focus_recipe()
 	elif !_unplaced.is_empty():
 		_place_new_nodes()
@@ -853,7 +941,10 @@ func _select_node(node: Node) -> void:
 				inspector.text += "\nThe saved charge is below the planned initial charge. Charge the units before relying on continuous operation."
 		inspector.text += "\n\nCable reach and network sharing need to match the player's build."
 		return
-	%EditGoal.text = "Edit power source" if _recipes[node.recipe_id].get("type") == "planner:solar_generation" else "Edit production goal"
+	var is_goal: bool = _request.goals.any(func(goal: Dictionary) -> bool:
+		return goal.get("recipe") == node.recipe_id)
+	%EditGoal.text = "Edit power source" if _recipes[node.recipe_id].get("type") == "planner:solar_generation" else (
+		"Edit production goal" if is_goal else "Configure production line")
 	_selected = node.recipe_id
 	_inspected_key = node.get_meta("position_key")
 	_refresh_connections()
