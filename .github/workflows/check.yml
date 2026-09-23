@@ -124,6 +124,9 @@ jobs:
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/power-check.log
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_solar_ui.gd 2>&1 | tee /tmp/solar-ui-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/solar-ui-check.log
+          node tools/verify_solar_capacity.mjs data/statech-2.0.1.json.gz /tmp/solar-capacity.json
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_solar_capacity_ui.gd -- /tmp/solar-capacity.json 2>&1 | tee /tmp/solar-capacity-ui-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/solar-capacity-ui-check.log
       - name: Check the complete endgame graph and feasible-result reporting
         run: |
           node tools/verify_endgame.mjs data/statech-2.0.1.json.gz /tmp/endgame.json

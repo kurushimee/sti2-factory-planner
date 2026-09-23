@@ -84,6 +84,8 @@ static func optimization_report(result: Dictionary) -> String:
 		text += "Alternative routes use a limited set of loadouts. Other choices may cost less; no global cost bound is available.\n"
 	elif result.get("search", {}).get("method") == "precision_recovery":
 		text += "Small flows were rechecked with rescaled equations. Whole-machine capacity and resource balances pass, but this numerical retry does not establish the lowest cost.\n"
+	elif result.get("search", {}).get("method") == "periodic_precision_recovery":
+		text += "Exact periodic capacity needed a bounded solver retry. Whole-machine, resource, and full-cycle energy checks pass within recorded numerical roundoff. This retry does not establish the lowest cost.\n"
 	var preferences: Dictionary = result.get("recipe_preferences", {})
 	if preferences.get("fallback", false):
 		text += "The preferred equal-material routes did not yield a verified plan in this search. Available alternatives were retained.\n"
@@ -125,13 +127,22 @@ static func power_report(power: Dictionary, resources: Dictionary = {}, construc
 	if !periodic.is_empty():
 		text += "\n[b]Periodic generation and storage[/b]\n%s ticks per modeled cycle\n" % number(periodic.period_ticks)
 		for source: Dictionary in periodic.generation:
+			if source.machines <= 0:
+				continue
 			text += "%s × %s: %s EU/t nominal cycle average; %s EU/t after a possible output gap\n" % [number(source.machines), markup(resources.get("item:" + str(source.machine), readable_name(source.machine))), number(source.nominal_average_eu_per_tick), number(source.guaranteed_average_eu_per_tick)]
 		for unit: Dictionary in periodic.storage:
+			if unit.machines <= 0:
+				continue
 			text += "%s × %s: %s EU capacity, %s EU/t charge and %s EU/t discharge\n" % [number(unit.machines), markup(resources.get("item:" + str(unit.machine), readable_name(unit.machine))), number(unit.capacity_eu), number(unit.charge_eu_per_tick), number(unit.discharge_eu_per_tick)]
 			text += "%s EU planned initial charge; %s EU at cycle end\n" % [number(unit.initial_charge_eu), number(unit.ending_charge_eu)]
 		if periodic.event_buffer_eu > 0:
 			text += "%s EU of storage is reserved for uncertain generation gaps.\n" % number(periodic.event_buffer_eu)
-		text += "%s EU of modeled output is curtailed per cycle.\n" % number(periodic.curtailed_generation_eu_per_period)
+		if periodic.has("energy_roundoff_bound_eu_per_period"):
+			text += "Full-cycle energy surplus: %s EU; numerical roundoff bound: %s EU.\n" % [number(periodic.energy_balance_surplus_eu_per_period), number(periodic.energy_roundoff_bound_eu_per_period)]
+		if periodic.curtailed_generation_eu_per_period <= periodic.get("energy_roundoff_bound_eu_per_period", 0.0) * 4.0:
+			text += "Modeled curtailment: %s EU per cycle, within numerical resolution.\n" % number(periodic.curtailed_generation_eu_per_period)
+		else:
+			text += "%s EU of modeled output is curtailed per cycle.\n" % number(periodic.curtailed_generation_eu_per_period)
 		for assumption: String in periodic.assumptions:
 			text += markup(assumption) + "\n"
 	text += "\n" + markup(power.get("reserve_basis", "")) + " External supply contributes to installed reserve only when it has a declared firm capacity.\n\n" + markup(power.get("attribution_basis", ""))

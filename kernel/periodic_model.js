@@ -163,6 +163,14 @@ export function decodePeriodicDispatch(model, value) {
   if (Math.abs(value('periodic_firm_net') - firmNet) > tolerance(firmNet)) {
     throw new PeriodicBalanceError('firm balance', value('periodic_firm_net'), firmNet);
   }
+  const generatedPerPeriod = model.lines.reduce((sum, line, index) =>
+    sum + (line.values.reduce((total, amount) => total + amount, 0) - model.gaps[index]) * value(line.variable), 0);
+  const firmPerPeriod = firmNet * model.period_ticks;
+  const periodSurplus = generatedPerPeriod + firmPerPeriod;
+  const periodRoundoff = (Math.abs(generatedPerPeriod) + Math.abs(firmPerPeriod)) * Number.EPSILON * 16;
+  if (!Number.isFinite(periodSurplus) || periodSurplus < -periodRoundoff) {
+    throw new PeriodicBalanceError('whole-period energy', periodSurplus, 0);
+  }
   const generation = model.lines.map(line => ({recipe: line.recipe, configuration: line.configuration,
     machine: line.machine,
     machines: Math.round(value(line.variable)),
@@ -218,6 +226,8 @@ export function decodePeriodicDispatch(model, value) {
   }
   return {period_ticks: model.period_ticks, generation, storage,
     firm_net_eu_per_tick: firmNet, minimum_dispatch_margin_eu_per_tick: minimumMargin,
+    energy_balance_surplus_eu_per_period: periodSurplus,
+    energy_roundoff_bound_eu_per_period: periodRoundoff,
     curtailed_generation_eu_per_period: curtailed,
     event_buffer_eu: eventBuffer,
     assumptions: ['Each segment repeats with steady production demand, continuous fuel supply, and lossless storage.',
