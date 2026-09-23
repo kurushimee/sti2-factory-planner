@@ -28,6 +28,14 @@ static func check(value: Variant) -> String:
 			if field == "machines" && record.has("availability"):
 				if !(record.availability is Dictionary) || !(record.availability.get("automatic") is bool) || !(record.availability.get("reason") is String):
 					return "Machine %s needs a valid availability flag and reason." % record.id
+			if field == "machines" && record.get("mechanic") == "energy_storage":
+				if record.get("status") != "infrastructure" || !(record.get("storage") is Dictionary):
+					return "Storage machine %s needs an infrastructure rule." % record.id
+				for amount: String in ["capacity_eu", "charge_eu_per_tick", "discharge_eu_per_tick"]:
+					if !_positive(record.storage.get(amount)) || floor(record.storage[amount]) != record.storage[amount]:
+						return "Storage machine %s needs a positive whole %s." % [record.id, amount]
+				if !_nonnegative(record.storage.get("loss_eu_per_tick")) || floor(record.storage.loss_eu_per_tick) != record.storage.loss_eu_per_tick || !(record.storage.get("saved_charge_field") is String) || record.storage.saved_charge_field.is_empty():
+					return "Storage machine %s needs a valid loss and saved-charge rule." % record.id
 		catalog_ids[field] = ids
 	if !_string_list(value.get("default_machines", [])):
 		return "Default machines must be a list of text IDs."

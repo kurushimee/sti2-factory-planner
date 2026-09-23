@@ -47,7 +47,7 @@ func open_review(world: Dictionary, dataset: Dictionary) -> void:
 	%RetainOutput.disabled = true
 	_filter_recipes("")
 	var reconstruction: Dictionary = _world.get("reconstruction", {})
-	%WorldSummary.text = "%d machines · %d capacity goals · %d infrastructure configurations · %d need correction\nSaved capacity assumes continuous supply. Requester stocks are quantities." % [_world.get("machines", []).size(), reconstruction.get("goals", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size()]
+	%WorldSummary.text = "%d machines · %d capacity goals · %d storage units · %d infrastructure configurations · %d need correction\nSaved capacity assumes continuous supply. Stored energy and requester stocks are quantities." % [_world.get("machines", []).size(), reconstruction.get("goals", []).size(), reconstruction.get("storage_units", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size()]
 	if %WorldMachines.item_count:
 		%WorldMachines.select(0)
 		_select_machine(0)
@@ -123,15 +123,26 @@ func _select_machine(index: int) -> void:
 		for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
 			if unresolved.get("machine") == key:
 				%WorldDetails.text += "\n" + str(unresolved.reason)
+	if _is_storage():
+		%RetainOutput.disabled = true
+		%RetainOutput.set_pressed_no_signal(false)
+		%RetainOutput.text = "Energy storage has no output goal"
+		%WorldDetails.text = "%s · %d, %d, %d\n%s\nEnergy storage. Saved charge is a starting quantity, not a sustained power supply." % [str(machine.id).get_slice(":", 1).replace("_", " ").capitalize(), machine.origin.x, machine.origin.y, machine.origin.z, machine.origin.dimension]
+		for unit: Dictionary in _world.get("reconstruction", {}).get("storage_units", []):
+			if unit.machine == key:
+				%WorldDetails.text += "\nSaved charge: %s / %s EU\nCharge and discharge: %s EU/t each\n%s" % [unit.saved_charge_eu, PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.charge_eu_per_tick), unit.assumption]
+		for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
+			if unresolved.get("machine") == key:
+				%WorldDetails.text += "\n" + str(unresolved.reason)
 	_filter_recipes(%WorldRecipeSearch.text, true)
 
 
 func _filter_recipes(query: String, reveal_selected: bool = false) -> void:
 	_recipe_matches.clear()
 	_recipe_page = 0
-	%WorldRecipeSearch.editable = !_is_infrastructure()
-	%WorldRecipeSearch.placeholder_text = "This infrastructure has no recipe assignment." if _is_infrastructure() else "Find a compatible recipe…"
-	if _selected >= 0 && !_is_infrastructure():
+	%WorldRecipeSearch.editable = !_is_nonrecipe()
+	%WorldRecipeSearch.placeholder_text = "This device has no recipe assignment." if _is_nonrecipe() else "Find a compatible recipe…"
+	if _selected >= 0 && !_is_nonrecipe():
 		var machine: Dictionary = _world.machines[_selected]
 		var chosen: String = str(_corrections.get(_key(machine), {}).get("recipe", machine.get("recipe_id", "")))
 		var search := query.to_lower()
@@ -176,7 +187,7 @@ func _select_recipe(index: int) -> void:
 
 
 func _retain_changed(enabled: bool) -> void:
-	if _selected < 0:
+	if _selected < 0 || _is_storage():
 		return
 	var key := _key(_world.machines[_selected])
 	if !_corrections.has(key):
@@ -189,3 +200,14 @@ func _is_infrastructure() -> bool:
 		return false
 	var key := _key(_world.machines[_selected])
 	return _world.get("reconstruction", {}).get("infrastructure_candidates", []).any(func(candidate: Dictionary) -> bool: return candidate.machine == key)
+
+
+func _is_storage() -> bool:
+	if _selected < 0:
+		return false
+	var id: String = str(_world.machines[_selected].id)
+	return _dataset.get("machines", []).any(func(machine: Dictionary) -> bool: return machine.get("id") == id && machine.get("mechanic") == "energy_storage")
+
+
+func _is_nonrecipe() -> bool:
+	return _is_infrastructure() || _is_storage()

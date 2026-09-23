@@ -31,6 +31,19 @@ def machine_rules(capture, upgrades):
                     "Transmitted energy is already charged to consuming machines; only the tower drain is extra overhead."]
                 } for tier in machine["tesla_tower_probe"]["tiers"]],
                 infrastructure_evidence=machine["tesla_tower_probe"])
+        elif machine.get("storage_probe"):
+            probe = machine["storage_probe"]
+            capacity = probe["capacity_eu"]
+            limit = probe["cable_limit_eu_per_tick"]
+            if capacity != 100000 * probe["nominal_tier_eu"] or limit <= 0:
+                raise ValueError("The loaded storage capacity or transfer limit is inconsistent.")
+            if probe["charge_eu_over_20_ticks"] != 20 * limit or probe["discharge_eu_over_20_ticks"] != 20 * limit:
+                raise ValueError("The loaded storage transfer samples do not match the stated limit.")
+            record.update(status="infrastructure", mechanic="energy_storage", storage={
+                "capacity_eu": capacity, "charge_eu_per_tick": limit,
+                "discharge_eu_per_tick": limit, "loss_eu_per_tick": 0,
+                "saved_charge_field": "storedEu",
+                "basis": "Loaded storage adapters on a one-node cable network; a placed cable topology is not established."})
         elif machine.get("water_pump_probe"):
             record.update(status="supported", mechanic="fixed_cycle", **machine["water_pump_probe"])
         elif machine.get("waste_collector_probe"):

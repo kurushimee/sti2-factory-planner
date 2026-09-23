@@ -11,6 +11,9 @@ test('dataset validation rejects malformed references before dependency pruning'
     [data => data.resources[0].max_stack_size = 0, /max_stack_size/],
     [data => data.machines = [{id: 'test:machine', availability: []}], /availability/],
     [data => data.machines = [{id: 'test:machine', availability: {automatic: 'no', reason: 'Removed'}}], /availability/],
+    [data => data.machines = [{id: 'test:storage', status: 'infrastructure', mechanic: 'energy_storage',
+      storage: {capacity_eu: 3200000, charge_eu_per_tick: 256, discharge_eu_per_tick: 0,
+        loss_eu_per_tick: 0, saved_charge_field: 'storedEu'}}], /discharge_eu_per_tick/],
     [data => data.recipes[0].outputs[0].resource = 'missing', /unknown ID/],
     [data => data.recipes[0].primary = 'coal', /primary must/],
     [data => data.recipes[0].configurations[0].eu_per_operation = -1, /eu_per_operation/],
@@ -36,5 +39,13 @@ test('dataset validation accepts complete captured world-state rotations', () =>
   const state = {Name: 'test:chain', Properties: {axis: 'y'}};
   data.shape_member_rules = [{state_only_verified: true, matching_states: [state], rotation_verified: true,
     matching_world_states: {'2': [state], '3': [state], '4': [state], '5': [state]}}];
+  validateDataset(data);
+});
+
+test('dataset validation accepts a portable energy-storage machine', () => {
+  const data = example();
+  data.machines = [{id: 'test:storage', status: 'infrastructure', mechanic: 'energy_storage',
+    storage: {capacity_eu: 3200000, charge_eu_per_tick: 256, discharge_eu_per_tick: 256,
+      loss_eu_per_tick: 0, saved_charge_field: 'storedEu'}}];
   validateDataset(data);
 });

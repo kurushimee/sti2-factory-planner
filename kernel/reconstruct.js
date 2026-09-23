@@ -8,7 +8,7 @@ export function worldMachineKey(machine) {
 export function reconstructFactory(imported, dataset, corrections = {}) {
   const machines = new Map((dataset.machines ?? []).map(value => [value.id, value]));
   const upgrades = new Map((dataset.upgrades ?? []).map(value => [value.id, value]));
-  const assignments = [], unresolved = [], infrastructure = [], infrastructureCandidates = [];
+  const assignments = [], unresolved = [], infrastructure = [], infrastructureCandidates = [], storageUnits = [];
   const candidates = new Map();
   for (const recipe of dataset.recipes ?? []) {
     for (const id of new Set([recipe.id, recipe.source_id].filter(Boolean))) {
@@ -25,6 +25,25 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     const pending = reason => unresolved.push({machine: key, origin: saved.origin, machine_id: saved.id, recipe_id: recipeId, reason,
       recipe_candidates: saved.provider_candidates ?? [], facts: saved});
     const definition = machines.get(saved.id);
+    if (definition?.mechanic === 'energy_storage') {
+      const rule = definition.storage;
+      const raw = saved.facts?.[rule?.saved_charge_field ?? 'storedEu'];
+      if (!rule || !Number.isSafeInteger(rule.capacity_eu) || rule.capacity_eu <= 0
+        || !Number.isSafeInteger(rule.charge_eu_per_tick) || rule.charge_eu_per_tick <= 0
+        || !Number.isSafeInteger(rule.discharge_eu_per_tick) || rule.discharge_eu_per_tick <= 0
+        || rule.loss_eu_per_tick !== 0) {
+        pending('This storage unit needs a verified capacity, transfer limit, and loss rule.'); continue;
+      }
+      if (!/^(0|[1-9]\d*)$/.test(String(raw ?? '')) || BigInt(raw) > BigInt(rule.capacity_eu)) {
+        pending('The saved charge is missing, invalid, or exceeds this storage unit capacity.'); continue;
+      }
+      storageUnits.push({machine: key, machine_id: saved.id, origin: saved.origin,
+        saved_charge_eu: String(raw), capacity_eu: rule.capacity_eu,
+        charge_eu_per_tick: rule.charge_eu_per_tick, discharge_eu_per_tick: rule.discharge_eu_per_tick,
+        loss_eu_per_tick: rule.loss_eu_per_tick, evidence: `saved_${rule.saved_charge_field ?? 'storedEu'}`,
+        assumption: 'Saved charge is a starting quantity, not a sustained power supply. Cable layout and enabled state may limit transfer.'});
+      continue;
+    }
     if (definition?.mechanic === 'passive_infrastructure') {
       const enabled = correction.infrastructure_enabled;
       const candidate = {machine: key, origin: saved.origin, enabled: enabled ?? true,
@@ -144,7 +163,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
   }
   if (assignments.length && !goals.length && goalCandidates.every(value => value.consumers.length && value.evidence !== 'player_correction')) unresolved.push({reason: 'Assigned production forms a cycle with no clear retained primary output. Choose an end goal.', machines: assignments.map(value => value.machine)});
   return {assignments, goals, goal_candidates: goalCandidates, machine_setups: machineSetups, unresolved,
-    infrastructure, infrastructure_candidates: infrastructureCandidates,
+    infrastructure, infrastructure_candidates: infrastructureCandidates, storage_units: storageUnits,
     ingredients, obtained_resources: [...obtained],
     stock_targets: (imported.requesters ?? []).flatMap(requester => requester.requests.map(value => ({...value, origin: requester.origin}))),
     inference: 'Primary outputs with no other assigned consumer become capacity goals. Shared-resource connectivity is inferred, not a recovered cable network. Byproduct retention and cycles may need correction.',

@@ -66,7 +66,7 @@ The same world contains two zero-byte region files. Minecraft 1.21.1's matching 
 
 ## Charged storage units
 
-The controlled `--storage-fixture` world places all five MI storage tiers at distinct coordinates and charges each to one-third capacity before saving. `node tools/verify_storage_world.mjs <world.zip> <fixture.json> data/statech-2.0.1.json.gz <report.json>` checks the actual ZIP: all five block entities and exact decimal `storedEu` quantities survive import without archive errors. The compact result is `data/provenance/storage-world-report.json`. Stored charge is an initial quantity and does not prove overnight generation. The importer currently recognizes these machines but asks for recipe assignments that do not apply to storage. Issue #41 tracks the dedicated import result; #37 tracks its connection to period-aware power planning.
+The controlled `--storage-fixture` world places all five MI storage tiers at distinct coordinates and charges each to one-third capacity before saving. `node tools/verify_storage_world.mjs <world.zip> <fixture.json> data/statech-2.0.1.json.gz <report.json>` checks the actual ZIP: all five block entities become dedicated storage results with exact decimal `storedEu`, capacity, transfer limits, and origins. No recipe correction or production goal is invented. The compact result is `data/provenance/storage-world-report.json`. Missing or invalid charge is a focused unresolved entry. Stored charge is an initial quantity and does not prove overnight generation. Issue #41 still covers carrying these results into editable power settings and the graph; #37 covers period-aware dispatch.
 
 ## Formed processing arrays
 

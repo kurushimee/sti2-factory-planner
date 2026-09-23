@@ -2,7 +2,7 @@
   "pack": "StaTech Industry 2.0.1",
   "world_archive_sha256": "eae4b69f5eb38ba8f6e79e26608e88564ff46fbf5b885cf32f0afbdca197df14",
   "fixture_sha256": "2392c35f5873629c598685422fa5f6fe25ad77ac4bb01da0c81d30efc632719f",
-  "dataset_sha256": "44410c0d2663c477f913e5ffc208442d9a780c87587703dacdc46edd8dbf6770",
+  "dataset_sha256": "19cdb3186f471f0ba8ca3c2a644b54ff2b3b708a650b9d6c6bd638801e984e21",
   "machines": [
     {
       "machine": "modern_industrialization:lv_storage_unit",
@@ -13,6 +13,9 @@
         "z": 0
       },
       "saved_charge_eu": "1066666",
+      "capacity_eu": 3200000,
+      "charge_eu_per_tick": 256,
+      "discharge_eu_per_tick": 256,
       "evidence": "saved_storedEu"
     },
     {
@@ -24,6 +27,9 @@
         "z": 0
       },
       "saved_charge_eu": "4266666",
+      "capacity_eu": 12800000,
+      "charge_eu_per_tick": 1024,
+      "discharge_eu_per_tick": 1024,
       "evidence": "saved_storedEu"
     },
     {
@@ -35,6 +41,9 @@
         "z": 0
       },
       "saved_charge_eu": "34133333",
+      "capacity_eu": 102400000,
+      "charge_eu_per_tick": 8192,
+      "discharge_eu_per_tick": 8192,
       "evidence": "saved_storedEu"
     },
     {
@@ -46,6 +55,9 @@
         "z": 0
       },
       "saved_charge_eu": "273066666",
+      "capacity_eu": 819200000,
+      "charge_eu_per_tick": 65536,
+      "discharge_eu_per_tick": 65536,
       "evidence": "saved_storedEu"
     },
     {
@@ -57,8 +69,11 @@
         "z": 0
       },
       "saved_charge_eu": "4266666666666",
+      "capacity_eu": 12800000000000,
+      "charge_eu_per_tick": 1024000000,
+      "discharge_eu_per_tick": 1024000000,
       "evidence": "saved_storedEu"
     }
   ],
-  "limitation": "Saved charge is a quantity, not a sustained output rate. The current planner still asks for recipe assignments on these recognized storage units; issue #41 tracks their dedicated import."
+  "limitation": "Saved charge is a starting quantity, not a sustained output rate. The planner still needs to carry imported storage into periodic power settings and the graph."
 }

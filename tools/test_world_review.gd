@@ -73,5 +73,25 @@ func _run() -> void:
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/world-review-tesla.png")
 	dialog.hide()
+	var storage_origin := {"dimension": "minecraft:overworld", "x": 404, "y": 160, "z": 0}
+	var storage_key := "minecraft:overworld|404|160|0"
+	var storage_machine := {"id": "modern_industrialization:lv_storage_unit", "origin": storage_origin, "facts": {"storedEu": "1066666"}}
+	var storage_rule := {"id": storage_machine.id, "mechanic": "energy_storage"}
+	var storage_selection := {"machine": storage_key, "saved_charge_eu": "1066666", "capacity_eu": 3200000,
+		"charge_eu_per_tick": 256, "assumption": "Cable layout may limit transfer."}
+	await dialog.open_review({"machines": [storage_machine], "reconstruction": {"storage_units": [storage_selection]}},
+		{"machines": [storage_rule], "recipes": recipes})
+	assert(dialog.get_node("%WorldRecipes").item_count == 0)
+	assert(!dialog.get_node("%WorldRecipeSearch").editable)
+	assert(dialog.get_node("%RetainOutput").disabled)
+	assert("Saved charge: 1066666 / 3.2 M EU" in dialog.get_node("%WorldDetails").text)
+	assert("not a sustained power supply" in dialog.get_node("%WorldDetails").text)
+	dialog._retain_changed(true)
+	assert(!dialog._corrections.has(storage_key))
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/world-review-storage.png")
+	dialog.hide()
 	print("World review passed large lists, page selection, search, staged corrections, cancellation, and empty imports.")
 	quit()

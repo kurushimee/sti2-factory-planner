@@ -340,7 +340,9 @@ def build_dataset(capture):
                                  if machine["status"] == "supported" and machine.get("mechanic") != "mi_array"
                                  and machine.get("availability", {}).get("automatic", True)],
             "unsupported_entries": unsupported, "loaded_mods": capture["loaded_mods"],
-            "source": {"pack_version": "2.0.1", "capture_format": capture["format"], "capture_version": capture["version"]}}
+            "source": {"pack_version": "2.0.1", "capture_format": capture["format"], "capture_version": capture["version"],
+                       **({"storage_capture_sha256": capture["storage_capture_sha256"]}
+                          if capture.get("storage_capture_sha256") else {})}}
 
 
 if __name__ == "__main__":
