@@ -13,6 +13,7 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--fixture", action="store_true", help="Create the controlled import fixture in the isolated test world.")
     parser.add_argument("--structure-fixture", action="store_true", help="Create and check the isolated multiblock structure fixture.")
+    parser.add_argument("--rotation-fixture", action="store_true", help="Create and check four rotated steam quarries in the isolated test world.")
     parser.add_argument("--structure-bill", action="store_true", help="Check the prepared structural bill in the isolated world.")
     parser.add_argument("--certus-farm", action="store_true", help="Build and measure both certus farms in the isolated world.")
     args = parser.parse_args()
@@ -51,6 +52,8 @@ def main() -> None:
                         commands.extend(line.strip() for line in (Path(__file__).parent / "fixture-commands.txt").read_text().splitlines() if line.strip())
                     if args.structure_fixture:
                         commands.extend(["forceload add 48 -16 80 16", "tick freeze", "planner_fixture_structure", "save-all flush"])
+                    if args.rotation_fixture:
+                        commands.extend(["forceload add 240 -16 368 16", "tick freeze", "planner_fixture_rotation", "save-all flush"])
                     commands.append("stop")
                     process.stdin.write("\n".join(commands) + "\n")
                     process.stdin.flush()
@@ -65,6 +68,8 @@ def main() -> None:
                 raise RuntimeError(f"The structural bill did not match. Inspect {log_path}.")
             if args.structure_fixture and "Planner structure fixture matched:" not in text:
                 raise RuntimeError(f"Structure fixture did not match. Inspect {log_path}.")
+            if args.rotation_fixture and "Planner rotation fixtures matched all four loaded steam quarries." not in text:
+                raise RuntimeError(f"Rotated structure fixtures did not match. Inspect {log_path}.")
         finally:
             if process.poll() is None:
                 try:

@@ -28,12 +28,13 @@ export function associateStructures(imported, dataset, stateAt) {
         if (!rule?.state_only_verified) { report.problems.push({origin, reason: 'This shape member requires an unsupported predicate.'}); continue; }
         const state = stateAt(origin);
         if (!state) { report.problems.push({origin, reason: 'The required block state is unavailable.'}); continue; }
-        // Directional state predicates need the matching block's rotation behavior, not a guessed property rename.
-        const matching = rule.matching_states.filter(value => value.Name === state.Name);
         const hasDirection = Object.keys(state.Properties ?? {}).some(key => ['facing', 'axis', 'rotation', 'north', 'east', 'south', 'west', 'shape'].includes(key));
-        if (hasDirection && machine.facts.facingDirection !== 3) {
-          report.problems.push({origin, reason: 'This directional member requires a block rotation adapter.'}); continue;
+        const facing = machine.facts.facingDirection;
+        const rotated = rule.matching_world_states?.[facing];
+        if (hasDirection && facing !== 3 && !rotated) {
+          report.problems.push({origin, reason: 'This directional member has no verified world-state rotation.'}); continue;
         }
+        const matching = (facing === 3 ? rule.matching_states : rotated ?? rule.matching_states).filter(value => value.Name === state.Name);
         if (!matching.some(value => Object.entries(value.Properties ?? {}).every(([key, expected]) => state.Properties?.[key] === expected))) {
           report.problems.push({origin, reason: 'The saved block does not match the captured shape.', block: state.Name});
         }

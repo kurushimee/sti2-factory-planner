@@ -6,10 +6,12 @@ import {readDataset} from './read_dataset.mjs';
 
 if (process.platform !== 'win32') throw new Error('Run the exported Windows check on Windows.');
 const [archive, catalog = 'data/statech-2.0.1.json.gz'] = process.argv.slice(2);
-if (!archive) throw new Error('Supply the controlled array-world ZIP.');
+if (!archive) throw new Error('Supply a controlled world ZIP.');
+const rotation = process.argv.includes('--rotation');
 const appdata = await mkdtemp('F:/sti2-work/desktop-world-');
 const user = join(appdata, 'Godot', 'app_userdata', 'STI2 Factory Planner');
 await mkdir(user, {recursive: true});
+await mkdir(resolve('.plans/artifacts/workspace'), {recursive: true});
 const dataset = await readDataset(catalog);
 const request = {goals: [], replication: true,
   available_machines: ['modern_industrialization:electric_macerator', 'modern_industrialization:replicator', 'ae2:molecular_assembler',
@@ -37,15 +39,24 @@ await new Promise((resolveRun, reject) => {
   });
 });
 const saved = JSON.parse(await readFile(join(user, 'autosave.json'), 'utf8'));
-assert.equal(saved.imported_world.machines.length, 12);
-assert.equal(saved.request.goals.length, 7);
+assert.equal(saved.imported_world.machines.length, rotation ? 14 : 12);
+assert.equal(saved.request.goals.length, rotation ? 6 : 7);
 assert.deepEqual(saved.imported_world.errors, []);
-assert.ok(Object.keys(saved.positions).length >= 7);
-for (const x of [320, 384]) {
-  const machine = saved.imported_world.machines.find(value => value.origin.x === x);
-  assert.equal(machine.contained_machine.count, 8);
-  assert.equal(machine.upgrades.count, 4);
+assert.ok(Object.keys(saved.positions).length >= (rotation ? 6 : 7));
+if (rotation) {
+  for (const [x, facing] of [[256, 2], [288, 5], [320, 3], [352, 4]]) {
+    const machine = saved.imported_world.machines.find(value => value.id === 'modern_industrialization:steam_quarry' && value.origin.x === x);
+    assert.ok(machine);
+    assert.equal(machine.facts.facingDirection, facing);
+    assert.equal(machine.structure.status, 'matching_saved_geometry');
+  }
+} else {
+  for (const x of [320, 384]) {
+    const machine = saved.imported_world.machines.find(value => value.origin.x === x);
+    assert.equal(machine.contained_machine.count, 8);
+    assert.equal(machine.upgrades.count, 4);
+  }
 }
 assert.ok((await stat(capture)).mtimeMs >= started);
 assert.equal((await stat(archive)).mtimeMs, before.mtimeMs);
-console.log(`The standalone export imported 12 machines and seven goals from ${before.size} bytes with empty PATH: ${appdata}`);
+console.log(`The standalone export imported ${saved.imported_world.machines.length} machines and ${saved.request.goals.length} goals from ${before.size} bytes with empty PATH: ${appdata}`);

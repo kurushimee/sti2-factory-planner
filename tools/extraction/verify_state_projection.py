@@ -29,10 +29,23 @@ def verify(probes, previous):
                        for properties in by_block.get(state["Name"], [])):
                 raise ValueError(f"The projection lost a previously accepted state: {state}")
         encoded = json.dumps(rule["matching_states"], sort_keys=True, separators=(",", ":")).encode()
-        reports.append({"rule": index, "source_class": rule["source_class"], "old_patterns": len(old["matching_states"]),
-                        "patterns": len(rule["matching_states"]), "matching_loaded_states": rule["matching_state_count"],
-                        "checked_loaded_states": rule["projection_checked_state_count"], "sha256": hashlib.sha256(encoded).hexdigest()})
-    return {"scope": "The Java probe checks membership for every loaded state of each matching block before and after projection. This comparison also checks every previously captured accepted pattern.",
+        record = {"rule": index, "source_class": rule["source_class"], "old_patterns": len(old["matching_states"]),
+                  "patterns": len(rule["matching_states"]), "matching_loaded_states": rule["matching_state_count"],
+                  "checked_loaded_states": rule["projection_checked_state_count"], "sha256": hashlib.sha256(encoded).hexdigest()}
+        rotated = rule.get("matching_world_states")
+        if rotated is not None:
+            if rule.get("rotation_verified") is not True or set(rotated) != {"2", "3", "4", "5"}:
+                raise ValueError(f"Rule {index} lacks all four verified horizontal rotations.")
+            record["world_rotations"] = {}
+            for facing in ("2", "3", "4", "5"):
+                states = rotated[facing]
+                if not states or any(not isinstance(state.get("Name"), str) or not isinstance(state.get("Properties"), dict)
+                                     for state in states):
+                    raise ValueError(f"Rule {index} has an invalid {facing} world-state projection.")
+                payload = json.dumps(states, sort_keys=True, separators=(",", ":")).encode()
+                record["world_rotations"][facing] = {"patterns": len(states), "sha256": hashlib.sha256(payload).hexdigest()}
+        reports.append(record)
+    return {"scope": "The Java probe checks membership for every loaded state of each matching block before and after projection. Rotated projections also use the loaded block rotation methods at two positions and reverse back to the template state. This comparison checks every previously captured accepted pattern.",
             "rules": reports}
 
 

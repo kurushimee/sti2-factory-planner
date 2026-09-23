@@ -169,6 +169,19 @@ export function validateDataset(dataset) {
         object(state.Properties ?? {}, `${at}.Properties`);
         for (const value of Object.values(state.Properties ?? {})) text(value, `${at}.property`);
       }
+      if (rule.matching_world_states !== undefined) {
+        if (rule.rotation_verified !== true) fail(at, 'world-state rotations require verified capture evidence');
+        object(rule.matching_world_states, `${at}.matching_world_states`);
+        for (const facing of ['2', '3', '4', '5']) {
+          const states = rule.matching_world_states[facing];
+          array(states, `${at}.matching_world_states.${facing}`);
+          for (const state of states) {
+            object(state, at); text(state.Name, `${at}.Name`);
+            object(state.Properties ?? {}, `${at}.Properties`);
+            for (const value of Object.values(state.Properties ?? {})) text(value, `${at}.property`);
+          }
+        }
+      }
     }
   }
   for (const upgrade of dataset.upgrades ?? []) number(upgrade.extra_max_eu, `upgrade ${upgrade.id}.extra_max_eu`, 0, true);
