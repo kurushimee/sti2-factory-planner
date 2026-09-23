@@ -2,7 +2,7 @@
   "pack": "StaTech Industry 2.0.1",
   "world_archive_sha256": "eae4b69f5eb38ba8f6e79e26608e88564ff46fbf5b885cf32f0afbdca197df14",
   "fixture_sha256": "2392c35f5873629c598685422fa5f6fe25ad77ac4bb01da0c81d30efc632719f",
-  "dataset_sha256": "19cdb3186f471f0ba8ca3c2a644b54ff2b3b708a650b9d6c6bd638801e984e21",
+  "dataset_sha256": "8c59e872eb7b31b06b68414d726098db3ba02937c6796196cb12a093b863b4d8",
   "machines": [
     {
       "machine": "modern_industrialization:lv_storage_unit",
@@ -75,5 +75,5 @@
       "evidence": "saved_storedEu"
     }
   ],
-  "limitation": "Saved charge is a starting quantity, not a sustained output rate. The planner still needs to carry imported storage into periodic power settings and the graph."
+  "limitation": "Saved charge is a starting quantity, not a sustained output rate. Imported storage counts enter the editable power settings; actual transfer depends on the player's cable network."
 }

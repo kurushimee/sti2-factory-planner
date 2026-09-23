@@ -5,7 +5,7 @@
   "capture_sha256": "59b2a1f5edc9d628a8d1f34c70885d4bbbd0ccafe080bb44174b77024a77ba17",
   "private_world_archive_sha256": "77b63f6128499dcd5a466b34174beb423ecb32597fb98f4acf732b36a0048b93",
   "source_method": "The matching storage-unit registration and EnergyComponent bytecode give capacity, saved energy, and absence of intrinsic decay. Loaded adapters transferred through a one-node ElectricityNetwork for 20 ticks in each direction.",
-  "planning_status": "Storage is not selectable until a periodic power balance and construction bill are integrated.",
+  "planning_status": "The planner sizes whole units in periodic dispatch and imports saved counts and charge as editable power-plan facts.",
   "limits": [
     "The transfer samples use injected adjacent adapters, not a placed cable layout.",
     "A player's shared network, transformer chain, and distribution topology can reduce available transfer.",

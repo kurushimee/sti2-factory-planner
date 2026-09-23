@@ -39,4 +39,8 @@ test('missing and impossible stored charge receive focused corrections', () => {
     {machines: [{...rule, storage: {...rule.storage, loss_eu_per_tick: 1}}], recipes: []});
   assert.equal(unknown.storage_units.length, 0);
   assert.match(unknown.unresolved[0].reason, /loss rule/);
+  const missingTier = reconstructFactory({machines: [{...saved(2, '1'), id: 'mi:new_storage_unit'}]}, dataset);
+  assert.equal(missingTier.storage_units.length, 0);
+  assert.match(missingTier.unresolved[0].reason, /missing from the dataset/);
+  assert.equal(missingTier.unresolved[0].facts.facts.storedEu, '1');
 });

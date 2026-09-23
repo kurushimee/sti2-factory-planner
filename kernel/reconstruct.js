@@ -25,6 +25,10 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     const pending = reason => unresolved.push({machine: key, origin: saved.origin, machine_id: saved.id, recipe_id: recipeId, reason,
       recipe_candidates: saved.recipe_candidates ?? saved.provider_candidates ?? [], facts: saved});
     const definition = machines.get(saved.id);
+    if (saved.id.endsWith('_storage_unit') && !definition?.storage) {
+      pending('This saved storage tier is missing from the dataset. Its charge and transfer cannot be used until a matching rule is supplied.');
+      continue;
+    }
     if (definition?.mechanic === 'energy_storage') {
       const rule = definition.storage;
       const raw = saved.facts?.[rule?.saved_charge_field ?? 'storedEu'];

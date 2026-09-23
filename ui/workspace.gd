@@ -697,13 +697,13 @@ func _select_node(node: Node) -> void:
 		node.selected = true
 		%EditGoal.disabled = true
 		%RemoveGoal.disabled = true
-		inspector.text = "[font_size=20]%s[/font_size]\n\n[b]%s whole units[/b]\n%s EU total capacity\n%s EU/t charge limit\n%s EU/t discharge limit" % [PlannerDisplay.markup(PlannerDisplay.machine_name(unit.machine, _resources)), PlannerDisplay.number(unit.machines), PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.charge_eu_per_tick), PlannerDisplay.number(unit.discharge_eu_per_tick)]
+		inspector.text = "[font_size=20]%s[/font_size]\n\n[b]%d whole %s[/b]\n%s EU total capacity\n%s EU/t charge limit\n%s EU/t discharge limit" % [PlannerDisplay.markup(PlannerDisplay.machine_name(unit.machine, _resources)), int(unit.machines), "unit" if int(unit.machines) == 1 else "units", PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.charge_eu_per_tick), PlannerDisplay.number(unit.discharge_eu_per_tick)]
 		if unit.has("initial_charge_eu"):
 			inspector.text += "\n%s EU planned initial charge\n%s EU at the cycle end\n\nThis valid dispatch may use more than the minimum initial charge. The factory's generation and fuel chains sustain the repeated cycle." % [PlannerDisplay.number(unit.initial_charge_eu), PlannerDisplay.number(unit.ending_charge_eu)]
 		else:
 			inspector.text += "\n\nNo generation or production goal currently sizes this storage for periodic dispatch."
 		if unit.has("imported_saved_charge_eu"):
-			inspector.text += "\n\n[b]World snapshot[/b]\n%s saved units with %s EU total charge when imported. This is a starting quantity, not sustained generation." % [PlannerDisplay.number(unit.imported_count), unit.imported_saved_charge_eu]
+			inspector.text += "\n\n[b]World snapshot[/b]\n%d saved %s with %s EU total charge when imported. This is a starting quantity, not sustained generation." % [int(unit.imported_count), "unit" if int(unit.imported_count) == 1 else "units", unit.imported_saved_charge_eu]
 			for origin: Dictionary in unit.get("imported_origins", []):
 				inspector.text += "\n%s · %d, %d, %d" % [PlannerDisplay.markup(str(origin.dimension)), origin.x, origin.y, origin.z]
 			if unit.has("initial_charge_eu") && float(unit.imported_saved_charge_eu) < float(unit.initial_charge_eu):
