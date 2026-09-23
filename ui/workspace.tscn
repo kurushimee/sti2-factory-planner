@@ -262,8 +262,8 @@ popup/item_2/id = 2
 [node name="FocusRecipe" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Focus recipe"
-tooltip_text = "Center the inspected recipe at a readable zoom."
+text = "Focus chain"
+tooltip_text = "Show the inspected recipe and nearby input lines at a readable zoom."
 
 [node name="Hint" type="Label" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Navigation"]
 layout_mode = 2

@@ -5,6 +5,7 @@ func _initialize() -> void:
 	var entries: Array[PlannerGraphLayout.Entry] = []
 	for key: String in ["a", "b", "c", "d"]:
 		entries.append(PlannerGraphLayout.Entry.new(key, "Metals", Vector2(280, 210)))
+	entries.append(PlannerGraphLayout.Entry.new("other", "Metals", Vector2(280, 210)))
 	entries.append(PlannerGraphLayout.Entry.new("power", "Power", Vector2(310, 250)))
 	entries.append(PlannerGraphLayout.Entry.new("ore", "Ore processing", Vector2(280, 210)))
 	entries.append(PlannerGraphLayout.Entry.new("extraction", "Extraction", Vector2(280, 210)))
@@ -20,6 +21,9 @@ func _initialize() -> void:
 	assert(layout.positions.b.x == layout.positions.c.x)
 	assert(layout.positions.c.x < layout.positions.d.x)
 	assert(layout.positions.b.y != layout.positions.c.y)
+	var focused := PlannerGraphLayout.arrange(entries, flows, ["d"])
+	assert(focused.positions.c.y < focused.positions.b.y)
+	assert(focused.positions.a.y < focused.positions.other.y)
 	assert(layout.positions.extraction.x < layout.positions.ore.x)
 	assert(layout.positions.ore.x < layout.positions.a.x)
 	for first: PlannerGraphLayout.Entry in entries:
