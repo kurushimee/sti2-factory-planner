@@ -8,7 +8,7 @@ export function worldMachineKey(machine) {
 export function reconstructFactory(imported, dataset, corrections = {}) {
   const machines = new Map((dataset.machines ?? []).map(value => [value.id, value]));
   const upgrades = new Map((dataset.upgrades ?? []).map(value => [value.id, value]));
-  const assignments = [], unresolved = [], infrastructure = [], infrastructureCandidates = [], storageUnits = [];
+  const assignments = [], unresolved = [], infrastructure = [], infrastructureCandidates = [], storageUnits = [], solarPanels = [], solarCandidates = [];
   const candidates = new Map();
   for (const recipe of dataset.recipes ?? []) {
     for (const id of new Set([recipe.id, recipe.source_id].filter(Boolean))) {
@@ -25,6 +25,32 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
     const pending = reason => unresolved.push({machine: key, origin: saved.origin, machine_id: saved.id, recipe_id: recipeId, reason,
       recipe_candidates: saved.recipe_candidates ?? saved.provider_candidates ?? [], facts: saved});
     const definition = machines.get(saved.id);
+    if (definition?.mechanic === 'periodic_generation') {
+      const routes = (dataset.recipes ?? []).filter(recipe => !recipe.unsupported &&
+        recipe.configurations?.some(configuration => configuration.machine === saved.id && configuration.periodic_generation));
+      const cell = routes[0]?.inputs.find(flow => flow.resource?.startsWith('item:'))?.resource?.slice(5);
+      const savedCell = (saved.facts?.items ?? []).find(stack => stack.key?.id === cell && Number(stack.amount) > 0);
+      const savedFluid = (saved.facts?.fluids ?? []).find(stack => Number(stack.amount) > 0 && stack.key?.id);
+      const wet = routes.filter(recipe => recipe.inputs.some(flow => flow.resource === `fluid:${savedFluid?.key?.id}`));
+      const dry = routes.filter(recipe => !recipe.inputs.some(flow => flow.resource?.startsWith('fluid:')));
+      const selected = correction.solar_recipe ? routes.filter(recipe => recipe.id === correction.solar_recipe)
+        : savedFluid ? wet : dry;
+      const enabled = correction.solar_enabled ?? true;
+      const candidate = {machine: key, machine_id: saved.id, origin: saved.origin, enabled,
+        route_candidates: routes.map(recipe => recipe.id),
+        saved_cell: savedCell ? {resource: `item:${cell}`, amount: String(savedCell.amount)} : null,
+        saved_fluid: savedFluid ? {resource: `fluid:${savedFluid.key.id}`, amount_mb: String(savedFluid.amount)} : null,
+        assumption: 'Continuous clear weather, open sky, a supplied replacement cell, and a free power output are planning assumptions. Saved cell and water are stocks, not recurring supplies.'};
+      solarCandidates.push(candidate);
+      if (!enabled) continue;
+      if (!routes.length) { pending('This panel needs a verified periodic generation route.'); continue; }
+      if (!savedCell) { pending('No matching photovoltaic cell is saved in this panel. Confirm its supply before planning continuous generation.'); continue; }
+      if (selected.length !== 1) { pending('Choose one supported dry or water-assisted route for this panel.'); continue; }
+      const configuration = selected[0].configurations.find(value => value.machine === saved.id && value.periodic_generation);
+      solarPanels.push({...candidate, recipe: selected[0].id, configuration: configuration.id,
+        route_evidence: correction.solar_recipe ? 'player_correction' : savedFluid ? 'saved_water_stock' : 'no_saved_water'});
+      continue;
+    }
     if (saved.id.endsWith('_storage_unit') && !definition?.storage) {
       pending('This saved storage tier is missing from the dataset. Its charge and transfer cannot be used until a matching rule is supplied.');
       continue;
@@ -169,6 +195,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
   if (assignments.length && !goals.length && goalCandidates.every(value => value.consumers.length && value.evidence !== 'player_correction')) unresolved.push({reason: 'Assigned production forms a cycle with no clear retained primary output. Choose an end goal.', machines: assignments.map(value => value.machine)});
   return {assignments, goals, goal_candidates: goalCandidates, machine_setups: machineSetups, unresolved,
     infrastructure, infrastructure_candidates: infrastructureCandidates, storage_units: storageUnits,
+    solar_panels: solarPanels, solar_candidates: solarCandidates,
     ingredients, obtained_resources: [...obtained],
     stock_targets: (imported.requesters ?? []).flatMap(requester => requester.requests.map(value => ({...value, origin: requester.origin}))),
     inference: 'Primary outputs with no other assigned consumer become capacity goals. Shared-resource connectivity is inferred, not a recovered cable network. Byproduct retention and cycles may need correction.',

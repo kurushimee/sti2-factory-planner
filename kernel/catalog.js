@@ -151,6 +151,11 @@ export function prepareDataset(dataset, request, checkBudget = () => {}, options
   const structures = structureContext(dataset);
   const selected = new Map();
   const needed = new Set((request.goals ?? []).map(goal => goal.resource));
+  for (const recipe of dataset.recipes) {
+    if (recipe.configurations?.some(configuration => (request.installed?.[configuration.id] ?? 0) > 0)) {
+      for (const output of recipe.outputs) needed.add(output.resource);
+    }
+  }
   if (request.overhead_eu_per_tick || request.infrastructure?.some(value => value.count > 0)) needed.add('energy:eu');
   if (request.construction) for (const entry of infrastructurePower(dataset, request).entries) {
     for (const flow of entry.structure.build_requirements) needed.add(flow.resource);

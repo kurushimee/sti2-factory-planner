@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://ui/world_review.gd" id="1"]
 
 [node name="WorldReview" type="ConfirmationDialog"]
-title = "Review imported production"
+title = "Review imported factory"
 size = Vector2i(1000, 650)
 ok_button_text = "Apply and recalculate"
 script = ExtResource("1")
@@ -114,4 +114,4 @@ layout_mode = 2
 custom_minimum_size = Vector2(940, 0)
 theme_type_variation = &"MutedLabel"
 autowrap_mode = 2
-text = "Select a production machine to correct its recipe or end goal. Storage shows saved charge without creating a power supply. Cancel leaves the current plan unchanged."
+text = "Select a saved machine to review its recipe, power setup, or end goal. Stored quantities are not output rates. Cancel leaves the current plan unchanged."

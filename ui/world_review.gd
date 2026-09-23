@@ -47,7 +47,7 @@ func open_review(world: Dictionary, dataset: Dictionary) -> void:
 	%RetainOutput.disabled = true
 	_filter_recipes("")
 	var reconstruction: Dictionary = _world.get("reconstruction", {})
-	%WorldSummary.text = "%d machines · %d capacity goals · %d storage units · %d infrastructure configurations · %d need correction\nSaved capacity assumes continuous supply. Stored energy and requester stocks are quantities." % [_world.get("machines", []).size(), reconstruction.get("goals", []).size(), reconstruction.get("storage_units", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size()]
+	%WorldSummary.text = "%d machines · %d capacity goals · %d solar panels · %d storage units · %d infrastructure configurations · %d need correction\nSaved capacity assumes continuous supply. Stored energy and requester stocks are quantities." % [_world.get("machines", []).size(), reconstruction.get("goals", []).size(), reconstruction.get("solar_panels", []).size(), reconstruction.get("storage_units", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size()]
 	if %WorldMachines.item_count:
 		%WorldMachines.select(0)
 		_select_machine(0)
@@ -140,6 +140,19 @@ func _select_machine(index: int) -> void:
 		for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
 			if unresolved.get("machine") == key:
 				%WorldDetails.text += "\n" + str(unresolved.reason)
+	if _is_solar():
+		%RetainOutput.text = "Include this panel in the power plan"
+		%RetainOutput.set_pressed_no_signal(_corrections.get(key, {}).get("solar_enabled", true))
+		for candidate: Dictionary in _world.get("reconstruction", {}).get("solar_candidates", []):
+			if candidate.machine != key:
+				continue
+			var cell: Dictionary = candidate.get("saved_cell", {}) if candidate.get("saved_cell") != null else {}
+			var fluid: Dictionary = candidate.get("saved_fluid", {}) if candidate.get("saved_fluid") != null else {}
+			%WorldDetails.text = "%s · %d, %d, %d\n%s\nSaved cell: %s × %s\nSaved fluid: %s mB %s\n%s" % [str(machine.id).get_slice(":", 1).replace("_", " ").capitalize(), machine.origin.x, machine.origin.y, machine.origin.z, machine.origin.dimension, cell.get("amount", "0"), PlannerDisplay.readable_name(cell.get("resource", "none")), fluid.get("amount_mb", "0"), PlannerDisplay.readable_name(fluid.get("resource", "none")), candidate.assumption]
+			break
+		for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
+			if unresolved.get("machine") == key:
+				%WorldDetails.text += "\n" + str(unresolved.reason)
 	_filter_recipes(%WorldRecipeSearch.text, true)
 
 
@@ -150,9 +163,11 @@ func _filter_recipes(query: String, reveal_selected: bool = false) -> void:
 	%WorldRecipeSearch.placeholder_text = "This device has no recipe assignment." if _is_nonrecipe() else "Find a compatible recipe…"
 	if _selected >= 0 && !_is_nonrecipe():
 		var machine: Dictionary = _world.machines[_selected]
-		var chosen: String = str(_corrections.get(_key(machine), {}).get("recipe", machine.get("recipe_id", "")))
+		var chosen: String = _selected_recipe(machine)
 		var search := query.to_lower()
 		for recipe: Dictionary in _dataset.get("recipes", []):
+			if _is_solar() && !recipe.id in _solar_routes(machine):
+				continue
 			if machine.get("recipe_type") != null && recipe.get("type") != machine.recipe_type && recipe.get("process", {}).get("type") != machine.recipe_type:
 				continue
 			var title: String = PlannerDisplay.recipe_name(recipe)
@@ -175,7 +190,7 @@ func _show_recipes() -> void:
 	var chosen := ""
 	if _selected >= 0:
 		var machine: Dictionary = _world.machines[_selected]
-		chosen = str(_corrections.get(_key(machine), {}).get("recipe", machine.get("recipe_id", "")))
+		chosen = _selected_recipe(machine)
 	for offset: int in range(_recipe_page * PAGE_SIZE, mini((_recipe_page + 1) * PAGE_SIZE, _recipe_matches.size())):
 		var recipe: Dictionary = _recipe_matches[offset]
 		var machine: Dictionary = _world.machines[_selected]
@@ -200,7 +215,7 @@ func _select_recipe(index: int) -> void:
 	var key := _key(_world.machines[_selected])
 	if !_corrections.has(key):
 		_corrections[key] = {}
-	_corrections[key].recipe = %WorldRecipes.get_item_metadata(index)
+	_corrections[key]["solar_recipe" if _is_solar() else "recipe"] = %WorldRecipes.get_item_metadata(index)
 
 
 func _retain_changed(enabled: bool) -> void:
@@ -209,7 +224,7 @@ func _retain_changed(enabled: bool) -> void:
 	var key := _key(_world.machines[_selected])
 	if !_corrections.has(key):
 		_corrections[key] = {}
-	_corrections[key]["storage_enabled" if _is_storage() else ("infrastructure_enabled" if _is_infrastructure() else "goal")] = enabled
+	_corrections[key]["solar_enabled" if _is_solar() else ("storage_enabled" if _is_storage() else ("infrastructure_enabled" if _is_infrastructure() else "goal"))] = enabled
 
 
 func _is_infrastructure() -> bool:
@@ -224,6 +239,31 @@ func _is_storage() -> bool:
 		return false
 	var id: String = str(_world.machines[_selected].id)
 	return _dataset.get("machines", []).any(func(machine: Dictionary) -> bool: return machine.get("id") == id && machine.get("mechanic") == "energy_storage")
+
+
+func _is_solar() -> bool:
+	if _selected < 0:
+		return false
+	var id: String = str(_world.machines[_selected].id)
+	return _dataset.get("machines", []).any(func(machine: Dictionary) -> bool: return machine.get("id") == id && machine.get("mechanic") == "periodic_generation")
+
+
+func _solar_routes(machine: Dictionary) -> Array:
+	for candidate: Dictionary in _world.get("reconstruction", {}).get("solar_candidates", []):
+		if candidate.machine == _key(machine):
+			return candidate.route_candidates
+	return []
+
+
+func _selected_recipe(machine: Dictionary) -> String:
+	var key := _key(machine)
+	if _is_solar():
+		if _corrections.get(key, {}).has("solar_recipe"):
+			return str(_corrections[key].solar_recipe)
+		for panel: Dictionary in _world.get("reconstruction", {}).get("solar_panels", []):
+			if panel.machine == key:
+				return str(panel.recipe)
+	return str(_corrections.get(key, {}).get("recipe", machine.get("recipe_id", "")))
 
 
 func _is_nonrecipe() -> bool:

@@ -351,7 +351,13 @@ func _edit_goal() -> void:
 		%GroupName.select_all()
 		%GroupName.grab_focus.call_deferred()
 	elif _recipes.has(_selected):
-		%GoalEditor.open_goal(_recipes[_selected], _dataset, _request)
+		if _recipes[_selected].get("type") == "planner:solar_generation":
+			%FactorySettings.open_settings(_dataset, _request, _world_import)
+			%FactorySettings.get_node("%SettingsCategory").select(9)
+			%FactorySettings._category_changed(9)
+			%FactorySettings._filter(_selected)
+		else:
+			%GoalEditor.open_goal(_recipes[_selected], _dataset, _request)
 
 
 func _rename_group() -> void:
@@ -426,14 +432,18 @@ func _calculated(result: Dictionary) -> void:
 		status.text = "Configuration preview updated. Apply the goal to recalculate its support."
 		return
 	if _job_kind in ["import_world", "correct_world"]:
+		var previous_solar: Array = _world_import.get("reconstruction", {}).get("solar_panels", []).duplicate(true)
 		var apply_empty: bool = _job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("goals", []).is_empty()
 		var replace_infrastructure: bool = !result.get("reconstruction", {}).get("infrastructure", []).is_empty() || (_job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("infrastructure", []).is_empty())
 		var replace_storage: bool = !result.get("reconstruction", {}).get("storage_units", []).is_empty() || (_job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("storage_units", []).is_empty())
+		var replace_solar: bool = !result.get("reconstruction", {}).get("solar_panels", []).is_empty() || !previous_solar.is_empty()
 		_remember()
 		_world_import.assign(result)
 		%ReviewWorld.disabled = false
 		var reconstruction: Dictionary = result.get("reconstruction", {})
 		var goals: Array = reconstruction.get("goals", [])
+		if replace_solar:
+			_preserve_solar_positions(previous_solar, reconstruction.get("solar_panels", []))
 		if replace_infrastructure:
 			_request.infrastructure = reconstruction.get("infrastructure", []).duplicate(true)
 		if replace_storage:
@@ -449,6 +459,44 @@ func _calculated(result: Dictionary) -> void:
 				if !id in available_storage:
 					available_storage.append(id)
 			_request.available_machines = available_storage
+		if replace_solar:
+			var installed_solar: Dictionary = _request.get("installed", {}).duplicate(true)
+			for panel: Dictionary in previous_solar:
+				installed_solar.erase(panel.configuration)
+			for panel: Dictionary in reconstruction.get("solar_panels", []):
+				installed_solar[panel.configuration] = int(installed_solar.get(panel.configuration, 0)) + 1
+			_request.installed = installed_solar
+			var available_solar: Array = _request.get("available_machines", _dataset.get("default_machines", [])).duplicate()
+			for panel: Dictionary in reconstruction.get("solar_panels", []):
+				if !panel.machine_id in available_solar:
+					available_solar.append(panel.machine_id)
+			_request.available_machines = available_solar
+			if !reconstruction.get("solar_panels", []).is_empty() && _request.get("periodic_storage", []).is_empty():
+				var peak := 0.0
+				for panel: Dictionary in reconstruction.solar_panels:
+					for recipe: Dictionary in _dataset.get("recipes", []):
+						if recipe.id == panel.recipe:
+							var profile: Dictionary = recipe.configurations[0].periodic_generation
+							var panel_peak := 0.0
+							for segment: Dictionary in profile.segments:
+								panel_peak = maxf(panel_peak, float(segment.eu_per_tick))
+							peak += panel_peak
+							break
+				var tiers: Array[Dictionary] = []
+				for machine: Dictionary in _dataset.get("machines", []):
+					if machine.get("mechanic") == "energy_storage" && machine.get("status") == "infrastructure":
+						tiers.append(machine)
+				tiers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.storage.discharge_eu_per_tick < b.storage.discharge_eu_per_tick)
+				if !tiers.is_empty():
+					var chosen: Dictionary = tiers[-1]
+					for tier: Dictionary in tiers:
+						if tier.storage.discharge_eu_per_tick >= peak:
+							chosen = tier
+							break
+					_request.periodic_storage = [chosen.id]
+					if !chosen.id in _request.available_machines:
+						_request.available_machines.append(chosen.id)
+					_world_import["inferred_solar_storage"] = chosen.id
 		if !goals.is_empty() || apply_empty:
 			_request.goals = goals.duplicate(true)
 			_request.machine_setups = reconstruction.get("machine_setups", {}).duplicate(true)
@@ -472,10 +520,10 @@ func _calculated(result: Dictionary) -> void:
 				_request.available_machines = available
 		_autosave()
 		%Notice.title = "World import"
-		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d storage units; %d infrastructure configurations; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("storage_units", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
+		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d solar panels; %d storage units; %d infrastructure configurations; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("solar_panels", []).size(), reconstruction.get("storage_units", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
 		%Notice.popup_centered()
 		status.text = "World configuration read locally."
-		if !goals.is_empty() || apply_empty || replace_infrastructure || replace_storage:
+		if !goals.is_empty() || apply_empty || replace_infrastructure || replace_storage || replace_solar:
 			_recalculate()
 		return
 	if result.get("status") not in ["optimal", "feasible"]:
@@ -501,6 +549,26 @@ func _calculated(result: Dictionary) -> void:
 				capture_path = argument.trim_prefix("--capture-path=")
 		get_viewport().get_texture().get_image().save_png(capture_path)
 		get_tree().quit()
+
+
+func _preserve_solar_positions(previous: Array, current: Array) -> void:
+	var current_routes: Dictionary = {}
+	for panel: Dictionary in current:
+		current_routes[panel.configuration] = true
+	for old: Dictionary in previous:
+		if current_routes.has(old.configuration):
+			continue
+		for panel: Dictionary in current:
+			if panel.machine != old.machine:
+				continue
+			var old_key: String = "%s|%s" % [old.recipe, old.configuration]
+			var new_key: String = "%s|%s" % [panel.recipe, panel.configuration]
+			if _positions.has(old_key) && !_positions.has(new_key):
+				_positions[new_key] = _positions[old_key]
+				_positions.erase(old_key)
+				if _inspected_key == old_key:
+					_inspected_key = new_key
+			break
 
 
 func _storage_units_for_graph(result: Dictionary) -> Array[Dictionary]:
@@ -575,6 +643,12 @@ func _render_plan(result: Dictionary) -> void:
 		node.name = "line_%d" % index
 		graph.add_child(node)
 		node.configure(line, _recipes[line.recipe], _resources)
+		var imported_panels: Array[Dictionary] = []
+		for panel: Dictionary in _world_import.get("reconstruction", {}).get("solar_panels", []):
+			if panel.configuration == line.configuration:
+				imported_panels.append(panel)
+		if !imported_panels.is_empty():
+			node.set_meta("solar_panels", imported_panels)
 		var key := String(line.recipe) + "|" + String(line.configuration)
 		node.set_meta("position_key", key)
 		if !_positions.has(key):
@@ -710,7 +784,7 @@ func _select_node(node: Node) -> void:
 				inspector.text += "\nThe saved charge is below the planned initial charge. Charge the units before relying on continuous operation."
 		inspector.text += "\n\nCable reach and network sharing need to match the player's build."
 		return
-	%EditGoal.text = "Edit production goal"
+	%EditGoal.text = "Edit power source" if _recipes[node.recipe_id].get("type") == "planner:solar_generation" else "Edit production goal"
 	_selected = node.recipe_id
 	_inspected_key = node.get_meta("position_key")
 	_refresh_connections()
@@ -718,6 +792,12 @@ func _select_node(node: Node) -> void:
 	%EditGoal.disabled = false
 	var line: Dictionary = node.allocation
 	inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
+	if node.has_meta("solar_panels"):
+		var panels: Array = node.get_meta("solar_panels")
+		inspector.text += "\n\n[b]World snapshot[/b]\n%d saved %s with this route. A stored cell or fluid amount does not establish sustained supply." % [panels.size(), "panel" if panels.size() == 1 else "panels"]
+		for panel: Dictionary in panels:
+			inspector.text += "\n%s · %d, %d, %d · %s cell; %s mB fluid" % [PlannerDisplay.markup(str(panel.origin.dimension)), panel.origin.x, panel.origin.y, panel.origin.z, panel.saved_cell.get("amount", "0"), panel.saved_fluid.get("amount_mb", "0") if panel.saved_fluid != null else "0"]
+		inspector.text += "\nClear weather, open sky, a cable path, and continuous replacement supplies remain planning assumptions."
 	for route: Dictionary in _last_result.get("primary_routes", []):
 		if route.recipe == line.recipe:
 			inspector.text += "\nPrimary supply: %s. Other useful outputs are credited across the factory.\n" % PlannerDisplay.markup(_resources.get(route.resource, route.resource))
