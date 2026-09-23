@@ -84,7 +84,7 @@ static func check(value: Variant) -> String:
 					return "Periodic generation in %s does not cover its period or event loss." % recipe.id
 				if profile.has("cell_cycle") && !_cell_cycle_valid(profile):
 					return "Periodic generation in %s disagrees with its cell wear rule." % recipe.id
-				catalog_ids.machines[configuration.machine] = true
+			catalog_ids.machines[configuration.machine] = true
 	if !(value.get("route_preferences", []) is Array):
 		return "Route preferences must be a list."
 	for preference: Variant in value.get("route_preferences", []):
