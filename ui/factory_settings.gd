@@ -178,7 +178,7 @@ func _category_changed(category: int) -> void:
 		"Choose hatches available for multiblock structures. Build lists use verified storage and power limits; unsupported hatch types remain visible.",
 		"Select purchased construction supplies and their prices. Other parts need an enabled recipe. Construction workstations must already be available. Whole batches round crafts and tools; random yields remain estimates. Supplies here are quantities, not rates.",
 		"Enable towers, then choose their count, input/receiver tier, and planned transfer. Idle drain adds to other overhead. Structural bills assume independent cable networks; receiver coverage needs a separate check.",
-		"Choose lossless storage tiers for periodic generation. The planner sizes whole units and their initial charge. Solar's uncertain cell gap currently supports one selected tier; weather and cable reach remain your assumptions.",
+		"Choose lossless storage tiers for periodic generation. The planner sizes whole units and their initial charge. Solar cell expiry currently supports one selected tier; clear weather remains an assumption.",
 		"Fix installed generator counts when you own a specific setup. Leave a source unchecked to let the planner choose it when needed. Saved cells and fuel are stocks, not continuous supplies."]
 	%SettingsHint.text = hints[category]
 	match category:

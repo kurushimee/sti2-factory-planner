@@ -129,7 +129,30 @@ static func power_report(power: Dictionary, resources: Dictionary = {}, construc
 		for source: Dictionary in periodic.generation:
 			if source.machines <= 0:
 				continue
-			text += "%s × %s: %s EU/t nominal cycle average; %s EU/t after a possible output gap\n" % [number(source.machines), markup(resources.get("item:" + str(source.machine), readable_name(source.machine))), number(source.nominal_average_eu_per_tick), number(source.guaranteed_average_eu_per_tick)]
+			var source_name: String = str(
+				resources.get("item:" + str(source.machine), readable_name(source.machine))
+			)
+			text += "%s × %s\n" % [number(source.machines), markup(source_name)]
+			if source.has("cell_cycle"):
+				var cycle: Dictionary = source.cell_cycle
+				var cycle_ticks: int = cycle.repeating_clear_days * periodic.period_ticks
+				text += "Per panel · clear day without cell expiry\n%d EU / %d ticks\n" % [
+					cycle.energy_eu_without_expiry_per_day, periodic.period_ticks
+				]
+				text += "Firm clear-day minimum · credited\n%d EU / %d ticks per panel\n" % [
+					cycle.minimum_energy_eu_in_one_clear_day, periodic.period_ticks
+				]
+				text += "Long-run clear-day average\n%d EU / %d ticks per panel\n" % [
+					cycle.energy_eu_per_repeating_cycle, cycle_ticks
+				]
+				text += "Cell use\n%d cells / %d ticks per panel.\n" % [
+					cycle.cells_used_per_repeating_cycle,
+					cycle_ticks
+				]
+			else:
+				text += "%s EU/t nominal cycle average\n" % (
+					number(source.nominal_average_eu_per_tick)
+				)
 		for unit: Dictionary in periodic.storage:
 			if unit.machines <= 0:
 				continue

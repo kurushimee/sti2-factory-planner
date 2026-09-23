@@ -82,7 +82,9 @@ static func check(value: Variant) -> String:
 					covered += int(segment.ticks)
 				if covered != profile.period_ticks || !_nonnegative(profile.get("one_event_loss_eu_per_period", 0)):
 					return "Periodic generation in %s does not cover its period or event loss." % recipe.id
-			catalog_ids.machines[configuration.machine] = true
+				if profile.has("cell_cycle") && !_cell_cycle_valid(profile):
+					return "Periodic generation in %s disagrees with its cell wear rule." % recipe.id
+				catalog_ids.machines[configuration.machine] = true
 	if !(value.get("route_preferences", []) is Array):
 		return "Route preferences must be a list."
 	for preference: Variant in value.get("route_preferences", []):
@@ -220,6 +222,54 @@ static func _quantity(value: Variant) -> bool:
 
 static func _nonnegative(value: Variant) -> bool:
 	return (value is float || value is int) && is_finite(float(value)) && value >= 0 && value <= 9007199254740991.0
+
+
+static func _cell_cycle_valid(profile: Dictionary) -> bool:
+	var cycle: Variant = profile.cell_cycle
+	if !(cycle is Dictionary) || cycle.get("kind") != "uniform_cell_expiry":
+		return false
+	var fields: Array[String] = [
+		"active_ticks_per_clear_day", "cell_lifetime_wear_ticks", "wear_every_active_ticks",
+		"active_ticks_per_cell", "repeating_clear_days", "cells_used_per_repeating_cycle",
+		"energy_eu_per_repeating_cycle", "energy_eu_without_expiry_per_day",
+		"minimum_energy_eu_in_one_clear_day", "maximum_cell_use_in_one_clear_day"
+	]
+	for field: String in fields:
+		if !_nonnegative(cycle.get(field)) || floor(cycle[field]) != cycle[field]:
+			return false
+	var daily_energy: float = 0
+	for segment: Dictionary in profile.segments:
+		daily_energy += segment.ticks * segment.eu_per_tick
+	if !_nonnegative(daily_energy) || floor(daily_energy) != daily_energy:
+		return false
+	if cycle.active_ticks_per_clear_day <= 0:
+		return false
+	if cycle.active_ticks_per_clear_day > profile.period_ticks:
+		return false
+	if cycle.cell_lifetime_wear_ticks <= 0 || cycle.wear_every_active_ticks <= 0:
+		return false
+	if cycle.active_ticks_per_cell != cycle.cell_lifetime_wear_ticks * cycle.wear_every_active_ticks:
+		return false
+	var left: int = cycle.active_ticks_per_clear_day
+	var right: int = cycle.active_ticks_per_cell
+	while right != 0:
+		var remainder: int = left % right
+		left = right
+		right = remainder
+	if left != 1:
+		return false
+	if cycle.repeating_clear_days != cycle.active_ticks_per_cell:
+		return false
+	if cycle.cells_used_per_repeating_cycle != cycle.active_ticks_per_clear_day:
+		return false
+	if cycle.energy_eu_without_expiry_per_day != daily_energy:
+		return false
+	if cycle.energy_eu_per_repeating_cycle != daily_energy * (cycle.repeating_clear_days - 1):
+		return false
+	var event_loss: float = profile.get("one_event_loss_eu_per_period", 0)
+	if cycle.minimum_energy_eu_in_one_clear_day != daily_energy - event_loss:
+		return false
+	return cycle.maximum_cell_use_in_one_clear_day == 1
 
 
 static func _version(value: Variant) -> bool:
