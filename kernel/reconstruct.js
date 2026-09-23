@@ -38,6 +38,7 @@ export function reconstructFactory(imported, dataset, corrections = {}) {
         pending('The saved charge is missing, invalid, or exceeds this storage unit capacity.'); continue;
       }
       storageUnits.push({machine: key, machine_id: saved.id, origin: saved.origin,
+        enabled: correction.storage_enabled !== false,
         saved_charge_eu: String(raw), capacity_eu: rule.capacity_eu,
         charge_eu_per_tick: rule.charge_eu_per_tick, discharge_eu_per_tick: rule.discharge_eu_per_tick,
         loss_eu_per_tick: rule.loss_eu_per_tick, evidence: `saved_${rule.saved_charge_field ?? 'storedEu'}`,

@@ -128,12 +128,14 @@ func _select_machine(index: int) -> void:
 			if unresolved.get("machine") == key:
 				%WorldDetails.text += "\n" + str(unresolved.reason)
 	if _is_storage():
+		%RetainOutput.text = "Include this storage in the power plan"
 		%RetainOutput.disabled = true
 		%RetainOutput.set_pressed_no_signal(false)
-		%RetainOutput.text = "Energy storage has no output goal"
 		%WorldDetails.text = "%s · %d, %d, %d\n%s\nEnergy storage. Saved charge is a starting quantity, not a sustained power supply." % [str(machine.id).get_slice(":", 1).replace("_", " ").capitalize(), machine.origin.x, machine.origin.y, machine.origin.z, machine.origin.dimension]
 		for unit: Dictionary in _world.get("reconstruction", {}).get("storage_units", []):
 			if unit.machine == key:
+				%RetainOutput.disabled = false
+				%RetainOutput.set_pressed_no_signal(_corrections.get(key, {}).get("storage_enabled", unit.get("enabled", true)))
 				%WorldDetails.text += "\nSaved charge: %s / %s EU\nCharge and discharge: %s EU/t each\n%s" % [unit.saved_charge_eu, PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.charge_eu_per_tick), unit.assumption]
 		for unresolved: Dictionary in _world.get("reconstruction", {}).get("unresolved", []):
 			if unresolved.get("machine") == key:
@@ -202,12 +204,12 @@ func _select_recipe(index: int) -> void:
 
 
 func _retain_changed(enabled: bool) -> void:
-	if _selected < 0 || _is_storage():
+	if _selected < 0:
 		return
 	var key := _key(_world.machines[_selected])
 	if !_corrections.has(key):
 		_corrections[key] = {}
-	_corrections[key]["infrastructure_enabled" if _is_infrastructure() else "goal"] = enabled
+	_corrections[key]["storage_enabled" if _is_storage() else ("infrastructure_enabled" if _is_infrastructure() else "goal")] = enabled
 
 
 func _is_infrastructure() -> bool:

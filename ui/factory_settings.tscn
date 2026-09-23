@@ -142,6 +142,13 @@ unique_name_in_owner = true
 layout_mode = 2
 visible = false
 
+[node name="StorageImported" type="Label" parent="Content/Availability/StorageDetails"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
+text = "Select a storage tier to inspect saved units."
+tooltip_text = "Saved charge is a starting quantity. It does not add a sustained power supply."
+
 [node name="StorageInstalledEnabled" type="CheckButton" parent="Content/Availability/StorageDetails"]
 unique_name_in_owner = true
 layout_mode = 2

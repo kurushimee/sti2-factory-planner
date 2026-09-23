@@ -72,7 +72,7 @@ func _ready() -> void:
 	for index: int in group_controls.size():
 		group_controls[index].focus_next = group_controls[index].get_path_to(group_controls[(index + 1) % group_controls.size()])
 		group_controls[index].focus_previous = group_controls[index].get_path_to(group_controls[(index + group_controls.size() - 1) % group_controls.size()])
-	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request))
+	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request, _world_import))
 	%Summary.pressed.connect(_show_power)
 	%ConnectionMode.item_selected.connect(func(_index: int) -> void: _refresh_connections(); _save_view())
 	%FocusRecipe.pressed.connect(_focus_recipe)
@@ -428,6 +428,7 @@ func _calculated(result: Dictionary) -> void:
 	if _job_kind in ["import_world", "correct_world"]:
 		var apply_empty: bool = _job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("goals", []).is_empty()
 		var replace_infrastructure: bool = !result.get("reconstruction", {}).get("infrastructure", []).is_empty() || (_job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("infrastructure", []).is_empty())
+		var replace_storage: bool = !result.get("reconstruction", {}).get("storage_units", []).is_empty() || (_job_kind == "correct_world" && !_world_import.get("reconstruction", {}).get("storage_units", []).is_empty())
 		_remember()
 		_world_import.assign(result)
 		%ReviewWorld.disabled = false
@@ -435,6 +436,19 @@ func _calculated(result: Dictionary) -> void:
 		var goals: Array = reconstruction.get("goals", [])
 		if replace_infrastructure:
 			_request.infrastructure = reconstruction.get("infrastructure", []).duplicate(true)
+		if replace_storage:
+			var installed: Dictionary = {}
+			for unit: Dictionary in reconstruction.get("storage_units", []):
+				if unit.get("enabled", true):
+					installed[unit.machine_id] = int(installed.get(unit.machine_id, 0)) + 1
+			_request.periodic_storage = installed.keys()
+			_request.periodic_storage_installed = installed
+			_request.periodic_storage_limits = {}
+			var available_storage: Array = _request.get("available_machines", _dataset.get("default_machines", [])).duplicate()
+			for id: String in installed:
+				if !id in available_storage:
+					available_storage.append(id)
+			_request.available_machines = available_storage
 		if !goals.is_empty() || apply_empty:
 			_request.goals = goals.duplicate(true)
 			_request.machine_setups = reconstruction.get("machine_setups", {}).duplicate(true)
@@ -458,10 +472,10 @@ func _calculated(result: Dictionary) -> void:
 				_request.available_machines = available
 		_autosave()
 		%Notice.title = "World import"
-		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d infrastructure configurations; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
+		%Notice.dialog_text = "Read %d machines and %d pattern providers.\n%d capacity goals; %d storage units; %d infrastructure configurations; %d assignments need correction.\n%d unsupported entries; %d read errors.\n\nUse Imported factory to review assignments and end goals. Stored quantities are not production rates." % [result.machines.size(), result.providers.size(), goals.size(), reconstruction.get("storage_units", []).size(), reconstruction.get("infrastructure", []).size(), reconstruction.get("unresolved", []).size(), result.unsupported.size(), result.errors.size()]
 		%Notice.popup_centered()
 		status.text = "World configuration read locally."
-		if !goals.is_empty() || apply_empty || replace_infrastructure:
+		if !goals.is_empty() || apply_empty || replace_infrastructure || replace_storage:
 			_recalculate()
 		return
 	if result.get("status") not in ["optimal", "feasible"]:
@@ -489,9 +503,57 @@ func _calculated(result: Dictionary) -> void:
 		get_tree().quit()
 
 
-func _render_plan(result: Dictionary) -> void:
-	var layout_lines: Array = result.lines.duplicate()
+func _storage_units_for_graph(result: Dictionary) -> Array[Dictionary]:
+	var observed: Dictionary = {}
+	for saved: Dictionary in _world_import.get("reconstruction", {}).get("storage_units", []):
+		var id: String = saved.machine_id
+		if !saved.get("enabled", true) || !id in _request.get("periodic_storage", []):
+			continue
+		if !observed.has(id):
+			observed[id] = {"count": 0, "saved_charge_eu": 0, "origins": []}
+		var record: Dictionary = observed[id]
+		record.count += 1
+		record.saved_charge_eu += int(saved.saved_charge_eu)
+		record.origins.append(saved.origin)
+	var display: Array[Dictionary] = []
+	var solved: Dictionary = {}
 	for unit: Dictionary in result.get("periodic_power", {}).get("storage", []):
+		if unit.machines <= 0:
+			continue
+		var item: Dictionary = unit.duplicate(true)
+		if observed.has(unit.machine):
+			item.imported_count = observed[unit.machine].count
+			item.imported_saved_charge_eu = str(observed[unit.machine].saved_charge_eu)
+			item.imported_origins = observed[unit.machine].origins
+		display.append(item)
+		solved[unit.machine] = true
+	for id: String in observed:
+		if solved.has(id):
+			continue
+		var machine: Dictionary = {}
+		for candidate: Dictionary in _dataset.get("machines", []):
+			if candidate.id == id:
+				machine = candidate
+				break
+		if machine.is_empty():
+			continue
+		var count: int = int(_request.get("periodic_storage_installed", {}).get(id, observed[id].count))
+		if count <= 0:
+			continue
+		var rule: Dictionary = machine.storage
+		display.append({"machine": id, "machines": count, "capacity_eu": rule.capacity_eu * count,
+			"charge_eu_per_tick": rule.charge_eu_per_tick * count,
+			"discharge_eu_per_tick": rule.discharge_eu_per_tick * count,
+			"imported_count": observed[id].count,
+			"imported_saved_charge_eu": str(observed[id].saved_charge_eu),
+			"imported_origins": observed[id].origins})
+	return display
+
+
+func _render_plan(result: Dictionary) -> void:
+	var storage_display: Array[Dictionary] = _storage_units_for_graph(result)
+	var layout_lines: Array = result.lines.duplicate()
+	for unit: Dictionary in storage_display:
 		if unit.machines > 0:
 			var key: String = "planner:storage|" + str(unit.machine)
 			layout_lines.append({"recipe": key, "configuration": key, "machine": unit.machine})
@@ -521,7 +583,7 @@ func _render_plan(result: Dictionary) -> void:
 		node.position_offset = Vector2(saved[0], saved[1])
 		_nodes[String(node.name)] = node
 		machine_count += int(line.machines)
-	for unit: Dictionary in result.get("periodic_power", {}).get("storage", []):
+	for unit: Dictionary in storage_display:
 		if unit.machines <= 0:
 			continue
 		var node := recipe_scene.instantiate() as PlannerRecipeNode
@@ -635,7 +697,18 @@ func _select_node(node: Node) -> void:
 		node.selected = true
 		%EditGoal.disabled = true
 		%RemoveGoal.disabled = true
-		inspector.text = "[font_size=20]%s[/font_size]\n\n[b]%s whole units[/b]\n%s EU total capacity\n%s EU/t charge limit\n%s EU/t discharge limit\n%s EU planned initial charge\n%s EU at the cycle end\n\nStored charge is a startup quantity. This valid dispatch may use more than the minimum initial charge. The factory's generation and fuel chains sustain the repeated cycle. Cable reach and network sharing need to match the player's build." % [PlannerDisplay.markup(PlannerDisplay.machine_name(unit.machine, _resources)), PlannerDisplay.number(unit.machines), PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.charge_eu_per_tick), PlannerDisplay.number(unit.discharge_eu_per_tick), PlannerDisplay.number(unit.initial_charge_eu), PlannerDisplay.number(unit.ending_charge_eu)]
+		inspector.text = "[font_size=20]%s[/font_size]\n\n[b]%s whole units[/b]\n%s EU total capacity\n%s EU/t charge limit\n%s EU/t discharge limit" % [PlannerDisplay.markup(PlannerDisplay.machine_name(unit.machine, _resources)), PlannerDisplay.number(unit.machines), PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.charge_eu_per_tick), PlannerDisplay.number(unit.discharge_eu_per_tick)]
+		if unit.has("initial_charge_eu"):
+			inspector.text += "\n%s EU planned initial charge\n%s EU at the cycle end\n\nThis valid dispatch may use more than the minimum initial charge. The factory's generation and fuel chains sustain the repeated cycle." % [PlannerDisplay.number(unit.initial_charge_eu), PlannerDisplay.number(unit.ending_charge_eu)]
+		else:
+			inspector.text += "\n\nNo generation or production goal currently sizes this storage for periodic dispatch."
+		if unit.has("imported_saved_charge_eu"):
+			inspector.text += "\n\n[b]World snapshot[/b]\n%s saved units with %s EU total charge when imported. This is a starting quantity, not sustained generation." % [PlannerDisplay.number(unit.imported_count), unit.imported_saved_charge_eu]
+			for origin: Dictionary in unit.get("imported_origins", []):
+				inspector.text += "\n%s · %d, %d, %d" % [PlannerDisplay.markup(str(origin.dimension)), origin.x, origin.y, origin.z]
+			if unit.has("initial_charge_eu") && float(unit.imported_saved_charge_eu) < float(unit.initial_charge_eu):
+				inspector.text += "\nThe saved charge is below the planned initial charge. Charge the units before relying on continuous operation."
+		inspector.text += "\n\nCable reach and network sharing need to match the player's build."
 		return
 	%EditGoal.text = "Edit production goal"
 	_selected = node.recipe_id
@@ -726,6 +799,15 @@ func _apply_layout(announce: bool = true) -> void:
 				layout_connections.append({"source": str(source.recipe) + "|" + str(source.configuration),
 					"destination": storage_key, "resource": "dispatch_buffer"})
 	var layout := PlannerGraphLayout.arrange(entries, layout_connections)
+	if _last_result.get("lines", []).is_empty() && _nodes.size() > 1 && _nodes.values().all(func(node: PlannerRecipeNode) -> bool: return node.has_meta("storage_unit")):
+		var storage_bounds := Rect2(Vector2(20, 40), Vector2.ZERO)
+		var storage_index := 0
+		for node: PlannerRecipeNode in _nodes.values():
+			var position := Vector2(45 + (storage_index % 2) * 340, 75 + floori(storage_index / 2.0) * 160)
+			layout.positions[node.get_meta("position_key")] = position
+			storage_bounds = storage_bounds.expand(position + node.size + Vector2(25, 25))
+			storage_index += 1
+		layout.groups["Power"] = storage_bounds
 	_rendering = true
 	for node: PlannerRecipeNode in _nodes.values():
 		node.position_offset = layout.positions[node.get_meta("position_key")]

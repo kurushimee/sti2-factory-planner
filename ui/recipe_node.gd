@@ -52,14 +52,15 @@ func configure_storage(unit: Dictionary, resources: Dictionary[String, String]) 
 	title = PlannerDisplay.machine_name(unit.machine, resources)
 	summary.text = "%d × %s" % [int(unit.machines), title]
 	loadout.text = "Lossless power buffer"
-	throughput.text = "%s EU capacity · %s EU planned charge" % [PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.initial_charge_eu)]
+	throughput.text = "%s EU capacity · %s EU planned charge" % [PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(unit.initial_charge_eu)] if unit.has("initial_charge_eu") else "%s EU capacity · %s EU saved" % [PlannerDisplay.number(unit.capacity_eu), PlannerDisplay.number(int(unit.get("imported_saved_charge_eu", "0")))]
 	power.text = "%s EU/t charge · %s EU/t discharge" % [PlannerDisplay.number(unit.charge_eu_per_tick), PlannerDisplay.number(unit.discharge_eu_per_tick)]
-	var connection := flow_scene.instantiate() as Label
-	var slot := get_child_count()
-	add_child(connection)
-	connection.text = "← Electricity · dispatch buffer"
-	connection.tooltip_text = "This link shows that generation can charge storage. It is not an extra sustained demand."
-	var tint := Color("d5a36a")
-	set_slot(slot, true, 0, tint, false, 0, tint)
-	input_ports["energy:eu"] = 0
-	tooltip_text = "%s\nStored energy is a startup requirement, not a sustained source.\nPower transfer depends on the player's cable network." % title
+	if unit.has("initial_charge_eu"):
+		var connection := flow_scene.instantiate() as Label
+		var slot := get_child_count()
+		add_child(connection)
+		connection.text = "← Electricity · dispatch buffer"
+		connection.tooltip_text = "This link shows that generation can charge storage. It is not an extra sustained demand."
+		var tint := Color("d5a36a")
+		set_slot(slot, true, 0, tint, false, 0, tint)
+		input_ports["energy:eu"] = 0
+	tooltip_text = "%s\nSaved charge is a starting quantity, not a sustained source.\nPower transfer depends on the player's cable network." % title
