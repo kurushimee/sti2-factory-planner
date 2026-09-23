@@ -83,6 +83,12 @@ public final class PlannerProbe {
                     try { return captureSpectrumAutomation(context.getSource().getServer()); }
                     catch (Exception error) { error.printStackTrace(); return 0; }
                 }));
+        event.getDispatcher().register(Commands.literal("planner_probe_turtle_growth")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    try { return captureTurtleGrowth(context.getSource().getServer()); }
+                    catch (Exception error) { error.printStackTrace(); return 0; }
+                }));
         event.getDispatcher().register(Commands.literal("planner_fixture_ae2")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> createAe2Fixture(context.getSource().getServer())));
@@ -438,6 +444,209 @@ public final class PlannerProbe {
         } finally {
             for (var place : new BlockPos[]{position.above(), planePosition, storagePosition,
                     chestPosition, cellPosition, acceptorPosition, machineNodePosition,
+                    pickerNodePosition, pickerPosition, position})
+                level.setBlockAndUpdate(place, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        }
+    }
+
+    private static int captureTurtleGrowth(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var position = new BlockPos(704, 160, 0);
+        var turtlePosition = position.above(2);
+        var inputPosition = turtlePosition.above();
+        var outputPosition = turtlePosition.north();
+        var pickerPosition = position.east(4);
+        var machineNodePosition = position.east();
+        var pickerNodePosition = pickerPosition.east();
+        for (var place : new BlockPos[]{position, position.above(), turtlePosition, inputPosition,
+                outputPosition, pickerPosition,
+                machineNodePosition, pickerNodePosition})
+            if (!level.getBlockState(place).isAir())
+                throw new IllegalStateException("The turtle growth probe area is occupied.");
+        var machineBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.CRYSTALLARIEUM.get();
+        var pickerBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.COLOR_PICKER.get();
+        var nodeBlock = de.dafuqs.spectrum.registries.SpectrumBlocks.INK_NODE.get();
+        var turtleBlock = dan200.computercraft.shared.ModRegistry.Blocks.TURTLE_NORMAL.get();
+        var liquid = BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse("spectrum:liquid_crystal"));
+        var brown = de.dafuqs.spectrum.api.ink.color.InkColor.ofIdString("spectrum:brown").orElseThrow();
+        level.setBlockAndUpdate(position, machineBlock.defaultBlockState());
+        level.setBlockAndUpdate(pickerPosition, pickerBlock.defaultBlockState());
+        level.setBlockAndUpdate(machineNodePosition, nodeBlock.defaultBlockState().setValue(
+                de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlock.FACING,
+                net.minecraft.core.Direction.EAST));
+        level.setBlockAndUpdate(pickerNodePosition, nodeBlock.defaultBlockState().setValue(
+                de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlock.FACING,
+                net.minecraft.core.Direction.EAST));
+        level.setBlockAndUpdate(turtlePosition, turtleBlock.defaultBlockState());
+        level.setBlockAndUpdate(inputPosition, net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        level.setBlockAndUpdate(outputPosition, net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+        try {
+            var machine = (de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity)
+                    level.getBlockEntity(position);
+            var picker = (de.dafuqs.spectrum.blocks.ink.gen.ColorPickerBlockEntity)
+                    level.getBlockEntity(pickerPosition);
+            var machineNode = (de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity)
+                    level.getBlockEntity(machineNodePosition);
+            var pickerNode = (de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity)
+                    level.getBlockEntity(pickerNodePosition);
+            var turtle = (dan200.computercraft.shared.turtle.blocks.TurtleBlockEntity)
+                    level.getBlockEntity(turtlePosition);
+            var inputChest = (net.minecraft.world.level.block.entity.ChestBlockEntity)
+                    level.getBlockEntity(inputPosition);
+            var outputChest = (net.minecraft.world.level.block.entity.ChestBlockEntity)
+                    level.getBlockEntity(outputPosition);
+            var access = turtle.getAccess();
+            var upgrade = dan200.computercraft.impl.TurtleUpgrades.instance().get(server.registryAccess(),
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_PICKAXE));
+            if (upgrade == null)
+                throw new IllegalStateException("The loaded turtle has no diamond-pickaxe upgrade.");
+            var brain = (dan200.computercraft.shared.turtle.core.TurtleBrain) access;
+            brain.setUpgrade(dan200.computercraft.api.turtle.TurtleSide.LEFT, upgrade);
+            turtle.setDirection(net.minecraft.core.Direction.NORTH);
+            inputChest.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 2));
+            brain.setSelectedSlot(0);
+            machine.getFluidTank().setFluid(new net.neoforged.neoforge.fluids.FluidStack(liquid, 1000));
+            var pickerHandler = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                    pickerPosition, net.minecraft.core.Direction.EAST);
+            if (pickerHandler == null || !pickerHandler.insertItem(1,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_DYE, 64),
+                    false).isEmpty() || picker.getItem(1).getCount() != 64)
+                throw new IllegalStateException("The Color Picker did not accept side-fed brown dye.");
+            machineNode.connectToNearbyNodes(null);
+            pickerNode.connectToNearbyNodes(null);
+            if (machineNode.getServerNetwork().isEmpty() || pickerNode.getServerNetwork().isEmpty()
+                    || machineNode.getServerNetwork().get() != pickerNode.getServerNetwork().get())
+                throw new IllegalStateException("The turtle probe ink nodes did not connect.");
+            var result = new JsonObject();
+            var additiveHandler = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                    position, net.minecraft.core.Direction.EAST);
+            result.addProperty("machine_item_handler", additiveHandler != null);
+            result.addProperty("turtle_stationary_fuel", brain.getFuelLevel());
+            result.addProperty("turtle_fuel_needed", brain.isFuelNeeded());
+            result.addProperty("picker_item_handler", true);
+            result.addProperty("turtle_item_handler", level.getCapability(
+                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                    turtlePosition, net.minecraft.core.Direction.EAST) != null);
+            var cycles = new JsonArray();
+            for (int cycle = 0; cycle < 2; cycle++) {
+                var suck = new dan200.computercraft.shared.turtle.core.TurtleSuckCommand(
+                        dan200.computercraft.shared.turtle.core.InteractDirection.UP, 1).execute(access);
+                if (!suck.isSuccess() || !brain.getInventory().getItem(0).is(net.minecraft.world.item.Items.RAW_IRON))
+                    throw new IllegalStateException("The turtle did not pull a raw-iron starter from its input chest.");
+                var drop = new dan200.computercraft.shared.turtle.core.TurtleDropCommand(
+                        dan200.computercraft.shared.turtle.core.InteractDirection.DOWN, 1).execute(access);
+                if (!drop.isSuccess())
+                    throw new IllegalStateException("The turtle did not drop the starter: " + drop.getErrorMessage());
+                var entities = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                        new net.minecraft.world.phys.AABB(position).inflate(2));
+                var starterEntity = entities.stream().filter(entity -> entity.getItem().is(net.minecraft.world.item.Items.RAW_IRON))
+                        .findFirst().orElseThrow(() -> new IllegalStateException("The turtle drop made no raw-iron entity."));
+                for (int tick = 0; tick < 40 && !starterEntity.getItem().isEmpty(); tick++) starterEntity.tick();
+                if (!starterEntity.getItem().isEmpty())
+                    throw new IllegalStateException("The turtle starter did not land in the Crystallarieum.");
+                int additiveRefill = 64 - machine.getItem(0).getCount();
+                if (cycle == 0) {
+                    additiveRefill = 64;
+                }
+                var refused = additiveHandler.insertItem(0,
+                        new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_NUGGET, additiveRefill),
+                        false);
+                if (!refused.isEmpty() || machine.getItem(0).getCount() != 64)
+                    throw new IllegalStateException("The Crystallarieum did not accept side-fed additive stock.");
+                int matureTick = -1;
+                var inspectCommand = new dan200.computercraft.shared.turtle.core.TurtleInspectCommand(
+                        dan200.computercraft.shared.turtle.core.InteractDirection.DOWN);
+                var inspectedStages = new JsonArray();
+                int pickerRefill = 0;
+                for (int tick = 1; tick <= 2000; tick++) {
+                    if (cycle == 1 && tick == 2) {
+                        pickerRefill = 64 - picker.getItem(1).getCount();
+                        if (!pickerHandler.insertItem(1,
+                                new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_DYE, pickerRefill),
+                                false).isEmpty() || picker.getItem(1).getCount() != 64)
+                            throw new IllegalStateException("The Color Picker did not accept a side-fed dye refill.");
+                    }
+                    if ((tick - 1) % 5 == 0) picker.tickLogic(level);
+                    de.dafuqs.spectrum.blocks.pastel_network.network.ServerPastelNetworkManager.get(level).tick();
+                    de.dafuqs.spectrum.blocks.ink.sink.CrystallarieumBlockEntity.serverTick(
+                            level, position, level.getBlockState(position), machine);
+                    var viewed = inspectCommand.execute(access);
+                    if (!viewed.isSuccess())
+                        throw new IllegalStateException("The turtle could not inspect the crop at tick " + tick);
+                    var viewedName = (String) ((java.util.Map<?, ?>) viewed.getResults()[0]).get("name");
+                    if (tick == 1 || tick == 300 || tick == 600) {
+                        var stage = new JsonObject();
+                        stage.addProperty("tick", tick);
+                        stage.addProperty("name", viewedName);
+                        inspectedStages.add(stage);
+                    }
+                    if (viewedName.equals("spectrum:iron_cluster")) {
+                        matureTick = tick;
+                        break;
+                    }
+                }
+                if (matureTick < 0)
+                    throw new IllegalStateException("The turtle crop did not mature: ink="
+                            + machine.getInkStorage().getEnergy(brown) + ", additive=" + machine.getItem(0).getCount());
+                var inspect = inspectCommand.execute(access);
+                if (!inspect.isSuccess())
+                    throw new IllegalStateException("The turtle could not inspect the mature cluster.");
+                var dig = dan200.computercraft.shared.turtle.core.TurtleToolCommand.dig(
+                        dan200.computercraft.shared.turtle.core.InteractDirection.DOWN, null).execute(access);
+                if (!dig.isSuccess())
+                    throw new IllegalStateException("The turtle could not dig the mature cluster: " + dig.getErrorMessage());
+                int collected = 0;
+                int outputSlot = -1;
+                for (int slot = 0; slot < brain.getInventory().getContainerSize(); slot++) {
+                    var stack = brain.getInventory().getItem(slot);
+                    if (BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals("spectrum:pure_iron")) {
+                        collected += stack.getCount();
+                        outputSlot = slot;
+                    }
+                }
+                if (outputSlot < 0)
+                    throw new IllegalStateException("The turtle inventory contains no harvested pure iron.");
+                brain.setSelectedSlot(outputSlot);
+                var output = new dan200.computercraft.shared.turtle.core.TurtleDropCommand(
+                        dan200.computercraft.shared.turtle.core.InteractDirection.FORWARD, collected).execute(access);
+                if (!output.isSuccess())
+                    throw new IllegalStateException("The turtle could not place pure iron in its output chest.");
+                brain.setSelectedSlot(0);
+                int outputCollected = 0;
+                for (int slot = 0; slot < outputChest.getContainerSize(); slot++)
+                    if (BuiltInRegistries.ITEM.getKey(outputChest.getItem(slot).getItem()).toString()
+                            .equals("spectrum:pure_iron"))
+                        outputCollected += outputChest.getItem(slot).getCount();
+                if (outputCollected < collected)
+                    throw new IllegalStateException("The output chest did not receive the harvested pure iron.");
+                var sample = new JsonObject();
+                sample.addProperty("cycle", cycle);
+                sample.addProperty("mature_tick", matureTick);
+                sample.add("inspected_stages", inspectedStages);
+                sample.addProperty("collected", collected);
+                sample.addProperty("output_chest_total", outputCollected);
+                sample.addProperty("input_chest_remaining", inputChest.getItem(0).getCount());
+                sample.addProperty("top_cleared", level.getBlockState(position.above()).isAir());
+                sample.addProperty("picker_ink", picker.getInkStorage().getEnergy(brown));
+                sample.addProperty("machine_ink", machine.getInkStorage().getEnergy(brown));
+                sample.addProperty("additive_remaining", machine.getItem(0).getCount());
+                sample.addProperty("additive_refill", additiveRefill);
+                sample.addProperty("picker_dye_refill", pickerRefill);
+                sample.addProperty("turtle_fuel_remaining", brain.getFuelLevel());
+                cycles.add(sample);
+                if (collected < 3 || collected > 5 || !level.getBlockState(position.above()).isAir())
+                    throw new IllegalStateException("The turtle dig did not collect ordinary pure-iron loot.");
+            }
+            result.add("cycles", cycles);
+            result.addProperty("fluid_remaining_mb", machine.getFluidTank().getFluidAmount());
+            Files.createDirectories(Path.of("planner-extraction"));
+            Files.writeString(Path.of("planner-extraction/turtle-growth.json"),
+                    new GsonBuilder().setPrettyPrinting().create().toJson(result));
+            System.out.println("Planner turtle harvested and replanted two ink-fed iron clusters.");
+            return 1;
+        } finally {
+            for (var place : new BlockPos[]{position.above(), inputPosition, outputPosition, turtlePosition,
+                    machineNodePosition,
                     pickerNodePosition, pickerPosition, position})
                 level.setBlockAndUpdate(place, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
         }
