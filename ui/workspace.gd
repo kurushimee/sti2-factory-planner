@@ -130,6 +130,7 @@ func _ready() -> void:
 	_capture_stage("Loading the parsed dataset")
 	if dataset_bytes.is_empty() || !_load_dataset(default_data):
 		_failed("The bundled dataset could not be read. Import a valid dataset to recover.")
+	_request = _new_request()
 	_capture_stage("The bundled dataset is ready")
 	if restore_saved_plan && OS.has_feature("web"):
 		JavaScriptBridge.eval("window.plannerBridge.restore()")
@@ -152,6 +153,8 @@ func _ready() -> void:
 		_restore_plan(saved)
 		_capture_stage("The saved plan was submitted")
 	search.grab_focus.call_deferred()
+	if _request.get("production_only", false) && _request.get("goals", []).is_empty():
+		status.text = "Production preview: electricity is an external supply in Factory settings."
 	if "--capture" in OS.get_cmdline_user_args():
 		_request.goals = [{"resource": "motor", "rate": 2.0, "recipe": "assemble"}]
 		_recalculate()
@@ -353,6 +356,21 @@ func _load_dataset(value: Variant) -> bool:
 	%DatasetName.text = "%s  ·  %s" % [_dataset.get("name", "Custom dataset"), _dataset.get("description", "")]
 	_filter_recipes(search.text)
 	return true
+
+
+func _new_request() -> Dictionary[String, Variant]:
+	if _dataset.get("identity") == "statech-industry-2:2.0.1":
+		var request: Dictionary[String, Variant] = {
+			"goals": [], "replication": false, "production_only": true,
+			"external": [{"resource": "energy:eu", "cost": 0}],
+		}
+		for stage: Dictionary in _dataset.get("progression", []):
+			if stage.id == "statech:stage_3":
+				request.available_machines = stage.available_machines.duplicate()
+				request.available_upgrades = stage.available_upgrades.duplicate()
+				break
+		return request
+	return {"goals": [], "replication": false}
 
 
 func _filter_recipes(query: String) -> void:
@@ -1375,7 +1393,7 @@ func _import_json(parsed: Variant) -> void:
 	elif PlannerDatasetValidation.check(parsed).is_empty():
 		_remember()
 		_load_dataset(parsed)
-		_request = {"goals": []}
+		_request = _new_request()
 		_positions.clear()
 		_groups.clear()
 		_world_import.clear()

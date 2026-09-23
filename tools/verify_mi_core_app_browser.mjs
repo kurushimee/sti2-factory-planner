@@ -63,6 +63,19 @@ try {
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
   await page.waitForTimeout(1200);
   await page.screenshot({path: `${artifacts}/browser-mi-ready.png`});
+  await page.mouse.click(120, 132);
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.type('materials/iron/compressor/main');
+  await page.waitForTimeout(250);
+  await page.mouse.click(85, 728);
+  await frame.waitForFunction(recipe => window.testResult?.lines?.length > 10 &&
+    window.testResult.lines.some(line => line.recipe === recipe), goalRecipe,
+  {timeout: 120000});
+  const fresh = await frame.evaluate(() => window.testResult);
+  assert.ok(['optimal', 'feasible'].includes(fresh.status));
+  assert.ok(fresh.external.some(flow => flow.resource === 'energy:eu'));
+  assert.equal(fresh.lines.some(line => line.outputs.some(flow => flow.resource === 'energy:eu')), false);
+  await page.screenshot({path: `${artifacts}/browser-mi-fresh-goal.png`});
   const chooser = page.waitForEvent('filechooser');
   await page.mouse.click(1126, 40);
   await (await chooser).setFiles({name: 'mi-core-plan.json', mimeType: 'application/json',
@@ -70,6 +83,7 @@ try {
   await frame.waitForFunction(() => window.testResult?.status === 'optimal' &&
     window.testResult?.lines?.length === 0, null, {timeout: 120000});
   await page.mouse.click(120, 132);
+  await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('materials/iron/compressor/main');
   await page.waitForTimeout(250);
   await page.mouse.click(85, 728);
