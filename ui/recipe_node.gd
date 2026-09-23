@@ -52,6 +52,46 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 	tooltip_text = "%s\n%s\n%s\n%s" % [title, summary.text, loadout.text, line.machine]
 
 
+func configure_endpoint(endpoint: Dictionary, resources: Dictionary[String, String]) -> void:
+	recipe_id = endpoint.key
+	allocation.assign({"recipe": recipe_id, "configuration": recipe_id, "machines": 0})
+	var resource: String = endpoint.resource
+	var incoming: bool = endpoint.kind not in ["external", "gap"]
+	match endpoint.kind:
+		"external":
+			title = "External supply"
+			loadout.text = "Configured in Factory settings"
+		"goal":
+			title = "Requested output"
+			loadout.text = "Retained for your production goal"
+		"gap":
+			title = "Unallocated demand"
+			loadout.text = "Numerical balance gap; no supply credited"
+		"remainder":
+			title = "Flow remainder"
+			loadout.text = "Within the calculation's balance tolerance"
+		_:
+			title = "Surplus output"
+			loadout.text = "Available after planned consumption"
+	summary.text = resources.get(resource, PlannerDisplay.readable_name(resource))
+	throughput.text = PlannerDisplay.flow_rate(resource, endpoint.rate)
+	power.text = ""
+	custom_minimum_size.x = 230
+	var row := flow_scene.instantiate() as Label
+	var slot := get_child_count()
+	add_child(row)
+	row.text = "%s %s" % ["←" if incoming else "→", summary.text]
+	row.tooltip_text = "%s\n%s" % [resource, throughput.text]
+	var tint := Color("dc8075") if endpoint.kind == "gap" else (
+		Color("d5a36a") if resource == "energy:eu" else Color("7fb9b1"))
+	set_slot(slot, incoming, 0, tint, !incoming, 0, tint)
+	if incoming:
+		input_ports[resource] = 0
+	else:
+		output_ports[resource] = 0
+	tooltip_text = "%s\n%s\n%s" % [title, summary.text, throughput.text]
+
+
 func configure_storage(unit: Dictionary, resources: Dictionary[String, String]) -> void:
 	recipe_id = "planner:storage|" + str(unit.machine)
 	allocation.assign({"recipe": recipe_id, "configuration": recipe_id, "machine": unit.machine,
