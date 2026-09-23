@@ -27,7 +27,7 @@ static func build(result: Dictionary) -> Dictionary:
 		if float(surplus.rate) <= 0:
 			continue
 		var key: String = "surplus:" + str(surplus.resource)
-		var tolerance := tolerances.get(str(surplus.resource), 0.0)
+		var tolerance: float = tolerances.get(str(surplus.resource), 0.0)
 		var kind := "remainder" if float(surplus.rate) <= tolerance else "surplus"
 		_add_endpoint(endpoints, key, kind, surplus.resource)
 		if kind == "surplus":

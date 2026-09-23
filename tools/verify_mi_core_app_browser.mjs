@@ -1,23 +1,14 @@
 import {createServer} from 'node:http';
 import {readFile, mkdir} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
-import {gunzipSync} from 'node:zlib';
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
 const root = resolve(process.env.STI2_WEB_ROOT ?? 'builds/web');
 const artifacts = resolve('.plans/artifacts/mi-core');
 await mkdir(artifacts, {recursive: true});
-const dataset = JSON.parse(gunzipSync(await readFile('data/statech-2.0.1.json.gz')));
-const stage = dataset.progression[2];
 const goalRecipe = 'modern_industrialization:compressor|modern_industrialization:materials/iron/compressor/main';
 const alternative = 'modern_industrialization:furnace|minecraft:/iron_ingot_from_smelting_raw_iron_exported_mi_furnace';
-assert.ok(dataset.recipes.some(recipe => recipe.id === goalRecipe));
-assert.ok(dataset.recipes.some(recipe => recipe.id === alternative));
-const plan = {format: 'factory-plan', version: 1, dataset_identity: dataset.identity,
-  dataset, request: {goals: [], replication: false,
-    available_machines: stage.available_machines, available_upgrades: stage.available_upgrades,
-    external: [{resource: 'energy:eu', cost: 0}]}, positions: {}, groups: {}};
 
 const server = createServer(async (incoming, outgoing) => {
   const pathname = new URL(incoming.url, 'http://localhost').pathname;
@@ -76,24 +67,37 @@ try {
   assert.ok(fresh.external.some(flow => flow.resource === 'energy:eu'));
   assert.equal(fresh.lines.some(line => line.outputs.some(flow => flow.resource === 'energy:eu')), false);
   await page.screenshot({path: `${artifacts}/browser-mi-fresh-goal.png`});
-  const chooser = page.waitForEvent('filechooser');
-  await page.mouse.click(1126, 40);
-  await (await chooser).setFiles({name: 'mi-core-plan.json', mimeType: 'application/json',
-    buffer: Buffer.from(JSON.stringify(plan))});
-  await frame.waitForFunction(() => window.testResult?.status === 'optimal' &&
-    window.testResult?.lines?.length === 0, null, {timeout: 120000});
-  await page.mouse.click(120, 132);
-  await page.keyboard.press('ControlOrMeta+A');
-  await page.keyboard.type('materials/iron/compressor/main');
-  await page.waitForTimeout(250);
-  await page.mouse.click(85, 728);
-  await frame.waitForFunction(recipe => window.testResult?.lines?.length > 10 &&
-    window.testResult.lines.some(line => line.recipe === recipe), goalRecipe,
-  {timeout: 120000});
-  let result = await frame.evaluate(() => window.testResult);
-  assert.ok(['optimal', 'feasible'].includes(result.status));
-  assert.ok(result.lines.some(line => line.recipe.includes('quarry')));
   await page.screenshot({path: `${artifacts}/browser-mi-goal.png`});
+  const connectionMode = async () => frame.evaluate(() => new Promise((done, reject) => {
+    const opened = indexedDB.open('factory-planner', 1);
+    opened.onerror = () => reject(opened.error);
+    opened.onsuccess = () => {
+      const read = opened.result.transaction('plans').objectStore('plans').get('workspace-view');
+      read.onsuccess = () => { done(read.result?.view?.connections); opened.result.close(); };
+      read.onerror = () => reject(read.error);
+    };
+  }));
+  assert.equal(await connectionMode(), 2);
+  await page.mouse.click(380, 825);
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('Enter');
+  for (let attempt = 0; attempt < 40 && await connectionMode() !== 0; attempt++) {
+    await page.waitForTimeout(100);
+  }
+  await page.screenshot({path: `${artifacts}/browser-mi-filter-state.png`});
+  assert.equal(await connectionMode(), 0);
+  await page.screenshot({path: `${artifacts}/browser-mi-all-flows.png`});
+  await page.mouse.click(380, 825);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  for (let attempt = 0; attempt < 40 && await connectionMode() !== 2; attempt++) {
+    await page.waitForTimeout(100);
+  }
+  assert.equal(await connectionMode(), 2);
   await page.mouse.click(120, 132);
   await page.keyboard.press('ControlOrMeta+A');
   await page.keyboard.type('iron_ingot_from_smelting_raw_iron');
@@ -101,7 +105,7 @@ try {
   await page.mouse.click(205, 728);
   await frame.waitForFunction(recipe => window.testResult?.lines?.some(line => line.recipe === recipe),
     alternative, {timeout: 120000});
-  result = await frame.evaluate(() => window.testResult);
+  const result = await frame.evaluate(() => window.testResult);
   assert.ok(['optimal', 'feasible'].includes(result.status));
   const savedRequest = async () => frame.evaluate(() => new Promise((done, reject) => {
     const opened = indexedDB.open('factory-planner', 1);

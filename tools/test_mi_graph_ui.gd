@@ -39,7 +39,7 @@ func _run() -> void:
 			goal = node
 		if "dust_to_ingot" in node.recipe_id && "iron" in node.recipe_id:
 			ingot = node
-		if workspace._recipes[node.recipe_id].get("outputs", []).any(func(output: Dictionary) -> bool:
+		if workspace._recipes.has(node.recipe_id) && workspace._recipes[node.recipe_id].get("outputs", []).any(func(output: Dictionary) -> bool:
 			return output.get("probability", 1) != 1):
 			chance_node = node
 	assert(goal != null && ingot != null)
