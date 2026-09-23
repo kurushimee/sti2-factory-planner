@@ -2,6 +2,8 @@
 
 Issue #2 tracks the complete application. Milestones do not end the task or require another user prompt. Main receives only completed, verified branches through issue-linked squash PRs.
 
+Issue #75 packages a production-only MI preview for player evaluation. Its verified scope and limits are in [the preview instructions](mi-preview.md). The full requirements below remain open; they do not prevent a clearly labeled preview release. Stop after delivering that preview until the player reports whether its core planning workflow works for them.
+
 ## Dataset and calculations
 
 Ship a reproducibly extracted StaTech Industry 2.0.1 dataset with exact mod versions, input hashes, licenses, effective recipes, resolved tags, generated content, configuration, and source references. Include MI, Extended Industrialization, Industrialization Overdrive, Yet Another Industrialization, custom content, ordinary crafting, extraction, and other participating processes. Prove the data matches a loaded pack. Supply versioned JSON documentation, validation, and a small example. Importing another pack must not require rebuilding the application.

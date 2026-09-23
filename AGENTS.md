@@ -1,6 +1,6 @@
 # STI2 Factory Planner
 
-This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The workspace loads the compressed StaTech Industry 2.0.1 planning catalog from `data/statech-2.0.1.json.gz`. Its completeness flag remains false while process adapters and delivery requirements are unfinished. The fictional example remains available for regression checks and custom-dataset examples. World import reconstructs supported capacity goals with editable assignments. Do not present development exports as the finished product.
+This project uses stock Godot 4.7.2 and the GL Compatibility renderer. The workspace loads the compressed StaTech Industry 2.0.1 planning catalog from `data/statech-2.0.1.json.gz`. Its completeness flag remains false while process adapters and delivery requirements are unfinished. The fictional example remains available for regression checks and custom-dataset examples. World import reconstructs supported capacity goals with editable assignments. Label development exports and the production-only MI preview separately; neither is the complete product.
 
 ## Automatic project plans
 
@@ -78,7 +78,7 @@ Equal-material route preferences must preserve exact normalized input and output
 
 Read world archives through bounded ranges on desktop and web. Do not turn a selected browser File into a whole-archive ArrayBuffer. Preserve checksum and size checks and consume region chunks separately. Reader parity, large-archive fixtures, and exported import recovery commands are in the world import guide. Directional multiblock states need captured world-state rotations; check all four controlled quarry orientations with `tools/verify_rotation_world.mjs` when changing shape rules. Optional desktop progress updates must tolerate Windows file-sharing conflicts without failing the calculation.
 
-Build desktop and web exports in clean ignored `builds/windows` and `builds/web` directories. Run `python tools/test_package_exports.py` and `python tools/package_exports.py` to check their file lists, runtime hash, notices, and archive checksums. The packages remain labeled development exports until #8 and the delivery requirements are complete; verify the extracted application before publishing.
+Build desktop and web exports in clean ignored `builds/windows` and `builds/web` directories. Run `python tools/test_package_exports.py` and `python tools/package_exports.py --preview` for the MI production preview; omit `--preview` for development archives. Check file lists, runtime hash, notices, itch.io limits, and archive checksums. Preview packages keep full-release readiness false and must state their limited scope. Verify both extracted applications before publishing. The complete product still needs #8 and the full delivery requirements.
 
 Stream browser JSON plan imports through bounded bridge chunks. Keep the prior graph intact until the complete file has been read and validated; cancellation and malformed files must leave it recoverable. Check full-catalog import, cancellation, export, and persistence with `node tools/verify_solar_app_browser.mjs`, and check a different dataset with the same exported application.
 

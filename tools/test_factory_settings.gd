@@ -91,8 +91,12 @@ func _run() -> void:
 	workspace._import_json(JSON.parse_string(FileAccess.get_file_as_string("res://data/example.json")))
 	await workspace.computation.completed
 	await process_frame
-	assert(!workspace._request.has("external"))
+	assert(workspace._request.external == [{"resource": "energy:eu", "cost": 0}])
 	assert(workspace._request.goals.is_empty())
+	dialog.open_settings(workspace._dataset, workspace._request)
+	assert(!dialog.get_node("%Reserve").editable)
+	assert(dialog.get_node("%Reserve").value == 0)
+	dialog.hide()
 	workspace._undo_action()
 	await workspace.computation.completed
 	await process_frame

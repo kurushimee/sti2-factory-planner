@@ -1,4 +1,4 @@
-"""Create checked development archives from completed Godot exports."""
+"""Create checked development or MI preview archives from Godot exports."""
 
 import argparse
 import hashlib
@@ -8,6 +8,7 @@ import shutil
 import zipfile
 
 
+PREVIEW_VERSION = "0.1.0-mi-preview.1"
 WINDOWS_REQUIRED = {
     "FactoryPlanner.exe", "FactoryPlanner.pck", "package.json", "runtime-manifest.json",
     "kernel/desktop.js", "runtime/node.exe", "licenses/fflate.txt",
@@ -63,7 +64,7 @@ def validate_export(kind, files):
     if kind == "windows":
         runtime = json.loads(files["runtime-manifest.json"].read_text(encoding="utf-8"))
         if runtime.get("godot") != "4.7.2" or runtime.get("release_ready") is not False:
-            raise ValueError("The Windows runtime manifest does not describe this development export.")
+            raise ValueError("The Windows runtime manifest does not describe this export.")
         if file_digest(files["runtime/node.exe"]) != runtime.get("node_sha256"):
             raise ValueError("The bundled Node executable differs from its runtime manifest.")
     else:
@@ -84,6 +85,21 @@ def notices(root):
     return entries
 
 
+def validate_itch_contents(entries):
+    if len(entries) + 1 > 1000:
+        raise ValueError("The itch.io archive exceeds 1,000 files.")
+    total = 0
+    for name, path in entries.items():
+        if len(name) > 240:
+            raise ValueError(f"The itch.io archive has a path longer than 240 characters: {name}")
+        length = path.stat().st_size
+        if length > 200_000_000:
+            raise ValueError(f"The itch.io archive has a file larger than 200 MB: {name}")
+        total += length
+    if total > 500_000_000:
+        raise ValueError("The itch.io archive exceeds 500 MB after extraction.")
+
+
 def write_entry(archive, name, source):
     info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
     info.compress_type = zipfile.ZIP_DEFLATED
@@ -96,10 +112,17 @@ def write_entry(archive, name, source):
         archive.writestr(info, source, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
 
 
-def package(kind, directory, destination, root):
+def package(kind, directory, destination, root, preview=False):
     files = files_under(directory)
     validate_export(kind, files)
     entries = {**files, **notices(root)}
+    if preview:
+        introduction = root / "docs/mi-preview.md"
+        if not introduction.is_file():
+            raise ValueError("The MI preview instructions are missing.")
+        entries["PREVIEW.md"] = introduction
+    if preview and kind == "web":
+        validate_itch_contents(entries)
     metadata = []
     for name, path in sorted(entries.items()):
         metadata.append({"path": name, "sha256": file_digest(path), "bytes": path.stat().st_size})
@@ -107,6 +130,9 @@ def package(kind, directory, destination, root):
                 "release_ready": False,
                 "source_dataset_sha256": file_digest(root / "data/statech-2.0.1.json.gz"),
                 "files": metadata}
+    if preview:
+        manifest.update({"app_version": PREVIEW_VERSION, "track": "mi-production-preview",
+                         "preview_ready": True})
     destination.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED,
                          compresslevel=9, allowZip64=True) as archive:
@@ -143,15 +169,21 @@ def main():
     parser.add_argument("--windows", type=Path, default=Path("builds/windows"))
     parser.add_argument("--web", type=Path, default=Path("builds/web"))
     parser.add_argument("--out", type=Path, default=Path("builds/packages"))
+    parser.add_argument("--preview", action="store_true",
+                        help="Package the verified MI production preview, while leaving full-release readiness false.")
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
-    archives = [("windows", args.windows, args.out / "sti2-factory-planner-windows-development.zip"),
-                ("web", args.web, args.out / "sti2-factory-planner-itch-development.zip")]
+    if args.preview:
+        archives = [("windows", args.windows, args.out / f"sti2-factory-planner-{PREVIEW_VERSION}-windows.zip"),
+                    ("web", args.web, args.out / f"sti2-factory-planner-{PREVIEW_VERSION}-itch.zip")]
+    else:
+        archives = [("windows", args.windows, args.out / "sti2-factory-planner-windows-development.zip"),
+                    ("web", args.web, args.out / "sti2-factory-planner-itch-development.zip")]
     sums = []
     for kind, directory, archive in archives:
-        sha256 = package(kind, directory, archive, root)
+        sha256 = package(kind, directory, archive, root, preview=args.preview)
         sums.append(f"{sha256}  {archive.name}")
-        print(f"Checked {kind} development archive: {archive}")
+        print(f"Checked {kind} {'MI preview' if args.preview else 'development'} archive: {archive}")
     (args.out / "SHA256SUMS.txt").write_text("\n".join(sums) + "\n", encoding="ascii")
 
 

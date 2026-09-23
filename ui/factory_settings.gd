@@ -120,7 +120,10 @@ func open_settings(dataset: Dictionary, request: Dictionary, world: Dictionary =
 	%MachineWeight.value = weights.get("machines", 1)
 	%EnergyWeight.value = weights.get("energy", 0.000001)
 	%RoutePreferences.set_pressed_no_signal(_request.get("honor_route_preferences", true))
-	%Reserve.value = _request.get("reserve_fraction", 0) * 100
+	var production_only: bool = _request.get("production_only", false)
+	%Reserve.editable = !production_only
+	%Reserve.tooltip_text = "Generation reserve needs installed power sources. This production-only plan uses external electricity." if production_only else "Extra installed generation capacity above operating demand."
+	%Reserve.value = 0 if production_only else _request.get("reserve_fraction", 0) * 100
 	%Overhead.value = _request.get("overhead_eu_per_tick", 0)
 	%SettingsError.text = ""
 	%Progression.visible = !_dataset.get("progression", []).is_empty()
@@ -507,7 +510,7 @@ func _supply_changed() -> void:
 
 
 func _apply() -> void:
-	_request.reserve_fraction = PlannerDisplay.input_value(%Reserve) / 100
+	_request.reserve_fraction = 0 if _request.get("production_only", false) else PlannerDisplay.input_value(%Reserve) / 100
 	_request.overhead_eu_per_tick = PlannerDisplay.input_value(%Overhead)
 	_request.weights = {"external": PlannerDisplay.input_value(%ResourceWeight), "machines": PlannerDisplay.input_value(%MachineWeight), "energy": PlannerDisplay.input_value(%EnergyWeight)}
 	_request.honor_route_preferences = %RoutePreferences.button_pressed

@@ -40,6 +40,8 @@ An available preferred route takes precedence unless the player pins the alterna
 
 A configuration needs an `id`, a `machine` ID, and positive `operations_per_second`. Give configuration IDs globally distinct names because plan pins and installed limits refer to them. Optional fields are:
 
+For deterministic exact capacity, add `capacity.ticks_per_batch` as a positive whole tick count. One completed batch performs `setup.batch` recipe operations, or one operation when `setup.batch` is absent, so `operations_per_second` must equal `20 × batch / ticks_per_batch`. The bundled fictional example uses a three-operation plate-press batch every 20 ticks. These values describe recipe operations; each operation still uses the recipe's listed inputs and outputs.
+
 | Field | Meaning |
 | --- | --- |
 | `eu_per_operation` | Electricity consumed by one completed operation. |
