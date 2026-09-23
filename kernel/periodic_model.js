@@ -171,13 +171,18 @@ export function decodePeriodicDispatch(model, value) {
   if (!Number.isFinite(periodSurplus) || periodSurplus < -periodRoundoff) {
     throw new PeriodicBalanceError('whole-period energy', periodSurplus, 0);
   }
-  const generation = model.lines.map(line => ({recipe: line.recipe, configuration: line.configuration,
-    machine: line.machine,
-    machines: Math.round(value(line.variable)),
-    nominal_average_eu_per_tick: line.values.reduce((sum, amount) => sum + amount, 0) / model.period_ticks * Math.round(value(line.variable)),
-    guaranteed_average_eu_per_tick: (line.values.reduce((sum, amount) => sum + amount, 0) -
-      (line.one_event_loss_eu_per_period ?? 0)) / model.period_ticks * Math.round(value(line.variable)),
-    assumptions: line.assumptions}));
+  const generation = model.lines.map(line => {
+    const machines = Math.round(value(line.variable));
+    const dailyEnergy = line.values.reduce((sum, amount) => sum + amount, 0);
+    const cycle = line.cell_cycle;
+    return {recipe: line.recipe, configuration: line.configuration, machine: line.machine, machines,
+      nominal_average_eu_per_tick: dailyEnergy / model.period_ticks * machines,
+      guaranteed_average_eu_per_tick: (dailyEnergy - (line.one_event_loss_eu_per_period ?? 0)) /
+        model.period_ticks * machines,
+      ...(cycle ? {cell_cycle: cycle, long_run_average_eu_per_tick:
+        cycle.energy_eu_per_repeating_cycle / (cycle.repeating_clear_days * model.period_ticks) * machines} : {}),
+      assumptions: line.assumptions};
+  });
   const eventBuffer = model.gaps.reduce((sum, gap, index) => sum + 2 * gap * value(model.lines[index].variable), 0);
   const storage = model.storage.map((unit, index) => ({machine: unit.id, machines: counts[index],
     capacity_eu: unit.capacity_eu * counts[index], charge_eu_per_tick: unit.charge_eu_per_tick * counts[index],

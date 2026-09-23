@@ -200,6 +200,7 @@ export function compileFactory(dataset, request, routeChoices = {}) {
         periodicLines.push({variable: machine, operation, output_eu_per_second: output, values: profile,
           recipe: recipe.id, configuration: configuration.id, machine: configuration.machine,
           one_event_loss_eu_per_period: gap,
+          ...(configuration.periodic_generation.cell_cycle ? {cell_cycle: configuration.periodic_generation.cell_cycle} : {}),
           assumptions: configuration.periodic_generation.assumptions ?? []});
       }
       hasConfiguration = true;
