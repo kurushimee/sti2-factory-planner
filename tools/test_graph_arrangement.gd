@@ -90,6 +90,7 @@ func _run() -> void:
 					workspace._select_node(node)
 					break
 			workspace._focus_recipe(true)
+			assert(workspace.graph.zoom >= 0.7, "Focused cards must remain readable.")
 			await RenderingServer.frame_post_draw
 			root.get_texture().get_image().save_png(output + "%s-chain-%d.png" % [prefix, viewport_size.x])
 			var cancel := InputEventAction.new()

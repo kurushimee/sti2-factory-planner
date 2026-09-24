@@ -1537,15 +1537,20 @@ func _focus_recipe(include_supplier: bool = false) -> void:
 		if connection.source == _inspected_key && str(connection.destination).begins_with("goal:") && by_key.has(connection.destination):
 			var goal: PlannerRecipeNode = by_key[connection.destination]
 			requested_output = Rect2(goal.position_offset, goal.size)
-			target = target.merge(requested_output)
+			var with_output := target.merge(requested_output)
+			if minf((graph.size.x - 60) / with_output.size.x, (graph.size.y - 60) / with_output.size.y) >= 0.7:
+				target = with_output
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.distance < b.distance)
 	if include_supplier:
+		graph.zoom = clampf(minf((graph.size.x - 60) / target.size.x,
+			(graph.size.y - 60) / target.size.y), graph.zoom_min, 1.0)
 		if !candidates.is_empty():
 			var nearby: Rect2 = target.merge(candidates[0].rect)
 			var fit: float = minf((graph.size.x - 60) / nearby.size.x,
 				(graph.size.y - 60) / nearby.size.y)
-			graph.zoom = clampf(fit, graph.zoom_min, 1.0)
+			if fit >= 0.7:
+				graph.zoom = minf(fit, 1.0)
 		var chosen := 0
 		for candidate: Dictionary in candidates:
 			var expanded: Rect2 = target.merge(candidate.rect)
