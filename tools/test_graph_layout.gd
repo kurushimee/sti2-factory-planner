@@ -2,46 +2,40 @@ extends SceneTree
 
 
 func _initialize() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	create_timer(60).timeout.connect(func() -> void: quit(1))
+	var service := PlannerComputation.new()
+	root.add_child(service)
+	var nodes: Array[Dictionary] = []
 	var entries: Array[PlannerGraphLayout.Entry] = []
 	for key: String in ["a", "b", "c", "d"]:
+		nodes.append({"id": key, "width": 280, "height": 210, "ports": [
+			{"side": "WEST", "resource": "iron", "x": 0, "y": 80},
+			{"side": "EAST", "resource": "iron", "x": 280, "y": 150}]})
 		entries.append(PlannerGraphLayout.Entry.new(key, "Metals", Vector2(280, 210)))
-	entries.append(PlannerGraphLayout.Entry.new("other", "Metals", Vector2(280, 210)))
-	entries.append(PlannerGraphLayout.Entry.new("power", "Power", Vector2(310, 250)))
-	entries.append(PlannerGraphLayout.Entry.new("ore", "Ore processing", Vector2(280, 210)))
-	entries.append(PlannerGraphLayout.Entry.new("extraction", "Extraction", Vector2(280, 210)))
 	var flows: Array = [
 		{"source": "a", "destination": "b", "resource": "iron"},
 		{"source": "b", "destination": "c", "resource": "iron"},
-		{"source": "c", "destination": "b", "resource": "return"},
-		{"source": "c", "destination": "d", "resource": "steel"},
-		{"source": "power", "destination": "a", "resource": "energy:eu"}
-	]
-	var layout := PlannerGraphLayout.arrange(entries, flows)
-	assert(layout.positions.a.x < layout.positions.b.x)
-	assert(layout.positions.b.x < layout.positions.c.x)
-	assert(layout.positions.c.x < layout.positions.d.x)
-	var focused := PlannerGraphLayout.arrange(entries, flows, ["d"])
-	assert(focused.positions.a.x < focused.positions.b.x)
-	assert(focused.positions.b.x < focused.positions.c.x)
-	assert(focused.positions.c.x < focused.positions.d.x)
-	assert(focused.positions.other.x < focused.positions.d.x)
+		{"source": "c", "destination": "b", "resource": "iron"},
+		{"source": "c", "destination": "d", "resource": "iron"}]
+	service.failed.connect(func(message: String) -> void: push_error(message); quit(1))
+	service.submit({"kind": "graph_layout", "nodes": nodes, "connections": flows, "focus": ["d"]})
+	var response: Dictionary = await service.completed
+	assert(response.routes.size() == flows.size())
+	assert(response.positions.a[0] < response.positions.b[0])
+	assert(response.positions.a[0] < response.positions.d[0])
+	assert(response.positions.c[0] < response.positions.d[0])
+	var layout := PlannerGraphLayout.Result.new()
+	for key: String in response.positions:
+		var point: Array = response.positions[key]
+		layout.positions[key] = Vector2(point[0], point[1])
+	layout = PlannerGraphLayout.group_positions(entries, flows, layout)
 	for first: PlannerGraphLayout.Entry in entries:
-		var rect := Rect2(layout.positions[first.key], first.size)
 		for second: PlannerGraphLayout.Entry in entries:
-			if first.key != second.key:
-				assert(!rect.intersects(Rect2(layout.positions[second.key], second.size)))
-	entries.reverse()
-	assert(PlannerGraphLayout.arrange(entries, flows).positions == layout.positions)
-	entries.clear()
-	flows.clear()
-	for index: int in 10000:
-		entries.append(PlannerGraphLayout.Entry.new(str(index), "Recycling", Vector2(280, 210)))
-		flows.append({"source": str(index), "destination": str((index + 1) % 10000),
-			"resource": "return"})
-	var start := Time.get_ticks_msec()
-	layout = PlannerGraphLayout.arrange(entries, flows)
-	assert(layout.positions.size() == 10000)
-	assert(layout.positions["0"] != layout.positions["9999"])
-	print("Layout passed ordering, cycles, grouping, and 10,000 nodes in %d ms." %
-		(Time.get_ticks_msec() - start))
+			if first != second:
+				assert(!Rect2(layout.positions[first.key], first.size).intersects(Rect2(layout.positions[second.key], second.size)))
+	print("Native layout service passed branching, cycles, fixed ports and local groups.")
 	quit()

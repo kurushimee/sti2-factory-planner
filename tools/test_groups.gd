@@ -19,8 +19,7 @@ func _run() -> void:
 	workspace._request = {"goals": [{"recipe": "mine_ore", "resource": "ore", "rate": 1}]}
 	workspace._recalculate()
 	await workspace.computation.completed
-	await process_frame
-	await process_frame
+	await workspace.layout_settled
 	await process_frame
 	var old_keys: Array = workspace._groups.keys()
 	workspace._add_group()
@@ -62,8 +61,7 @@ func _run() -> void:
 	workspace._request.goals.append({"recipe": "assemble", "resource": "motor", "rate": 1})
 	workspace._recalculate()
 	await workspace.computation.completed
-	await process_frame
-	await process_frame
+	await workspace.layout_settled
 	await process_frame
 	for position_key: String in positions:
 		assert(workspace._positions[position_key] == positions[position_key])
@@ -73,7 +71,7 @@ func _run() -> void:
 		for second: PlannerRecipeNode in nodes:
 			if first != second:
 				assert(!Rect2(first.position_offset, first.size).intersects(Rect2(second.position_offset, second.size)))
-	workspace._arrange()
+	await workspace._arrange()
 	assert(!workspace._groups.is_empty())
 	for group_key: String in workspace._groups:
 		var members := 0

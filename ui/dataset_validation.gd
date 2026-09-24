@@ -190,6 +190,16 @@ static func check_plan(value: Variant) -> String:
 	for point: Variant in value.get("positions", {}).values():
 		if !_coordinates(point, 2):
 			return "The plan contains an invalid node position."
+	if !(value.get("graph_routes", []) is Array):
+		return "The graph routes must be a list."
+	for route: Variant in value.get("graph_routes", []):
+		if !(route is Dictionary) || !(route.get("source") is String) || !(route.get("destination") is String) || !(route.get("resource") is String) || !(route.get("points") is Array):
+			return "The plan contains an invalid graph route."
+		if route.points.size() < 2 || route.points.size() > 10000:
+			return "A graph route needs between 2 and 10,000 points."
+		for point: Variant in route.points:
+			if !_coordinates(point, 2):
+				return "The plan contains an invalid graph route point."
 	if value.has("view") && !check_view(value.view).is_empty():
 		return check_view(value.view)
 	for group: Variant in value.get("groups", {}).values():

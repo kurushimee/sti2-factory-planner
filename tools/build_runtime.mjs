@@ -8,6 +8,9 @@ if (destination.replaceAll('\\', '/').startsWith('builds/')) {
 }
 await mkdir(`${destination}/kernel`, {recursive: true});
 await mkdir(`${destination}/vendor`, {recursive: true});
+await copyFile('node_modules/elkjs/lib/elk-worker.min.js', `${destination}/vendor/elk-worker.min.js`);
+await build({entryPoints: ['kernel/layout-worker.js'], outfile: `${destination}/kernel/layout-worker.js`,
+  bundle: true, format: 'esm', platform: 'browser', target: 'es2022'});
 await build({entryPoints: ['kernel/world-worker.js'], outfile: `${destination}/kernel/world-worker.js`,
   bundle: true, format: 'esm', platform: 'browser', target: 'es2022'});
 await build({entryPoints: ['kernel/worker.js'], outfile: `${destination}/kernel/worker.js`,

@@ -16,6 +16,7 @@ await build({entryPoints: ['kernel/desktop.js'], outfile: `${destination}/kernel
   bundle: true, platform: 'node', format: 'esm', target: 'node24', external: ['highs']});
 await cp('node_modules/highs', `${destination}/node_modules/highs`, {recursive: true});
 await writeFile(`${destination}/package.json`, JSON.stringify({private: true, type: 'module'}));
+await copyFile('data/licenses/elkjs.txt', `${destination}/licenses/elkjs.txt`);
 await copyFile('node_modules/fflate/LICENSE', `${destination}/licenses/fflate.txt`);
 await copyFile('node_modules/highs/LICENSE', `${destination}/licenses/highs-js.txt`);
 await copyFile('ui/fonts/OFL.txt', `${destination}/licenses/Inter.txt`);
@@ -23,6 +24,6 @@ const nodeLicense = await fetch(`https://raw.githubusercontent.com/nodejs/node/$
 if (!nodeLicense.ok) throw new Error('Could not obtain the license for the bundled Node version.');
 await writeFile(`${destination}/licenses/Node.txt`, await nodeLicense.text());
 const manifest = {node: process.version, node_sha256: createHash('sha256').update(await readFile(process.execPath)).digest('hex'),
-  highs: '1.15.3', fflate: '0.8.3', godot: '4.7.2', release_ready: false};
+  elkjs: '0.12.0', highs: '1.15.3', fflate: '0.8.3', godot: '4.7.2', release_ready: false};
 await writeFile(`${destination}/runtime-manifest.json`, JSON.stringify(manifest, null, 2));
 console.log(`Prepared the standalone calculation runtime in ${destination}.`);

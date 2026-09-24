@@ -71,6 +71,24 @@ static func build(result: Dictionary) -> Dictionary:
 	return {"nodes": nodes, "connections": connections}
 
 
+static func local_power(graph: Dictionary) -> Dictionary:
+	var source_key := "external:energy:eu"
+	var nodes: Array = graph.nodes.filter(func(node: Dictionary) -> bool: return node.key != source_key)
+	var connections: Array[Dictionary] = []
+	for original: Dictionary in graph.connections:
+		var flow := original.duplicate(true)
+		if flow.source == source_key:
+			flow.source = source_key + "|" + str(flow.destination).sha256_text()
+			var endpoint := {"key": flow.source, "kind": "external", "resource": "energy:eu",
+				"rate": flow.rate, "local_to": flow.destination, "shared_source": source_key}
+			for field: String in ["rate_exact", "rate_eu_per_tick_exact"]:
+				if flow.has(field):
+					endpoint[field] = flow[field]
+			nodes.append(endpoint)
+		connections.append(flow)
+	return {"nodes": nodes, "connections": connections}
+
+
 static func _add_endpoint(endpoints: Dictionary[String, Dictionary], key: String,
 		kind: String, resource: String) -> void:
 	if !endpoints.has(key):

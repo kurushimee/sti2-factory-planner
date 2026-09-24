@@ -127,6 +127,8 @@ func show_endpoint(endpoint: Dictionary, resources: Dictionary[String, String]) 
 	_exact_row("Rate", value, exact, " EU/t" if endpoint.resource == "energy:eu" else " mB/s" if String(endpoint.resource).begins_with("fluid:") else " /s")
 	if endpoint.kind == "gap":
 		_note("No supply is credited for this demand.")
+	if endpoint.has("shared_source"):
+		_note("This is the selected line's share of the configured external electricity supply. The plan totals count it once.")
 	scroll_vertical = 0
 
 

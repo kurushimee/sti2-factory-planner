@@ -6,6 +6,7 @@ import {reconstructFactory} from './reconstruct.js';
 import {previewConfiguration} from './preview.js';
 import {withArchiveFile} from './archive_file.js';
 import {createProgressReporter} from './desktop_progress.js';
+import {arrangeGraph} from './graph_layout.js';
 
 const [input, output] = process.argv.slice(2);
 if (!input || !output) throw new Error('Provide an input job path and an output result path.');
@@ -13,7 +14,9 @@ let result;
 try {
   const job = JSON.parse(await readFile(input, 'utf8'));
   const progress = createProgressReporter(output, job.id);
-  if (job.kind === 'preview_configuration') {
+  if (job.kind === 'graph_layout') {
+    result = {id: job.id, result: await arrangeGraph(job)};
+  } else if (job.kind === 'preview_configuration') {
     result = {id: job.id, result: previewConfiguration(job.dataset, job.request, job.selection)};
   } else if (job.kind === 'import_world') {
     result = {id: job.id, result: withArchiveFile(job.path, source => inspectWorld(source, job.dataset, progress))};

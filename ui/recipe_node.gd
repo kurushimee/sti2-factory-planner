@@ -113,6 +113,18 @@ func configure_endpoint(endpoint: Dictionary, resources: Dictionary[String, Stri
 		_output_colors[slot] = tint
 		output_ports[resource] = 0
 	tooltip_text = "%s\n%s\n%s" % [title, summary.text, throughput.text]
+	if endpoint.has("local_to"):
+		title = "External EU"
+		summary.hide()
+		loadout.hide()
+		power.hide()
+		row.text = "Supply to this line"
+		custom_minimum_size.x = 170
+		clear_slot(slot)
+		set_slot(1, false, 0, tint, true, 0, tint)
+		_output_colors.clear()
+		_output_colors[1] = tint
+		tooltip_text += "\nThis line's share of the configured external supply; not an extra source."
 
 
 func configure_storage(unit: Dictionary, resources: Dictionary[String, String]) -> void:
