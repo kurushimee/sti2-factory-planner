@@ -1642,6 +1642,7 @@ func _apply_layout(announce: bool = true) -> void:
 	var revision := _layout_revision
 	_layout_response = {}
 	var measured := _measure_graph()
+	var previous_status := status.text
 	status.text = "Arranging production branches and routing connections…"
 	%Arrange.disabled = true
 	%Cancel.disabled = false
@@ -1693,7 +1694,7 @@ func _apply_layout(announce: bool = true) -> void:
 	_unplaced.clear()
 	_refresh_connections()
 	_save_positions(false)
-	status.text = "Graph arranged. Select a line to trace its suppliers and consumers."
+	status.text = "Graph arranged. Select a line to trace its suppliers and consumers." if announce else previous_status
 	if announce:
 		%Feedback.confirm()
 

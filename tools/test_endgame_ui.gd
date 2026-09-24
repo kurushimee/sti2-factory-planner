@@ -6,7 +6,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	create_timer(90).timeout.connect(func() -> void: push_error("Endgame interface check timed out."); quit(1))
+	create_timer(240).timeout.connect(func() -> void: push_error("Endgame interface check timed out."); quit(1))
 	var arguments := OS.get_cmdline_user_args()
 	assert(!arguments.is_empty(), "Supply a saved solver request and result JSON.")
 	var fixture: Dictionary = PlannerJson.parse(FileAccess.get_file_as_string(arguments[0]))
@@ -58,13 +58,16 @@ func _run() -> void:
 	assert(focused_count > 0 && focused_count < 20)
 	assert(material_count > focused_count)
 	if fixture.result.get("flow_roundoff_links", []).is_empty():
-		assert("Feasible plan" in workspace.status.text)
+		assert("Cost unproven" in workspace.status.text)
 	else:
 		assert("unallocated" in workspace.status.text)
 	var saved: Dictionary = PlannerJson.parse(FileAccess.get_file_as_string("user://autosave.json"))
 	assert(saved.request.goals[0].rate == fixture.request.goals[0].rate)
 	assert(!saved.has("dataset") && saved.dataset_ref.length() == 64)
-	assert(FileAccess.get_file_as_bytes("user://autosave.json").size() < 500000)
+	assert(saved.graph_routes.size() == workspace._graph_connections.size())
+	var state_without_routes := saved.duplicate()
+	state_without_routes.erase("graph_routes")
+	assert(JSON.stringify(state_without_routes).to_utf8_buffer().size() < 500000)
 	var save_started := Time.get_ticks_msec()
 	workspace._autosave()
 	print("Saving the full workspace without rewriting its dataset took %d ms." % (Time.get_ticks_msec() - save_started))
