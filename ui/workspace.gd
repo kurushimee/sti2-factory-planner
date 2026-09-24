@@ -1107,13 +1107,13 @@ func _select_node(node: Node) -> void:
 	node.selected = true
 	%EditGoal.disabled = false
 	var line: Dictionary = node.allocation
+	inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
 	inspector.visible = false
 	inspector_cards.visible = true
 	inspector_cards.show_line(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
 	if node.has_meta("solar_panels"):
 		inspector.visible = true
 		inspector_cards.visible = false
-		inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
 		var panels: Array = node.get_meta("solar_panels")
 		inspector.text += "\n\n[b]World snapshot[/b]\n%d saved %s with this route. A stored cell or fluid amount does not establish sustained supply." % [panels.size(), "panel" if panels.size() == 1 else "panels"]
 		for panel: Dictionary in panels:

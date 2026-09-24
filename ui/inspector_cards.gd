@@ -13,6 +13,7 @@ func show_line(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 	_row("Machines", "%d × %s" % [int(line.machines), PlannerDisplay.machine_name(line.machine, resources)])
 	_row("Upgrades", PlannerDisplay.loadout(configuration, resources).replace("\n", " · "))
 	if line.has("route_preference"):
+		_section("Route choice")
 		_note(str(line.route_preference.reason))
 	_flow_section("Outputs", line.outputs, resources)
 	_flow_section("Inputs", line.inputs, resources)
