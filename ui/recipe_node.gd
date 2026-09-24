@@ -12,6 +12,8 @@ var recipe_id := ""
 var allocation: Dictionary[String, Variant] = {}
 var input_ports: Dictionary[String, int] = {}
 var output_ports: Dictionary[String, int] = {}
+var _input_colors: Dictionary[int, Color] = {}
+var _output_colors: Dictionary[int, Color] = {}
 
 
 func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[String, String]) -> void:
@@ -61,8 +63,10 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 			var tint := Color("d5a36a") if flow.resource == "energy:eu" else Color("7fb9b1")
 			set_slot(slot, direction == "input", 0, tint, direction == "output", 0, tint)
 			if direction == "input":
+				_input_colors[slot] = tint
 				input_ports[flow.resource] = input_ports.size()
 			else:
+				_output_colors[slot] = tint
 				output_ports[flow.resource] = output_ports.size()
 	tooltip_text = "%s\n%s\n%s\n%s" % [title, summary.text, loadout.text, line.machine]
 
@@ -103,8 +107,10 @@ func configure_endpoint(endpoint: Dictionary, resources: Dictionary[String, Stri
 		Color("d5a36a") if resource == "energy:eu" else Color("7fb9b1"))
 	set_slot(slot, incoming, 0, tint, !incoming, 0, tint)
 	if incoming:
+		_input_colors[slot] = tint
 		input_ports[resource] = 0
 	else:
+		_output_colors[slot] = tint
 		output_ports[resource] = 0
 	tooltip_text = "%s\n%s\n%s" % [title, summary.text, throughput.text]
 
@@ -126,5 +132,17 @@ func configure_storage(unit: Dictionary, resources: Dictionary[String, String]) 
 		connection.tooltip_text = "This link shows that generation can charge storage. It is not an extra sustained demand."
 		var tint := Color("d5a36a")
 		set_slot(slot, true, 0, tint, false, 0, tint)
+		_input_colors[slot] = tint
 		input_ports["energy:eu"] = 0
 	tooltip_text = "%s\nSaved charge is a starting quantity, not a sustained source.\nPower transfer depends on the player's cable network." % title
+
+
+func set_flow_emphasis(alpha: float) -> void:
+	for slot: int in _input_colors:
+		var color: Color = _input_colors[slot]
+		color.a = alpha
+		set_slot_color_left(slot, color)
+	for slot: int in _output_colors:
+		var color: Color = _output_colors[slot]
+		color.a = alpha
+		set_slot_color_right(slot, color)

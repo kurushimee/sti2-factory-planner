@@ -30,6 +30,10 @@ const byId = new Map(dataset.recipes.map(recipe => [recipe.id, recipe]));
 assert.ok(result.lines.every(line => !byId.get(line.recipe).replication));
 assert.ok(result.lines.every(line => line.recipe !== syntheses.find(recipe =>
   recipe.primary === 'item:minecraft:potato')?.id));
+const glass = result.lines.find(line => line.recipe ===
+  'modern_industrialization:furnace|minecraft:/glass_exported_mi_furnace');
+assert.ok(glass?.ingredient_choices.some(choice => choice.slot === 0 &&
+  choice.resource === 'item:minecraft:sand' && choice.rate > 0));
 assert.ok(result.connections.length > result.lines.length);
 assert.deepEqual(result.flow_roundoff_links, []);
 if (process.argv[2]) await writeFile(process.argv[2], JSON.stringify({

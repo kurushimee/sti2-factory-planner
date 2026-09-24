@@ -151,8 +151,26 @@ try {
       };
     });
   }, alternative, {timeout: 120000});
+  await page.mouse.click(1210, 542, {delay: 100});
+  await page.waitForTimeout(200);
+  await page.screenshot({path: `${artifacts}/browser-route-choices.png`});
+  await page.mouse.click(500, 240);
+  await page.mouse.click(1000, 710);
+  await frame.waitForFunction(async () => {
+    const opened = indexedDB.open('factory-planner', 1);
+    return new Promise(done => {
+      opened.onsuccess = () => {
+        const read = opened.result.transaction('plans').objectStore('plans').get('autosave');
+        read.onsuccess = () => {
+          done(read.result?.request.goals?.[0] && !read.result.request.goals[0].recipe &&
+            !read.result.request.routes?.['item:modern_industrialization:iron_plate']);
+          opened.result.close();
+        };
+      };
+    });
+  }, null, {timeout: 120000});
   assert.deepEqual(errors, []);
-  console.log('The embedded web app planned a full MI material chain and restored a route choice with Undo.');
+  console.log('The embedded web app planned MI materials and used both route controls with Undo.');
 } finally {
   await browser?.close();
   await new Promise(done => server.close(done));

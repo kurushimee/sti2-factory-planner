@@ -480,6 +480,19 @@ export function decodeFactory(model, solution) {
     }
     catch (error) {result.exact_production = {status: 'unavailable', reason: error.message};}
   }
+  let peak = Q.ZERO;
+  let missingPeaks = 0;
+  for (const line of result.lines) {
+    const rating = line.configuration_details?.capacity?.peak_eu_per_tick;
+    if (rating == null) {
+      if (line.power_eu_per_tick > 0) missingPeaks++;
+      continue;
+    }
+    peak = Q.add(peak, Q.multiply(Q.decimal(rating), Q.decimal(line.machines)));
+  }
+  result.power.production_peak_eu_per_tick = Q.number(peak);
+  result.power.production_peak_eu_per_tick_exact = Q.record(peak);
+  result.power.production_peak_missing_lines = missingPeaks;
   return result;
 }
 
@@ -543,6 +556,7 @@ function solveStagedProduction(highs, source, request, deadline, exhausted, onPr
   const relaxed = highs.createModel({format: 'lp', data: seedModel.text.replace(/\nGenerals\n[^]*?\nEnd$/, '\nEnd')});
   let selectedIds;
   const ingredientScores = new Map();
+  const equivalentIngredients = new Map();
   try {
     relaxed.options.set({output_flag: false, time_limit: Math.max(0.001, (deadline - Date.now()) / 1000)});
     relaxed.run();
@@ -568,21 +582,36 @@ function solveStagedProduction(highs, source, request, deadline, exhausted, onPr
         exclusions: seedModel.exclusions};
     }
     const values = relaxed.getSolution().colValue;
+    const reducedCosts = relaxed.getSolution().colDual;
     const activeLines = seedModel.lines.filter(line => values[relaxed.getColByName(line.operation)] > 0);
     selectedIds = new Set(activeLines.map(line => line.recipe.id));
+    const activeSupplies = new Set([...activeLines.flatMap(line => line.recipe.outputs.map(output => output.resource)),
+      ...(request.external ?? []).map(supply => supply.resource)]);
     for (const line of seedModel.lines) {
       if (values[relaxed.getColByName(line.operation)] <= 0) continue;
-      for (const check of line.inputChecks) for (const term of line.inputTerms.filter(value => value.slot === check.slot)) {
+      for (const check of line.inputChecks) {
         const key = `${line.recipe.id}#${check.slot}`;
-        if (!ingredientScores.has(key)) ingredientScores.set(key, new Map());
-        const score = values[relaxed.getColByName(term.variable)];
-        ingredientScores.get(key).set(term.resource, (ingredientScores.get(key).get(term.resource) ?? 0) + score);
+        const terms = line.inputTerms.filter(value => value.slot === check.slot);
+        for (const term of terms) {
+          if (!ingredientScores.has(key)) ingredientScores.set(key, new Map());
+          const score = values[relaxed.getColByName(term.variable)];
+          ingredientScores.get(key).set(term.resource, (ingredientScores.get(key).get(term.resource) ?? 0) + score);
+        }
+        const equal = terms.filter(term => activeSupplies.has(term.resource) &&
+          Math.abs(reducedCosts[relaxed.getColByName(term.variable)]) <= 1e-9)
+          .map(term => term.resource).sort((a, b) => a.length - b.length || a.localeCompare(b));
+        if (equal.length) {
+          const prior = equivalentIngredients.get(key);
+          if (!prior || equal[0].length < prior.length || (equal[0].length === prior.length && equal[0] < prior))
+            equivalentIngredients.set(key, equal[0]);
+        }
       }
     }
   } finally { relaxed.dispose(); }
   const chosenIngredients = {};
   for (const [key, scores] of ingredientScores) if (!Object.hasOwn(request.ingredients ?? {}, key)) {
-    chosenIngredients[key] = [...scores].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+    chosenIngredients[key] = equivalentIngredients.get(key) ??
+      [...scores].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
   }
   const selectedRequest = {...request, ingredients: {...request.ingredients, ...chosenIngredients},
     remove_unused_seed_machines: true};

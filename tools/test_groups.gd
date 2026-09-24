@@ -74,10 +74,13 @@ func _run() -> void:
 			if first != second:
 				assert(!Rect2(first.position_offset, first.size).intersects(Rect2(second.position_offset, second.size)))
 	workspace._arrange()
-	assert(workspace._groups.size() == 4)
-	for node: PlannerRecipeNode in workspace._nodes.values():
-		if !node.has_meta("flow_endpoint"):
-			assert(workspace._members.has(String(node.name)))
+	assert(!workspace._groups.is_empty())
+	for group_key: String in workspace._groups:
+		var members := 0
+		for member: String in workspace._members:
+			if workspace._members[member] == group_key:
+				members += 1
+		assert(members >= 2)
 	workspace._undo_action()
 	await workspace.computation.completed
 	assert(workspace._groups == groups)

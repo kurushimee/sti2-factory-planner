@@ -249,8 +249,8 @@ minimap_enabled = false
 minimap_size = Vector2(170, 115)
 minimap_opacity = 0.8
 connection_lines_thickness = 1.5
-connection_lines_curvature = 0.18
-zoom_min = 0.05
+connection_lines_curvature = 0.05
+zoom_min = 0.03
 snapping_distance = 20
 panning_scheme = 1
 
@@ -311,6 +311,7 @@ layout_mode = 2
 visible = false
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+focus_mode = 2
 script = ExtResource("12")
 
 [node name="Content" type="VBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column/InspectorCards"]
@@ -405,3 +406,53 @@ offset_right = 444.0
 offset_bottom = 62.0
 placeholder_text = "Group name"
 max_length = 120
+
+[node name="ChoiceDialog" type="Window" parent="."]
+unique_name_in_owner = true
+visible = false
+title = "Choose production route"
+size = Vector2i(700, 590)
+transient = true
+exclusive = true
+
+[node name="ChoiceContent" type="VBoxContainer" parent="ChoiceDialog"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+theme_override_constants/separation = 10
+
+[node name="ChoiceSearch" type="LineEdit" parent="ChoiceDialog/ChoiceContent"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Filter choices"
+
+[node name="ChoiceList" type="ItemList" parent="ChoiceDialog/ChoiceContent"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+allow_reselect = true
+
+[node name="ChoiceNote" type="Label" parent="ChoiceDialog/ChoiceContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
+
+[node name="ChoiceActions" type="HBoxContainer" parent="ChoiceDialog/ChoiceContent"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 8
+
+[node name="ChoiceCancel" type="Button" parent="ChoiceDialog/ChoiceContent/ChoiceActions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
+
+[node name="ChoiceApply" type="Button" parent="ChoiceDialog/ChoiceContent/ChoiceActions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Use choice"

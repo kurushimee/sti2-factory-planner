@@ -1,10 +1,14 @@
 class_name PlannerInspectorCards
 extends ScrollContainer
 
+signal node_requested(key: String)
+signal route_requested(resource: String)
+signal ingredient_requested(recipe: String, slot: int)
+
 @onready var content: VBoxContainer = %Content
 
 
-func show_line(line: Dictionary, recipe: Dictionary, resources: Dictionary[String, String], startup: Dictionary, construction: Dictionary) -> void:
+func show_line(line: Dictionary, recipe: Dictionary, resources: Dictionary[String, String], startup: Dictionary, construction: Dictionary, context: Dictionary = {}) -> void:
 	_clear()
 	_heading(PlannerDisplay.recipe_name(recipe))
 	var configuration: Dictionary = line.get("configuration_details", {})
@@ -17,6 +21,18 @@ func show_line(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 		_note(str(line.route_preference.reason))
 	_flow_section("Outputs", line.outputs, resources)
 	_flow_section("Inputs", line.inputs, resources)
+	if !context.get("routes", []).is_empty():
+		_section("Production routes")
+		for choice: Dictionary in context.routes:
+			_row(choice.name, "%d available%s" % [choice.count, " · pinned" if choice.pinned else ""])
+			_action("Choose source", _request_route.bind(choice.resource))
+	if !context.get("ingredients", []).is_empty():
+		_section("Ingredient choices")
+		for choice: Dictionary in context.ingredients:
+			_row("Slot %d" % (int(choice.slot) + 1), choice.name + (" · pinned" if choice.pinned else ""))
+			_action("Choose ingredient", _request_ingredient.bind(str(recipe.id), int(choice.slot)))
+	_relationships("Supplied by", context.get("incoming", []), resources)
+	_relationships("Used by", context.get("outgoing", []), resources)
 	_section("Capacity")
 	_exact_row("Operations", line.operations_per_second, line.get("operations_per_second_exact", {}), "/s")
 	_exact_row("Full speed", line.capacity_per_second, line.get("capacity_per_second_exact", {}), " ops/s")
@@ -56,6 +72,45 @@ func show_line(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 		_note(assumption)
 	if startup.get("preview_omitted", false):
 		_note("Warm-up stock is not calculated in this preview.")
+	scroll_vertical = 0
+
+
+func show_plan(result: Dictionary) -> void:
+	_clear()
+	_heading("Factory totals")
+	var power: Dictionary = result.get("power", {})
+	var machines := 0
+	for line: Dictionary in result.get("lines", []):
+		machines += int(line.get("machines", 0))
+	_section("Build")
+	_row("Machines", str(machines))
+	_row("Lines", str(result.get("lines", []).size()))
+	_section("Power")
+	_power_metric("Running draw", power, "consumption_eu_per_tick")
+	_power_metric("All machine peaks", power, "production_peak_eu_per_tick")
+	if int(power.get("production_peak_missing_lines", 0)) > 0:
+		_row("Peak coverage", "%d lines lack a peak rating" % int(power.production_peak_missing_lines))
+	else:
+		_note("Peak assumes every installed machine runs at its rated maximum.")
+	_power_metric("External supply", power, "external_eu_per_tick")
+	if float(power.get("gross_generation_eu_per_tick", 0)) > 0:
+		_power_metric("Gross generation", power, "gross_generation_eu_per_tick")
+		_power_metric("Generator support", power, "generation_related_consumption_eu_per_tick")
+		_power_metric("Net generation", power, "net_generation_eu_per_tick")
+	if float(power.get("infrastructure_and_goal_eu_per_tick", 0)) > 0:
+		_power_metric("Other demand", power, "infrastructure_and_goal_eu_per_tick")
+	_section("Calculation")
+	_row("Result", "Optimal" if result.get("optimal", false) else "Feasible · cost unproven")
+	var optimization: Dictionary = result.get("optimization", {})
+	if optimization.get("lower_bound") != null:
+		_row("Cost bound", PlannerDisplay.number(float(optimization.lower_bound)))
+	if optimization.get("relative_gap") != null:
+		_row("Cost gap", PlannerDisplay.number(float(optimization.relative_gap) * 100.0) + "%")
+	var construction: Dictionary = result.get("construction", {})
+	if !construction.is_empty():
+		_section("Construction")
+		_row("Material cost", PlannerDisplay.number(float(construction.material_cost)))
+		_row("Work", PlannerDisplay.number(float(construction.work_seconds)) + " machine-s")
 	scroll_vertical = 0
 
 
@@ -132,6 +187,24 @@ func _exact_row(label_text: String, numeric: float, exact: Variant, suffix: Stri
 		str(record.get("display", PlannerDisplay.number(numeric))) + suffix)
 
 
+func _power_metric(label_text: String, power: Dictionary, field: String) -> void:
+	var numeric := float(power.get(field, 0))
+	var exact: Dictionary = power.get(field + "_exact", {})
+	var full: String = str(exact.get("display", PlannerDisplay.number(numeric))) + " EU/t"
+	var card := VBoxContainer.new()
+	card.add_theme_constant_override("separation", 1)
+	var label := Label.new()
+	label.text = label_text
+	label.theme_type_variation = &"MutedLabel"
+	card.add_child(label)
+	var value := Label.new()
+	value.text = PlannerDisplay.number(numeric) + " EU/t"
+	value.add_theme_font_size_override("font_size", 19)
+	value.tooltip_text = full
+	card.add_child(value)
+	content.add_child(card)
+
+
 func _flow_section(title: String, flows: Array, resources: Dictionary[String, String]) -> void:
 	_section(title)
 	if flows.is_empty():
@@ -153,3 +226,35 @@ func _note(value: String) -> void:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.theme_type_variation = &"MutedLabel"
 	content.add_child(label)
+
+
+func _relationships(title: String, links: Array, resources: Dictionary[String, String]) -> void:
+	_section(title)
+	if links.is_empty():
+		_row("None", "")
+	for link: Dictionary in links:
+		var resource: String = link.resource
+		var rate: String = PlannerDisplay.flow_rate(resource, float(link.rate), link.get("rate_exact", {}), link.get("rate_eu_per_tick_exact", {}))
+		_action("%s · %s · %s" % [resources.get(resource, PlannerDisplay.readable_name(resource)), rate, link.title],
+			_request_node.bind(str(link.key)), str(link.get("exact", "")))
+
+
+func _action(title: String, callback: Callable, detail: String = "") -> void:
+	var button := Button.new()
+	button.text = title
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.tooltip_text = detail
+	button.pressed.connect(callback)
+	content.add_child(button)
+
+
+func _request_node(key: String) -> void:
+	node_requested.emit(key)
+
+
+func _request_route(resource: String) -> void:
+	route_requested.emit(resource)
+
+
+func _request_ingredient(recipe: String, slot: int) -> void:
+	ingredient_requested.emit(recipe, slot)

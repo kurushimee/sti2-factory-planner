@@ -75,6 +75,25 @@ test('a requested intermediate remains separate from downstream use', () => {
   assert.equal(result.exact_production.endpoints.find(endpoint => endpoint.key === 'goal:plate').rate.display, '1');
 });
 
+test('factory peak sums the rated draw of every installed machine', () => {
+  const dataset = {format: 1, resources: [{id: 'ore'}, {id: 'plate'}, {id: 'motor'}, {id: 'energy:eu'}], recipes: [
+    {id: 'press', primary: 'plate', inputs: [{resource: 'ore', amount: 1}],
+      outputs: [{resource: 'plate', amount: 1}], configurations: [{id: 'press:standard', machine: 'press',
+        operations_per_second: 1, eu_per_operation: 200, capacity: {ticks_per_batch: 20, peak_eu_per_tick: 40}}]},
+    {id: 'assemble', primary: 'motor', inputs: [{resource: 'plate', amount: 1}],
+      outputs: [{resource: 'motor', amount: 1}], configurations: [{id: 'assemble:standard', machine: 'assembler',
+        operations_per_second: 2, eu_per_operation: 300, capacity: {ticks_per_batch: 10, peak_eu_per_tick: 70}}]},
+  ]};
+  const result = solveFactory(highs, dataset, {goals: [{resource: 'motor', rate: 2}],
+    external: [{resource: 'ore'}, {resource: 'energy:eu'}], exact_production: true});
+  assert.equal(result.status, 'optimal');
+  assert.equal(result.exact_production.status, 'exact');
+  assert.equal(result.lines.find(line => line.recipe === 'press').machines, 2);
+  assert.equal(result.lines.find(line => line.recipe === 'assemble').machines, 1);
+  assert.equal(result.power.production_peak_eu_per_tick_exact.display, '150');
+  assert.equal(result.power.production_peak_missing_lines, 0);
+});
+
 test('an unverified machine capacity leaves the prior exact plan recoverable', () => {
   const dataset = {format: 1, resources: [{id: 'part'}], recipes: [{id: 'press', primary: 'part',
     inputs: [], outputs: [{resource: 'part', amount: 1}], configurations: [{id: 'press:unknown',
