@@ -280,6 +280,9 @@ def build_dataset(capture, blasting_report=None):
         record.update(name=names[primary], primary=primary, inputs=inputs, outputs=outputs,
                       configurations=[], catalysts=catalysts, conditions=entry.get("conditions", []),
                       expected_yields=any(flow["probability"] not in (0, 1) for flow in entry["inputs"] + entry["outputs"]))
+        if entry["type"] == "modern_industrialization:matter_fabricator" and any(
+                flow.get("resource") == "item:kubejs:uu_matter" for flow in inputs):
+            record["replication"] = True
         if entry["mechanic"] == "mi_recipe":
             record["process"] = {"duration_ticks": entry["duration_ticks"], "eu_per_tick": entry["eu_per_tick"], "type": entry["type"]}
             if generator and generation:

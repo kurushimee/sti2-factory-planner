@@ -5,6 +5,8 @@ const GROUP_ORDER: Array[String] = [
 	"Extraction", "Ore processing", "Metals", "Chemicals", "Fuels",
 	"Circuits", "Components", "Machinery", "Power", "Production"
 ]
+const ROW_WIDTH := 6200.0
+const GROUP_GAP := 120.0
 
 
 static func arrange(entries: Array[Entry], connections: Array,
@@ -87,6 +89,7 @@ static func arrange(entries: Array[Entry], connections: Array,
 				edges[source].append(destination)
 				indegree[destination] += 1
 	var ready: Array[int] = []
+	var topological: Array[int] = []
 	for component: int in count:
 		if indegree[component] == 0:
 			ready.append(component)
@@ -94,11 +97,20 @@ static func arrange(entries: Array[Entry], connections: Array,
 	while next_index < ready.size():
 		var source: int = ready[next_index]
 		next_index += 1
+		topological.append(source)
 		for destination: int in edges[source]:
-			rank[destination] = maxi(rank[destination], rank[source] + 1)
 			indegree[destination] -= 1
 			if indegree[destination] == 0:
 				ready.append(destination)
+	for index: int in range(topological.size() - 1, -1, -1):
+		var source: int = topological[index]
+		for destination: int in edges[source]:
+			rank[source] = maxi(rank[source], rank[destination] + 1)
+	var maximum := 0
+	for component: int in count:
+		maximum = maxi(maximum, rank[component])
+	for component: int in count:
+		rank[component] = maximum - rank[component]
 	var distance: Dictionary[String, int] = {}
 	var queue: Array[String] = []
 	for key: String in focus:
@@ -122,7 +134,8 @@ static func arrange(entries: Array[Entry], connections: Array,
 		if bi < 0: bi = GROUP_ORDER.size()
 		return ai < bi if ai != bi else a < b
 	)
-	var origin := Vector2(25, 55)
+	var cursor_position := Vector2(25, 55)
+	var row_height := 0.0
 	for index: int in names.size():
 		var group: String = names[index]
 		var columns: Dictionary[int, Array] = {}
@@ -134,26 +147,53 @@ static func arrange(entries: Array[Entry], connections: Array,
 		var column_ids: Array[int] = []
 		column_ids.assign(columns.keys())
 		column_ids.sort()
-		var x := origin.x + 24
+		var x := 24.0
 		var height := 0.0
+		var local_positions: Dictionary[String, Vector2] = {}
+		var column_x: Dictionary[int, float] = {}
+		for column: int in column_ids:
+			column_x[column] = x
+			var width := 0.0
+			for key: String in columns[column]:
+				width = maxf(width, by_key[key].size.x)
+			x += width + 80
+		column_ids.reverse()
 		for column: int in column_ids:
 			columns[column].sort_custom(func(a: String, b: String) -> bool:
+				var ay := _neighbor_y(a, outgoing, local_positions)
+				var by := _neighbor_y(b, outgoing, local_positions)
+				if ay >= 0 && by >= 0 && !is_equal_approx(ay, by):
+					return ay < by
 				var da: int = distance.get(a, 1000000000)
 				var db: int = distance.get(b, 1000000000)
 				return da < db if da != db else a < b
 			)
-			var y := origin.y + 54
-			var width := 0.0
+			var y := 54.0
 			for key: String in columns[column]:
-				result.positions[key] = Vector2(x, y)
+				local_positions[key] = Vector2(column_x[column], y)
 				y += by_key[key].size.y + 32
-				width = maxf(width, by_key[key].size.x)
-			height = maxf(height, y - origin.y)
-			x += width + 80
-		var bounds := Rect2(origin, Vector2(x - origin.x - 56, height))
+			height = maxf(height, y)
+		var size := Vector2(x - 56, height)
+		if cursor_position.x > 25 && cursor_position.x + size.x > ROW_WIDTH:
+			cursor_position = Vector2(25, cursor_position.y + row_height + GROUP_GAP)
+			row_height = 0
+		for key: String in local_positions:
+			result.positions[key] = cursor_position + local_positions[key]
+		var bounds := Rect2(cursor_position, size)
 		result.groups[group] = bounds
-		origin.x = bounds.end.x + 100
+		cursor_position.x = bounds.end.x + GROUP_GAP
+		row_height = maxf(row_height, size.y)
 	return result
+
+
+static func _neighbor_y(key: String, neighbors: Dictionary[String, Array], positions: Dictionary[String, Vector2]) -> float:
+	var total := 0.0
+	var count := 0
+	for neighbor: String in neighbors[key]:
+		if positions.has(neighbor):
+			total += positions[neighbor].y
+			count += 1
+	return total / count if count else -1.0
 
 
 class Entry:

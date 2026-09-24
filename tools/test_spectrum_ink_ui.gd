@@ -29,9 +29,17 @@ func _run() -> void:
 	workspace._select_node(node)
 	workspace.graph.scroll_offset = node.position_offset - Vector2(120, 80)
 	await process_frame
-	assert("20" in workspace.inspector.text)
+	assert(workspace.inspector_cards.visible)
+	assert("20" in _visible_text(workspace.inspector_cards.content))
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/spectrum-ink-plan.png")
 	print("The loaded Color Picker route shows one machine, brown dye input, and brown ink output.")
 	quit()
+
+
+func _visible_text(node: Node) -> String:
+	var output: String = node.text + "\n" if node is Label else ""
+	for child: Node in node.get_children():
+		output += _visible_text(child)
+	return output

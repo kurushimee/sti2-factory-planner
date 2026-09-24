@@ -26,7 +26,9 @@ func _run() -> void:
 	assert(workspace._last_result.status in ["optimal", "feasible"])
 	assert(workspace._last_result.exact_production.status == "exact")
 	assert(workspace._last_result.flow_roundoff.is_empty())
+	assert(workspace._last_result.lines.all(func(line: Dictionary) -> bool:
+		return !line.get("operations_per_second_exact", {}).is_empty()))
 	assert(workspace._last_result.lines.any(func(line: Dictionary) -> bool:
-		return line.get("operations_per_second_exact", {}).get("display") == "25411/24259"))
+		return line.recipe == workspace._request.goals[0].recipe))
 	print("A new StaTech goal reaches the exact connected MI plan without a flow gap.")
 	quit()

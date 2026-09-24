@@ -27,11 +27,20 @@ func _run() -> void:
 	workspace._select_node(selected)
 	workspace.graph.scroll_offset = selected.position_offset - Vector2(70, 70)
 	await process_frame
-	assert("Route choice" in workspace.inspector.text)
-	assert("Ordinary crafting uses the same materials for the same outputs." in workspace.inspector.text)
+	assert(workspace.inspector_cards.visible)
+	var card_text := _visible_text(workspace.inspector_cards.content)
+	assert("Route choice" in card_text)
+	assert("Ordinary crafting uses the same materials for the same outputs." in card_text)
 	assert("equal-material route preferences are applied" in PlannerDisplay.optimization_report(fixture.result))
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://.plans/artifacts/workspace/recipe-preference.png")
 	print("The real preferred crafting route and its reason appear in the selected-node inspector.")
 	quit()
+
+
+func _visible_text(node: Node) -> String:
+	var output: String = node.text + "\n" if node is Label else ""
+	for child: Node in node.get_children():
+		output += _visible_text(child)
+	return output

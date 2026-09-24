@@ -17,8 +17,10 @@ func _run() -> void:
 	workspace.computation.cancel()
 	assert(workspace._request.get("production_only", false))
 	assert(workspace._request.external == [{"resource": "energy:eu", "cost": 0}])
+	var all: Dictionary = workspace._dataset.progression[-1]
+	assert(workspace._request.available_machines == all.available_machines)
+	assert(workspace._request.available_upgrades == all.available_upgrades)
 	var stage: Dictionary = workspace._dataset.progression[2]
-	assert(workspace._request.available_machines == stage.available_machines)
 	workspace._request = {"goals": [], "replication": false, "exact_production": true,
 		"available_machines": stage.available_machines.duplicate(),
 		"available_upgrades": stage.available_upgrades.duplicate(),
@@ -32,7 +34,7 @@ func _run() -> void:
 	assert(workspace._last_result.exact_production.status == "exact")
 	assert(workspace._last_result.flow_roundoff.is_empty())
 	assert(workspace._last_result.lines.size() > 60)
-	assert((workspace.get_node("%ConnectionMode") as OptionButton).selected == 2)
+	assert((workspace.get_node("%ConnectionMode") as OptionButton).selected == 1)
 	var goal: PlannerRecipeNode
 	var ingot: PlannerRecipeNode
 	var chance_node: PlannerRecipeNode
@@ -45,19 +47,22 @@ func _run() -> void:
 			return output.get("probability", 1) != 1):
 			chance_node = node
 	assert(goal != null && ingot != null)
-	assert(chance_node != null && "expected yields" in chance_node.throughput.text)
-	assert(absf(goal.position_offset.y - ingot.position_offset.y) < goal.size.y)
+	assert(chance_node != null && "expected" in chance_node.throughput.text)
+	assert(!Rect2(goal.position_offset, goal.size).intersects(Rect2(ingot.position_offset, ingot.size)))
 	assert(workspace._last_result.connections.any(func(connection: Dictionary) -> bool:
 		return (connection.source == ingot.get_meta("position_key") &&
 			connection.destination == goal.get_meta("position_key"))))
 	var graph := workspace.graph
-	var focused_count := graph.get_connection_list().size()
-	assert(focused_count > 0)
-	var count_text := "/%d flows shown" % workspace._graph_connections.size()
+	var material_count := graph.get_connection_list().size()
+	assert(material_count > 0)
+	var count_text := "/%d flows" % workspace._graph_connections.size()
 	assert((workspace.get_node("%Hint") as Label).text.contains(count_text))
+	(workspace.get_node("%ConnectionMode") as OptionButton).select(2)
+	workspace._refresh_connections()
+	assert(graph.get_connection_list().size() < material_count)
 	(workspace.get_node("%ConnectionMode") as OptionButton).select(0)
 	workspace._refresh_connections()
-	assert(graph.get_connection_list().size() > focused_count)
+	assert(graph.get_connection_list().size() > material_count)
 	assert(workspace._graph_link_errors.is_empty())
 	assert(graph.get_connection_list().size() == workspace._graph_connections.size())
 	var nodes_by_key: Dictionary = {}

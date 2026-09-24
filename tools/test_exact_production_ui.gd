@@ -30,11 +30,20 @@ func _run() -> void:
 			plate = candidate
 			break
 	assert(plate != null)
-	assert("25411/24259 operations/s" in plate.throughput.text)
+	assert(!"Exact · details" in plate.throughput.text)
+	assert("25411/24259" in plate.throughput.tooltip_text)
 	assert(workspace._last_result.flow_roundoff.is_empty())
 	workspace._select_node(plate)
-	assert("25411/24259" in workspace.inspector.text)
-	assert("Warm-up stock requirements are not included" in workspace.inspector.text)
+	assert(workspace.inspector_cards.visible)
+	var found_exact := false
+	var found_warmup := false
+	for child: Node in workspace.inspector_cards.content.get_children():
+		if child is HBoxContainer:
+			for label: Node in child.get_children():
+				found_exact = found_exact || label.tooltip_text.contains("25411/24259")
+		if child is Label:
+			found_warmup = found_warmup || child.text.contains("Warm-up stock is not calculated")
+	assert(found_exact && found_warmup)
 	workspace._show_power()
 	assert("742082963247/12420608000 EU/t" in workspace.inspector.text)
 	workspace._select_node(plate)

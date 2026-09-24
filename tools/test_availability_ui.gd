@@ -38,7 +38,7 @@ func _run() -> void:
 	dialog.push_input(toggle)
 	await process_frame
 	assert("extended_industrialization:steel_bending_machine" in dialog._request.available_machines)
-	assert(!workspace._request.has("available_machines"))
+	assert(!"extended_industrialization:steel_bending_machine" in workspace._request.available_machines)
 	var malformed: Dictionary = workspace._dataset.duplicate()
 	malformed.machines = [{"id": "test:machine", "availability": []}]
 	assert("availability" in PlannerDatasetValidation.check(malformed))

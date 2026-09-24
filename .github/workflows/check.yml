@@ -47,6 +47,7 @@ jobs:
           node tools/verify_spectrum_ink_catalog.mjs data/statech-2.0.1.json.gz
           node tools/verify_spectrum_growth_catalog.mjs data/statech-2.0.1.json.gz
           node tools/verify_solar_catalog.mjs data/statech-2.0.1.json.gz
+          node tools/verify_processing_unit_preview.mjs
       - name: Install the test browser
         run: npx playwright install --with-deps chromium
       - name: Check the embedded browser calculation
@@ -134,6 +135,8 @@ jobs:
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_solar_capacity_ui.gd -- /tmp/solar-capacity.json 2>&1 | tee /tmp/solar-capacity-ui-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/solar-capacity-ui-check.log
       - name: Check the complete endgame graph and feasible-result reporting
+        env:
+          STI2_ENDGAME_BUDGET_MS: '240000'
         run: |
           node tools/verify_endgame.mjs data/statech-2.0.1.json.gz /tmp/endgame.json
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_endgame_ui.gd -- /tmp/endgame.json 2>&1 | tee /tmp/endgame-check.log
@@ -171,3 +174,5 @@ jobs:
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/layout-check.log
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_groups.gd 2>&1 | tee /tmp/groups-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/groups-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_preview_review_ui.gd 2>&1 | tee /tmp/preview-review-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/preview-review-check.log

@@ -3,8 +3,16 @@ extends RefCounted
 
 
 static func input_value(control: SpinBox) -> float:
+	if control.get_meta("pending_text_input", false):
+		control.apply()
+		control.set_meta("pending_text_input", false)
 	# Range steps can introduce binary noise beyond the decimals shown to the player.
 	return float(PlannerJson.parse(String.num(control.value, step_decimals(control.step))))
+
+
+static func track_input(control: SpinBox) -> void:
+	control.get_line_edit().text_changed.connect(func(_text: String) -> void:
+		control.set_meta("pending_text_input", true))
 
 
 static func readable_name(identity: String, supplied: String = "") -> String:
@@ -15,11 +23,19 @@ static func readable_name(identity: String, supplied: String = "") -> String:
 	var words := base.get_slice(":", base.get_slice_count(":") - 1).replace("_", " ").capitalize()
 	if identity.contains("#"):
 		words += " · " + identity.get_slice("#", 1).left(6)
-	return words.replace("Uu ", "UU ")
+	for acronym: String in ["UU", "MI", "AE2", "ME", "LV", "MV", "HV", "EV", "NPK", "EU"]:
+		words = words.replace(acronym.capitalize(), acronym)
+	return words
 
 
 static func recipe_name(recipe: Dictionary) -> String:
 	return readable_name(recipe.get("primary", recipe.id), recipe.get("name", ""))
+
+
+static func recipe_list_name(recipe: Dictionary) -> String:
+	var process: String = str(recipe.get("type", ""))
+	var route: String = "Crafting" if process in ["minecraft:crafting_shaped", "minecraft:crafting_shapeless", "kubejs:shaped", "kubejs:shapeless"] else readable_name(process)
+	return "%s · %s" % [recipe_name(recipe), route]
 
 
 static func machine_name(identity: String, resources: Dictionary[String, String]) -> String:
@@ -39,23 +55,24 @@ static func number(value: float) -> String:
 static func flow_rate(resource: String, rate: float, exact: Dictionary = {}, eu_per_tick_exact: Dictionary = {}) -> String:
 	if resource == "energy:eu":
 		if !eu_per_tick_exact.is_empty():
-			return str(eu_per_tick_exact.display) + " EU/t"
+			return compact_exact(eu_per_tick_exact, rate / 20.0) + " EU/t"
 		return number(rate / 20.0) + " EU/t"
 	if !exact.is_empty():
-		return str(exact.display) + (" mB/s" if resource.begins_with("fluid:") else " /s")
+		return compact_exact(exact, rate) + (" mB/s" if resource.begins_with("fluid:") else " /s")
 	return number(rate) + (" mB/s" if resource.begins_with("fluid:") else " /s")
 
 
 static func graph_flow_rate(resource: String, rate: float, exact: Dictionary = {}, eu_per_tick_exact: Dictionary = {}) -> String:
-	var value: Dictionary = eu_per_tick_exact if resource == "energy:eu" else exact
-	if !value.is_empty() && str(value.get("display", "")).length() > 26:
-		return "Exact EU/t · details" if resource == "energy:eu" else (
-			"Exact mB/s · details" if resource.begins_with("fluid:") else "Exact /s · details")
 	return flow_rate(resource, rate, exact, eu_per_tick_exact)
 
 
-static func graph_exact(value: String) -> String:
-	return "Exact · details" if value.length() > 26 else value
+static func compact_exact(exact: Dictionary, numeric: float) -> String:
+	var value: String = str(exact.get("display", number(numeric)))
+	return value if value.length() <= 10 else number(numeric) + "…"
+
+
+static func graph_exact(value: String, numeric: float) -> String:
+	return value if value.length() <= 10 else number(numeric) + "…"
 
 
 static func power_number(power: Dictionary, field: String) -> String:
