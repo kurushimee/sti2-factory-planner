@@ -54,6 +54,10 @@ jobs:
         env:
           STI2_ENDGAME_BUDGET_MS: '240000'
         run: node tools/verify_kernel_browser.mjs - data/statech-2.0.1.json.gz --endgame --blasting --ink --growth --solar
+      - name: Check graph layout in a browser Worker
+        run: |
+          node tools/build_runtime.mjs builds/layout-test
+          STI2_WEB_ROOT=builds/layout-test node tools/verify_graph_worker.mjs
       - name: Check browser dataset persistence and recovery
         run: node tools/verify_storage_browser.mjs
       - name: Check whitespace

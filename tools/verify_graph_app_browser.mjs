@@ -38,7 +38,7 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => {
-    if (message.type() === 'error' && /SCRIPT ERROR|Parse Error|ERROR:/.test(message.text())) errors.push(message.text());
+    if (message.type() === 'error' && /SCRIPT ERROR|Parse Error|ERROR:/.test(message.text())) { errors.push(message.text()); console.log(message.text()); }
   });
   await page.addInitScript(() => {
     const NativeWorker = window.Worker;
@@ -46,6 +46,7 @@ try {
       constructor(...args) {
         super(...args);
         this.addEventListener('message', event => {
+          if (event.data.error) { window.workerError = event.data.error; console.error(event.data.error); }
           if (event.data.result?.lines) window.testResult = event.data.result;
           if (event.data.result?.routes) { window.layoutResult = event.data.result; window.layoutRuns = (window.layoutRuns ?? 0) + 1; }
         });
@@ -55,17 +56,23 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/embed`);
   let frame = page.frames().find(candidate => candidate !== page.mainFrame());
   await frame.waitForFunction(() => !document.getElementById('status'), null, {timeout: 60000});
+  console.log('Browser loaded.');
+  await page.screenshot({path: `${artifacts}/browser-loaded.png`});
   const chooser = page.waitForEvent('filechooser');
   await page.mouse.click(1126, 40, {delay: 100});
   await (await chooser).setFiles({name: 'mi-goal-plan.json', mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(importedPlan))});
+  console.log('Plan selected.');
   await frame.waitForFunction(() => window.testResult?.lines?.length > 100, null, {timeout: 120000});
+  console.log('Production solved.');
   const result = await frame.evaluate(() => window.testResult);
   assert.equal(result.status, 'feasible');
   assert.equal(result.exact_production.status, 'exact');
   assert.deepEqual(result.flow_roundoff, []);
   assert.ok(result.connections.length > result.lines.length);
-  await frame.waitForFunction(() => window.layoutResult?.routes?.length > 100, null, {timeout: 180000});
+  await frame.waitForFunction(() => window.workerError || window.layoutResult?.routes?.length > 100, null, {timeout: 180000});
+  assert.equal(await frame.evaluate(() => window.workerError), undefined);
+  console.log('Layout worker finished.');
   const savedPlan = () => frame.evaluate(() => new Promise((done, reject) => {
     const opened = indexedDB.open('factory-planner', 1);
     opened.onerror = () => reject(opened.error);
@@ -83,8 +90,10 @@ try {
   }
   assert.deepEqual(saved?.request?.goals?.[0], expectedGoal);
   assert.ok(saved.graph_routes.length > result.connections.length);
+  console.log('Geometry saved.');
   const before = saved;
   await page.mouse.click(330, 91, {delay: 100});
+  console.log('Arrange requested.');
   await frame.waitForFunction(() => window.layoutRuns >= 2, null, {timeout: 180000});
   for (let attempt = 0; attempt < 100; attempt++) {
     saved = await savedPlan();
@@ -94,6 +103,11 @@ try {
   assert.equal(saved.graph_routes.length, before.graph_routes.length);
   assert.deepEqual(saved.request, before.request);
   await page.screenshot({path: `${artifacts}/browser-arranged-1440.png`});
+  await page.mouse.click(835, 91, {delay: 100});
+  await page.waitForTimeout(250);
+  await page.mouse.click(265, 825, {delay: 100});
+  await page.waitForTimeout(250);
+  await page.screenshot({path: `${artifacts}/browser-chain-1440.png`});
   await page.setViewportSize({width: 1280, height: 720});
   await page.screenshot({path: `${artifacts}/browser-arranged-1280.png`});
   const pending = page.waitForEvent('download');

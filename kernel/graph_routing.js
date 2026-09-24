@@ -1,8 +1,16 @@
 // A shared obstacle map keeps routes outside measured cards. Each search is bounded
 // by the graph's padded extent; the surrounding margin also carries feedback paths.
 export function routeGraph(nodes, connections, positions) {
+  try { return routeAtResolution(nodes, connections, positions, 24); }
+  catch (error) {
+    if (!/No routing clearance|No unobstructed route/.test(error.message)) throw error;
+    return routeAtResolution(nodes, connections, positions, 12);
+  }
+}
+
+function routeAtResolution(nodes, connections, positions, step) {
   if (!nodes.length) return [];
-  const step = 24, margin = 96, clearance = 10;
+  const margin = 96, clearance = step === 24 ? 10 : 4;
   const byId = new Map(nodes.map(node => [node.id, node]));
   const left = Math.floor((Math.min(...nodes.map(n => positions[n.id][0])) - margin) / step) * step;
   const top = Math.floor((Math.min(...nodes.map(n => positions[n.id][1])) - margin) / step) * step;

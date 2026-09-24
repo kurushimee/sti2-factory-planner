@@ -1,5 +1,5 @@
 ELK.js 0.12.0 by the Eclipse Layout Kernel contributors.
-Distributed under EPL-2.0. Unmodified source: https://github.com/kieler/elkjs/tree/v0.12.0
+Distributed under EPL-2.0. Unmodified source: https://github.com/kieler/elkjs/tree/0.12.0
 
 # Eclipse Public License - v 2.0
 
@@ -264,3 +264,4 @@ in the Eclipse Public License, v. 2.0 are satisfied: GNU General Public License 
 > look for such a notice.
 >
 > You may add additional accurate notices of copyright ownership.
+

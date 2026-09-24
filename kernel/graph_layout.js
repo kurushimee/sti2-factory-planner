@@ -3,7 +3,7 @@ import {routeGraph} from './graph_routing.js';
 import {compactGraph} from './graph_compaction.js';
 
 // Layout uses measured cards and fixed ports. Rates and machine choices are untouched.
-export async function arrangeGraph({nodes, connections, focus = [], positions}) {
+export async function arrangeGraph({nodes, connections, focus = [], positions}, elkOptions = {}) {
   if (positions) return {positions, routes: routeGraph(nodes, connections, positions)};
   const local = nodes.filter(node => node.local_to);
   const localIds = new Set(local.map(node => node.id));
@@ -11,7 +11,13 @@ export async function arrangeGraph({nodes, connections, focus = [], positions}) 
   const core = nodes.filter(node => !localIds.has(node.id)).map(node => ({...node,
     height: node.height + (padding.get(node.id) ?? 0),
   }));
-  const result = await arrangeCore({nodes: core, connections: connections.filter(flow => !localIds.has(flow.source)), focus});
+  const elk = new ELK(elkOptions);
+  let result;
+  try {
+    result = await arrangeCore({nodes: core, connections: connections.filter(flow => !localIds.has(flow.source)), focus, elk});
+  } finally {
+    if (elkOptions.workerFactory) elk.terminateWorker();
+  }
   const byId = new Map(nodes.map(node => [node.id, node]));
   for (const node of local) {
     const target = byId.get(node.local_to), p = result.positions[node.local_to];
@@ -22,7 +28,7 @@ export async function arrangeGraph({nodes, connections, focus = [], positions}) 
   return result;
 }
 
-async function arrangeCore({nodes, connections, focus}) {
+async function arrangeCore({nodes, connections, focus, elk}) {
   const sorted = [...nodes].sort((a, b) => a.id.localeCompare(b.id));
   const ids = new Map(sorted.map((node, index) => [node.id, `n${index}`]));
   const ports = new Map();
@@ -45,7 +51,6 @@ async function arrangeCore({nodes, connections, focus}) {
     if (!source || !target) throw new Error(`Missing layout port for ${flow.resource}.`);
     return {id: `e${index}`, sources: [source], targets: [target]};
   });
-  const elk = new ELK();
   if (nodes.length > 60 && nodes.length <= 800) {
     const graph = await elk.layout({id: 'factory', children: children.map(node => ({
       id: node.id, width: node.width + 120, height: node.height + 120,

@@ -22,7 +22,8 @@ WEB_REQUIRED = {
     "index.html", "index.js", "index.wasm", "index.pck", "bridge.js",
     "index.png", "index.icon.png", "index.apple-touch-icon.png",
     "index.audio.worklet.js", "index.audio.position.worklet.js",
-    "kernel/worker.js", "kernel/world-worker.js", "kernel/layout-worker.js", "vendor/highs.mjs", "vendor/highs.wasm",
+    "kernel/worker.js", "kernel/world-worker.js", "kernel/layout-worker.js",
+    "vendor/elk-worker.min.js", "vendor/highs.mjs", "vendor/highs.wasm",
 }
 
 

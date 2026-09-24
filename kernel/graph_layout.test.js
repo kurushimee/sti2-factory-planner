@@ -81,6 +81,14 @@ test('routing follows clear space around an intervening card', () => {
   verify(nodes, connections, {positions, routes: routeGraph(nodes, connections, positions)});
 });
 
+test('manual positions with a narrow corridor use a finer routing map', async () => {
+  const nodes = [node('a'), node('b')];
+  const connections = [edge('a', 'b')], positions = {a: [100, 100], b: [423, 170]};
+  const result = await arrangeGraph({nodes, connections, positions});
+  assert.deepEqual(result.positions, positions);
+  verify(nodes, connections, result);
+});
+
 test('missing ports fail explicitly instead of dropping a connection', async () => {
   await assert.rejects(arrangeGraph({nodes: [node('a'), node('b')], connections: [{...edge('a', 'b'), resource: 'missing'}]}), /Missing layout port/);
 });

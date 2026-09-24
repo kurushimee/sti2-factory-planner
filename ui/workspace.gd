@@ -1177,7 +1177,9 @@ func _render_plan(result: Dictionary) -> void:
 	_rendering = false
 	_restore_groups()
 	_settle_node_sizes.call_deferred()
-	if !%ReducedMotion.button_pressed:
+	if _initial_layout:
+		graph.modulate.a = 0.0
+	elif !%ReducedMotion.button_pressed:
 		var tween := create_tween()
 		tween.tween_property(graph, "modulate:a", 1.0, 0.18).from(0.5)
 	if !_nodes.is_empty():
@@ -1245,6 +1247,10 @@ func _settle_node_sizes() -> void:
 	if _initial_layout && !_nodes.is_empty():
 		_initial_layout = false
 		await _apply_layout(false)
+		graph.modulate.a = 1.0
+		if !%ReducedMotion.button_pressed:
+			var tween := create_tween()
+			tween.tween_property(graph, "modulate:a", 1.0, 0.18).from(0.5)
 		if !_inspected_key.is_empty():
 			_focus_recipe(false)
 	elif !_unplaced.is_empty():
@@ -1820,7 +1826,7 @@ func _place_endpoint_nodes(force: bool) -> void:
 
 
 func _free_graph_position(preferred: Vector2, size: Vector2, occupied: Array[Rect2]) -> Vector2:
-	var step := size + Vector2(55, 32)
+	var step := size + Vector2(96, 96)
 	for radius: int in 32:
 		for horizontal: int in range(-radius, radius + 1):
 			var vertical := radius - absi(horizontal)
@@ -1828,7 +1834,7 @@ func _free_graph_position(preferred: Vector2, size: Vector2, occupied: Array[Rec
 				var position := preferred + Vector2(horizontal * step.x, sign * vertical * step.y)
 				if position.x < 25 || position.y < 55:
 					continue
-				var area := Rect2(position, size).grow(12)
+				var area := Rect2(position, size).grow(48)
 				if occupied.all(func(other: Rect2) -> bool: return !area.intersects(other)):
 					return position
 	var right := 25.0
