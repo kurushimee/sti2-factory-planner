@@ -3,7 +3,8 @@ extends Control
 
 signal layout_settled
 
-@onready var graph: GraphEdit = %Graph
+@onready var graph: PlannerGraphCanvas = %Graph
+@onready var layout_computation: PlannerComputation = %LayoutComputation
 @onready var computation: PlannerComputation = %Computation
 @onready var recipes_list: ItemList = %Recipes
 @onready var search: LineEdit = %Search
@@ -41,6 +42,8 @@ var _file_action := "import"
 var _job_kind := "solve"
 var _rendering := false
 var _initial_layout := false
+var _layout_response: Dictionary = {}
+var _layout_revision := 0
 var _unplaced: Array[String] = []
 var _groups: Dictionary[String, Dictionary] = {}
 var _frames: Dictionary[String, GraphFrame] = {}
@@ -68,6 +71,8 @@ func _ready() -> void:
 	OS.low_processor_usage_mode = true
 	if "--capture" in OS.get_cmdline_user_args() || "--capture-existing" in OS.get_cmdline_user_args():
 		OS.low_processor_usage_mode = false
+	layout_computation.completed.connect(func(result: Dictionary) -> void: _layout_response = result)
+	layout_computation.failed.connect(func(message: String) -> void: status.text = "Graph arrangement failed: " + message)
 	computation.completed.connect(_calculated)
 	computation.failed.connect(_failed)
 	computation.progress.connect(func(message: String) -> void: status.text = message)
@@ -113,6 +118,7 @@ func _ready() -> void:
 	%GoalEditor.goal_changed.connect(_apply_goal)
 	%GoalEditor.line_changed.connect(_apply_line_choice)
 	%Arrange.pressed.connect(_arrange)
+	%ExpandGraph.toggled.connect(_expand_graph)
 	%AddGroup.pressed.connect(_add_group)
 	%Import.pressed.connect(_choose_import)
 	%NewPlan.pressed.connect(_start_new_plan)
@@ -200,7 +206,7 @@ func _capture_stage(message: String) -> void:
 
 func _setup_focus() -> void:
 	var controls: Array[Control] = [search, recipes_list, rate.get_line_edit(), %AddGoal, %PinRoute, %Replication, %ReducedMotion,
-		%PreviousRecipes, %NextRecipes, %Arrange, %AddGroup, %Settings, %Summary, %ConnectionMode, %FocusRecipe, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
+		%PreviousRecipes, %NextRecipes, %Arrange, %ExpandGraph, %AddGroup, %Settings, %Summary, %ConnectionMode, %FocusRecipe, graph, inspector, %EditGoal, %RemoveGoal, %ReviewWorld, %Import, %Save, %Undo, %Redo, %About, %Sounds, %Cancel]
 	graph.focus_mode = Control.FOCUS_ALL
 	for index: int in controls.size():
 		controls[index].focus_next = controls[index].get_path_to(controls[(index + 1) % controls.size()])
@@ -219,6 +225,10 @@ func _setup_focus() -> void:
 
 func _graph_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		if %ExpandGraph.button_pressed:
+			%ExpandGraph.button_pressed = false
+			graph.accept_event()
+			return
 		search.grab_focus()
 		graph.accept_event()
 		return
@@ -448,8 +458,9 @@ func _start_new_plan() -> void:
 
 
 func _replace_graph_canvas() -> void:
+	_cancel_layout()
 	var previous := graph
-	var replacement := GraphEdit.new()
+	var replacement := PlannerGraphCanvas.new()
 	replacement.name = previous.name
 	replacement.layout_mode = previous.layout_mode
 	replacement.size_flags_horizontal = previous.size_flags_horizontal
@@ -458,6 +469,7 @@ func _replace_graph_canvas() -> void:
 	replacement.theme = previous.theme
 	replacement.show_arrange_button = previous.show_arrange_button
 	replacement.show_grid_buttons = previous.show_grid_buttons
+	replacement.show_grid = previous.show_grid
 	replacement.show_zoom_label = previous.show_zoom_label
 	replacement.minimap_size = previous.minimap_size
 	replacement.minimap_opacity = previous.minimap_opacity
@@ -859,6 +871,7 @@ func _replication_changed(enabled: bool) -> void:
 
 
 func _recalculate() -> void:
+	_cancel_layout()
 	_job_kind = "solve"
 	_refresh_route_action()
 	%Cancel.disabled = false
@@ -1003,6 +1016,7 @@ func _calculated(result: Dictionary) -> void:
 		status.tooltip_text = "Open Plan details to inspect the search result, cost bound, and power balance."
 	_autosave()
 	if "--capture" in OS.get_cmdline_user_args() || "--capture-existing" in OS.get_cmdline_user_args():
+		await layout_settled
 		await get_tree().create_timer(0.5).timeout
 		await RenderingServer.frame_post_draw
 		var capture_path := "res://.plans/artifacts/workspace/first.png"
@@ -1081,7 +1095,10 @@ func _storage_units_for_graph(result: Dictionary) -> Array[Dictionary]:
 
 
 func _render_plan(result: Dictionary) -> void:
-	var graph_data: Dictionary = PlannerGraphEndpoints.build(result)
+	_layout_revision += 1
+	layout_computation.cancel()
+	%Arrange.disabled = false
+	var graph_data: Dictionary = PlannerGraphEndpoints.local_power(PlannerGraphEndpoints.build(result))
 	_graph_connections.assign(graph_data.connections)
 	var storage_display: Array[Dictionary] = _storage_units_for_graph(result)
 	var layout_lines: Array = result.lines.duplicate()
@@ -1227,11 +1244,13 @@ func _settle_node_sizes() -> void:
 		node.reset_size()
 	if _initial_layout && !_nodes.is_empty():
 		_initial_layout = false
-		_apply_layout(false)
+		await _apply_layout(false)
 		if !_inspected_key.is_empty():
 			_focus_recipe(false)
 	elif !_unplaced.is_empty():
 		_place_new_nodes()
+		await _reroute_graph()
+	graph.prepare_routes(_nodes)
 	if !_pending_view.is_empty():
 		graph.zoom = clampf(float(_pending_view.zoom), graph.zoom_min, graph.zoom_max)
 		graph.scroll_offset = Vector2(_pending_view.scroll[0], _pending_view.scroll[1])
@@ -1439,6 +1458,7 @@ func _highlight_neighbors(key: String) -> void:
 
 
 func _refresh_connections() -> void:
+	graph.prepare_routes(_nodes)
 	graph.clear_connections()
 	_graph_link_errors.clear()
 	var shown := 0
@@ -1550,7 +1570,18 @@ func _show_power() -> void:
 
 func _arrange() -> void:
 	_remember()
-	_apply_layout()
+	await _apply_layout()
+	layout_settled.emit()
+
+
+func _expand_graph(expanded: bool) -> void:
+	var center := (graph.scroll_offset + graph.size / 2.0) / graph.zoom
+	%Library.visible = !expanded
+	%InspectorPanel.visible = !expanded
+	%ExpandGraph.text = "Show panels" if expanded else "Expand graph"
+	await get_tree().process_frame
+	graph.scroll_offset = center * graph.zoom - graph.size / 2.0
+	graph.grab_focus()
 
 
 func _apply_layout(announce: bool = true) -> void:
@@ -1584,14 +1615,7 @@ func _apply_layout(announce: bool = true) -> void:
 				chosen = group
 				best = neighbor_groups[group]
 		entries.append(PlannerGraphLayout.Entry.new(key, chosen, node.size, node.title))
-	var layout_connections: Array = []
-	var primary_by_key: Dictionary[String, String] = {}
-	for node: PlannerRecipeNode in _nodes.values():
-		if !node.has_meta("flow_endpoint") && !node.has_meta("storage_unit"):
-			primary_by_key[node.get_meta("position_key")] = _recipes[node.recipe_id].primary
-	for connection: Dictionary in _graph_connections:
-		if !primary_by_key.has(connection.source) || primary_by_key[connection.source] == connection.resource:
-			layout_connections.append(connection)
+	var layout_connections: Array = _graph_connections.duplicate()
 	for unit: Dictionary in _last_result.get("periodic_power", {}).get("storage", []):
 		if unit.machines <= 0:
 			continue
@@ -1613,7 +1637,30 @@ func _apply_layout(announce: bool = true) -> void:
 		for node: PlannerRecipeNode in _nodes.values():
 			if !node.has_meta("flow_endpoint") && goal_recipes.has(node.recipe_id):
 				focus.append(node.get_meta("position_key"))
-	var layout := PlannerGraphLayout.arrange(entries, layout_connections, focus)
+	_layout_revision += 1
+	var revision := _layout_revision
+	_layout_response = {}
+	var measured := _measure_graph()
+	status.text = "Arranging production branches and routing connections…"
+	%Arrange.disabled = true
+	%Cancel.disabled = false
+	layout_computation.submit({"kind": "graph_layout", "nodes": measured, "focus": focus,
+		"connections": layout_connections})
+	while layout_computation.busy && revision == _layout_revision:
+		await get_tree().process_frame
+	if revision != _layout_revision:
+		return
+	%Arrange.disabled = false
+	%Cancel.disabled = true
+	if _layout_response.is_empty():
+		return
+	var layout := PlannerGraphLayout.Result.new()
+	for key: String in _layout_response.positions:
+		var point: Array = _layout_response.positions[key]
+		layout.positions[key] = Vector2(point[0], point[1])
+	layout = PlannerGraphLayout.group_positions(entries, layout_connections, layout, focus)
+	graph.routes = _layout_response.routes
+
 	if _last_result.get("lines", []).is_empty() && _nodes.size() > 1 && _nodes.values().all(func(node: PlannerRecipeNode) -> bool: return node.has_meta("storage_unit")):
 		var storage_bounds := Rect2(Vector2(20, 40), Vector2.ZERO)
 		var storage_index := 0
@@ -1629,10 +1676,13 @@ func _apply_layout(announce: bool = true) -> void:
 	_groups.clear()
 	var index := 0
 	var bounds := Rect2()
+	for entry: PlannerGraphLayout.Entry in entries:
+		var area := Rect2(layout.positions[entry.key], entry.size)
+		bounds = area if bounds.size == Vector2.ZERO else bounds.merge(area)
 	for title: String in layout.groups:
 		var rect: Rect2 = layout.groups[title]
 		_groups["line_%d" % index] = {"title": layout.titles.get(title, title), "rect": [rect.position.x, rect.position.y, rect.size.x, rect.size.y]}
-		bounds = rect if index == 0 else bounds.merge(rect)
+		bounds = bounds.merge(rect)
 		index += 1
 	_rendering = false
 	_restore_groups()
@@ -1640,9 +1690,46 @@ func _apply_layout(announce: bool = true) -> void:
 		graph.zoom = clampf(minf((graph.size.x - 60) / bounds.size.x, (graph.size.y - 90) / bounds.size.y), graph.zoom_min, 1.0)
 		graph.scroll_offset = bounds.position * graph.zoom - Vector2(30, 55)
 	_unplaced.clear()
-	_save_positions()
+	_refresh_connections()
+	_save_positions(false)
+	status.text = "Graph arranged. Select a line to trace its suppliers and consumers."
 	if announce:
-		status.text = "Graph arranged."
+		%Feedback.confirm()
+
+
+func _measure_graph() -> Array[Dictionary]:
+	var measured: Array[Dictionary] = []
+	for node: PlannerRecipeNode in _nodes.values():
+		var ports: Array[Dictionary] = []
+		for resource: String in node.input_ports:
+			var point := node.get_input_port_position(node.input_ports[resource])
+			ports.append({"resource": resource, "side": "WEST", "x": point.x, "y": point.y})
+		for resource: String in node.output_ports:
+			var point := node.get_output_port_position(node.output_ports[resource])
+			ports.append({"resource": resource, "side": "EAST", "x": point.x, "y": point.y})
+		measured.append({"id": node.get_meta("position_key"), "width": node.size.x,
+			"height": node.size.y, "ports": ports, "local_to": node.get_meta("flow_endpoint", {}).get("local_to", "")})
+	return measured
+
+
+func _reroute_graph() -> void:
+	if _nodes.is_empty() || layout_computation.busy:
+		return
+	_layout_revision += 1
+	var revision := _layout_revision
+	_layout_response = {}
+	var positions: Dictionary[String, Array] = {}
+	for node: PlannerRecipeNode in _nodes.values():
+		positions[node.get_meta("position_key")] = [node.position_offset.x, node.position_offset.y]
+	layout_computation.submit({"kind": "graph_layout", "nodes": _measure_graph(),
+		"connections": _graph_connections, "positions": positions})
+	while layout_computation.busy && revision == _layout_revision:
+		await get_tree().process_frame
+	if revision != _layout_revision || _layout_response.is_empty():
+		return
+	graph.routes = _layout_response.routes
+	_refresh_connections()
+	_autosave()
 
 
 func _place_new_nodes() -> void:
@@ -1687,7 +1774,7 @@ func _place_new_nodes() -> void:
 		occupied.append(Rect2(node.position_offset, node.size))
 	_place_endpoint_nodes(false)
 	_unplaced.clear()
-	_save_positions()
+	_save_positions(false)
 
 
 func _place_endpoint_nodes(force: bool) -> void:
@@ -1826,7 +1913,7 @@ func _update_membership() -> void:
 			_members[String(node.name)] = chosen
 
 
-func _save_positions() -> void:
+func _save_positions(reroute: bool = true) -> void:
 	if _rendering:
 		return
 	for node: PlannerRecipeNode in _nodes.values():
@@ -1834,6 +1921,10 @@ func _save_positions() -> void:
 	_resizing_group = ""
 	_update_membership()
 	_autosave()
+	if reroute:
+		if layout_computation.busy:
+			_cancel_layout()
+		_reroute_graph.call_deferred()
 
 
 func _delete_nodes(names: Array[StringName]) -> void:
@@ -1863,7 +1954,7 @@ func _snapshot() -> Dictionary:
 		_positions[node.get_meta("position_key")] = [node.position_offset.x, node.position_offset.y]
 	return {"format": "factory-plan", "version": 1, "dataset_identity": _dataset.get("identity", "custom"), "dataset": _dataset,
 		"view": _pending_view.duplicate(true) if !_pending_view.is_empty() else _view_snapshot(),
-		"request": _request.duplicate(true), "positions": _positions.duplicate(true), "groups": _groups.duplicate(true), "imported_world": _world_import.duplicate(true),
+		"graph_routes": graph.routes.duplicate(true), "request": _request.duplicate(true), "positions": _positions.duplicate(true), "groups": _groups.duplicate(true), "imported_world": _world_import.duplicate(true),
 		"preferences": {"sound": %Sounds.button_pressed, "reduced_motion": %ReducedMotion.button_pressed}}
 
 
@@ -1900,6 +1991,7 @@ func _restore_plan(value: Variant) -> void:
 	_pending_view = value.get("view", {}).duplicate(true)
 	_inspected_key = _pending_view.get("inspected", "")
 	%ConnectionMode.select(clampi(int(_pending_view.get("connections", 0)), 0, 2))
+	graph.routes = value.get("graph_routes", []).duplicate(true)
 	_positions.assign(value.get("positions", {}))
 	_groups.assign(value.get("groups", {}))
 	_world_import.assign(value.get("imported_world", {}))
@@ -2021,7 +2113,14 @@ func _import_json(parsed: Variant) -> void:
 		_failed(PlannerDatasetValidation.check(parsed))
 
 
+func _cancel_layout() -> void:
+	_layout_revision += 1
+	layout_computation.cancel()
+	%Arrange.disabled = false
+
+
 func _cancel() -> void:
+	_cancel_layout()
 	if _json_import:
 		_stop_json_import()
 		status.text = "Plan import cancelled. The current graph is preserved."

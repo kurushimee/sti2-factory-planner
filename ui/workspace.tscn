@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://ui/workspace.gd" id="1"]
 [ext_resource type="Theme" path="res://ui/theme.tres" id="2"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://ui/factory_settings.tscn" id="10"]
 [ext_resource type="PackedScene" path="res://ui/about.tscn" id="11"]
 [ext_resource type="Script" path="res://ui/inspector_cards.gd" id="12"]
+[ext_resource type="Script" path="res://ui/graph_canvas.gd" id="13"]
 
 [node name="Workspace" type="Control"]
 layout_mode = 3
@@ -28,6 +29,11 @@ group_scene = ExtResource("5")
 [node name="Computation" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("4")
+
+[node name="LayoutComputation" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4")
+bridge_name = "plannerLayoutBridge"
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -115,6 +121,7 @@ size_flags_vertical = 3
 split_offset = 260
 
 [node name="Library" type="PanelContainer" parent="Margin/Layout/Body"]
+unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(245, 0)
 
@@ -236,7 +243,15 @@ tooltip_text = "Inspect the optimization result, factory power, fuel-chain consu
 alignment = 2
 text = "No goals yet"
 
+[node name="ExpandGraph" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn/Tools"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Expand graph"
+tooltip_text = "Use the full workspace for the graph. Escape restores the panels."
+
 [node name="Graph" type="GraphEdit" parent="Margin/Layout/Body/WorkspaceSplit/GraphColumn"]
+script = ExtResource("13")
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -244,6 +259,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(400, 300)
 show_arrange_button = false
 show_grid_buttons = false
+show_grid = false
 show_zoom_label = true
 minimap_enabled = false
 minimap_size = Vector2(170, 115)
@@ -285,6 +301,7 @@ theme_type_variation = &"MutedLabel"
 text = "Middle-drag to pan · Ctrl + wheel to zoom"
 
 [node name="InspectorPanel" type="PanelContainer" parent="Margin/Layout/Body/WorkspaceSplit"]
+unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(330, 0)
 

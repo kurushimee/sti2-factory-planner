@@ -5,6 +5,8 @@ signal completed(result: Dictionary)
 signal failed(message: String)
 signal progress(message: String)
 
+@export var bridge_name := "plannerBridge"
+
 var busy := false
 var _process_id := -1
 var _job_id := 0
@@ -36,7 +38,7 @@ func _process(_delta: float) -> void:
 			_last_progress = text
 			_accept(PlannerJson.parse(text))
 	if OS.has_feature("web"):
-		var response: Variant = JavaScriptBridge.eval("window.plannerBridge ? window.plannerBridge.poll() : ''")
+		var response: Variant = JavaScriptBridge.eval("window.%s ? window.%s.poll() : ''" % [bridge_name, bridge_name])
 		if response is String && !response.is_empty():
 			_accept(PlannerJson.parse(response))
 	elif FileAccess.file_exists(_result_path):
@@ -57,7 +59,7 @@ func submit(job: Dictionary) -> void:
 	_last_progress = ""
 	progress.emit("Calculating the connected factory…")
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.plannerBridge.submit(%s)" % JSON.stringify(job, "", true, true))
+		JavaScriptBridge.eval("window.%s.submit(%s)" % [bridge_name, JSON.stringify(job, "", true, true)])
 		return
 	var job_key := "%d_%d_%d" % [OS.get_process_id(), get_instance_id(), _job_id]
 	_input_path = ProjectSettings.globalize_path("user://jobs/job_%s.json" % job_key)
@@ -86,7 +88,7 @@ func cancel() -> void:
 	var stopped := false
 	if busy:
 		if OS.has_feature("web"):
-			JavaScriptBridge.eval("window.plannerBridge.cancel()")
+			JavaScriptBridge.eval("window.%s.cancel()" % bridge_name)
 		elif _process_id > 0:
 			if OS.is_process_running(_process_id):
 				stopped = OS.kill(_process_id) == OK

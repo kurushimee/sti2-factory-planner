@@ -178,3 +178,8 @@ jobs:
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/preview-review-check.log
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_route_choices_ui.gd 2>&1 | tee /tmp/route-choices-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/route-choices-check.log
+      - name: Check complete graph routing and saved geometry
+        run: |
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_graph_arrangement.gd 2>&1 | tee /tmp/graph-arrangement-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/graph-arrangement-check.log
+          node tools/verify_graph_geometry.mjs .plans/artifacts/graph-arrangement/processing-geometry.json

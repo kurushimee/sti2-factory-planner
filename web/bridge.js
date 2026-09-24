@@ -1,4 +1,17 @@
 (() => {
+  let layoutWorker;
+  const layoutMessages = [];
+  window.plannerLayoutBridge = {
+    submit(job) {
+      this.cancel();
+      layoutWorker = new Worker('kernel/layout-worker.js', {type: 'module'});
+      layoutWorker.onmessage = event => layoutMessages.push(event.data);
+      layoutWorker.onerror = event => layoutMessages.push({id: job.id, error: event.message});
+      layoutWorker.postMessage(job);
+    },
+    cancel() { layoutWorker?.terminate(); layoutWorker = null; layoutMessages.length = 0; },
+    poll() { return layoutMessages.length ? JSON.stringify(layoutMessages.shift()) : ''; },
+  };
   let worker;
   const messages = [], files = [];
   let selectedArchive;

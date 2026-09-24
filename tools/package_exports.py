@@ -8,11 +8,11 @@ import shutil
 import zipfile
 
 
-PREVIEW_VERSION = "0.1.0-mi-preview.3"
+PREVIEW_VERSION = "0.1.0-mi-preview.4"
 WINDOWS_REQUIRED = {
     "FactoryPlanner.exe", "FactoryPlanner.pck", "package.json", "runtime-manifest.json",
     "kernel/desktop.js", "runtime/node.exe", "licenses/fflate.txt",
-    "licenses/highs-js.txt", "licenses/Inter.txt", "licenses/Node.txt",
+    "licenses/elkjs.txt", "licenses/highs-js.txt", "licenses/Inter.txt", "licenses/Node.txt",
     "node_modules/highs/package.json", "node_modules/highs/build/highs.mjs",
     "node_modules/highs/build/highs.wasm", "node_modules/highs/build/highs.js",
     "node_modules/highs/LICENSE", "node_modules/highs/README.md",
@@ -22,7 +22,7 @@ WEB_REQUIRED = {
     "index.html", "index.js", "index.wasm", "index.pck", "bridge.js",
     "index.png", "index.icon.png", "index.apple-touch-icon.png",
     "index.audio.worklet.js", "index.audio.position.worklet.js",
-    "kernel/worker.js", "kernel/world-worker.js", "vendor/highs.mjs", "vendor/highs.wasm",
+    "kernel/worker.js", "kernel/world-worker.js", "kernel/layout-worker.js", "vendor/highs.mjs", "vendor/highs.wasm",
 }
 
 

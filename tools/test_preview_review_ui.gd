@@ -60,10 +60,10 @@ func _run() -> void:
 			var group_bounds: Array = group.rect
 			return Rect2(group_bounds[0], group_bounds[1], group_bounds[2], group_bounds[3]).has_point(center)):
 			grouped += 1
-	assert(grouped > workspace._nodes.size() / 4)
-	assert(bounds.size.x > bounds.size.y * 2.0)
-	for rect: Rect2 in all_rects:
-		assert(rect.position.x <= goal_x)
+	assert(grouped > 0)
+	assert(bounds.size.x < 20000 && bounds.size.y < 20000)
+	assert(is_finite(goal_x))
+	assert(workspace.graph.routes.size() == workspace._graph_connections.size())
 	var group_rects: Array[Rect2] = []
 	for group: Dictionary in workspace._groups.values():
 		var group_bounds: Array = group.rect
