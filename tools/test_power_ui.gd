@@ -36,7 +36,7 @@ func _run() -> void:
 	assert("Factory power" in workspace.inspector.text)
 	assert("Net generation" in workspace.inspector.text)
 	assert("Remaining running margin" in workspace.inspector.text)
-	assert(workspace.inspector.has_focus())
+	assert(workspace.inspector_cards.visible && workspace.inspector_cards.has_focus())
 	assert(workspace.get_node("%EditGoal").disabled)
 	if DisplayServer.get_name() != "headless":
 		for dimensions: Vector2i in [Vector2i(1440, 900), Vector2i(1280, 720)]:
