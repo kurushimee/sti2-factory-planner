@@ -47,7 +47,8 @@ func _run() -> void:
 	workspace.get_node("%Notice").hide()
 	await workspace.computation.completed
 	await workspace.layout_settled
-	assert(workspace._last_result.status == "optimal")
+	assert(workspace._last_result.status in ["optimal", "feasible"])
+	assert(workspace._last_result.get("exact_production", {}).get("status") == "exact")
 	assert(workspace._request.goals.is_empty())
 	assert(workspace._request.periodic_storage.size() == 5)
 	assert(workspace._nodes.size() == 5)
@@ -113,11 +114,13 @@ func _run() -> void:
 	workspace._request.available_machines = [panel, lv]
 	workspace._request.goals = [{"resource": "energy:eu", "rate": 280}]
 	workspace._request.external = [{"resource": "item:extended_industrialization:lv_photovoltaic_cell"}]
+	# Periodic dispatch uses the development calculation mode, outside the exact production preview.
+	workspace._request.production_only = false
+	workspace._request.exact_production = false
 	workspace._request.time_limit_ms = 30000
 	workspace._recalculate()
 	await workspace.computation.completed
-	await process_frame
-	await process_frame
+	await workspace.layout_settled
 	assert(workspace._last_result.status == "optimal")
 	assert(workspace._last_result.periodic_power.storage[0].machines == 1)
 	assert(workspace._nodes.values().filter(func(candidate: PlannerRecipeNode) -> bool: return !candidate.has_meta("flow_endpoint")).size() == 2)
