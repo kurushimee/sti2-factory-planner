@@ -70,6 +70,11 @@ func _run() -> void:
 		if node.has_meta("storage_unit"):
 			storage_node = node
 	assert(storage_node != null)
+	assert(workspace.graph.routes_current())
+	assert(workspace.graph.routes.any(func(route: Dictionary) -> bool:
+		return route.destination == storage_node.get_meta("position_key") && route.resource == "energy:eu"))
+	(workspace.get_node("%ConnectionMode") as OptionButton).select(0)
+	workspace._refresh_connections()
 	workspace._select_node(storage_node)
 	assert("planned initial charge" in workspace.inspector.text)
 	assert(workspace.graph.get_connection_list().any(func(link: Dictionary) -> bool: return link.to_node == storage_node.name))

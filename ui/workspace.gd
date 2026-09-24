@@ -1177,7 +1177,8 @@ func _render_plan(result: Dictionary) -> void:
 	_rendering = false
 	_restore_groups()
 	_settle_node_sizes.call_deferred()
-	if _initial_layout:
+	graph.modulate.a = 1.0
+	if _initial_layout && !_nodes.is_empty():
 		graph.modulate.a = 0.0
 	elif !%ReducedMotion.button_pressed:
 		var tween := create_tween()
@@ -1257,6 +1258,8 @@ func _settle_node_sizes() -> void:
 		_place_new_nodes()
 		await _reroute_graph()
 	graph.prepare_routes(_nodes)
+	if !graph.routes.is_empty() && !graph.routes_current():
+		await _reroute_graph()
 	if !_pending_view.is_empty():
 		graph.zoom = clampf(float(_pending_view.zoom), graph.zoom_min, graph.zoom_max)
 		graph.scroll_offset = Vector2(_pending_view.scroll[0], _pending_view.scroll[1])
@@ -1621,15 +1624,7 @@ func _apply_layout(announce: bool = true) -> void:
 				chosen = group
 				best = neighbor_groups[group]
 		entries.append(PlannerGraphLayout.Entry.new(key, chosen, node.size, node.title))
-	var layout_connections: Array = _graph_connections.duplicate()
-	for unit: Dictionary in _last_result.get("periodic_power", {}).get("storage", []):
-		if unit.machines <= 0:
-			continue
-		var storage_key: String = "planner:storage|%s|planner:storage|%s" % [unit.machine, unit.machine]
-		for source: Dictionary in _last_result.periodic_power.generation:
-			if source.machines > 0:
-				layout_connections.append({"source": str(source.recipe) + "|" + str(source.configuration),
-					"destination": storage_key, "resource": "dispatch_buffer"})
+	var layout_connections := _layout_connections()
 	var focus: Array[String] = []
 	var goal_recipes: Dictionary[String, bool] = {}
 	for goal: Dictionary in _request.get("goals", []):
@@ -1703,6 +1698,19 @@ func _apply_layout(announce: bool = true) -> void:
 		%Feedback.confirm()
 
 
+func _layout_connections() -> Array:
+	var connections: Array = _graph_connections.duplicate()
+	for unit: Dictionary in _last_result.get("periodic_power", {}).get("storage", []):
+		if unit.machines <= 0:
+			continue
+		var storage_key: String = "planner:storage|%s|planner:storage|%s" % [unit.machine, unit.machine]
+		for source: Dictionary in _last_result.periodic_power.generation:
+			if source.machines > 0:
+				connections.append({"source": str(source.recipe) + "|" + str(source.configuration),
+					"destination": storage_key, "resource": "energy:eu"})
+	return connections
+
+
 func _measure_graph() -> Array[Dictionary]:
 	var measured: Array[Dictionary] = []
 	for node: PlannerRecipeNode in _nodes.values():
@@ -1728,7 +1736,7 @@ func _reroute_graph() -> void:
 	for node: PlannerRecipeNode in _nodes.values():
 		positions[node.get_meta("position_key")] = [node.position_offset.x, node.position_offset.y]
 	layout_computation.submit({"kind": "graph_layout", "nodes": _measure_graph(),
-		"connections": _graph_connections, "positions": positions})
+		"connections": _layout_connections(), "positions": positions})
 	while layout_computation.busy && revision == _layout_revision:
 		await get_tree().process_frame
 	if revision != _layout_revision || _layout_response.is_empty():

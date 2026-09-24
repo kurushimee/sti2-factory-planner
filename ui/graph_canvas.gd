@@ -34,6 +34,10 @@ func prepare_routes(nodes: Dictionary[String, PlannerRecipeNode]) -> void:
 		_paths[_path_key(start, end)] = points
 
 
+func routes_current() -> bool:
+	return _paths.size() == routes.size()
+
+
 func _get_connection_line(from_position: Vector2, to_position: Vector2) -> PackedVector2Array:
 	var start := from_position / zoom
 	var end := to_position / zoom
