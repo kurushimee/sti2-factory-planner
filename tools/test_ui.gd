@@ -51,7 +51,7 @@ func _run() -> void:
 	workspace._request = {"goals": [{"resource": "motor", "rate": 2.0, "recipe": "assemble"}]}
 	workspace._recalculate()
 	await workspace.computation.completed
-	await process_frame
+	await workspace.layout_settled
 	workspace.graph.grab_focus()
 	var previous := workspace._inspected_key
 	var right := InputEventJoypadButton.new()
@@ -65,8 +65,15 @@ func _run() -> void:
 	var selected := workspace._inspected_key
 	workspace._recalculate()
 	await workspace.computation.completed
-	await process_frame
+	await workspace.layout_settled
 	assert(workspace._inspected_key == selected)
+	if !workspace._recipes.has(workspace._selected):
+		for node: PlannerRecipeNode in workspace._nodes.values():
+			if workspace._recipes.has(node.recipe_id):
+				workspace._select_node(node)
+				break
+	assert(workspace._recipes.has(workspace._selected))
+	selected = workspace._inspected_key
 	var confirm := InputEventJoypadButton.new()
 	confirm.button_index = JOY_BUTTON_A
 	confirm.pressed = true

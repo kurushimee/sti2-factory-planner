@@ -17,6 +17,7 @@ var _line_only := false
 
 
 func _ready() -> void:
+	PlannerDisplay.track_input(%GoalRate)
 	%GoalKind.add_item("Output rate")
 	%GoalKind.add_item("Machine capacity")
 	%GoalKind.add_item("Finite quantity")

@@ -24,14 +24,21 @@ func configure(line: Dictionary, recipe: Dictionary, resources: Dictionary[Strin
 	loadout.text = PlannerDisplay.loadout(line.get("configuration_details", {}), resources)
 	var chance_outputs: bool = recipe.get("expected_yields", false) || recipe.get("outputs", []).any(func(output: Dictionary) -> bool:
 		return output.get("probability", 1) != 1)
-	var operations: String = line.get("operations_per_second_exact", {}).get("display", PlannerDisplay.number(line.operations_per_second))
-	throughput.text = "%s operations/s" % PlannerDisplay.graph_exact(operations)
+	var primary_output: Dictionary = {}
+	for flow: Dictionary in line.outputs:
+		if flow.resource == recipe.primary:
+			primary_output = flow
+			break
+	if primary_output.is_empty() && !line.outputs.is_empty():
+		primary_output = line.outputs[0]
+	throughput.text = PlannerDisplay.graph_flow_rate(primary_output.get("resource", recipe.primary),
+		primary_output.get("rate", 0.0), primary_output.get("rate_exact", {}), primary_output.get("rate_eu_per_tick_exact", {}))
 	if chance_outputs:
-		throughput.text = "%s ops/s · expected yields" % PlannerDisplay.graph_exact(operations)
-	throughput.tooltip_text = "%s operations/s%s" % [operations, " · expected yields" if chance_outputs else ""]
+		throughput.text += " · expected yields"
+	throughput.tooltip_text = "%s operations/s%s" % [line.get("operations_per_second_exact", {}).get("display", PlannerDisplay.number(line.operations_per_second)), " · expected yield" if chance_outputs else ""]
 	var exact_power: String = line.get("power_eu_per_tick_exact", {}).get("display", PlannerDisplay.number(line.power_eu_per_tick))
 	var exact_utilization: String = line.get("utilization_percent_exact", {}).get("display", PlannerDisplay.number(line.utilization * 100))
-	power.text = "%s EU/t  ·  %s%% utilized" % [PlannerDisplay.graph_exact(exact_power), PlannerDisplay.graph_exact(exact_utilization)]
+	power.text = "%s EU/t  ·  %s%%" % [PlannerDisplay.graph_exact(exact_power, line.power_eu_per_tick), PlannerDisplay.graph_exact(exact_utilization, line.utilization * 100)]
 	power.tooltip_text = "%s EU/t · %s%% utilized" % [exact_power, exact_utilization]
 	var inputs: Array = line.inputs.duplicate(true)
 	if line.power_eu_per_tick > 0:

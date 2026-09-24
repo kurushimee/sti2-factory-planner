@@ -9,6 +9,7 @@ signal layout_settled
 @onready var search: LineEdit = %Search
 @onready var rate: SpinBox = %Rate
 @onready var inspector: RichTextLabel = %Inspector
+@onready var inspector_cards: PlannerInspectorCards = %InspectorCards
 @onready var status: Label = %Status
 @onready var files: FileDialog = %Files
 
@@ -64,6 +65,7 @@ func _ready() -> void:
 	computation.failed.connect(_failed)
 	computation.progress.connect(func(message: String) -> void: status.text = message)
 	search.text_changed.connect(_filter_recipes)
+	PlannerDisplay.track_input(rate)
 	recipes_list.item_selected.connect(func(_index: int) -> void: _refresh_route_action())
 	%PreviousRecipes.pressed.connect(func() -> void: _recipe_page -= 1; _show_recipe_page())
 	%NextRecipes.pressed.connect(func() -> void: _recipe_page += 1; _show_recipe_page())
@@ -97,6 +99,7 @@ func _ready() -> void:
 	%Arrange.pressed.connect(_arrange)
 	%AddGroup.pressed.connect(_add_group)
 	%Import.pressed.connect(_choose_import)
+	%NewPlan.pressed.connect(_start_new_plan)
 	%Save.pressed.connect(_choose_export)
 	%Undo.pressed.connect(_undo_action)
 	%Redo.pressed.connect(_redo_action)
@@ -115,6 +118,7 @@ func _ready() -> void:
 	_setup_focus()
 	files.file_selected.connect(_file_selected)
 	graph.node_selected.connect(_select_node)
+	graph.add_theme_color_override("activity", Color("e8dfba"))
 	graph.gui_input.connect(_graph_input)
 	graph.end_node_move.connect(_save_positions)
 	graph.begin_node_move.connect(_remember)
@@ -355,7 +359,7 @@ func _load_dataset(value: Variant) -> bool:
 		_resources[resource.id] = PlannerDisplay.readable_name(resource.id, resource.get("name", ""))
 	for recipe: Dictionary in _dataset.recipes:
 		_recipes[recipe.id] = recipe
-	%DatasetName.text = "%s  ·  %s" % [_dataset.get("name", "Custom dataset"), _dataset.get("description", "")]
+	%DatasetName.text = "%s · Preview" % _dataset.get("name", "Custom dataset") if !_dataset.get("complete", false) else str(_dataset.get("name", "Custom dataset"))
 	_filter_recipes(search.text)
 	return true
 
@@ -372,12 +376,94 @@ func _new_request() -> Dictionary[String, Variant]:
 			"external": [{"resource": "energy:eu", "cost": 0}],
 		}
 		for stage: Dictionary in _dataset.get("progression", []):
-			if stage.id == "statech:stage_3":
+			if stage.id == "statech:all":
 				request.available_machines = stage.available_machines.duplicate()
 				request.available_upgrades = stage.available_upgrades.duplicate()
+				request.available_parts = stage.available_parts.duplicate()
+				request.progression_preset = stage.id
 				break
 		return request
 	return {"goals": [], "replication": false, "exact_production": true}
+
+
+func _start_new_plan() -> void:
+	var already_bundled: bool = _dataset.get("identity", "") == "statech-industry-2:2.0.1"
+	var decoded: Variant = null
+	if !already_bundled:
+		var packed := FileAccess.get_file_as_bytes(default_dataset_path)
+		if packed.is_empty():
+			_failed("The bundled dataset could not be read.")
+			return
+		decoded = PlannerJson.parse(packed.decompress_dynamic(128 * 1024 * 1024, FileAccess.COMPRESSION_GZIP).get_string_from_utf8())
+		if !PlannerDatasetValidation.check(decoded).is_empty():
+			_failed("The bundled dataset is invalid.")
+			return
+	_remember()
+	computation.cancel()
+	_replace_graph_canvas()
+	_frames.clear()
+	if !already_bundled && !_load_dataset(decoded):
+		return
+	_request = _new_request()
+	_positions.clear()
+	_groups.clear()
+	_world_import.clear()
+	_pending_view.clear()
+	_inspected_key = ""
+	%ReviewWorld.disabled = true
+	%Replication.set_pressed_no_signal(false)
+	%ConnectionMode.select(0)
+	_last_result = {"status": "feasible", "optimal": true, "lines": [], "connections": []}
+	graph.minimap_enabled = false
+	_render_plan(_last_result)
+	graph.zoom = 1.0
+	graph.scroll_offset = Vector2.ZERO
+	_refresh_connections()
+	%Summary.text = "No goals yet"
+	status.text = "New plan ready."
+	_autosave()
+
+
+func _replace_graph_canvas() -> void:
+	var previous := graph
+	var replacement := GraphEdit.new()
+	replacement.name = previous.name
+	replacement.layout_mode = previous.layout_mode
+	replacement.size_flags_horizontal = previous.size_flags_horizontal
+	replacement.size_flags_vertical = previous.size_flags_vertical
+	replacement.custom_minimum_size = previous.custom_minimum_size
+	replacement.theme = previous.theme
+	replacement.show_arrange_button = previous.show_arrange_button
+	replacement.show_grid_buttons = previous.show_grid_buttons
+	replacement.show_zoom_label = previous.show_zoom_label
+	replacement.minimap_size = previous.minimap_size
+	replacement.minimap_opacity = previous.minimap_opacity
+	replacement.connection_lines_thickness = previous.connection_lines_thickness
+	replacement.connection_lines_curvature = previous.connection_lines_curvature
+	replacement.zoom_min = previous.zoom_min
+	replacement.zoom_max = previous.zoom_max
+	replacement.snapping_distance = previous.snapping_distance
+	replacement.panning_scheme = previous.panning_scheme
+	var parent := previous.get_parent()
+	var child_index := previous.get_index()
+	previous.unique_name_in_owner = false
+	parent.remove_child(previous)
+	previous.queue_free()
+	parent.add_child(replacement)
+	parent.move_child(replacement, child_index)
+	replacement.owner = self
+	replacement.unique_name_in_owner = true
+	graph = replacement
+	graph.node_selected.connect(_select_node)
+	graph.gui_input.connect(_graph_input)
+	graph.end_node_move.connect(_save_positions)
+	graph.begin_node_move.connect(_remember)
+	graph.delete_nodes_request.connect(_delete_nodes)
+	graph.add_theme_color_override("activity", Color("e8dfba"))
+	_nodes.clear()
+	_frames.clear()
+	_members.clear()
+	_graph_connections.clear()
 
 
 func _filter_recipes(query: String) -> void:
@@ -385,7 +471,7 @@ func _filter_recipes(query: String) -> void:
 	_recipe_page = 0
 	var normalized := query.to_lower()
 	for recipe: Dictionary in _dataset.get("recipes", []):
-		var title: String = PlannerDisplay.recipe_name(recipe)
+		var title: String = PlannerDisplay.recipe_list_name(recipe)
 		if !normalized.is_empty() && !normalized in (title + " " + recipe.id).to_lower():
 			continue
 		_recipe_matches.append(recipe.id)
@@ -398,10 +484,10 @@ func _show_recipe_page() -> void:
 	var last := mini(first + RECIPE_PAGE_SIZE, _recipe_matches.size())
 	for match_index: int in range(first, last):
 		var recipe: Dictionary = _recipes[_recipe_matches[match_index]]
-		var title: String = PlannerDisplay.recipe_name(recipe)
+		var title: String = PlannerDisplay.recipe_list_name(recipe)
 		var index := recipes_list.add_item(title)
 		recipes_list.set_item_metadata(index, recipe.id)
-		recipes_list.set_item_tooltip(index, recipe.get("unsupported", recipe.id))
+		recipes_list.set_item_tooltip(index, "%s\n%s" % [title, recipe.get("unsupported", recipe.id)])
 	%RecipePage.text = "%d–%d / %d" % [first + 1 if last > first else 0, last, _recipe_matches.size()]
 	%PreviousRecipes.disabled = first == 0
 	%NextRecipes.disabled = last >= _recipe_matches.size()
@@ -416,7 +502,7 @@ func _refresh_route_action() -> void:
 		var id: String = recipes_list.get_item_metadata(index)
 		var recipe: Dictionary = _recipes[id]
 		var pinned: bool = routes.get(recipe.primary) == id
-		recipes_list.set_item_text(index, ("✓ " if pinned else "") + PlannerDisplay.recipe_name(recipe))
+		recipes_list.set_item_text(index, ("✓ " if pinned else "") + PlannerDisplay.recipe_list_name(recipe))
 	var selected := recipes_list.get_selected_items()
 	if selected.is_empty():
 		%PinRoute.disabled = true
@@ -715,11 +801,12 @@ func _calculated(result: Dictionary) -> void:
 			%Notice.dialog_text = "The calculation could not verify every flow at the requested precision. It has not replaced your plan.\n\n" + String(result.get("reason", "A numerical balance check failed."))
 			%Notice.popup_centered()
 			return
-		_failed("The goals could not be solved (%s). Check available routes and supplies. The previous graph is preserved." % result.get("status", "unknown"))
+		_failed("No feasible plan. Check unlocks, routes, and supplies.")
+		status.tooltip_text = str(result.get("reason", result.get("status", "unknown")))
 		return
 	_last_result.assign(result)
 	_render_plan(result)
-	status.text = "Plan updated. Shared demand and generation support are included." if result.get("optimal", false) else "Feasible plan · lowest cost not yet proven."
+	status.text = "Plan ready." if result.get("optimal", false) else "Plan ready · Cost unproven."
 	if !_graph_link_errors.is_empty():
 		status.text = "%d graph flows could not be drawn. Select Plan details for the calculation." % _graph_link_errors.size()
 		status.tooltip_text = "\n".join(_graph_link_errors)
@@ -819,10 +906,14 @@ func _render_plan(result: Dictionary) -> void:
 	_reuse_allocation_positions(layout_lines)
 	_initial_layout = _positions.is_empty() && _groups.is_empty()
 	if _initial_layout && _pending_view.is_empty():
-		%ConnectionMode.select(2 if result.lines.size() > 30 else 0)
+		%ConnectionMode.select(1)
+		graph.minimap_enabled = result.lines.size() > 30
 	_unplaced.clear()
 	_rendering = true
 	graph.clear_connections()
+	for frame: GraphFrame in _frames.values():
+		frame.free()
+	_frames.clear()
 	for node: PlannerRecipeNode in _nodes.values():
 		graph.remove_child(node)
 		node.queue_free()
@@ -879,7 +970,7 @@ func _render_plan(result: Dictionary) -> void:
 	var by_key: Dictionary[String, PlannerRecipeNode] = {}
 	for node: PlannerRecipeNode in _nodes.values():
 		by_key[node.get_meta("position_key")] = node
-	%Summary.text = "%d %s  ·  Plan details" % [machine_count, "machine" if machine_count == 1 else "machines"]
+	%Summary.text = "%d %s · Details" % [machine_count, "machine" if machine_count == 1 else "machines"]
 	_rendering = false
 	_restore_groups()
 	_settle_node_sizes.call_deferred()
@@ -896,6 +987,8 @@ func _render_plan(result: Dictionary) -> void:
 		_select_node(preferred if preferred else _nodes.values()[0])
 	else:
 		_selected = ""
+		inspector.visible = true
+		inspector_cards.visible = false
 		inspector.text = "Select a recipe and add a goal to start planning."
 		%RemoveGoal.disabled = true
 		%EditGoal.disabled = true
@@ -956,12 +1049,15 @@ func _settle_node_sizes() -> void:
 
 
 func _select_node(node: Node) -> void:
+	inspector.visible = true
+	inspector_cards.visible = false
 	if node is GraphFrame:
 		%EditGoal.disabled = false
 		%EditGoal.text = "Rename group"
 		_selected = String(node.name)
-		inspector.text = "[font_size=20]%s[/font_size]\n\nDrag the title to move this group and its members. Resize a border to change membership without moving recipes.\n\nA recipe belongs to the smallest group containing its center. Equal-sized overlaps use the group's stable ID.\n\n%d member nodes" % [PlannerDisplay.markup(node.title), _members.values().count(String(node.name))]
-		inspector.get_v_scroll_bar().set_deferred("value", 0.0)
+		inspector.visible = false
+		inspector_cards.visible = true
+		inspector_cards.show_group(node.title, _members.values().count(String(node.name)))
 		%RemoveGoal.text = "Remove group"
 		%RemoveGoal.disabled = false
 		return
@@ -975,16 +1071,9 @@ func _select_node(node: Node) -> void:
 		node.selected = true
 		%EditGoal.disabled = true
 		%RemoveGoal.disabled = true
-		inspector.text = "[font_size=20]%s[/font_size]\n\n%s\n%s\n\n%s" % [
-			node.title, PlannerDisplay.markup(node.summary.text),
-			PlannerDisplay.flow_rate(endpoint.resource, endpoint.rate,
-				endpoint.get("rate_exact", {}), endpoint.get("rate_eu_per_tick_exact", {})),
-			"Change external supplies in Factory settings." if endpoint.kind == "external" else
-			"Select a producing recipe to change its goal or route." if endpoint.kind == "goal" else
-			"This input was not allocated to a supply. Its amount is within the recorded numerical tolerance and is not credited as production." if endpoint.kind == "gap" else
-			"This remainder is within the calculation's balance tolerance. It is shown for traceability and is not credited as useful surplus." if endpoint.kind == "remainder" else
-			"This output remains after the factory's planned consumption."]
-		inspector.get_v_scroll_bar().set_deferred("value", 0.0)
+		inspector.visible = false
+		inspector_cards.visible = true
+		inspector_cards.show_endpoint(endpoint, _resources)
 		return
 	if node.has_meta("storage_unit"):
 		var unit: Dictionary = node.get_meta("storage_unit")
@@ -1018,8 +1107,13 @@ func _select_node(node: Node) -> void:
 	node.selected = true
 	%EditGoal.disabled = false
 	var line: Dictionary = node.allocation
-	inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
+	inspector.visible = false
+	inspector_cards.visible = true
+	inspector_cards.show_line(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
 	if node.has_meta("solar_panels"):
+		inspector.visible = true
+		inspector_cards.visible = false
+		inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
 		var panels: Array = node.get_meta("solar_panels")
 		inspector.text += "\n\n[b]World snapshot[/b]\n%d saved %s with this route. A stored cell or fluid amount does not establish sustained supply." % [panels.size(), "panel" if panels.size() == 1 else "panels"]
 		for panel: Dictionary in panels:
@@ -1063,8 +1157,11 @@ func _refresh_connections() -> void:
 				destination.name, destination.input_ports[connection.resource]) != OK:
 			_graph_link_errors.append("Could not draw %s." % connection.resource)
 		else:
+			if connection.source == _inspected_key || connection.destination == _inspected_key:
+				graph.set_connection_activity(source.name, source.output_ports[connection.resource],
+					destination.name, destination.input_ports[connection.resource], 0.9)
 			shown += 1
-	%Hint.text = "%d/%d flows shown · Middle-drag to pan · Ctrl+wheel to zoom" % [shown, _graph_connections.size()]
+	%Hint.text = "%d/%d flows · Middle drag: pan · Ctrl+wheel: zoom" % [shown, _graph_connections.size()]
 	%Hint.tooltip_text = "The connection filter changes only the drawing. All production flows remain in the plan."
 	if %ConnectionMode.selected == 1:
 		return
@@ -1107,26 +1204,30 @@ func _focus_recipe(include_supplier: bool = false) -> void:
 			candidates.append({"rect": Rect2(goal.position_offset, goal.size), "distance": 0.0})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.distance < b.distance)
-	graph.zoom = maxf(graph.zoom, 1.0)
-	if include_supplier && !candidates.is_empty():
-		var nearby: Rect2 = target.merge(candidates[0].rect)
-		var fit: float = minf((graph.size.x - 60) / nearby.size.x,
-			(graph.size.y - 60) / nearby.size.y)
-		graph.zoom = minf(graph.zoom, clampf(fit, graph.zoom_min, 1.0))
-	var chosen := 0
-	for candidate: Dictionary in candidates:
-		var expanded: Rect2 = target.merge(candidate.rect)
-		if (expanded.size.x * graph.zoom <= graph.size.x - 40 &&
-				expanded.size.y * graph.zoom <= graph.size.y - 40):
-			target = expanded
-			chosen += 1
-		if chosen == 3:
-			break
+	if include_supplier:
+		if !candidates.is_empty():
+			var nearby: Rect2 = target.merge(candidates[0].rect)
+			var fit: float = minf((graph.size.x - 60) / nearby.size.x,
+				(graph.size.y - 60) / nearby.size.y)
+			graph.zoom = clampf(fit, graph.zoom_min, 1.0)
+		var chosen := 0
+		for candidate: Dictionary in candidates:
+			var expanded: Rect2 = target.merge(candidate.rect)
+			if (expanded.size.x * graph.zoom <= graph.size.x - 40 &&
+					expanded.size.y * graph.zoom <= graph.size.y - 40):
+				target = expanded
+				chosen += 1
+			if chosen == 3:
+				break
+	else:
+		graph.zoom = 0.8
 	graph.scroll_offset = target.get_center() * graph.zoom - graph.size / 2.0
 	_save_view()
 
 
 func _show_power() -> void:
+	inspector.visible = true
+	inspector_cards.visible = false
 	inspector.text = PlannerDisplay.optimization_report(_last_result) + PlannerDisplay.power_report(_last_result.get("power", {}), _resources, _last_result.get("construction", {}))
 	inspector.scroll_to_line(0)
 	%EditGoal.disabled = true
@@ -1141,6 +1242,7 @@ func _arrange() -> void:
 
 func _apply_layout(announce: bool = true) -> void:
 	var entries: Array[PlannerGraphLayout.Entry] = []
+	var group_for_key: Dictionary[String, String] = {}
 	for node: PlannerRecipeNode in _nodes.values():
 		if node.has_meta("flow_endpoint"):
 			continue
@@ -1148,8 +1250,28 @@ func _apply_layout(announce: bool = true) -> void:
 		if !node.has_meta("storage_unit"):
 			var recipe: Dictionary = _recipes[node.recipe_id]
 			group = recipe.get("group", "Power" if recipe.primary == "energy:eu" else "Production")
-		entries.append(PlannerGraphLayout.Entry.new(node.get_meta("position_key"), group, node.size))
-	var layout_connections: Array = _last_result.get("connections", []).duplicate()
+		var key: String = node.get_meta("position_key")
+		group_for_key[key] = group
+		entries.append(PlannerGraphLayout.Entry.new(key, group, node.size))
+	for node: PlannerRecipeNode in _nodes.values():
+		if !node.has_meta("flow_endpoint"):
+			continue
+		var key: String = node.get_meta("position_key")
+		var neighbor_groups: Dictionary[String, int] = {}
+		for connection: Dictionary in _graph_connections:
+			var neighbor: String = connection.destination if connection.source == key else (
+				connection.source if connection.destination == key else "")
+			if group_for_key.has(neighbor):
+				var group: String = group_for_key[neighbor]
+				neighbor_groups[group] = neighbor_groups.get(group, 0) + 1
+		var chosen := "Production"
+		var best := 0
+		for group: String in neighbor_groups:
+			if neighbor_groups[group] > best:
+				chosen = group
+				best = neighbor_groups[group]
+		entries.append(PlannerGraphLayout.Entry.new(key, chosen, node.size))
+	var layout_connections: Array = _graph_connections.duplicate()
 	for unit: Dictionary in _last_result.get("periodic_power", {}).get("storage", []):
 		if unit.machines <= 0:
 			continue
@@ -1180,9 +1302,7 @@ func _apply_layout(announce: bool = true) -> void:
 		layout.groups["Power"] = storage_bounds
 	_rendering = true
 	for node: PlannerRecipeNode in _nodes.values():
-		if !node.has_meta("flow_endpoint"):
-			node.position_offset = layout.positions[node.get_meta("position_key")]
-	_place_endpoint_nodes(true)
+		node.position_offset = layout.positions[node.get_meta("position_key")]
 	_groups.clear()
 	var index := 0
 	var bounds := Rect2()
@@ -1199,21 +1319,49 @@ func _apply_layout(announce: bool = true) -> void:
 	_unplaced.clear()
 	_save_positions()
 	if announce:
-		status.text = "Recipes arranged into production groups. Drag nodes and groups to adjust the layout."
+		status.text = "Graph arranged."
 
 
 func _place_new_nodes() -> void:
-	var right := 25.0
+	var by_key: Dictionary[String, PlannerRecipeNode] = {}
+	var occupied: Array[Rect2] = []
+	var pending: Array[PlannerRecipeNode] = []
 	for node: PlannerRecipeNode in _nodes.values():
-		if !node.get_meta("position_key") in _unplaced:
-			right = maxf(right, node.position_offset.x + node.size.x + 80)
-	for frame: GraphFrame in _frames.values():
-		right = maxf(right, frame.position_offset.x + frame.size.x + 80)
-	var y := 75.0
-	for node: PlannerRecipeNode in _nodes.values():
-		if !node.has_meta("flow_endpoint") && node.get_meta("position_key") in _unplaced:
-			node.position_offset = Vector2(right, y)
-			y += node.size.y + 32
+		var key: String = node.get_meta("position_key")
+		by_key[key] = node
+		if key in _unplaced && !node.has_meta("flow_endpoint"):
+			pending.append(node)
+		elif !key in _unplaced:
+			occupied.append(Rect2(node.position_offset, node.size))
+	while !pending.is_empty():
+		var chosen := -1
+		var preferred := Vector2.ZERO
+		for index: int in pending.size():
+			var node: PlannerRecipeNode = pending[index]
+			var key: String = node.get_meta("position_key")
+			for connection: Dictionary in _graph_connections:
+				if connection.resource == "energy:eu":
+					continue
+				var other: String = connection.destination if connection.source == key else (
+					connection.source if connection.destination == key else "")
+				if !by_key.has(other) || pending.has(by_key[other]) || by_key[other].has_meta("flow_endpoint"):
+					continue
+				var neighbor: PlannerRecipeNode = by_key[other]
+				preferred = neighbor.position_offset + Vector2(
+					-node.size.x - 80 if connection.source == key else neighbor.size.x + 80, 0)
+				chosen = index
+				break
+			if chosen >= 0:
+				break
+		if chosen < 0:
+			chosen = 0
+			var right := 25.0
+			for area: Rect2 in occupied:
+				right = maxf(right, area.end.x + 80)
+			preferred = Vector2(right, 75)
+		var node: PlannerRecipeNode = pending.pop_at(chosen)
+		node.position_offset = _free_graph_position(preferred, node.size, occupied)
+		occupied.append(Rect2(node.position_offset, node.size))
 	_place_endpoint_nodes(false)
 	_unplaced.clear()
 	_save_positions()
@@ -1244,35 +1392,39 @@ func _place_endpoint_nodes(force: bool) -> void:
 			if by_key.has(neighbor) && !by_key[neighbor].has_meta("flow_endpoint"):
 				anchor = by_key[neighbor]
 				break
-		var candidates: Array[Vector2] = []
+		var preferred := Vector2.ZERO
 		if anchor:
 			var at := anchor.position_offset
 			var size := anchor.size
 			if node.get_meta("flow_endpoint").kind in ["external", "gap"]:
-				candidates.append(at + Vector2(-node.size.x - 55, 0))
+				preferred = at + Vector2(-node.size.x - 55, 0)
 			else:
-				candidates.append(at + Vector2(size.x + 55, 0))
-			candidates.append(at + Vector2(0, size.y + 55))
-			candidates.append(at + Vector2(0, -node.size.y - 55))
-			candidates.append(at + Vector2(size.x + 55, size.y + 55))
-		var right := 25.0
-		for area: Rect2 in occupied:
-			right = maxf(right, area.end.x + 55)
-		candidates.append(Vector2(right, 75))
-		var placed := false
-		for position: Vector2 in candidates:
-			var area := Rect2(position, node.size).grow(12)
-			if occupied.all(func(other: Rect2) -> bool: return !area.intersects(other)):
-				node.position_offset = position
-				placed = true
-				break
-		if !placed:
-			var fallback := candidates[-1]
-			while occupied.any(func(other: Rect2) -> bool:
-				return Rect2(fallback, node.size).grow(12).intersects(other)):
-				fallback.y += node.size.y + 24
-			node.position_offset = fallback
+				preferred = at + Vector2(size.x + 55, 0)
+		else:
+			var right := 25.0
+			for area: Rect2 in occupied:
+				right = maxf(right, area.end.x + 55)
+			preferred = Vector2(right, 75)
+		node.position_offset = _free_graph_position(preferred, node.size, occupied)
 		occupied.append(Rect2(node.position_offset, node.size))
+
+
+func _free_graph_position(preferred: Vector2, size: Vector2, occupied: Array[Rect2]) -> Vector2:
+	var step := size + Vector2(55, 32)
+	for radius: int in 32:
+		for horizontal: int in range(-radius, radius + 1):
+			var vertical := radius - absi(horizontal)
+			for sign: int in [-1, 1]:
+				var position := preferred + Vector2(horizontal * step.x, sign * vertical * step.y)
+				if position.x < 25 || position.y < 55:
+					continue
+				var area := Rect2(position, size).grow(12)
+				if occupied.all(func(other: Rect2) -> bool: return !area.intersects(other)):
+					return position
+	var right := 25.0
+	for area: Rect2 in occupied:
+		right = maxf(right, area.end.x + 80)
+	return Vector2(right, 75)
 
 
 func _add_group() -> void:
@@ -1290,8 +1442,7 @@ func _add_group() -> void:
 func _restore_groups() -> void:
 	_rendering = true
 	for frame: GraphFrame in _frames.values():
-		graph.remove_child(frame)
-		frame.queue_free()
+		frame.free()
 	_frames.clear()
 	for key: String in _groups:
 		var frame := group_scene.instantiate() as GraphFrame
@@ -1299,7 +1450,6 @@ func _restore_groups() -> void:
 		frame.title = _groups[key].title
 		var rect: Array = _groups[key].rect
 		graph.add_child(frame)
-		graph.move_child(frame, 0)
 		frame.position_offset = Vector2(rect[0], rect[1])
 		frame.size = Vector2(rect[2], rect[3])
 		frame.position_offset_changed.connect(_group_moved.bind(key))

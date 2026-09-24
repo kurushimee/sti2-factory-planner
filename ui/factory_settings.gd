@@ -19,6 +19,8 @@ var _construction: Dictionary = {}
 
 
 func _ready() -> void:
+	for control: SpinBox in [%InfrastructureTransfer, %SupplyLimit, %SupplyCost, %Reserve, %Overhead, %ResourceWeight, %MachineWeight, %EnergyWeight, %ConstructionWeight]:
+		PlannerDisplay.track_input(control)
 	for title_text: String in ["Machines", "Upgrades", "Production routes", "Obtained templates", "External supplies", "Structure hatches", "Construction costs", "Infrastructure", "Power storage", "Power sources"]:
 		%SettingsCategory.add_item(title_text)
 	%SettingsCategory.item_selected.connect(_category_changed)

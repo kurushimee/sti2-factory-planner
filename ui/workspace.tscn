@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://ui/workspace.gd" id="1"]
 [ext_resource type="Theme" path="res://ui/theme.tres" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://ui/goal_editor.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://ui/factory_settings.tscn" id="10"]
 [ext_resource type="PackedScene" path="res://ui/about.tscn" id="11"]
+[ext_resource type="Script" path="res://ui/inspector_cards.gd" id="12"]
 
 [node name="Workspace" type="Control"]
 layout_mode = 3
@@ -81,6 +82,12 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Imported factory"
 disabled = true
+
+[node name="NewPlan" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "New plan"
+tooltip_text = "Start a blank StaTech plan. Undo restores this workspace."
 
 [node name="Import" type="Button" parent="Margin/Layout/Header"]
 unique_name_in_owner = true
@@ -239,7 +246,11 @@ show_arrange_button = false
 show_grid_buttons = false
 show_zoom_label = true
 minimap_enabled = false
-connection_lines_thickness = 2.0
+minimap_size = Vector2(170, 115)
+minimap_opacity = 0.8
+connection_lines_thickness = 1.5
+connection_lines_curvature = 0.18
+zoom_min = 0.05
 snapping_distance = 20
 panning_scheme = 1
 
@@ -251,7 +262,7 @@ unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Choose which connections to draw. All production and power remain in the plan."
 item_count = 3
-selected = 0
+selected = 1
 popup/item_0/text = "All flows"
 popup/item_0/id = 0
 popup/item_1/text = "Materials"
@@ -294,6 +305,20 @@ selection_enabled = true
 focus_mode = 2
 text = "Select a node to inspect its inputs, capacity, and power."
 
+[node name="InspectorCards" type="ScrollContainer" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+script = ExtResource("12")
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column/InspectorCards"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
 [node name="EditGoal" type="Button" parent="Margin/Layout/Body/WorkspaceSplit/InspectorPanel/Column"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -319,7 +344,7 @@ text_overrun_behavior = 3
 [node name="About" type="Button" parent="Margin/Layout/StatusRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "About · Unofficial Minecraft companion"
+text = "About"
 tooltip_text = "Not approved by or associated with Mojang or Microsoft. Read attribution and licenses."
 
 [node name="Sounds" type="CheckButton" parent="Margin/Layout/StatusRow"]

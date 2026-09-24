@@ -8,7 +8,7 @@ import shutil
 import zipfile
 
 
-PREVIEW_VERSION = "0.1.0-mi-preview.1"
+PREVIEW_VERSION = "0.1.0-mi-preview.2"
 WINDOWS_REQUIRED = {
     "FactoryPlanner.exe", "FactoryPlanner.pck", "package.json", "runtime-manifest.json",
     "kernel/desktop.js", "runtime/node.exe", "licenses/fflate.txt",

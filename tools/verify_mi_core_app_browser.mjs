@@ -83,7 +83,7 @@ try {
       read.onerror = () => reject(read.error);
     };
   }));
-  assert.equal(await connectionMode(), 2);
+  assert.equal(await connectionMode(), 1);
   await page.mouse.click(380, 825);
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
