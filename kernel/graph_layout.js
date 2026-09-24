@@ -102,4 +102,3 @@ async function arrangeCore({nodes, connections, focus, elk}) {
     return {positions, routes, width: graph.width, height: graph.height};
   }
 }
-
