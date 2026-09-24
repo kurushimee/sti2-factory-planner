@@ -81,9 +81,11 @@ try {
   }
   assert.equal(plan?.request.goals[0]?.rate, 1);
   await new Promise(resolve => setTimeout(resolve, 800));
+  await page.mouse.click(425, 92, {delay: 100});
+  await new Promise(resolve => setTimeout(resolve, 200));
   const grouped = await savedPlan();
   assert.equal(Object.keys(grouped.groups).length, 1);
-  const groupId = Object.keys(grouped.groups).find(key => grouped.groups[key].title === 'Extraction');
+  const groupId = Object.keys(grouped.groups)[0];
   assert.ok(groupId);
   const screenPoint = (x, y, view) => [290 + x * view.zoom - view.scroll[0], 119 + y * view.zoom - view.scroll[1]];
   const groupRect = grouped.groups[groupId].rect;

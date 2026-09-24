@@ -176,3 +176,5 @@ jobs:
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/groups-check.log
           /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_preview_review_ui.gd 2>&1 | tee /tmp/preview-review-check.log
           ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/preview-review-check.log
+          /tmp/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script tools/test_route_choices_ui.gd 2>&1 | tee /tmp/route-choices-check.log
+          ! grep -E 'SCRIPT ERROR:|ERROR:' /tmp/route-choices-check.log

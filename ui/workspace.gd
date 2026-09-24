@@ -25,6 +25,7 @@ var _request: Dictionary[String, Variant] = {"goals": [], "replication": false}
 var _positions: Dictionary[String, Variant] = {}
 var _recipes: Dictionary[String, Dictionary] = {}
 var _resources: Dictionary[String, String] = {}
+var _routes_by_resource: Dictionary[String, Array] = {}
 var _inspected_key := ""
 var _last_view := Vector3(INF, INF, INF)
 var _last_view_key := ""
@@ -53,6 +54,12 @@ const JSON_IMPORT_PATH := "user://portable-import.pending"
 var _recipe_matches: Array[String] = []
 var _recipe_page := 0
 const RECIPE_PAGE_SIZE := 150
+var _choice_kind := ""
+var _choice_resource := ""
+var _choice_recipe := ""
+var _choice_slot := -1
+var _choice_candidates: Array[Dictionary] = []
+var _pending_selected_recipe := ""
 
 
 func _ready() -> void:
@@ -86,6 +93,15 @@ func _ready() -> void:
 		group_controls[index].focus_previous = group_controls[index].get_path_to(group_controls[(index + group_controls.size() - 1) % group_controls.size()])
 	%Settings.pressed.connect(func() -> void: %FactorySettings.open_settings(_dataset, _request, _world_import))
 	%Summary.pressed.connect(_show_power)
+	inspector_cards.node_requested.connect(_jump_to_node)
+	inspector_cards.route_requested.connect(_open_route_choice)
+	inspector_cards.ingredient_requested.connect(_open_ingredient_choice)
+	%ChoiceSearch.text_changed.connect(_filter_choices)
+	%ChoiceList.item_selected.connect(func(_index: int) -> void: _refresh_choice_action())
+	%ChoiceList.item_activated.connect(func(_index: int) -> void: _apply_choice())
+	%ChoiceApply.pressed.connect(_apply_choice)
+	%ChoiceCancel.pressed.connect(func() -> void: %ChoiceDialog.hide())
+	%ChoiceDialog.close_requested.connect(func() -> void: %ChoiceDialog.hide())
 	%ConnectionMode.item_selected.connect(func(_index: int) -> void: _refresh_connections(); _save_view())
 	%FocusRecipe.pressed.connect(func() -> void: _focus_recipe(true))
 	%FactorySettings.settings_changed.connect(func(request: Dictionary) -> void:
@@ -355,10 +371,17 @@ func _load_dataset(value: Variant) -> bool:
 	_dataset_storage_key = ""
 	_recipes.clear()
 	_resources.clear()
+	_routes_by_resource.clear()
 	for resource: Dictionary in _dataset.resources:
 		_resources[resource.id] = PlannerDisplay.readable_name(resource.id, resource.get("name", ""))
 	for recipe: Dictionary in _dataset.recipes:
 		_recipes[recipe.id] = recipe
+		for output: Dictionary in recipe.get("outputs", []):
+			var resource: String = output.resource
+			if !_routes_by_resource.has(resource):
+				_routes_by_resource[resource] = []
+			if !recipe.id in _routes_by_resource[resource]:
+				_routes_by_resource[resource].append(recipe.id)
 	%DatasetName.text = "%s · Preview" % _dataset.get("name", "Custom dataset") if !_dataset.get("complete", false) else str(_dataset.get("name", "Custom dataset"))
 	_filter_recipes(search.text)
 	return true
@@ -558,6 +581,168 @@ func _pin_route() -> void:
 	else:
 		status.text = "Pinned %s as the route for %s without adding a goal." % [
 			PlannerDisplay.recipe_name(recipe), _resources.get(recipe.primary, recipe.primary)]
+
+
+func _open_route_choice(resource: String) -> void:
+	_choice_kind = "route"
+	_choice_resource = resource
+	_choice_recipe = ""
+	_choice_slot = -1
+	_choice_candidates = [{"id": "", "name": "Automatic choice", "reason": ""}]
+	var active := ""
+	for route: Dictionary in _last_result.get("primary_routes", []):
+		if route.resource == resource:
+			active = route.recipe
+			break
+	for id: String in _routes_by_resource.get(resource, []):
+		var recipe: Dictionary = _recipes[id]
+		var inputs: Array[String] = []
+		for flow: Dictionary in recipe.get("inputs", []).slice(0, 2):
+			inputs.append(_resources.get(flow.get("resource", ""), "Alternative inputs" if flow.has("choices") else "Unknown input"))
+		var label: String = PlannerDisplay.recipe_list_name(recipe)
+		if !inputs.is_empty():
+			label += " · " + ", ".join(inputs)
+		if id == active:
+			label = "Current · " + label
+		_choice_candidates.append({"id": id, "name": label, "reason": _recipe_unavailable_reason(recipe)})
+	_open_choice_dialog("Source for " + _resources.get(resource, PlannerDisplay.readable_name(resource)),
+		"Choose a recipe that supplies this resource. Automatic removes your pin.")
+
+
+func _open_ingredient_choice(recipe_id: String, slot: int) -> void:
+	var selected_line: Dictionary = _inspected_line()
+	if selected_line.is_empty() || selected_line.recipe != recipe_id:
+		return
+	var flows := _ingredient_flows(selected_line, _recipes[recipe_id])
+	if slot < 0 || slot >= flows.size():
+		return
+	var flow: Dictionary = flows[slot]
+	_choice_kind = "ingredient"
+	_choice_recipe = recipe_id
+	_choice_slot = slot
+	_choice_resource = ""
+	_choice_candidates = [{"id": "", "name": "Automatic choice", "reason": ""}]
+	for resource: String in flow.get("choices", []):
+		_choice_candidates.append({"id": resource,
+			"name": _resources.get(resource, PlannerDisplay.readable_name(resource)), "reason": ""})
+	_open_choice_dialog("Ingredient · slot %d" % (slot + 1),
+		"Choose one resource for this recipe slot. Automatic removes your pin.")
+
+
+func _open_choice_dialog(title: String, note: String) -> void:
+	%ChoiceDialog.title = title
+	%ChoiceNote.text = note
+	%ChoiceSearch.text = ""
+	_filter_choices("")
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var dialog_size := Vector2i(mini(700, maxi(440, int(viewport_size.x) - 64)), mini(590, maxi(350, int(viewport_size.y) - 64)))
+	%ChoiceDialog.popup_centered(dialog_size)
+	%ChoiceSearch.grab_focus.call_deferred()
+
+
+func _filter_choices(query: String) -> void:
+	%ChoiceList.clear()
+	var normalized := query.strip_edges().to_lower()
+	var selected_id := ""
+	if _choice_kind == "route":
+		selected_id = _request.get("routes", {}).get(_choice_resource, "")
+	elif _choice_kind == "ingredient":
+		selected_id = _request.get("ingredients", {}).get("%s#%d" % [_choice_recipe, _choice_slot], "")
+	var selected_index := -1
+	for candidate: Dictionary in _choice_candidates:
+		if !normalized.is_empty() && !normalized in str(candidate.name).to_lower() && !normalized in str(candidate.id).to_lower():
+			continue
+		var index: int = %ChoiceList.add_item(str(candidate.name))
+		%ChoiceList.set_item_metadata(index, candidate.id)
+		%ChoiceList.set_item_tooltip(index, str(candidate.reason) if !str(candidate.reason).is_empty() else str(candidate.id))
+		%ChoiceList.set_item_disabled(index, !str(candidate.reason).is_empty())
+		if candidate.id == selected_id:
+			selected_index = index
+	if selected_index >= 0 && !%ChoiceList.is_item_disabled(selected_index):
+		%ChoiceList.select(selected_index)
+	_refresh_choice_action()
+
+
+func _refresh_choice_action() -> void:
+	var selected: PackedInt32Array = %ChoiceList.get_selected_items()
+	%ChoiceApply.disabled = selected.is_empty() || %ChoiceList.is_item_disabled(selected[0])
+
+
+func _apply_choice() -> void:
+	var selected: PackedInt32Array = %ChoiceList.get_selected_items()
+	if selected.is_empty() || %ChoiceList.is_item_disabled(selected[0]):
+		return
+	var id: String = %ChoiceList.get_item_metadata(selected[0])
+	if _choice_kind == "route":
+		if !id.is_empty() && !_recipes.has(id):
+			return
+		for goal: Dictionary in _request.get("goals", []):
+			if goal.resource == _choice_resource && goal.get("kind", "rate") == "capacity" && !id.is_empty() && id != goal.recipe:
+				_failed("Edit this capacity goal before changing its recipe.")
+				return
+		_remember()
+		if !_request.has("routes"):
+			_request.routes = {}
+		if id.is_empty():
+			_request.routes.erase(_choice_resource)
+		else:
+			_request.routes[_choice_resource] = id
+		for goal: Dictionary in _request.get("goals", []):
+			if goal.resource == _choice_resource && goal.get("kind", "rate") != "capacity":
+				if id.is_empty():
+					goal.erase("recipe")
+				else:
+					goal.recipe = id
+		_pending_selected_recipe = id
+	elif _choice_kind == "ingredient":
+		_remember()
+		if !_request.has("ingredients"):
+			_request.ingredients = {}
+		var key := "%s#%d" % [_choice_recipe, _choice_slot]
+		if id.is_empty():
+			_request.ingredients.erase(key)
+		else:
+			_request.ingredients[key] = id
+	%ChoiceDialog.hide()
+	_recalculate()
+
+
+func _recipe_unavailable_reason(recipe: Dictionary) -> String:
+	if recipe.has("unsupported"):
+		return str(recipe.unsupported)
+	if recipe.get("replication", false) && !_request.get("replication", false):
+		return "Enable replication to use this route."
+	if recipe.id in _request.get("disabled_recipes", []):
+		return "This recipe is disabled in Settings."
+	for resource: String in recipe.get("requires_obtained", []):
+		if !resource in _request.get("obtained_resources", []):
+			return "Requires an obtained resource: " + _resources.get(resource, PlannerDisplay.readable_name(resource))
+	var available: Variant = _request.get("available_machines", _dataset.get("default_machines", null))
+	var disabled: Array = _request.get("disabled_machines", [])
+	var supported := false
+	if recipe.has("process"):
+		for machine: Dictionary in _dataset.get("machines", []):
+			if machine.get("status", "supported") != "supported" || machine.id in disabled:
+				continue
+			if available != null && !machine.id in available:
+				continue
+			if machine.get("recipe_type", "") == recipe.process.type:
+				supported = true
+				break
+			if machine.get("mechanic", "") == "mi_array":
+				for contained: String in machine.get("eligible_machines", []):
+					if (machine.get("contained_recipe_types", {}).get(contained, "") == recipe.process.type &&
+						!contained in disabled && (available == null || contained in available)):
+						supported = true
+						break
+			if supported:
+				break
+	else:
+		supported = recipe.get("configurations", []).any(func(configuration: Dictionary) -> bool:
+			return !configuration.machine in disabled && (available == null || configuration.machine in available))
+	if !supported:
+		return "No available machine supports this route."
+	return ""
 
 
 func _remove_goal() -> void:
@@ -795,6 +980,7 @@ func _calculated(result: Dictionary) -> void:
 			_recalculate()
 		return
 	if result.get("status") not in ["optimal", "feasible"]:
+		_pending_selected_recipe = ""
 		if result.get("status") == "numerical_error":
 			_failed("The requested precision could not be verified. The previous graph is preserved.")
 			%Notice.title = "Calculation precision"
@@ -979,6 +1165,12 @@ func _render_plan(result: Dictionary) -> void:
 		tween.tween_property(graph, "modulate:a", 1.0, 0.18).from(0.5)
 	if !_nodes.is_empty():
 		var preferred: PlannerRecipeNode = by_key.get(_inspected_key)
+		if !_pending_selected_recipe.is_empty():
+			for node: PlannerRecipeNode in _nodes.values():
+				if node.recipe_id == _pending_selected_recipe:
+					preferred = node
+					break
+		_pending_selected_recipe = ""
 		if !preferred:
 			for node: PlannerRecipeNode in _nodes.values():
 				if _request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == node.recipe_id):
@@ -1037,7 +1229,7 @@ func _settle_node_sizes() -> void:
 		_initial_layout = false
 		_apply_layout(false)
 		if !_inspected_key.is_empty():
-			_focus_recipe()
+			_focus_recipe(false)
 	elif !_unplaced.is_empty():
 		_place_new_nodes()
 	if !_pending_view.is_empty():
@@ -1052,6 +1244,7 @@ func _select_node(node: Node) -> void:
 	inspector.visible = true
 	inspector_cards.visible = false
 	if node is GraphFrame:
+		_highlight_neighbors("")
 		%EditGoal.disabled = false
 		%EditGoal.text = "Rename group"
 		_selected = String(node.name)
@@ -1067,6 +1260,7 @@ func _select_node(node: Node) -> void:
 		var endpoint: Dictionary = node.get_meta("flow_endpoint")
 		_selected = ""
 		_inspected_key = endpoint.key
+		_highlight_neighbors(_inspected_key)
 		_refresh_connections()
 		node.selected = true
 		%EditGoal.disabled = true
@@ -1079,6 +1273,7 @@ func _select_node(node: Node) -> void:
 		var unit: Dictionary = node.get_meta("storage_unit")
 		_selected = ""
 		_inspected_key = node.get_meta("position_key")
+		_highlight_neighbors(_inspected_key)
 		_refresh_connections()
 		node.selected = true
 		%EditGoal.disabled = true
@@ -1103,6 +1298,7 @@ func _select_node(node: Node) -> void:
 		"Edit production goal" if is_goal else "Configure production line")
 	_selected = node.recipe_id
 	_inspected_key = node.get_meta("position_key")
+	_highlight_neighbors(_inspected_key)
 	_refresh_connections()
 	node.selected = true
 	%EditGoal.disabled = false
@@ -1110,7 +1306,8 @@ func _select_node(node: Node) -> void:
 	inspector.text = PlannerDisplay.inspection(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
 	inspector.visible = false
 	inspector_cards.visible = true
-	inspector_cards.show_line(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}), _last_result.get("construction", {}))
+	inspector_cards.show_line(line, _recipes[line.recipe], _resources, _last_result.get("startup", {}),
+		_last_result.get("construction", {}), _inspector_context(node))
 	if node.has_meta("solar_panels"):
 		inspector.visible = true
 		inspector_cards.visible = false
@@ -1131,6 +1328,114 @@ func _select_node(node: Node) -> void:
 	inspector.get_v_scroll_bar().set_deferred("value", 0.0)
 	%RemoveGoal.text = "Remove selected goal"
 	%RemoveGoal.disabled = !_request.goals.any(func(goal: Dictionary) -> bool: return goal.get("recipe") == _selected)
+
+
+func _inspected_line() -> Dictionary:
+	for node: PlannerRecipeNode in _nodes.values():
+		if node.get_meta("position_key") == _inspected_key && !node.has_meta("flow_endpoint") && !node.has_meta("storage_unit"):
+			return node.allocation
+	return {}
+
+
+func _ingredient_flows(line: Dictionary, recipe: Dictionary) -> Array:
+	var flows: Array = recipe.get("inputs", []).duplicate()
+	var configuration: Dictionary = line.get("configuration_details", {})
+	flows.append_array(configuration.get("inputs", []))
+	for point: Dictionary in configuration.get("operating_points", []):
+		flows.append_array(point.get("inputs", []))
+	return flows
+
+
+func _inspector_context(node: PlannerRecipeNode) -> Dictionary:
+	var line: Dictionary = node.allocation
+	var key: String = node.get_meta("position_key")
+	var by_key: Dictionary[String, PlannerRecipeNode] = {}
+	for candidate: PlannerRecipeNode in _nodes.values():
+		by_key[candidate.get_meta("position_key")] = candidate
+	var incoming: Array[Dictionary] = []
+	var outgoing: Array[Dictionary] = []
+	for connection: Dictionary in _graph_connections:
+		var neighbor := ""
+		var target: Array[Dictionary] = []
+		if connection.destination == key:
+			neighbor = connection.source
+			target = incoming
+		elif connection.source == key:
+			neighbor = connection.destination
+			target = outgoing
+		if !by_key.has(neighbor):
+			continue
+		var entry := connection.duplicate()
+		entry.key = neighbor
+		entry.title = by_key[neighbor].title
+		entry.exact = str(connection.get("rate_exact", {}).get("display", ""))
+		target.append(entry)
+	var routes: Array[Dictionary] = []
+	for output: Dictionary in line.outputs:
+		var resource: String = output.resource
+		var count: int = _routes_by_resource.get(resource, []).size()
+		if count > 1:
+			routes.append({"resource": resource, "name": _resources.get(resource, PlannerDisplay.readable_name(resource)),
+				"count": count, "pinned": _request.get("routes", {}).get(resource, "") == line.recipe})
+	var ingredients: Array[Dictionary] = []
+	var ingredient_flows := _ingredient_flows(line, _recipes[line.recipe])
+	for slot: int in ingredient_flows.size():
+		var flow: Dictionary = ingredient_flows[slot]
+		if flow.get("choices", []).size() < 2:
+			continue
+		var selected := ""
+		for chosen: Dictionary in line.get("ingredient_choices", []):
+			if int(chosen.slot) == slot && float(chosen.rate) > 0:
+				selected = chosen.resource
+				break
+		var pin: String = _request.get("ingredients", {}).get("%s#%d" % [line.recipe, slot], "")
+		ingredients.append({"slot": slot, "name": _resources.get(selected, PlannerDisplay.readable_name(selected)) if !selected.is_empty() else "Automatic",
+			"pinned": !pin.is_empty(), "choices": flow.choices.size()})
+	return {"incoming": incoming, "outgoing": outgoing, "routes": routes, "ingredients": ingredients}
+
+
+func _jump_to_node(key: String) -> void:
+	for node: PlannerRecipeNode in _nodes.values():
+		if node.get_meta("position_key") == key:
+			_select_node(node)
+			_focus_recipe(true)
+			return
+
+
+func _highlight_neighbors(key: String) -> void:
+	var sources: Dictionary[String, bool] = {}
+	var destinations: Dictionary[String, bool] = {}
+	for connection: Dictionary in _graph_connections:
+		if connection.destination == key:
+			sources[connection.source] = true
+		if connection.source == key:
+			destinations[connection.destination] = true
+	for node: PlannerRecipeNode in _nodes.values():
+		var node_key: String = node.get_meta("position_key")
+		if key.is_empty():
+			node.modulate = Color.WHITE
+			node.set_meta("relation", "")
+			node.set_flow_emphasis(0.55)
+		elif node_key == key:
+			node.modulate = Color("fff4cf")
+			node.set_meta("relation", "selected")
+			node.set_flow_emphasis(1.0)
+		elif sources.has(node_key) && destinations.has(node_key):
+			node.modulate = Color("f4dcff")
+			node.set_meta("relation", "both")
+			node.set_flow_emphasis(1.0)
+		elif sources.has(node_key):
+			node.modulate = Color("b8fff0")
+			node.set_meta("relation", "supplier")
+			node.set_flow_emphasis(1.0)
+		elif destinations.has(node_key):
+			node.modulate = Color("ffdbac")
+			node.set_meta("relation", "consumer")
+			node.set_flow_emphasis(1.0)
+		else:
+			node.modulate = Color("a9b5b9")
+			node.set_meta("relation", "other")
+			node.set_flow_emphasis(0.22)
 
 
 func _refresh_connections() -> void:
@@ -1191,6 +1496,7 @@ func _focus_recipe(include_supplier: bool = false) -> void:
 	var selected: PlannerRecipeNode = by_key[_inspected_key]
 	var target := Rect2(selected.position_offset, selected.size)
 	var candidates: Array[Dictionary] = []
+	var requested_output := Rect2()
 	for connection: Dictionary in _graph_connections:
 		if connection.destination != _inspected_key || connection.resource == "energy:eu":
 			continue
@@ -1201,7 +1507,8 @@ func _focus_recipe(include_supplier: bool = false) -> void:
 	for connection: Dictionary in _graph_connections:
 		if connection.source == _inspected_key && str(connection.destination).begins_with("goal:") && by_key.has(connection.destination):
 			var goal: PlannerRecipeNode = by_key[connection.destination]
-			candidates.append({"rect": Rect2(goal.position_offset, goal.size), "distance": 0.0})
+			requested_output = Rect2(goal.position_offset, goal.size)
+			target = target.merge(requested_output)
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.distance < b.distance)
 	if include_supplier:
@@ -1220,19 +1527,25 @@ func _focus_recipe(include_supplier: bool = false) -> void:
 			if chosen == 3:
 				break
 	else:
-		graph.zoom = 0.8
-	graph.scroll_offset = target.get_center() * graph.zoom - graph.size / 2.0
+		graph.zoom = clampf(minf((graph.size.x - 60) / target.size.x,
+			(graph.size.y - 60) / target.size.y), graph.zoom_min, 0.8)
+	var offset: Vector2 = target.get_center() * graph.zoom - graph.size / 2.0
+	if target.size.y * graph.zoom < graph.size.y - 150.0:
+		offset.y -= 45.0
+	graph.scroll_offset = offset
 	_save_view()
 
 
 func _show_power() -> void:
-	inspector.visible = true
-	inspector_cards.visible = false
+	_highlight_neighbors("")
+	inspector.visible = false
+	inspector_cards.visible = true
 	inspector.text = PlannerDisplay.optimization_report(_last_result) + PlannerDisplay.power_report(_last_result.get("power", {}), _resources, _last_result.get("construction", {}))
 	inspector.scroll_to_line(0)
+	inspector_cards.show_plan(_last_result)
 	%EditGoal.disabled = true
 	%RemoveGoal.disabled = true
-	inspector.grab_focus()
+	inspector_cards.grab_focus()
 
 
 func _arrange() -> void:
@@ -1252,7 +1565,7 @@ func _apply_layout(announce: bool = true) -> void:
 			group = recipe.get("group", "Power" if recipe.primary == "energy:eu" else "Production")
 		var key: String = node.get_meta("position_key")
 		group_for_key[key] = group
-		entries.append(PlannerGraphLayout.Entry.new(key, group, node.size))
+		entries.append(PlannerGraphLayout.Entry.new(key, group, node.size, node.title))
 	for node: PlannerRecipeNode in _nodes.values():
 		if !node.has_meta("flow_endpoint"):
 			continue
@@ -1270,8 +1583,15 @@ func _apply_layout(announce: bool = true) -> void:
 			if neighbor_groups[group] > best:
 				chosen = group
 				best = neighbor_groups[group]
-		entries.append(PlannerGraphLayout.Entry.new(key, chosen, node.size))
-	var layout_connections: Array = _graph_connections.duplicate()
+		entries.append(PlannerGraphLayout.Entry.new(key, chosen, node.size, node.title))
+	var layout_connections: Array = []
+	var primary_by_key: Dictionary[String, String] = {}
+	for node: PlannerRecipeNode in _nodes.values():
+		if !node.has_meta("flow_endpoint") && !node.has_meta("storage_unit"):
+			primary_by_key[node.get_meta("position_key")] = _recipes[node.recipe_id].primary
+	for connection: Dictionary in _graph_connections:
+		if !primary_by_key.has(connection.source) || primary_by_key[connection.source] == connection.resource:
+			layout_connections.append(connection)
 	for unit: Dictionary in _last_result.get("periodic_power", {}).get("storage", []):
 		if unit.machines <= 0:
 			continue
@@ -1281,15 +1601,18 @@ func _apply_layout(announce: bool = true) -> void:
 				layout_connections.append({"source": str(source.recipe) + "|" + str(source.configuration),
 					"destination": storage_key, "resource": "dispatch_buffer"})
 	var focus: Array[String] = []
-	if !_inspected_key.is_empty():
-		focus.append(_inspected_key)
 	var goal_recipes: Dictionary[String, bool] = {}
 	for goal: Dictionary in _request.get("goals", []):
 		if goal.has("recipe"):
 			goal_recipes[str(goal.recipe)] = true
-	for node: PlannerRecipeNode in _nodes.values():
-		if !node.has_meta("flow_endpoint") && goal_recipes.has(node.recipe_id):
-			focus.append(node.get_meta("position_key"))
+		var endpoint_key := "goal:" + str(goal.get("resource", ""))
+		if _nodes.values().any(func(node: PlannerRecipeNode) -> bool:
+			return node.get_meta("position_key") == endpoint_key):
+			focus.append(endpoint_key)
+	if focus.is_empty():
+		for node: PlannerRecipeNode in _nodes.values():
+			if !node.has_meta("flow_endpoint") && goal_recipes.has(node.recipe_id):
+				focus.append(node.get_meta("position_key"))
 	var layout := PlannerGraphLayout.arrange(entries, layout_connections, focus)
 	if _last_result.get("lines", []).is_empty() && _nodes.size() > 1 && _nodes.values().all(func(node: PlannerRecipeNode) -> bool: return node.has_meta("storage_unit")):
 		var storage_bounds := Rect2(Vector2(20, 40), Vector2.ZERO)
@@ -1308,7 +1631,7 @@ func _apply_layout(announce: bool = true) -> void:
 	var bounds := Rect2()
 	for title: String in layout.groups:
 		var rect: Rect2 = layout.groups[title]
-		_groups["category_%d" % index] = {"title": title, "rect": [rect.position.x, rect.position.y, rect.size.x, rect.size.y]}
+		_groups["line_%d" % index] = {"title": layout.titles.get(title, title), "rect": [rect.position.x, rect.position.y, rect.size.x, rect.size.y]}
 		bounds = rect if index == 0 else bounds.merge(rect)
 		index += 1
 	_rendering = false
@@ -1433,7 +1756,14 @@ func _add_group() -> void:
 	_remember()
 	var key := "group_%d" % Time.get_ticks_usec()
 	var position := graph.scroll_offset / graph.zoom + Vector2(25, 55)
-	_groups[key] = {"title": "Production line %d" % (_groups.size() + 1), "rect": [position.x, position.y, 660.0, 360.0]}
+	var size := Vector2(660, 360)
+	for node: PlannerRecipeNode in _nodes.values():
+		if node.get_meta("position_key") == _inspected_key:
+			position = node.position_offset - Vector2(24, 45)
+			size = Vector2(maxf(420.0, node.size.x + 48.0), maxf(300.0, node.size.y + 90.0))
+			break
+	_groups[key] = {"title": "Production line %d" % (_groups.size() + 1),
+		"rect": [position.x, position.y, size.x, size.y]}
 	_restore_groups()
 	_autosave()
 	status.text = "Drag the group title to move its members. Resize its border to change membership."

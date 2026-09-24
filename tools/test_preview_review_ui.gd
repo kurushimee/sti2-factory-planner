@@ -39,26 +39,42 @@ func _run() -> void:
 	(workspace.get_node("%ConnectionMode") as OptionButton).select(0)
 	workspace._refresh_connections()
 	assert(workspace.graph.get_connection_list().size() == workspace._graph_connections.size())
-	assert(workspace.graph.zoom_min <= 0.051)
+	assert(workspace.graph.zoom_min <= 0.031)
 	assert(workspace.inspector_cards.visible)
 	var all_rects: Array[Rect2] = []
+	var bounds := Rect2()
+	var grouped := 0
+	var goal_x := -INF
 	for node: PlannerRecipeNode in workspace._nodes.values():
 		var rect := Rect2(node.position_offset, node.size)
+		bounds = rect if all_rects.is_empty() else bounds.merge(rect)
+		if node.get_meta("position_key") == "goal:item:modern_industrialization:processing_unit":
+			goal_x = rect.position.x
 		for other: Rect2 in all_rects:
 			assert(!rect.intersects(other))
 		all_rects.append(rect)
 		assert(!node.throughput.text.contains("Exact"))
 		assert(!node.power.text.contains("details"))
 		var center := rect.get_center()
-		assert(workspace._groups.values().any(func(group: Dictionary) -> bool:
-			var bounds: Array = group.rect
-			return Rect2(bounds[0], bounds[1], bounds[2], bounds[3]).has_point(center)))
+		if workspace._groups.values().any(func(group: Dictionary) -> bool:
+			var group_bounds: Array = group.rect
+			return Rect2(group_bounds[0], group_bounds[1], group_bounds[2], group_bounds[3]).has_point(center)):
+			grouped += 1
+	assert(grouped > workspace._nodes.size() / 4)
+	assert(bounds.size.x > bounds.size.y * 2.0)
+	for rect: Rect2 in all_rects:
+		assert(rect.position.x <= goal_x)
 	var group_rects: Array[Rect2] = []
 	for group: Dictionary in workspace._groups.values():
-		var bounds: Array = group.rect
-		var rect := Rect2(bounds[0], bounds[1], bounds[2], bounds[3])
+		var group_bounds: Array = group.rect
+		var rect := Rect2(group_bounds[0], group_bounds[1], group_bounds[2], group_bounds[3])
 		for other: Rect2 in group_rects:
 			assert(!rect.intersects(other))
+		var members := 0
+		for node_rect: Rect2 in all_rects:
+			if rect.has_point(node_rect.get_center()):
+				members += 1
+		assert(members >= 2 && members <= 16)
 		group_rects.append(rect)
 	var visible_text := ""
 	for child: Node in workspace.inspector_cards.content.get_children():

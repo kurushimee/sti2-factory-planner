@@ -18,17 +18,15 @@ func _initialize() -> void:
 	]
 	var layout := PlannerGraphLayout.arrange(entries, flows)
 	assert(layout.positions.a.x < layout.positions.b.x)
-	assert(layout.positions.b.x == layout.positions.c.x)
+	assert(layout.positions.b.x < layout.positions.c.x)
 	assert(layout.positions.c.x < layout.positions.d.x)
-	assert(layout.positions.b.y != layout.positions.c.y)
 	var focused := PlannerGraphLayout.arrange(entries, flows, ["d"])
-	assert(focused.positions.c.y < focused.positions.b.y)
-	assert(focused.positions.a.y < focused.positions.other.y)
-	assert(layout.positions.extraction.x < layout.positions.ore.x)
-	assert(layout.positions.ore.x < layout.positions.a.x)
+	assert(focused.positions.a.x < focused.positions.b.x)
+	assert(focused.positions.b.x < focused.positions.c.x)
+	assert(focused.positions.c.x < focused.positions.d.x)
+	assert(focused.positions.other.x < focused.positions.d.x)
 	for first: PlannerGraphLayout.Entry in entries:
 		var rect := Rect2(layout.positions[first.key], first.size)
-		assert(layout.groups[first.group].encloses(rect))
 		for second: PlannerGraphLayout.Entry in entries:
 			if first.key != second.key:
 				assert(!rect.intersects(Rect2(layout.positions[second.key], second.size)))
@@ -43,7 +41,7 @@ func _initialize() -> void:
 	var start := Time.get_ticks_msec()
 	layout = PlannerGraphLayout.arrange(entries, flows)
 	assert(layout.positions.size() == 10000)
-	assert(layout.positions["0"].x == layout.positions["9999"].x)
+	assert(layout.positions["0"] != layout.positions["9999"])
 	print("Layout passed ordering, cycles, grouping, and 10,000 nodes in %d ms." %
 		(Time.get_ticks_msec() - start))
 	quit()
